@@ -17,7 +17,6 @@ target_link_libraries(DarwinStorage PUBLIC Storage)
 target_link_libraries(DarwinStorage PUBLIC Utilities)
 target_link_libraries(DarwinStorage PUBLIC Event)
 target_link_libraries(DarwinStorage PUBLIC Logging)
-target_link_libraries(DarwinStorage PUBLIC LoggingApplication)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC DarwinStorage)
 
 if (ESP_PLATFORM)

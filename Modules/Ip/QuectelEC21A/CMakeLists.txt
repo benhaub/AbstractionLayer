@@ -13,6 +13,7 @@ target_link_libraries(QuectelEC21AIpCellularClient PUBLIC abstractionLayer)
 target_link_libraries(QuectelEC21AIpCellularClient PUBLIC IpClient)
 target_link_libraries(QuectelEC21AIpCellularClient PUBLIC Logging)
 target_link_libraries(QuectelEC21AIpCellularClient PUBLIC Utilities)
+target_link_libraries(QuectelEC21AIpCellularClient PUBLIC QuectelEC21ACellularModule)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC QuectelEC21AIpCellularClient)
 
 #Server

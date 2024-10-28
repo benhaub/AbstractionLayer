@@ -17,7 +17,6 @@ target_link_libraries(LinuxStorage PUBLIC Storage)
 target_link_libraries(LinuxStorage PUBLIC Utilities)
 target_link_libraries(LinuxStorage PUBLIC Event)
 target_link_libraries(LinuxStorage PUBLIC Logging)
-target_link_libraries(LinuxStorage PUBLIC LoggingApplication)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC LinuxStorage)
 
 if (ESP_PLATFORM)

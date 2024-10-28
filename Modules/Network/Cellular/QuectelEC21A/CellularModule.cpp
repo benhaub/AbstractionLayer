@@ -2,7 +2,7 @@
 #include "CellularModule.hpp"
 #include "OperatingSystemModule.hpp"
 //AbstractionLayer Applications
-#include "log.hpp"
+#include "Log.hpp"
 //C++
 #include <cstring>
 
