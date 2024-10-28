@@ -20,12 +20,25 @@ using Seconds = uint32_t;
 ///@typedef Minutes
 ///Minutes
 using Minutes = uint32_t;
+///@typedef Hours
+///Hours (h)
+using Hours = uint32_t;
 ///@typedef UnixTime
 ///Unix time (s)
 using UnixTime = uint32_t;
 ///@typedef Ticks
 ///CPU tick. Must use a system dependant conversion to get elapsed time in seconds.
 using Ticks = uint32_t;
+///@struct DateTime
+///Date and time
+struct DateTime {
+    Seconds seconds;
+    Minutes minutes;
+    Hours hours;
+    uint8_t week;
+    uint8_t month;
+    uint16_t year;
+};
 
 //-------------------------------Storage sizes
 ///@typedef Bytes
