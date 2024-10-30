@@ -72,16 +72,21 @@ class RtcAbstraction {
      * @brief ic
      * @returns The IC device used to communicate with the RTC as a const reference
      */
-    const std::unique_ptr<IcCommunicationProtocol> &icConst() const { return _ic; }
+    const IcCommunicationProtocol &icConst() const { assert(nullptr != _ic); return *_ic; }
     /**
      * @brief ic
      * @returns The IC device used to communicate with the RTC as a mutable reference
      */
-    std::unique_ptr<IcCommunicationProtocol> &ic() { return _ic; }
+    IcCommunicationProtocol &ic() { assert(nullptr != _ic); return *_ic; }
+
+    /// @brief Set the network abstraction that this client communicates on.
+    /// @param network The network abstraction to use.
+    ErrorType setIcDevice(IcCommunicationProtocol &ic) { _ic = &ic; return ErrorType::Success; }
 
     protected:
-    /// @brief The IC device that is being used to communicate with the RTC.
-    std::unique_ptr<IcCommunicationProtocol> _ic;
+    /// @brief The Integrated circuit device that is being used to communicate with the RTC.
+    /// @note Not a unique_ptr because the RTC does not have exclusive ownersip of the _ic device.
+    IcCommunicationProtocol *_ic = nullptr;
 };
 
 #endif //__RTC_ABSTRACTION_HPP__

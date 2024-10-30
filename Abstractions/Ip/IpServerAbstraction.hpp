@@ -156,10 +156,12 @@ class IpServerAbstraction {
      * @brief Get the port
     */
     Port port() const { return _port; }
+    /// @brief Get the network abstraction that this server communicates on as a mutable reference
+    NetworkAbstraction &network() { assert(nullptr != _network); return *_network; }
     /**
-     * @brief Get the network abstraction
+     * @brief Get the network abstraction as a constant reference
     */
-    NetworkAbstraction &network() const { return *_network; }
+    const NetworkAbstraction &networkConst() const { return *_network; }
     /**
      * @brief Get the status of the server
     */
@@ -183,6 +185,7 @@ class IpServerAbstraction {
 
     private:
     /// @brief The network abstraction that this server communicates on.
+    /// @note Not a unique_ptr because this IP server does not have exclusive ownersip of the network
     NetworkAbstraction *_network = nullptr;
 
 };

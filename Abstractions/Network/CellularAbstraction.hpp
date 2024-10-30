@@ -81,15 +81,15 @@ class CellularAbstraction : public NetworkAbstraction {
     */
     const PinNumber &resetPinConst() const { return _resetPin; }
     /**
-     * @brief The IC peripheral used to communicate with the network device as a const reference.
-     * @returns The IC peripheral as a constant reference.
-    */
-    const IcCommunicationProtocol &icConst() { return *_ic; }
+     * @brief ic
+     * @returns The IC device used to communicate with the RTC as a const reference
+     */
+    const IcCommunicationProtocol &icConst() const { assert(nullptr != _ic); return *_ic; }
     /**
-     * @brief The IC peripheral used to communicate with the network device as a mutable pointer
-     * @returns The IC peripheral as a mutable pointer.
-    */
-    std::unique_ptr<IcCommunicationProtocol> &ic() { return _ic; }
+     * @brief ic
+     * @returns The IC device used to communicate with the RTC as a mutable reference
+     */
+    IcCommunicationProtocol &ic() { assert(nullptr != _ic); return *_ic; }
     /**
      * @brief Get the radio access technology.
      * @returns The radio access technology as a mutable reference.
@@ -110,6 +110,11 @@ class CellularAbstraction : public NetworkAbstraction {
      * @returns The access mode as a constant reference.
     */
     const CellularConfig::AccessMode &accessModeConst() const { return _accessMode; }
+    /**
+     * @brief Set the network abstraction that this client communicates on.
+     * @param network The network abstraction to use.
+     */
+    ErrorType setIcDevice(IcCommunicationProtocol &ic) { _ic = &ic; return ErrorType::Success; }
 
     protected:
     /// @brief The Access Point Name (APN).
@@ -117,7 +122,7 @@ class CellularAbstraction : public NetworkAbstraction {
     /// @brief The pin number for the reset pin.
     PinNumber _resetPin = -1;
     /// @brief The IC peripheral used to communicate with the network device.
-    std::unique_ptr<IcCommunicationProtocol> _ic;
+    IcCommunicationProtocol *_ic;
     /// @brief The radio access technology.
     CellularConfig::RadioAccessTechnology _radioAccessTechnology = CellularConfig::RadioAccessTechnology::Unknown;
     /// @brief The access mode.

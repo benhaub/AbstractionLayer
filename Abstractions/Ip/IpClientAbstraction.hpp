@@ -200,6 +200,7 @@ class IpClientAbstraction {
 
     private:
     /// @brief The network interface that this client communicates on.
+    /// @note Not a unique_ptr because this IP client does not have exclusive ownersip of the network
     NetworkAbstraction *_network = nullptr;
 };
 
