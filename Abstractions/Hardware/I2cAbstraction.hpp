@@ -89,10 +89,39 @@ class I2cAbstraction : public IcCommunicationProtocol {
      * @param[in] sclPullUp Whether the SCL line should have a pull-up resistor.
      * @returns ErrorType::Success if the hardware configurations were set successfully.
      * @returns ErrorType::Failure otherwise.
+     * @note The reason the config is not part of the constructor parameter list is because of convenience.
+     *       It's a little verbose to have sub-class constructors contain the same parameter list as the parent.
+     *       It also makes cross-platform development easier since some platforms don't offer a config and having a function
+     *       at least allows you to return NotSupported on NotAvailable in this case.
      */
     virtual ErrorType setHardwareConfig(const I2cConfig::PeripheralNumber peripharal, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullUp, const PinNumber scl, const bool sclPullUp) = 0;
 
+    /**
+     * @brief deviceAddress
+     * @returns A mutable reference the the write address
+     */
+    uint16_t &deviceAddress() { return _deviceAddress; }
+    /**
+     * @brief deviceAddressConst
+     * @returns A constant reference to the read address
+     */
+    const uint16_t &deviceaddressConst() const { return _deviceAddress; }
+    /**
+     * @brief registerAddress
+     * @returns A mutable reference to the register address of the device.
+     */
+    uint16_t &registerAddress() { return _registerAddress; }
+    /*
+     * @brief registerAddressConst
+     * @returns A constant reference to the register address of the device.
+     */
+    const uint16_t &registerAddressConst() const { return _registerAddress; }
+
     protected:
+    /// @brief The address of the device.
+    uint16_t _deviceAddress;
+    /// @brief The address of the register being written or read to.
+    uint16_t _registerAddress;
     /// @brief The mode of the I2C.
     I2cConfig::Mode _mode = I2cConfig::Mode::Unknown;
     /// @brief The speed of the I2C.

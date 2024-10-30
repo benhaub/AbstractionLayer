@@ -32,12 +32,13 @@ using Ticks = uint32_t;
 ///@struct DateTime
 ///Date and time
 struct DateTime {
-    Seconds seconds;
-    Minutes minutes;
-    Hours hours;
-    uint8_t week;
-    uint8_t month;
-    uint16_t year;
+    uint8_t second; ///< Seconds. 0-59
+    uint8_t minute; ///< minutes. 0-59
+    uint8_t hour;   ///< hour. 0-23
+    uint8_t day;    ///< day. 0-31
+    uint8_t weekday;///< week 0-7 (Sun-Sat)
+    uint8_t month;  ///< month. 0-12
+    uint8_t year;   ///< year. 0-99.
 };
 
 //-------------------------------Storage sizes

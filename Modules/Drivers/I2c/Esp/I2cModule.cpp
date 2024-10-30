@@ -1,7 +1,9 @@
 //AbstractionLayer
 #include "I2cModule.hpp"
+//AbstractionLayer Applications
+#include "Log.hpp"
 
-ErrorType I2cModule::init() {
+ErrorType I2c::init() {
     //You have to configure before initializing
     assert(I2cConfig::Mode::Unknown != _mode);
     assert(I2cConfig::Speed::Unknown != _speed);
@@ -18,6 +20,10 @@ ErrorType I2cModule::init() {
 
     if (I2cConfig::Mode::Master == _mode) {
         conf.master.clk_speed = toEspClockSpeed(_speed, error);
+        conf.clk_flags = I2C_SCLK_SRC_FLAG_FOR_NOMAL;
+        if (ErrorType::Success != error) {
+            return error;
+        }
     }
     else if (I2cConfig::Mode::Slave == _mode) {
         //conf.slave.addr_10bit_en
@@ -40,7 +46,7 @@ ErrorType I2cModule::init() {
     return error;
 }
 
-ErrorType I2cModule::deinit() {
+ErrorType I2c::deinit() {
     ErrorType error;
     const i2c_port_t i2cPort = toEspPort(_peripheral, error);
     if (ErrorType::Success != error) {
@@ -50,7 +56,7 @@ ErrorType I2cModule::deinit() {
     return toPlatformError(i2c_driver_delete(i2cPort));
 }
 
-ErrorType I2cModule::setHardwareConfig(const I2cConfig::PeripheralNumber peripheral, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullup, const PinNumber scl, const bool sclPullup) {
+ErrorType I2c::setHardwareConfig(const I2cConfig::PeripheralNumber peripheral, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullup, const PinNumber scl, const bool sclPullup) {
     _mode = mode;
     _speed = speed;
     _peripheral = peripheral;
@@ -62,16 +68,23 @@ ErrorType I2cModule::setHardwareConfig(const I2cConfig::PeripheralNumber periphe
     return ErrorType::Success;
 }
 
-ErrorType I2cModule::txBlocking(const std::string &data, const Milliseconds timeout) {
+ErrorType I2c::txBlocking(const std::string &data, const Milliseconds timeout) {
     ErrorType error = ErrorType::Failure;
     i2c_port_t i2cPort = toEspPort(_peripheral, error);
     if (ErrorType::Success != error) {
         return error;
     }
 
+    //Appen the register address to the beginning of the data.
+    //TODO: 10-bit addressing?
+    std::string writeData(data.size() + 1, 0);
+    writeData.resize(0);
+    writeData.push_back(static_cast<char>((uint8_t)_registerAddress));
+    writeData.append(data);
+
     if (I2cConfig::Mode::Master == _mode) {
         //TODO: Need millisecondsToTicks
-        error = toPlatformError(i2c_master_write_to_device(i2cPort, _currentWriteAddress, reinterpret_cast<const uint8_t *>(data.data()), data.size(), timeout));
+        error = toPlatformError(i2c_master_write_to_device(i2cPort, _deviceAddress, reinterpret_cast<const uint8_t *>(writeData.data()), writeData.size(), timeout));
     }
     else if (I2cConfig::Mode::Slave == _mode) {
         error = ErrorType::NotImplemented;
@@ -83,20 +96,21 @@ ErrorType I2cModule::txBlocking(const std::string &data, const Milliseconds time
     return error;
 }
 
-ErrorType I2cModule::txNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+ErrorType I2c::txNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType I2cModule::rxBlocking(std::string &buffer, const Milliseconds timeout) {
+ErrorType I2c::rxBlocking(std::string &buffer, const Milliseconds timeout) {
     ErrorType error = ErrorType::Failure;
-    uint8_t registerAddress;
+    //TODO: 10-bit addressing?
+    uint8_t registerAddress = static_cast<uint8_t>(_registerAddress);
     i2c_port_t i2cPort = toEspPort(_peripheral, error);
     if (ErrorType::Failure == error) {
         return error;
     }
 
     if (I2cConfig::Mode::Master == _mode) {
-        error = toPlatformError(i2c_master_write_read_device(i2cPort, _currentReadAddress, &registerAddress, sizeof(registerAddress), reinterpret_cast<uint8_t *>(buffer.data()), buffer.size(), timeout));
+        error = toPlatformError(i2c_master_write_read_device(i2cPort, _deviceAddress, &registerAddress, 1, reinterpret_cast<uint8_t *>(buffer.data()), buffer.size(), timeout));
     }
     else if (I2cConfig::Mode::Slave == _mode) {
         error = ErrorType::NotImplemented;
@@ -108,10 +122,10 @@ ErrorType I2cModule::rxBlocking(std::string &buffer, const Milliseconds timeout)
     return error;
 }
 
-ErrorType I2cModule::rxNonBlocking(std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
+ErrorType I2c::rxNonBlocking(std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType I2cModule::flushRxBuffer() {
+ErrorType I2c::flushRxBuffer() {
     return ErrorType::NotSupported;
 }

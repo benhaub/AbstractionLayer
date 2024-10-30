@@ -7,19 +7,15 @@
 #ifndef __RTC_ABSTRACTION_HPP__
 #define __RTC_ABSTRACTION_HPP__
 
-#include "Error.hpp"
-#include "Types.hpp"
-
-namespace RtcConfig {
-
-}
+//AbstractionLayer
+#include <IcCommunicationProtocol.hpp>
 
 /**
  * @class RtcAbstraction
  * @brief Abstraction layer for RTC communication.
  * @note All member functions can return any of ErrorType::NotImplemented, ErrorType::NotSupported or ErrorType::NotAvailable.
  */
-class RtcAbstraction{
+class RtcAbstraction {
     public:
     /// @brief Constructor.
     RtcAbstraction() = default;
@@ -71,6 +67,17 @@ class RtcAbstraction{
      * @returns ErrorType::Failure otherwise.
      */
     virtual ErrorType readAlarm(DateTime& dateTime) = 0;
+
+    /**
+     * @brief ic
+     * @returns The IC device used to communicate with the RTC as a const reference
+     */
+    const std::unique_ptr<IcCommunicationProtocol> &icConst() const { return _ic; }
+    /**
+     * @brief ic
+     * @returns The IC device used to communicate with the RTC as a mutable reference
+     */
+    std::unique_ptr<IcCommunicationProtocol> &ic() { return _ic; }
 
     protected:
     /// @brief The IC device that is being used to communicate with the RTC.

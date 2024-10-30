@@ -3,13 +3,14 @@
 
 #include "I2cAbstraction.hpp"
 
-class I2cModule : public I2cAbstraction {
-    I2cModule() = default;
-    ~I2cModule() = default;
+class I2c : public I2cAbstraction {
+    public:
+    I2c() : I2cAbstraction() {}
+    ~I2c() = default;
 
     ErrorType init() override;
     ErrorType deinit() override;
-    ErrorType setHardwareConfig(const I2cConfig::PeripheralNumber peripharal, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullUp, const PinNumber scl, const bool sclPullUp) override;
+    ErrorType setHardwareConfig(const I2cConfig::PeripheralNumber peripheral, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullup, const PinNumber scl, const bool sclPullup) override;
 
     ErrorType txBlocking(const std::string &data, const Milliseconds timeout) override;
     ErrorType txNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) override;
