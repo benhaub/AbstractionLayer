@@ -9,6 +9,9 @@ ErrorType I2c::deinit() {
 ErrorType I2c::setHardwareConfig(const I2cConfig::PeripheralNumber peripheral, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullup, const PinNumber scl, const bool sclPullup) {
     return ErrorType::NotImplemented;
 }
+ErrorType I2c::setInterruptConfig(const bool arbitrationLost, const bool nackDetected, const bool sclLowTimeout, const bool stopDetect, const bool receiveFifoOverflow, const bool transmitFifoOverflow) {
+    return ErrorType::NotImplemented;
+}
 ErrorType I2c::txBlocking(const std::string &data, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }

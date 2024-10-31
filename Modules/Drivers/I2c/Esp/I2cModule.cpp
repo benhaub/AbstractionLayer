@@ -56,7 +56,6 @@ ErrorType I2c::deinit() {
     return toPlatformError(i2c_driver_delete(i2cPort));
 }
 
-//TODO: What about interrupt config?
 ErrorType I2c::setHardwareConfig(const I2cConfig::PeripheralNumber peripheral, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullup, const PinNumber scl, const bool sclPullup) {
     _mode = mode;
     _speed = speed;
@@ -67,6 +66,11 @@ ErrorType I2c::setHardwareConfig(const I2cConfig::PeripheralNumber peripheral, c
     _sclPullup = sclPullup;
 
     return ErrorType::Success;
+}
+
+ErrorType I2c::setInterruptConfig(const bool arbitrationLost, const bool nackDetected, const bool sclLowTimeout, const bool stopDetect, const bool receiveFifoOverflow, const bool transmitFifoOverflow) {
+    //See the API reference docs. An interrupt handler is created by default when you call i2c_driver_install.
+    return ErrorType::NotSupported;
 }
 
 ErrorType I2c::txBlocking(const std::string &data, const Milliseconds timeout) {

@@ -96,7 +96,17 @@ class I2cAbstraction : public IcCommunicationProtocol {
      *       at least allows you to return NotSupported on NotAvailable in this case.
      */
     virtual ErrorType setHardwareConfig(const I2cConfig::PeripheralNumber peripharal, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullUp, const PinNumber scl, const bool sclPullUp) = 0;
-
+    /**
+     * @brief enable or disable interrupts.
+     * @param[in] arbitrationLost
+     * @param[in] nackDetected The transfer was not completed because the target did not acknowledge
+     * @param[in] sclLowTimeout The controller has lost clock synchronization with another controller because the SCL line was held low longer than the configured timeout
+     * @sa user manual Pg.10, Sect. 3.1.7
+     * @param[in] stopDetect When the controller has finished sending data. The stop bit is sent and this interrupt is activated.
+     * @param[in] receiveFifoOverflow Can be enabled for controller or transmit mode to fire when the receive FIFO has reached a threshold.
+     * @param[in] transmitFifoOverflow Can be enabled for controller or transmitter mode to fire when the transmit FIFO has reached a threshold.
+     */
+    virtual ErrorType setInterruptConfig(const bool arbitrationLost, const bool nackDetected, const bool sclLowTimeout, const bool stopDetect, const bool receiveFifoOverflow, const bool transmitFifoOverflow) = 0;
     /**
      * @brief deviceAddress
      * @returns A mutable reference the the write address

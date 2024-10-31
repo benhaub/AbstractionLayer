@@ -100,16 +100,8 @@ ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout) {
     return ErrorType::Failure;
 }
 
-//I'm not sure how to handle the interrupt based system.
 ErrorType Uart::rxNonBlocking(std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
     ErrorType error;
-
-    uart_intr_config_t intr_conf = {
-        .intr_enable_mask = UART_INTR_RXFIFO_OVF | UART_INTR_RXFIFO_TOUT,
-        .rx_timeout_thresh = 255,
-        .txfifo_empty_intr_thresh = 0,
-        .rxfifo_full_thresh = 255
-    };
 
     auto rx = [this, callback](std::shared_ptr<std::string> buffer, Bytes size) -> ErrorType {
         ErrorType error = ErrorType::Failure;

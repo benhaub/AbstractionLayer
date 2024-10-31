@@ -15,6 +15,7 @@ class I2c : public I2cAbstraction {
     ErrorType init() override;
     ErrorType deinit() override;
     ErrorType setHardwareConfig(const I2cConfig::PeripheralNumber peripheral, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullup, const PinNumber scl, const bool sclPullup) override;
+    ErrorType setInterruptConfig(const bool arbitrationLost, const bool nackDetected, const bool sclLowTimeout, const bool stopDetect, const bool receiveFifoOverflow, const bool transmitFifoOverflow) override;
 
     ErrorType txBlocking(const std::string &data, const Milliseconds timeout) override;
     ErrorType txNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) override;
