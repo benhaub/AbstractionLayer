@@ -67,6 +67,13 @@ class RtcAbstraction {
      * @returns ErrorType::Failure otherwise.
      */
     virtual ErrorType readAlarm(DateTime& dateTime) = 0;
+    /**
+     * @brief Set the hour mode
+     * @param[in] twentyFourHourMode True to set the RTC to support reading and writing 24-hour clock times. False for 12-hour.
+     * @returns ErrorType::Success if the mode could be set.
+     * @returns ErrorType::Failure otherwise.
+     */
+    virtual ErrorType setHourMode(bool twentyFourHourMode) = 0;
 
     /**
      * @brief ic

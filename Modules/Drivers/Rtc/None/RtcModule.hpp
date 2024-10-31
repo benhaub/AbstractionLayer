@@ -14,6 +14,7 @@ class Rtc : public RtcAbstraction {
     ErrorType readDate(DateTime& dateTime) override;
     ErrorType writeAlarm(const DateTime& dateTime) override;
     ErrorType readAlarm(DateTime& dateTime) override;
+    ErrorType setHourMode(bool twentyFourHourMode);
 };
 
 #endif //__RTC_MODULE_HPP__

@@ -16,6 +16,7 @@ class Rtc : public RtcAbstraction {
     ErrorType readDate(DateTime& dateTime) override;
     ErrorType writeAlarm(const DateTime& dateTime) override;
     ErrorType readAlarm(DateTime& dateTime) override;
+    ErrorType setHourMode(bool twentyFourHourMode) override;
 
     private:
     static constexpr uint8_t _SlaveAddress = 0b1010001;

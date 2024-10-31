@@ -18,3 +18,6 @@ ErrorType Rtc::writeAlarm(const DateTime& dateTime) {
 ErrorType Rtc::readAlarm(DateTime& dateTime) {
     return ErrorType::NotImplemented;
 }
+ErrorType Rtc::setHourMode(bool twentyFourHourMode) {
+    return ErrorType::NotImplemented;
+}

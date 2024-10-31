@@ -56,6 +56,7 @@ ErrorType I2c::deinit() {
     return toPlatformError(i2c_driver_delete(i2cPort));
 }
 
+//TODO: What about interrupt config?
 ErrorType I2c::setHardwareConfig(const I2cConfig::PeripheralNumber peripheral, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullup, const PinNumber scl, const bool sclPullup) {
     _mode = mode;
     _speed = speed;
@@ -77,10 +78,15 @@ ErrorType I2c::txBlocking(const std::string &data, const Milliseconds timeout) {
 
     //Appen the register address to the beginning of the data.
     //TODO: 10-bit addressing?
+    CBT_LOGI(TAG, "Tx");
+    CBT_LOG_BUFFER_HEXDUMP(TAG, data.data(), data.size(), LogType::Info);
     std::string writeData(data.size() + 1, 0);
     writeData.resize(0);
     writeData.push_back(static_cast<char>((uint8_t)_registerAddress));
     writeData.append(data);
+
+    CBT_LOGI(TAG, "Tx writeData");
+    CBT_LOG_BUFFER_HEXDUMP(TAG, writeData.data(), writeData.size(), LogType::Info);
 
     if (I2cConfig::Mode::Master == _mode) {
         //TODO: Need millisecondsToTicks
@@ -95,7 +101,7 @@ ErrorType I2c::txBlocking(const std::string &data, const Milliseconds timeout) {
 
     return error;
 }
-
+//TODO
 ErrorType I2c::txNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     return ErrorType::NotImplemented;
 }
@@ -119,6 +125,8 @@ ErrorType I2c::rxBlocking(std::string &buffer, const Milliseconds timeout) {
         error = ErrorType::NotSupported;
     }
 
+    CBT_LOGI(TAG, "Rx");
+    CBT_LOG_BUFFER_HEXDUMP(TAG, buffer.data(), buffer.size(), LogType::Info);
     return error;
 }
 
