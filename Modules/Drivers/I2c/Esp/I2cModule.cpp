@@ -18,14 +18,14 @@ ErrorType I2c::init() {
     conf.sda_pullup_en = _sdaPullup;
     conf.scl_pullup_en = _sclPullup;
 
-    if (I2cConfig::Mode::Master == _mode) {
+    if (I2cConfig::Mode::Controller == _mode) {
         conf.master.clk_speed = toEspClockSpeed(_speed, error);
         conf.clk_flags = I2C_SCLK_SRC_FLAG_FOR_NOMAL;
         if (ErrorType::Success != error) {
             return error;
         }
     }
-    else if (I2cConfig::Mode::Slave == _mode) {
+    else if (I2cConfig::Mode::Target == _mode) {
         //conf.slave.addr_10bit_en
         //conf.slave.slave_addr
         //conf.slave.maximum_speed
@@ -36,7 +36,7 @@ ErrorType I2c::init() {
     const i2c_port_t i2cPort = toEspPort(_peripheral, error);
     i2c_param_config(i2cPort, &conf);
 
-    if (I2cConfig::Mode::Master == _mode) {
+    if (I2cConfig::Mode::Controller == _mode) {
         error = toPlatformError(i2c_driver_install(i2cPort, conf.mode, 0, 0, 0));
     }
     else {
@@ -88,11 +88,11 @@ ErrorType I2c::txBlocking(const std::string &data, const Milliseconds timeout) {
     CBT_LOGI(TAG, "Tx writeData");
     CBT_LOG_BUFFER_HEXDUMP(TAG, writeData.data(), writeData.size(), LogType::Info);
 
-    if (I2cConfig::Mode::Master == _mode) {
+    if (I2cConfig::Mode::Controller == _mode) {
         //TODO: Need millisecondsToTicks
         error = toPlatformError(i2c_master_write_to_device(i2cPort, _deviceAddress, reinterpret_cast<const uint8_t *>(writeData.data()), writeData.size(), timeout));
     }
-    else if (I2cConfig::Mode::Slave == _mode) {
+    else if (I2cConfig::Mode::Target == _mode) {
         error = ErrorType::NotImplemented;
     }
     else {

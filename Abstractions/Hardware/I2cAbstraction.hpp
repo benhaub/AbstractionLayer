@@ -16,11 +16,12 @@ namespace I2cConfig {
     /**
      * @enum Mode
      * @details I2C mode
+     * @sa User manual Pg.6
      */
     enum class Mode : uint8_t {
         Unknown = 0, ///< Unknown mode
-        Master,      ///< Master mode
-        Slave,       ///< Slave mode
+        Controller,  ///< Device that initiates a transfer, generates clock signals and terminates a transfer
+        Target,      ///< The device that is addressed by the controller.
     };
 
     /**

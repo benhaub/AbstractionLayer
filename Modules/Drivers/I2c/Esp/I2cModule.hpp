@@ -26,9 +26,9 @@ class I2c : public I2cAbstraction {
         error = ErrorType::Success;
 
         switch (mode) {
-            case I2cConfig::Mode::Master:
+            case I2cConfig::Mode::Controller:
                 return I2C_MODE_MASTER;
-            case I2cConfig::Mode::Slave:
+            case I2cConfig::Mode::Target:
                 return I2C_MODE_SLAVE;
             case I2cConfig::Mode::Unknown:
             default:
