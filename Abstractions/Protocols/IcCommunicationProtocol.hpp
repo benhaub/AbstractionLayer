@@ -43,6 +43,7 @@ class IcCommunicationProtocol : public CommunicationProtocol {
 
     /**
      * @brief transmit data
+     * @note Note thread safe.
      * @sa Fnd::CommunicationProtocol::send
     */
     virtual ErrorType txBlocking(const std::string &data, const Milliseconds timeout) = 0;
@@ -53,6 +54,7 @@ class IcCommunicationProtocol : public CommunicationProtocol {
     virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) = 0;
     /**
      * @brief receive data
+     * @note Note thread safe.
      * @sa Fnd::CommunicationProtocol::receive
     */
     virtual ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout) = 0;

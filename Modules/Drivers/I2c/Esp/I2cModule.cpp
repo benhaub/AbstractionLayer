@@ -3,6 +3,8 @@
 //AbstractionLayer Applications
 #include "Log.hpp"
 
+#define I2C_ESP_MODULE_DEBUG 0
+
 ErrorType I2c::init() {
     //You have to configure before initializing
     assert(I2cConfig::Mode::Unknown != _mode);
@@ -82,15 +84,19 @@ ErrorType I2c::txBlocking(const std::string &data, const Milliseconds timeout) {
 
     //Appen the register address to the beginning of the data.
     //TODO: 10-bit addressing?
+#if I2C_ESP_MODULE_DEBUG
     CBT_LOGI(TAG, "Tx");
     CBT_LOG_BUFFER_HEXDUMP(TAG, data.data(), data.size(), LogType::Info);
+#endif
     std::string writeData(data.size() + 1, 0);
     writeData.resize(0);
     writeData.push_back(static_cast<char>((uint8_t)_registerAddress));
     writeData.append(data);
 
+#if I2C_ESP_MODULE_DEBUG
     CBT_LOGI(TAG, "Tx writeData");
     CBT_LOG_BUFFER_HEXDUMP(TAG, writeData.data(), writeData.size(), LogType::Info);
+#endif
 
     if (I2cConfig::Mode::Controller == _mode) {
         //TODO: Need millisecondsToTicks
@@ -112,25 +118,27 @@ ErrorType I2c::txNonBlocking(const std::shared_ptr<std::string> data, std::funct
 
 ErrorType I2c::rxBlocking(std::string &buffer, const Milliseconds timeout) {
     ErrorType error = ErrorType::Failure;
-    //TODO: 10-bit addressing?
     uint8_t registerAddress = static_cast<uint8_t>(_registerAddress);
     i2c_port_t i2cPort = toEspPort(_peripheral, error);
     if (ErrorType::Failure == error) {
         return error;
     }
 
-    if (I2cConfig::Mode::Master == _mode) {
+    if (I2cConfig::Mode::Controller == _mode) {
         error = toPlatformError(i2c_master_write_read_device(i2cPort, _deviceAddress, &registerAddress, 1, reinterpret_cast<uint8_t *>(buffer.data()), buffer.size(), timeout));
     }
-    else if (I2cConfig::Mode::Slave == _mode) {
+    else if (I2cConfig::Mode::Target == _mode) {
         error = ErrorType::NotImplemented;
     }
     else {
         error = ErrorType::NotSupported;
     }
 
+#if I2C_ESP_MODULE_DEBUG
     CBT_LOGI(TAG, "Rx");
     CBT_LOG_BUFFER_HEXDUMP(TAG, buffer.data(), buffer.size(), LogType::Info);
+#endif
+
     return error;
 }
 
