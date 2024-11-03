@@ -437,7 +437,9 @@ ErrorType Cellular::dataIsAvailable(const Socket socket) {
     token = strtok_r(save_ptr, delim, &save_ptr);
     token = strtok_r(save_ptr, delim, &save_ptr);
 
-    assert(nullptr != token);
+    if (nullptr == token) {
+        return ErrorType::NoData;
+    }
 
     const Bytes unread = strtoul(token, nullptr, 10);
 

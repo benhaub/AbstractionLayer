@@ -73,10 +73,13 @@ ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port po
         }
 
         ErrorType error = _cellNetworkInterface->pdpContextIsActive(Cellular::_IpContext);
-        if (ErrorType::Success != error) {
+        const bool pdpContextIsNotActive = ErrorType::Success != error;
+        if (pdpContextIsNotActive) {
             error = _cellNetworkInterface->activatePdpContext(Cellular::_IpContext, socket, ToQuectelContextType(version), _cellNetworkInterface->accessPointName());
-            if (ErrorType::Success != error) {
+            const bool pdpContextCouldNotBeActivated = ErrorType::Success != error;
+            if (pdpContextCouldNotBeActivated) {
                 socket = -1;
+                CBT_LOGW(TAG, "Failed to activate PDP context");
                 return error;
             }
         }
@@ -100,12 +103,18 @@ ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port po
         error = _cellNetworkInterface->sendCommand(openSocketCommand, 1000, 10);
         if (ErrorType::Success != error) {
             socket = -1;
+            CBT_LOGW(TAG, "AT command failed <error:%u>", openSocketCommand);
             return error;
         }
+
+        std::string &receiveBuffer = openSocketCommand;
+        receiveBuffer.resize(receiveBuffer.capacity());
 
         error = _cellNetworkInterface->receiveCommand(openSocketCommand, 1000, 10, "OK");
         if (ErrorType::Success != error) {
             socket = -1;
+            CBT_LOGW(TAG, "AT command failed <error:%u>", openSocketCommand);
+            CBT_LOG_BUFFER_HEXDUMP(TAG, receiveBuffer.data(), receiveBuffer.size(), LogType::Warning);
             return error;
         }
 
