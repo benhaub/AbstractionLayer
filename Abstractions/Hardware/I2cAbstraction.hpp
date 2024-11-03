@@ -55,6 +55,8 @@ namespace I2cConfig {
 /**
  * @class I2cAbstraction
  * @brief Abstraction layer for I2C communication.
+ * @details The interface provided by IcCommunication does not have all the parameters we need, but we still want to maintain the polymorphism so the tx and rx family of
+ *          functions have been redefined for this interface. You will need to cast to an I2C abstraction if you store this class polymorphically.
  * @note All member functions can return any of ErrorType::NotImplemented, ErrorType::NotSupported or ErrorType::NotAvailable.
  */
 class I2cAbstraction : public IcCommunicationProtocol {
@@ -108,31 +110,39 @@ class I2cAbstraction : public IcCommunicationProtocol {
      */
     virtual ErrorType setInterruptConfig(const bool arbitrationLost, const bool nackDetected, const bool sclLowTimeout, const bool stopDetect, const bool receiveFifoOverflow, const bool transmitFifoOverflow) = 0;
     /**
-     * @brief deviceAddress
-     * @returns A mutable reference the the write address
-     */
-    uint16_t &deviceAddress() { return _deviceAddress; }
+     * @brief transmit data
+     * @sa Fnd::CommunicationProtocol::send
+     * @param[in] deviceAddress The address of the device you want to transmit to
+     * @param[in] registerAddress The address of the register on the device that you want to write to.
+    */
+    virtual ErrorType txBlocking(const std::string &data, uint8_t deviceAddress, uint8_t registerAddress, const Milliseconds timeout) = 0;
     /**
-     * @brief deviceAddressConst
-     * @returns A constant reference to the read address
-     */
-    const uint16_t &deviceaddressConst() const { return _deviceAddress; }
+     * @brief transmit data
+     * @sa Fnd::CommunicationProtocol::sendNonBlocking
+     * @param[in] deviceAddress The address of the device you want to transmit to
+     * @param[in] registerAddress The address of the register on the device that you want to write to.
+    */
+    virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> data, uint8_t deviceAddress, uint8_t registerAddress, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) = 0;
     /**
-     * @brief registerAddress
-     * @returns A mutable reference to the register address of the device.
-     */
-    uint16_t &registerAddress() { return _registerAddress; }
-    /*
-     * @brief registerAddressConst
-     * @returns A constant reference to the register address of the device.
-     */
-    const uint16_t &registerAddressConst() const { return _registerAddress; }
+     * @brief receive data
+     * @sa Fnd::CommunicationProtocol::receive
+     * @param[in] deviceAddress The address of the device you want to receive from to
+     * @param[in] registerAddress The address of the register on the device that you read from.
+    */
+    virtual ErrorType rxBlocking(std::string &buffer, uint8_t deviceAddress, uint8_t registerAddress, const Milliseconds timeout) = 0;
+    /**
+     * @brief receive data
+     * @sa Fnd::CommunicationProtocol::receiveNonBlocking
+     * @param[in] deviceAddress The address of the device you want to receive from to
+     * @param[in] registerAddress The address of the register on the device that you read from.
+    */
+    virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, uint8_t deviceAddress, uint8_t registerAddress, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) = 0;
 
-    protected:
-    /// @brief The address of the device.
-    uint16_t _deviceAddress;
-    /// @brief The address of the register being written or read to.
-    uint16_t _registerAddress;
+    ErrorType txBlocking(const std::string &data, const Milliseconds timeout) override { assert(false); return ErrorType::NotSupported; }
+    ErrorType txNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) override { assert(false); return ErrorType::NotSupported; }
+    ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout) override { assert(false); return ErrorType::NotSupported; }
+    ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) override { assert(false); return ErrorType::NotSupported; }
+
     /// @brief The mode of the I2C.
     I2cConfig::Mode _mode = I2cConfig::Mode::Unknown;
     /// @brief The speed of the I2C.
