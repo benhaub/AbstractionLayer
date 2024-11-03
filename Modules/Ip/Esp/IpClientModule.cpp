@@ -21,7 +21,7 @@
  * call fcntl and set O_NONBLOCK on the socket it would fail to connect every time so there
  * was quite a symphony of bugs there.
 */
-ErrorType IpClient::connectTo(std::string hostname, Port port, IpClientSettings::Protocol protocol, IpClientSettings::Version version, Socket &sock, Milliseconds timeout) {
+ErrorType IpClient::connectTo(const std::string &hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &sock, const Milliseconds timeout) {
 
     auto connectCb = [&]() -> ErrorType {
         disconnect();

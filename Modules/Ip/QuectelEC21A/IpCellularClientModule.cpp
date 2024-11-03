@@ -51,7 +51,7 @@ static int8_t ToQuectelAccessMode(const CellularConfig::AccessMode accessMode) {
     }
 }
 
-ErrorType IpCellularClient::connectTo(std::string hostname, Port port, IpClientSettings::Protocol protocol, IpClientSettings::Version version, Socket &socket, Milliseconds timeout) {
+ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &socket, const Milliseconds timeout) {
     auto connectCb = [&]() -> ErrorType {
         _cellNetworkInterface = dynamic_cast<Cellular *>(&network());
         if (nullptr == _cellNetworkInterface) {

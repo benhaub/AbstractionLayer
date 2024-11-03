@@ -13,7 +13,7 @@
 #include <cassert>
 #include <cstring>
 
-ErrorType IpServer::listenTo(IpServerSettings::Protocol protocol, IpServerSettings::Version version, Port port) {
+ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
     Socket sock = -1;
     struct addrinfo hints;
     struct addrinfo *servinfo = nullptr;
@@ -68,7 +68,7 @@ ErrorType IpServer::listenTo(IpServerSettings::Protocol protocol, IpServerSettin
 
     return ErrorType::Success;
 }
-ErrorType IpServer::acceptConnection(Socket &socket) {
+ErrorType IpServer::acceptConnection(const Socket socket) {
     struct sockaddr_storage clientAddress;
     socklen_t receiveSocketSize;
 

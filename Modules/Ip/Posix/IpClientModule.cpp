@@ -12,7 +12,7 @@
 #include <cassert>
 #include <cstring>
 
-ErrorType IpClient::connectTo(std::string hostname, Port port, IpClientSettings::Protocol protocol, IpClientSettings::Version version, Socket &sock, Milliseconds timeout) {
+ErrorType IpClient::connectTo(const std::string &hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &sock, const Milliseconds timeout) {
     struct addrinfo hints;
     struct addrinfo *servinfo = nullptr;
     struct addrinfo *p = nullptr;

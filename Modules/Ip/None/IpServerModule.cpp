@@ -1,10 +1,10 @@
 #include "IpServerModule.hpp"
 
-ErrorType IpServer::listenTo(IpServerSettings::Protocol protocol, IpServerSettings::Version version, Port port) {
+ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType IpServer::acceptConnection(Socket &socket) {
+ErrorType IpServer::acceptConnection(const Socket socket) {
     return ErrorType::NotImplemented;
 }
 

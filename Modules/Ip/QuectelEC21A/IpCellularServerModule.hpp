@@ -6,8 +6,8 @@
 class IpCellularServer : public IpServerAbstraction {
 
     public:
-    ErrorType listenTo(IpServerSettings::Protocol protocol, IpServerSettings::Version version, Port port) override;
-    ErrorType acceptConnection(Socket &socket) override;
+    ErrorType listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) override;
+    ErrorType acceptConnection(const Socket socket) override;
     ErrorType closeConnection() override;
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) override;
     ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) override;

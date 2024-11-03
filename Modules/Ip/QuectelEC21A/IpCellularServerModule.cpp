@@ -1,10 +1,10 @@
 #include "IpCellularServerModule.hpp"
 
-ErrorType IpCellularServer::listenTo(IpServerSettings::Protocol protocol, IpServerSettings::Version version, Port port) {
+ErrorType IpCellularServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType IpCellularServer::acceptConnection(Socket &socket) {
+ErrorType IpCellularServer::acceptConnection(const Socket socket) {
     return ErrorType::NotImplemented;
 }
 
