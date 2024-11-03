@@ -16,9 +16,12 @@ class Rtc : public RtcAbstraction {
     ErrorType readDate(DateTime& dateTime) override;
     ErrorType writeAlarm(const DateTime& dateTime) override;
     ErrorType readAlarm(DateTime& dateTime) override;
-
+    ErrorType setHourMode(bool twentyFourHourMode) override;
+    ErrorType startClock();
+    ErrorType stopClock();
+    ErrorType softwareReset();
     private:
-    static constexpr uint8_t _SlaveAddress = 0b1010001;
+    static constexpr uint8_t _I2cAddress = 0b1010001;
     I2c *_i2c = nullptr;
 
     enum class RegisterMap : uint8_t {
@@ -60,7 +63,7 @@ class Rtc : public RtcAbstraction {
     }
 
     inline bool isInitialized() {
-        return nullptr != _i2c && nullptr != _ic.get();
+        return nullptr != _i2c && nullptr != _ic;
     }
 };
 

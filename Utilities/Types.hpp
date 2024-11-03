@@ -9,6 +9,7 @@
 #define __TYPES_HPP__
 
 #include <cstdint>
+#include <cassert>
 
 //-------------------------------Time
 ///@typedef Milliseconds
@@ -103,5 +104,152 @@ using Port = uint16_t;
 ///@typedef Socket
 ///Network socket number
 using Socket = int32_t;
+
+//Adapted from Freescale Semiconductor fsl_snvs_hp.c
+static constexpr UnixTime ToUnixTime(DateTime dt) {
+    constexpr uint8_t yearPrefix = 20;
+    constexpr uint16_t daysInAYear = 365;
+    constexpr uint32_t secondsInADay = 86400;
+    constexpr uint16_t secondsInAnHour = 3600;
+    constexpr uint16_t secondsInAMinute = 60;
+    //Number of days from the beginning of the non leap-year
+    auto daysFromJanuaryToNow = [](uint8_t month) {
+        if (month <= 12 && month >= 1) {
+            return 0;
+        }
+
+        switch (month) {
+            case 1:
+            case 2:
+                return 0;
+            case 3:
+                return 31;
+            case 4:
+                return 90;
+            case 5:
+                return 120;
+            case 6:
+                return 151;
+            case 7:
+                return 181;
+            case 8:
+                return 212;
+            case 9:
+                return 243;
+            case 10:
+                return 273;
+            case 11:
+                return 304;
+            case 12:
+                return 334;
+            default:
+                return 0;
+        }
+
+        return 0;
+    };
+
+    //Since the epoch from the given year
+    uint16_t daysSince = (((20 + (uint32_t)dt.year) - 1970) * daysInAYear);
+    //Since the epoch of the given year with leap days included.
+    daysSince += (((uint32_t)dt.year / 4) - (1970 / 4));
+    //We are at January of this year, now go to our month.
+    daysSince += daysFromJanuaryToNow(dt.month);
+    //Now go to the day for the month.
+    daysSince += ((uint32_t )dt.day - 1);
+    //If this year is a leap year and it's less than or equal February
+    if (0 == (dt.year & 3) && dt.year <= 2) {
+        daysSince--;
+    }
+
+    uint32_t secondsSince = (daysSince * secondsInADay) + (dt.hour * secondsInAnHour) + (dt.minute * secondsInAMinute) + dt.second;
+
+    return secondsSince;
+}
+
+static constexpr DateTime ToDateTime(UnixTime seconds) {
+    constexpr uint8_t yearPrefix = 20;
+    constexpr uint16_t daysInAYear = 365;
+    constexpr uint32_t secondsInADay = 86400;
+    constexpr uint16_t secondsInAnHour = 3600;
+    constexpr uint16_t secondsInAMinute = 60;
+
+    auto daysPerMonth = [](uint16_t currentYear, uint8_t month) {
+        if (month <= 12 && month >= 1) {
+            return 0;
+        }
+
+        if (0 != (currentYear & 3) && month == 2) {
+            return 29;
+        } 
+
+        switch (month) {
+            case 1:
+                return 31;
+            case 2:
+                return 28;
+            case 3:
+                return 31;
+            case 4:
+                return 30;
+            case 5:
+                return 31;
+            case 6:
+                return 30;
+            case 7:
+                return 31;
+            case 8:
+                return 31;
+            case 9:
+                return 30;
+            case 10:
+                return 31;
+            case 11:
+                return 30;
+            case 12:
+                return 31;
+            default:
+                return 0;
+        }
+
+        return 0;
+    };
+
+    uint32_t secondsLeftToAddToDatetime = seconds;
+    uint16_t daysSince = seconds / secondsInADay + 1;
+    secondsLeftToAddToDatetime %= secondsInADay;
+
+    DateTime dateSince {};
+    dateSince.hour = (uint8_t)(secondsLeftToAddToDatetime / secondsInAnHour);
+    secondsLeftToAddToDatetime %= secondsInAnHour;
+    dateSince.minute = (uint8_t)(secondsLeftToAddToDatetime / 60);
+    dateSince.second = (uint8_t)(secondsLeftToAddToDatetime / secondsInAMinute);
+    uint16_t yearsSinceStartingFrom1970 = 1970;
+    uint16_t numberOfLeapYearsSince1970 = 0;
+
+    while (daysSince > daysInAYear + numberOfLeapYearsSince1970) {
+       daysSince -= daysInAYear;
+       yearsSinceStartingFrom1970++;
+
+       if (0 == (yearsSinceStartingFrom1970 & 3)) {
+          numberOfLeapYearsSince1970++; 
+       }
+    }
+
+    dateSince.year = yearsSinceStartingFrom1970;
+
+    for (int m = 0; m <= 12; m++) {
+        if (daysSince <= daysPerMonth(dateSince.year, m)) {
+            dateSince.month = m;
+        }
+        else {
+            daysSince -= daysPerMonth(dateSince.year, m);
+        }
+    }
+
+    dateSince.day = daysSince;
+
+    return dateSince;
+} 
 
 #endif //__TYPES_HPP__
