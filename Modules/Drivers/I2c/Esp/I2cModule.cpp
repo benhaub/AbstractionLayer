@@ -7,9 +7,9 @@
 
 ErrorType I2c::init() {
     //You have to configure before initializing
-    assert(I2cConfig::Mode::Unknown != _mode);
-    assert(I2cConfig::Speed::Unknown != _speed);
-    assert(I2cConfig::PeripheralNumber::Unknown != _peripheral);
+    if ((I2cConfig::Mode::Unknown == _mode) || (I2cConfig::Speed::Unknown == _speed) || (I2cConfig::PeripheralNumber::Unknown == _peripheral)) {
+        return ErrorType::PrerequisitesNotMet;
+    }
 
     i2c_config_t conf;
     ErrorType error = ErrorType::Failure;
