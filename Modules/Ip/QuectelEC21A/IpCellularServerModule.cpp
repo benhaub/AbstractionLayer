@@ -4,7 +4,7 @@ ErrorType IpCellularServer::listenTo(const IpServerSettings::Protocol protocol, 
     return ErrorType::NotImplemented;
 }
 
-ErrorType IpCellularServer::acceptConnection(const Socket socket) {
+ErrorType IpCellularServer::acceptConnection(Socket &socket) {
     return ErrorType::NotImplemented;
 }
 

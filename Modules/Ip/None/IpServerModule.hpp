@@ -11,8 +11,8 @@ class IpServer : public IpServerAbstraction {
     ErrorType closeConnection() override;
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) override;
     ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) override;
-    ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) override;
-    ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) override;
+    ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
+    ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
 };
 
 #endif // __IP_SERVER_MODULE_HPP__

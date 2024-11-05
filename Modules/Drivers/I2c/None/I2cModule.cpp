@@ -12,16 +12,16 @@ ErrorType I2c::setHardwareConfig(const I2cConfig::PeripheralNumber peripheral, c
 ErrorType I2c::setInterruptConfig(const bool arbitrationLost, const bool nackDetected, const bool sclLowTimeout, const bool stopDetect, const bool receiveFifoOverflow, const bool transmitFifoOverflow) {
     return ErrorType::NotImplemented;
 }
-ErrorType I2c::txBlocking(const std::string &data, const Milliseconds timeout) {
+ErrorType I2c::txBlocking(const std::string &data, uint8_t deviceAddress, uint8_t registerAddress, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
-ErrorType I2c::txNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+ErrorType I2c::rxBlocking(std::string &buffer, uint8_t deviceAddress, uint8_t registerAddress, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
-ErrorType I2c::rxBlocking(std::string &buffer, const Milliseconds timeout) {
+ErrorType I2c::txNonBlocking(const std::shared_ptr<std::string> data, uint8_t deviceAddress, uint8_t registerAddress, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     return ErrorType::NotImplemented;
 }
-ErrorType I2c::rxNonBlocking(std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
+ErrorType I2c::rxNonBlocking(std::shared_ptr<std::string> buffer, uint8_t deviceAddress, uint8_t registerAddress, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
     return ErrorType::NotImplemented;
 }
 ErrorType I2c::flushRxBuffer() {

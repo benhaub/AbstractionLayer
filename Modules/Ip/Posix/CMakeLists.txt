@@ -13,6 +13,7 @@ target_link_libraries(PosixIpClient PUBLIC abstractionLayer)
 target_link_libraries(PosixIpClient PUBLIC Network)
 target_link_libraries(PosixIpClient PUBLIC OperatingSystem)
 target_link_libraries(PosixIpClient PUBLIC Utilities)
+target_link_libraries(PosixIpClient PUBLIC Logging)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC PosixIpClient)
 
 #Server

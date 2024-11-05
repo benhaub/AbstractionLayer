@@ -7,6 +7,8 @@
 #ifndef __IP_CLIENT_ABSTRACTION_HPP__
 #define __IP_CLIENT_ABSTRACTION_HPP__
 
+//AbstractionLayer
+#include "CommunicationProtocol.hpp"
 //Foundation
 #include "Types.hpp"
 #include "Error.hpp"
@@ -58,11 +60,11 @@ class NetworkAbstraction;
  * @brief Abstraction for creating a client on any network
  * @note You should use the network to handle communication by placing events on it's queue.
 */
-class IpClientAbstraction {
+class IpClientAbstraction : public CommunicationProtocol {
 
     public:
     /// @brief Constructor
-    IpClientAbstraction() { _status.connected = false; }
+    IpClientAbstraction() : CommunicationProtocol() { _status.connected = false; }
     /// @brief Destructor
     virtual ~IpClientAbstraction() = default;
 
@@ -93,63 +95,6 @@ class IpClientAbstraction {
      * @returns Fnd::ErrorType::NotImplemented if not implemented
     */
     virtual ErrorType disconnect() = 0;
-    /**
-     * @brief Send data to a socket
-     * @param[in] data The data to send
-     * @param[in] timeout The amount of time to wait to send the message
-     * @pre data should be appropriately sized with the correct amount of bytes you want to send, i.e data.resize()
-     * @returns Fnd::ErrorType::Success on success
-     * @returns Fnd::ErrorType::Failure on failure
-     * @returns Fnd::ErrorType::NotImplemented if not implemented
-     * @returns Fnd::ErrorType::Timeout if a timeout occurred
-    */
-    virtual ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) = 0;
-    /**
-     * @brief Receive data from a socket
-     * @pre buffer should be appropriately sized with the correct amount of bytes you want to send, i.e buffer.resize()
-     * @param[out] buffer The buffer to receive data into
-     * @param[in] timeout The amount of time to wait to receive the message
-     * @returns ErrorType::Success on success
-     * @returns ErrorType::Failure on failure
-     * @returns ErrorType::NotImplemented if not implemented
-     * @returns ErrorType::Timeout if a timeout occurred
-     * @returns ErrorType::InvalidParameter if an invalid parameter was given
-     * @post The number of bytes received is equal to the size of the buffer (i.e buffer.size())
-    */
-    virtual ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) = 0;
-    /**
-     * @brief Receive data from this client
-     * @pre data should be appropriately sized with the correct amount of bytes you want to receive, i.e data.resize()
-     * @param[in] data The data to send
-     * @param[in] callback The callback to call when the data is received
-     * @param[in] timeout The amount of time to wait to send the message.
-     * @post If no callback is provided, then the function will wait for the timeout specified to occur before returning. If a callback is provided, then the function will return immediately.
-     * @code
-     * //TODO: add an example of a callback and how to give it to this function
-     * @endcode
-     * @returns ErrorType::Success on success
-     * @returns ErrorType::Failure on failure
-     * @returns ErrorType::NotImplemented if not implemented
-     * @returns ErrorType::Timeout if a timeout occurred
-     * @returns ErrorType::PrerequisitesNotMet if the buffer is not appropriately sized
-    */
-    virtual ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) = 0;
-    /**
-     * @brief Receive data from this client
-     * @pre buffer should be appropriately sized with the correct amount of bytes you want to receive, i.e buffer.resize()
-     * @param[out] buffer The buffer to receive data into
-     * @param[in] timeout The amount of time to wait to receive the message. The message can still be received after the timeout is reached.
-     * @param[in] callback The callback to call when the data is received
-     * @post If no callback is provided, then the function will wait for the timeout specified to occur before returning. If a callback is provided, then the function will return immediately.
-     * @code
-     * //TODO: add an example of a callback and how to give it to this function
-     * @endcode
-     * @returns Fnd::ErrorType::Success on success
-     * @returns Fnd::ErrorType::Failure on failure
-     * @returns Fnd::ErrorType::NotImplemented if not implemented
-     * @returns Fnd::ErrorType::Timeout if a timeout occurred
-    */
-    virtual ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) = 0;
 
     /// @brief Get the socket as a constant reference
     const Socket &sockConst() const { return _socket; }

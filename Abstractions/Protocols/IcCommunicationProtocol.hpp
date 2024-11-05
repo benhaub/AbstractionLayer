@@ -7,8 +7,8 @@
 #ifndef __IC_COMMUNICATION_PROTOCOL_HPP__
 #define __IC_COMMUNICATION_PROTOCOL_HPP__
 
-//Foundation
-#include "CommunicationProtocol.hpp"
+//AbstractionLayer applications
+#include "EventQueue.hpp"
 
 namespace IcCommunicationProtocolTypes {
     /**
@@ -28,14 +28,15 @@ namespace IcCommunicationProtocolTypes {
 /**
  * @class IcCommunicationProtocol
  * @brief Interface for integrated circuit communication
+ * TODO: Why did I suddenly switch from abtractions suffixes to protocol? Do I need two different abstractions?
 */
-class IcCommunicationProtocol : public CommunicationProtocol {
+class IcCommunicationProtocol : public EventQueue {
 
     public:
     /**
      * @brief constructor
     */
-    IcCommunicationProtocol() : CommunicationProtocol() {}
+    IcCommunicationProtocol() : EventQueue() {}
     /**
      * @brief destructor
     */
@@ -50,7 +51,7 @@ class IcCommunicationProtocol : public CommunicationProtocol {
      * @brief transmit data
      * @sa Fnd::CommunicationProtocol::sendNonBlocking
     */
-    virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) = 0;
+    virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
     /**
      * @brief receive data
      * @sa Fnd::CommunicationProtocol::receive
@@ -60,26 +61,11 @@ class IcCommunicationProtocol : public CommunicationProtocol {
      * @brief receive data
      * @sa Fnd::CommunicationProtocol::receiveNonBlocking
     */
-    virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) = 0;
+    virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) = 0;
     /**
      * @brief flush the receive buffer
     */
     virtual ErrorType flushRxBuffer() = 0;
-
-    private:
-    ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) override {
-        return txBlocking(data, timeout);
-
-    }
-    ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) override {
-        return rxBlocking(buffer, timeout);
-    }
-    virtual ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) override {
-        return txNonBlocking(data, callback);
-    }
-    virtual ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) override {
-        return rxNonBlocking(buffer, callback);
-    }
 };
 
 #endif //__IC_COMMUNICATION_PROTOCOL_HPP__

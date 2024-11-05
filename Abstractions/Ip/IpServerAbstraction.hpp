@@ -73,10 +73,10 @@ class IpServerAbstraction {
     virtual ErrorType listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) = 0;
     /**
      * @brief Accept a connection from a client connecting to the socket given
-     * @param[in] socket The socket to accept the connection on
+     * @param[out] socket The socket that the connection was accepted on
      * @returns Fnd::ErrorType::Success on success
     */
-    virtual ErrorType acceptConnection(const Socket socket) = 0;
+    virtual ErrorType acceptConnection(Socket &socket) = 0;
     /**
      * @brief Close the connection
      * @returns Fnd::ErrorType::Success on success

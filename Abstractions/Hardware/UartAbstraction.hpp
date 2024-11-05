@@ -90,51 +90,6 @@ class UartAbstraction : public IcCommunicationProtocol{
     */
     virtual ErrorType deinit() = 0;
     /**
-     * @brief Tranmit data
-     * @details This is a blocking call. Control will not be returned until the data is transmitted or the timeout has been reached.
-     * @param [in] data The data to transmit.
-     * @param [in] timeout The amount of time to wait to send data.
-     * @returns ErrorType::Success if the data was transmitted successfully.
-     * @returns ErrorType::Failure otherwise
-    */
-    virtual ErrorType txBlocking(const std::string &data, const Milliseconds timeout) = 0;
-    /**
-     * @brief Receive data
-     * @details This is a blocking call. Control will not be returned until the data is received or the timeout has been reached.
-     * @param [in] buffer The data to transmit.
-     * @param [in] timeout The amount of time to wait to send data.
-     * @returns ErrorType::Success if the data was transmitted successfully.
-     * @returns ErrorType::Failure otherwise
-     * @post The amount of data received is equal to the size of the buffer (std::string::size()).
-    */
-    virtual ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout) = 0;
-    /**
-     * @brief Tranmit data
-     * @details This is a non-blocking call. Control is returned immediately to the caller and the callback is called once the data has been trasnmitted.
-     * @param [in] data The data to transmit.
-     * @param [in] callback The callback to call once the data has been transmitted.
-     * @returns ErrorType::Success if the data was transmitted successfully.
-     * @returns ErrorType::Failure if the terminating byte is not negative and the byte was not found in the message
-    */
-    virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) = 0;
-    /**
-     * @brief Receive data
-     * @details This is a non-blocking call. Control is returned immediately to the caller and the callback is called once the data has been received.
-     * @param [in] buffer The data to transmit.
-     * @param [in] callback The callback to call once the data has been received.
-     * @returns ErrorType::Success if the data was transmitted successfully.
-     * @returns ErrorType::Failure otherwise
-     * @post The amount of data received is equal to the size of the buffer (std::string::size()).
-    */
-    virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) = 0;
-    /**
-     * @brief clear the receive buffer
-     * @returns ErrorType::Success if the receive buffer was cleared successfully.
-     * @returns ErrorType::Failure otherwise
-     * @post The receive buffer is empty.
-     */
-    virtual ErrorType flushRxBuffer() = 0;
-    /**
      * @brief Set hardware configuration parameters.
      * @param [in] txNumber The transmit pin number.
      * @param [in] rxNumber The receive pin number.

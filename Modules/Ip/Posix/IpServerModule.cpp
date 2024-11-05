@@ -68,7 +68,7 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
 
     return ErrorType::Success;
 }
-ErrorType IpServer::acceptConnection(const Socket socket) {
+ErrorType IpServer::acceptConnection(Socket &socket) {
     struct sockaddr_storage clientAddress;
     socklen_t receiveSocketSize;
 

@@ -3,7 +3,7 @@
 //AbstractionLayer Applications
 #include "Log.hpp"
 
-#define I2C_ESP_MODULE_DEBUG 0
+#define I2C_ESP_MODULE_DEBUG 1
 
 ErrorType I2c::init() {
     //You have to configure before initializing

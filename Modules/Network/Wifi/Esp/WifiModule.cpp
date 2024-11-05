@@ -8,6 +8,8 @@
 //ESP
 #include "esp_wifi_types.h"
 #include "esp_mac.h" //For setting the Access Point ssid
+#include "lwip/netdb.h"
+#include "lwip/ip_addr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -153,16 +155,62 @@ ErrorType Wifi::radioOff() {
     return toPlatformError(esp_wifi_deinit());
 }
 
-ErrorType Wifi::txBlocking(const std::string &frame, const Milliseconds timeout) {
+ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) {
+    if (-1 == send(socket, frame.data(), frame.size(), 0)) {
+        return toPlatformError(errno);
+    }
+
+    return ErrorType::Success;
+}
+
+ErrorType Wifi::txNonBlocking(const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callbackr) {
     return ErrorType::NotImplemented;
 }
-ErrorType Wifi::txNonBlocking(const std::shared_ptr<std::string> frame, std::function<void(const ErrorType error, const Bytes bytesWritten)> callbackr) {
-    return ErrorType::NotImplemented;
+
+ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
+    ErrorType error = ErrorType::Failure;
+    ssize_t bytesReceived = 0;
+
+    struct timeval timeoutval = {
+        .tv_sec = timeout / 1000,
+        .tv_usec = 0
+    };
+    fd_set readfds;
+
+    FD_ZERO(&readfds);
+    FD_SET(socket, &readfds);
+
+    //Wait for input from the socket until the timeout
+    {
+    int ret;
+    ret = select(socket + 1, &readfds, NULL, NULL, &timeoutval);
+    if (ret < 0) {
+        return toPlatformError(errno);
+    }
+    }
+
+    if (FD_ISSET(socket, &readfds)) {
+        if (-1 == (bytesReceived = recv(socket, frameBuffer.data(), frameBuffer.size(), 0))) {
+            error = toPlatformError(errno);
+        }
+        else if ((size_t)bytesReceived > frameBuffer.size()) {
+            error = ErrorType::PrerequisitesNotMet;
+        }
+        else {
+            frameBuffer.resize(bytesReceived);
+            return ErrorType::Success;
+        }
+    }
+    else {
+        error = ErrorType::Timeout;
+    }
+
+    frameBuffer.resize(0);
+
+    return error;
 }
-ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Milliseconds timeout) {
-    return ErrorType::NotImplemented;
-}
-ErrorType Wifi::rxNonBlocking(std::shared_ptr<std::string> frameBuffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) {
+
+ErrorType Wifi::rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) {
     return ErrorType::NotImplemented;
 }
 

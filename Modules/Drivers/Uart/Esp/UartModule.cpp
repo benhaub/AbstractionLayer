@@ -36,7 +36,7 @@ ErrorType Uart::txBlocking(const std::string &data, Milliseconds timeout) {
     return ErrorType::Failure;
 }
 
-ErrorType Uart::txNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+ErrorType Uart::txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     return ErrorType::NotImplemented;
 }
 
@@ -100,7 +100,7 @@ ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout) {
     return ErrorType::Failure;
 }
 
-ErrorType Uart::rxNonBlocking(std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
+ErrorType Uart::rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
     ErrorType error;
 
     auto rx = [this, callback](std::shared_ptr<std::string> buffer, Bytes size) -> ErrorType {

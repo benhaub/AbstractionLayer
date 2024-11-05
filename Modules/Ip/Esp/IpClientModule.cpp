@@ -4,7 +4,7 @@
 #include "IpClientModule.hpp"
 #include "OperatingSystemModule.hpp"
 #include "Log.hpp"
-//Lwip
+//Esp
 #include "lwip/netdb.h"
 #include "lwip/tcp.h"
 #include "lwip/dns.h"
@@ -22,8 +22,7 @@
  * was quite a symphony of bugs there.
 */
 ErrorType IpClient::connectTo(const std::string &hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &sock, const Milliseconds timeout) {
-
-    auto connectCb = [&]() -> ErrorType {
+    auto connectCb = [=, this]() -> ErrorType {
         disconnect();
 
         if (version != IpClientSettings::Version::IPv4) {
@@ -86,7 +85,6 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
             }
         }
 
-        CBT_LOGI(TAG, "Connected to %s (%s)", hostname.c_str(), inet_ntoa(*(struct in_addr *)hent->h_addr_list[0]));
         _status.connected = true;
         return ErrorType::Success;
     };
@@ -96,7 +94,6 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         return ErrorType::Failure;
     }
 
-    {
     Milliseconds i;
     for (i = 0; i < timeout / 10 && !_status.connected; i++) {
         OperatingSystem::Instance().delay(10);
@@ -111,7 +108,6 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
     else {
         return ErrorType::Success;
     }
-    }
 }
 
 ErrorType IpClient::disconnect() {
@@ -124,78 +120,16 @@ ErrorType IpClient::disconnect() {
     return ErrorType::Success;
 }
 
-//TODO: Timeout is not implemented
 ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds timeout) {
     assert(0 != _socket);
-
-    if (-1 == send(_socket, data.data(), data.size(), 0)) {
-        _status.connected = false;
-        return toPlatformError(errno);
-    }
-
-    return ErrorType::Success;
-}
-
-ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds timeout) {
-    assert(0 != _socket);
-
-    ErrorType error = ErrorType::Failure;
-    ssize_t bytesReceived = 0;
-
-    struct timeval timeoutval = {
-        .tv_sec = timeout / 1000,
-        .tv_usec = 0
-    };
-    fd_set readfds;
-
-    FD_ZERO(&readfds);
-    FD_SET(_socket, &readfds);
-
-    //Wait for input from the socket until the timeout
-    {
-    int ret;
-    ret = select(_socket + 1, &readfds, NULL, NULL, &timeoutval);
-    if (ret < 0) {
-        return toPlatformError(errno);
-    }
-    }
-
-    if (FD_ISSET(_socket, &readfds)) {
-        if (-1 == (bytesReceived = recv(_socket, buffer.data(), buffer.size(), 0))) {
-            error = toPlatformError(errno);
-        }
-        else if ((size_t)bytesReceived > buffer.size()) {
-            error = ErrorType::PrerequisitesNotMet;
-        }
-        else {
-            buffer.resize(bytesReceived);
-            return ErrorType::Success;
-        }
-    }
-    else {
-        error = ErrorType::Timeout;
-    }
-
-    buffer.resize(0);
-    _status.connected = false;
-
-    return error;
-}
-
-ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     bool sent = false;
 
-    auto tx = [this, callback, &sent](const std::shared_ptr<std::string> frame, const Milliseconds timeout) -> ErrorType {
+    auto tx = [this, &sent](const std::string &frame, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
-        if (nullptr == frame.get()) {
-            return ErrorType::NoData;
-        }
-
-        error = sendBlocking(*frame, timeout);
-
-        if (nullptr != callback) {
-            callback(error, frame->size());
+        error = network().txBlocking(frame, _socket, timeout);
+        if (ErrorType::Success != error) {
+            _status.connected = false;
         }
 
         sent = true;
@@ -209,27 +143,87 @@ ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, con
     }
 
     //Block for the timeout specified if no callback is provided
-    if (nullptr == callback) {
-        Milliseconds i;
-        for (i = 0; i < timeout / 10 && !sent; i++) {
-            OperatingSystem::Instance().delay(10);
-        }
-
-        if (!sent && (timeout / 10) == i) {
-            return ErrorType::Timeout;
-        }
-        else if (!sent) {
-            return ErrorType::Failure;
-        }
-        else {
-            return ErrorType::Success;
-        }
+    Milliseconds i;
+    for (i = 0; i < timeout / 10 && !sent; i++) {
+        OperatingSystem::Instance().delay(10);
     }
 
-    return ErrorType::Success;
+    if (!sent && (timeout / 10) == i) {
+        return ErrorType::Timeout;
+    }
+    else if (!sent) {
+        return ErrorType::Failure;
+    }
+    else {
+        return ErrorType::Success;
+    }
+}
+
+ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds timeout) {
+    bool received = false;
+
+    auto rx = [this, &received](std::string *buffer, const Milliseconds timeout) -> ErrorType {
+        ErrorType error = ErrorType::Failure;
+
+        assert(0 != _socket);
+        error = network().rxBlocking(*buffer, _socket, timeout);
+        if (ErrorType::Success != error) {
+            _status.connected = false;
+        }
+
+        received = true;
+        return error;
+    };
+
+    //For some reason, I could pass buffer as a reference parameter to the callback. It had to be a pointer otherwise the
+    //pointer to the data inside the string would change.
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpClient>>(std::bind(rx, &buffer, timeout));
+    ErrorType error = network().addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    Milliseconds i;
+    for (i = 0; i < timeout / 10 && !received; i++) {
+        OperatingSystem::Instance().delay(10);
+    }
+
+    if (!received && (timeout / 10) == i) {
+        return ErrorType::Timeout;
+    }
+    else if (!received) {
+        return ErrorType::Failure;
+    }
+    else {
+        return ErrorType::Success;
+    }
+}
+
+ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+    bool sent = false;
+
+    auto tx = [this, callback, &sent](const std::shared_ptr<std::string> frame, const Milliseconds timeout) -> ErrorType {
+        ErrorType error = ErrorType::Failure;
+
+        if (nullptr == frame.get()) {
+            return ErrorType::NoData;
+        }
+
+        error = network().txBlocking(*frame, _socket, timeout);
+
+        assert(nullptr != callback);
+        callback(error, frame->size());
+
+        sent = true;
+        return error;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpClient>>(std::bind(tx, data, timeout));
+    return network().addEvent(event);
 }
 
 ErrorType IpClient::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
+    assert(0 != _socket);
     bool received = false;
 
     auto rx = [this, callback, &received](const std::shared_ptr<std::string> buffer, const Milliseconds timeout) -> ErrorType {
@@ -239,39 +233,15 @@ ErrorType IpClient::receiveNonBlocking(std::shared_ptr<std::string> buffer, cons
             return ErrorType::NoData;
         }
 
-        error = receiveBlocking(*buffer, timeout);
+        error = network().rxBlocking(*buffer, _socket, timeout);
 
-        if (nullptr != callback) {
-            callback(error, buffer);
-        }
+        assert(nullptr != callback);
+        callback(error, buffer);
 
         received = true;
         return error;
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpClient>>(std::bind(rx, buffer, timeout));
-    ErrorType error = network().addEvent(event);
-    if (ErrorType::Success != error) {
-        return error;
-    }
-
-    //Block for the timeout specified if no callback is provided
-    if (nullptr == callback) {
-        Milliseconds i;
-        for (i = 0; i < timeout / 10 && !received; i++) {
-            OperatingSystem::Instance().delay(10);
-        }
-
-        if (!received && (timeout / 10) == i) {
-            return ErrorType::Timeout;
-        }
-        else if (!received) {
-            return ErrorType::Failure;
-        }
-        else {
-            return ErrorType::Success;
-        }
-    }
-
-    return ErrorType::Success;
+    return network().addEvent(event);
 }

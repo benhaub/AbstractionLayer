@@ -139,9 +139,9 @@ class I2cAbstraction : public IcCommunicationProtocol {
     virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, uint8_t deviceAddress, uint8_t registerAddress, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) = 0;
 
     ErrorType txBlocking(const std::string &data, const Milliseconds timeout) override { assert(false); return ErrorType::NotSupported; }
-    ErrorType txNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) override { assert(false); return ErrorType::NotSupported; }
+    ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override { assert(false); return ErrorType::NotSupported; }
     ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout) override { assert(false); return ErrorType::NotSupported; }
-    ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) override { assert(false); return ErrorType::NotSupported; }
+    ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override { assert(false); return ErrorType::NotSupported; }
 
     /// @brief The mode of the I2C.
     I2cConfig::Mode _mode = I2cConfig::Mode::Unknown;

@@ -107,7 +107,7 @@ using Socket = int32_t;
 
 //Adapted from Freescale Semiconductor fsl_snvs_hp.c
 static constexpr UnixTime ToUnixTime(DateTime dt) {
-    constexpr uint8_t yearPrefix = 20;
+    constexpr uint16_t currentMillenium = 2000;
     constexpr uint16_t daysInAYear = 365;
     constexpr uint32_t secondsInADay = 86400;
     constexpr uint16_t secondsInAnHour = 3600;
@@ -152,7 +152,7 @@ static constexpr UnixTime ToUnixTime(DateTime dt) {
     //Since the epoch from the given year
     uint16_t daysSince = (((20 + (uint32_t)dt.year) - 1970) * daysInAYear);
     //Since the epoch of the given year with leap days included.
-    daysSince += (((uint32_t)dt.year / 4) - (1970 / 4));
+    daysSince += ((currentMillenium + (uint32_t)dt.year / 4) - (1970 / 4));
     //We are at January of this year, now go to our month.
     daysSince += daysFromJanuaryToNow(dt.month);
     //Now go to the day for the month.
@@ -168,7 +168,6 @@ static constexpr UnixTime ToUnixTime(DateTime dt) {
 }
 
 static constexpr DateTime ToDateTime(UnixTime seconds) {
-    constexpr uint8_t yearPrefix = 20;
     constexpr uint16_t daysInAYear = 365;
     constexpr uint32_t secondsInADay = 86400;
     constexpr uint16_t secondsInAnHour = 3600;

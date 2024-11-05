@@ -25,7 +25,7 @@ class CommunicationProtocol : public EventQueue {
     /**
      * @brief Constructor.
     */
-    CommunicationProtocol() = default;
+    CommunicationProtocol() : EventQueue() {}
     /**
      * @brief Destructor.
     */
@@ -49,7 +49,7 @@ class CommunicationProtocol : public EventQueue {
      * @returns ErrorType::Failure if the data was not sent.
      * @post The callback will be called when the data has been sent. The bytes written is valid if and only if error is equal to ErrorType::Success.
     */
-    virtual ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) = 0;
+    virtual ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
     /**
      * @brief Receives data.
      * @param[in] buffer The data to receive.
@@ -66,7 +66,7 @@ class CommunicationProtocol : public EventQueue {
      * @param[in] callback The callback to call when the data has been received.
      * @post The callback will be called when the data has been received. The buffer is valid if and only if error is equal to ErrorType::Success.
     */
-    virtual ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) = 0;
+    virtual ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) = 0;
 };
 
 #endif //__COMMUNICATION_PROTOCOL_HPP__

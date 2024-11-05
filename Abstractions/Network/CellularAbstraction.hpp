@@ -8,6 +8,7 @@
 #define __CELLULAR_ABSTRACTION_HPP__
 
 #include "NetworkAbstraction.hpp"
+#include "IcCommunicationProtocol.hpp"
 
 namespace CellularConfig {
 

@@ -118,7 +118,6 @@ ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port po
             return error;
         }
 
-        CBT_LOGI(TAG, "Connected to %s", hostname.c_str());
         _status.connected = true;
         _socket = socket;
 
@@ -149,7 +148,8 @@ ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port po
 }
 
 ErrorType IpCellularClient::disconnect() {
-    return ErrorType::NotImplemented;
+    _status.connected = false;
+    return ErrorType::Success;
 }
 
 ErrorType IpCellularClient::sendBlocking(const std::string &data, const Milliseconds timeout) {
@@ -357,24 +357,6 @@ ErrorType IpCellularClient::sendNonBlocking(const std::shared_ptr<std::string> d
         return error;
     }
 
-    //Block for the timeout specified if no callback is provided
-    if (nullptr == callback) {
-        Milliseconds i;
-        for (i = 0; i < timeout / 10 && !sent; i++) {
-            OperatingSystem::Instance().delay(10);
-        }
-
-        if (!sent && (timeout / 10) == i) {
-            return ErrorType::Timeout;
-        }
-        else if (!sent) {
-            return ErrorType::Failure;
-        }
-        else {
-            return ErrorType::Success;
-        }
-    }
-
     return ErrorType::Success;
 }
 
@@ -403,24 +385,6 @@ ErrorType IpCellularClient::receiveNonBlocking(std::shared_ptr<std::string> buff
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
-    }
-
-    //Block for the timeout specified if no callback is provided
-    if (nullptr == callback) {
-        Milliseconds i;
-        for (i = 0; i < timeout / 10 && !received; i++) {
-            OperatingSystem::Instance().delay(10);
-        }
-
-        if (!received && (timeout / 10) == i) {
-            return ErrorType::Timeout;
-        }
-        else if (!received) {
-            return ErrorType::Failure;
-        }
-        else {
-            return ErrorType::Success;
-        }
     }
 
     return ErrorType::Success;
