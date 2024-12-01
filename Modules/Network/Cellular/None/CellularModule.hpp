@@ -22,9 +22,9 @@ class Cellular : public CellularAbstraction {
     ErrorType networkDown() override;
     
     ErrorType txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) override;
-    ErrorType txNonBlocking(const std::shared_ptr<std::string> frame, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) override;
+    ErrorType txNonBlocking(const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
     ErrorType rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) override;
-    ErrorType rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback = nullptr) override;
+    ErrorType rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) override;
     ErrorType getMacAddress(std::string &macAddress) override;
     ErrorType getSignalStrength(DecibelMilliWatts &signalStrength) override;
 

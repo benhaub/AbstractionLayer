@@ -7,7 +7,7 @@ class IpServer : public IpServerAbstraction {
 
     public:
     ErrorType listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) override;
-    ErrorType acceptConnection(const Socket socket) override;
+    ErrorType acceptConnection(Socket &socket) override;
     ErrorType closeConnection() override;
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) override;
     ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) override;

@@ -2,7 +2,7 @@
 #Date: September 26th, 2023                                                    #
 #File: CMakeLists.txt                                                          #
 #Authour: Ben Haubrich                                                         #
-#Synopsis: Top level project CMakeList.txt for AbstractionLayer desktop build  #
+#Synopsis: Top level project CMakeList.txt for AbstractionLayer cc32xx build   #
 ################################################################################
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR})
 
@@ -17,17 +17,17 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/Watchdog/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/Gpio/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/I2c/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/Rtc/None)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/OperatingSystem/Linux)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Network/Wifi/Linux)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/OperatingSystem/Cc32xx)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Network/Wifi/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Network/Cellular/None)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Ip/Posix)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Ip/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Logging/stdlib)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Storage/Linux)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Storage/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Serialization/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Error/Errno)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Tools/Any/Crc)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/MemoryManagement/Default)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Cryptography/Linux)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Cryptography/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Utilities)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Logging)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/ChainOfResponsibility)

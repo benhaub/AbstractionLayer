@@ -36,10 +36,10 @@ ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority
         Thread newThread = {
             .posixThreadId = thread,
             .name = name,
-            .fndThreadId = nextThreadId++
+            .threadId = nextThreadId++
         };
 
-        number = newThread.fndThreadId;
+        number = newThread.threadId;
 
         if (threads.size() < MaxThreads) {
             threads[name] = newThread;
@@ -79,7 +79,7 @@ ErrorType OperatingSystem::joinThread(std::string name) {
 
 ErrorType OperatingSystem::threadId(std::string name, Id &thread) {
     if (threads.contains(name)) {
-        thread = threads[name].fndThreadId;
+        thread = threads[name].threadId;
         return ErrorType::Success;
     }
 

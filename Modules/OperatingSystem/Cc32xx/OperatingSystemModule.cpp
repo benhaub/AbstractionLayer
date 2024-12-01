@@ -3,38 +3,38 @@
 //C++
 #include <ctime>
 //Posix
+#include <unistd.h>
+#include <pthread.h>
 #include <sys/times.h>
-#include <sys/time.h>
-#include <limits.h>
-#include <fcntl.h>
 
 ErrorType OperatingSystem::delay(Milliseconds delay) {
-    usleep(delay*1000);
+    vTaskDelay(delay);
     return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority, std::string name, void * arguments, Bytes stackSize, void *(*startFunction)(void *), Id &number) {
-    pthread_attr_t attr;
-    sched_param param;
-    int res;
     pthread_t thread;
-    static Id nextThreadId = 1;
+    pthread_attr_t attrs;
+    struct sched_param priParam;
+    int retc;
     ErrorType error = ErrorType::Failure;
+    static Id nextThreadId = 1;
 
-    res = pthread_attr_init(&attr);
-    assert(0 == res);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    pthread_attr_setstacksize(&attr, stackSize);
-    pthread_attr_setschedpolicy(&attr, SCHED_RR);
-    pthread_attr_getschedparam(&attr, &param);
-    param.sched_priority = toPosixPriority(priority);
-    pthread_attr_setschedparam(&attr, &param);
-    pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
-    pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+    /* Initialize the attributes structure with default values */
+    pthread_attr_init(&attrs);
 
-    //On Linux, the start function is called before pthread_create returns so we have to add our thread before we create it.
+    /* Set priority, detach state, and stack size attributes */
+    priParam.sched_priority = toCc32xxPriority(priority);
+    retc = pthread_attr_setschedparam(&attrs, &priParam);
+    retc |= pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_DETACHED);
+    retc |= pthread_attr_setstacksize(&attrs, stackSize);
+    if (retc != 0) {
+        return toPlatformError(retc);
+    }
+
+    //On cc32xx, the start function is called before pthread_create returns so we have to add our thread before we create it.
     Thread newThread = {
-        .posixThreadId = thread,
+        .cc32xxThreadId = thread,
         .name = name,
         .threadId = nextThreadId++
     };
@@ -48,16 +48,17 @@ ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority
 
     number = newThread.threadId;
 
-    const bool threadWasCreated = (0 == (res = pthread_create(&thread, &attr, startFunction, arguments)));
-    pthread_attr_destroy(&attr);
+    const bool threadWasCreated = (0 == (retc = pthread_create(&thread, &attrs, startFunction, arguments)));
     if (threadWasCreated) {
-        threads[name].posixThreadId = thread;
         error = ErrorType::Success;
+        threads[name].cc32xxThreadId = thread;
     }
     else {
         deleteThread(name);
-        error = toPlatformError(res);
+        error = toPlatformError(retc);
     }
+
+    _status.threadCount = threads.size();
 
     return error;
 }
@@ -82,7 +83,7 @@ ErrorType OperatingSystem::joinThread(std::string name) {
         return ErrorType::NoData;
     }
 
-    ret = pthread_join(threads[name].posixThreadId, nullptr);
+    ret = pthread_join(threads[name].cc32xxThreadId, nullptr);
     return toPlatformError(ret);
 }
 
@@ -108,16 +109,11 @@ ErrorType OperatingSystem::createSemaphore(Count max, Count initial, std::string
     //For all other purposes inside this operating system abstraction, the name should be used directly.
     std::string internalName = std::string("/").append(name);
 
-    if (internalName.size() > NAME_MAX-4) {
-        return ErrorType::InvalidParameter;
-    }
-
-    //On POSIX systems, a created semaphore has peristence within the kernel until it is removed.
-    //So delete old semaphores first and then create the new one since we specify O_EXCL as a flag.
-    deleteSemaphore(name); //Using name and not internalName is NOT a bug.
-    sem_t *semaphore = sem_open(internalName.c_str(), O_CREAT | O_EXCL, S_IRWXU, initial);
-    if (SEM_FAILED == semaphore) {
-        return toPlatformError(errno);
+    sem_t *semaphore = nullptr;
+    int pshared = 0;
+    int ret = sem_init(semaphore, pshared, initial);
+    if (0 == ret) {
+        return toPlatformError(ret);
     }
     else {
         semaphores[name] = semaphore;
@@ -128,7 +124,7 @@ ErrorType OperatingSystem::createSemaphore(Count max, Count initial, std::string
 ErrorType OperatingSystem::deleteSemaphore(std::string name) {
     std::string internalName = std::string("/").append(name);
 
-    if (0 != sem_unlink(internalName.c_str())) {
+    if (0 != sem_destroy(semaphores[name])) {
         return toPlatformError(errno);
     }
 
@@ -225,33 +221,7 @@ ErrorType OperatingSystem::ticksToMilliseconds(Ticks ticks, Milliseconds &timeIn
 }
 
 ErrorType OperatingSystem::getSoftwareVersion(std::string &softwareVersion) {
-    std::string softwareVersionStringRaw(32, 0);
-    
-    constexpr char command[] = "sh -c \"git describe --tag\"";
-    ErrorType error = ErrorType::Failure;
-    
-    FILE* pipe = popen(command, "r");
-    if (nullptr != pipe) {
-        if (nullptr != fgets(softwareVersionStringRaw.data(), softwareVersionStringRaw.capacity(), pipe)) {
-            error = ErrorType::Success;
-        }
-        else {
-            softwareVersionStringRaw.clear();
-            pclose(pipe);
-            error = ErrorType::Failure;
-        }
-    }
-
-    for (unsigned int i = 0; i < softwareVersionStringRaw.size() && softwareVersionStringRaw.at(i) != '-'; i++) {
-        if (softwareVersionStringRaw.at(i) == '.') {
-            softwareVersion.push_back('.');
-            continue;
-        }
-
-        softwareVersion.push_back(softwareVersionStringRaw.at(i));
-    }
-
-    return error;
+    return ErrorType::NotImplemented;
 }
 
 ErrorType OperatingSystem::getResetReason(OperatingSystemConfig::ResetReason &resetReason) {
@@ -271,57 +241,5 @@ ErrorType OperatingSystem::setTimeOfDay(UnixTime utc, Seconds timeZoneDifference
 }
 
 ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
-    ErrorType error = ErrorType::Failure;
-    std::string idleTime(4, 0);
-    std::string cpuTimeSeconds(16, 0);
-    std::string elapsedTimeSeconds(16, 0);
-    Seconds cpuTime, elapsedTime;
-
-    const std::string commandCpuTime("ps -p $(pgrep -i foundation) -o cputimes");
-    const std::string commandElapsedTime("ps -p $(pgrep -i foundation) -o etimes");
-    
-    FILE* pipe = popen(commandCpuTime.c_str(), "r");
-    if (nullptr != pipe) {
-        size_t bytesRead = fread(cpuTimeSeconds.data(), sizeof(uint8_t), cpuTimeSeconds.capacity(), pipe);
-        if (feof(pipe) || bytesRead == cpuTimeSeconds.capacity()) {
-            error = ErrorType::Success;
-            cpuTimeSeconds.resize(bytesRead);
-            while (cpuTimeSeconds.back() == '\n') {
-                cpuTimeSeconds.pop_back();
-            }
-        }
-        else if (ferror(pipe)) {
-            pclose(pipe);
-            error = ErrorType::Failure;
-        }
-    }
-
-    cpuTime = strtoul(cpuTimeSeconds.c_str(), nullptr, 10);
-
-    pipe = popen(commandElapsedTime.c_str(), "r");
-    if (nullptr != pipe) {
-        size_t bytesRead = fread(elapsedTimeSeconds.data(), sizeof(uint8_t), elapsedTimeSeconds.capacity(), pipe);
-        if (feof(pipe) || bytesRead == elapsedTimeSeconds.capacity()) {
-            error = ErrorType::Success;
-            elapsedTimeSeconds.resize(bytesRead);
-            while (elapsedTimeSeconds.back() == '\n') {
-                elapsedTimeSeconds.pop_back();
-            }
-        }
-        else if (ferror(pipe)) {
-            pclose(pipe);
-            error = ErrorType::Failure;
-        }
-    }
-
-    elapsedTime = strtoul(elapsedTimeSeconds.c_str(), nullptr, 10);
-
-    if (0 != elapsedTime) {
-        idlePercent = 100.0f - (((float)cpuTime / (float)elapsedTime) * 100.0f);
-    }
-    else {
-        idlePercent = 100.0f;
-    }
-
-    return error;
+    return ErrorType::NotImplemented;
 }

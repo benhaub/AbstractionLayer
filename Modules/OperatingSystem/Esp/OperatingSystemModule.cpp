@@ -47,7 +47,7 @@ ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority
     Thread newThread = {
         .posixThreadId = thread,
         .name = name,
-        .fndThreadId = nextThreadId++
+        .threadId = nextThreadId++
     };
 
     if (threads.size() < MaxThreads) {
@@ -57,7 +57,7 @@ ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority
         return ErrorType::LimitReached;
     }
 
-    number = newThread.fndThreadId;
+    number = newThread.threadId;
 
     const bool threadWasCreated = (0 == (res = pthread_create(&thread, NULL, startFunction, arguments)));
     if (threadWasCreated) {
@@ -97,7 +97,7 @@ ErrorType OperatingSystem::joinThread(std::string name) {
 
 ErrorType OperatingSystem::threadId(std::string name, Id &thread) {
     if (threads.contains(name)) {
-        thread = threads[name].fndThreadId;
+        thread = threads[name].threadId;
         return ErrorType::Success;
     }
 

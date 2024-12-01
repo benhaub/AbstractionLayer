@@ -5,9 +5,7 @@
 #include "OperatingSystemAbstraction.hpp"
 //Common
 #include "Global.hpp"
-//C
-#include <unistd.h>
-#include <pthread.h>
+//Posix
 #include <sched.h>
 #include <semaphore.h>
 //C++
@@ -69,7 +67,7 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
     struct Thread {
         pthread_t posixThreadId;
         std::string name;
-        Id fndThreadId;
+        Id threadId;
     };
 
     std::map<std::string, Thread> threads;

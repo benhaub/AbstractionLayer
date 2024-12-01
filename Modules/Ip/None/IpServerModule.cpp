@@ -4,7 +4,7 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
     return ErrorType::NotImplemented;
 }
 
-ErrorType IpServer::acceptConnection(const Socket socket) {
+ErrorType IpServer::acceptConnection(Socket &socket) {
     return ErrorType::NotImplemented;
 }
 
