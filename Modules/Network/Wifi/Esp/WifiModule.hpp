@@ -7,7 +7,7 @@
 #ifndef __WIFI_MODULE_HPP__
 #define __WIFI_MODULE_HPP__
 
-//Foundation
+//AbstractionLayer
 #include "WifiAbstraction.hpp"
 //ESP
 #include "esp_wifi.h"

@@ -3,7 +3,7 @@
 
 //AbstractionLayer
 #include "Error.hpp"
-#include "NetworkAbstraction.hpp"
+#include "WifiAbstraction.hpp"
 //C++
 #include <memory>
 #include <string>
@@ -26,10 +26,10 @@ namespace WifiConfig {
     };
 }
 
-class Wifi : public NetworkAbstraction {
+class Wifi : public WifiAbstraction {
 
     public:
-    Wifi() : NetworkAbstraction() {
+    Wifi() : WifiAbstraction() {
         _status.isUp = false;
     }
     ~Wifi() = default;
