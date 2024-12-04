@@ -22,7 +22,9 @@
  * was quite a symphony of bugs there.
 */
 ErrorType IpClient::connectTo(const std::string &hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &sock, const Milliseconds timeout) {
-    auto connectCb = [=, this]() -> ErrorType {
+    sock = -1;
+
+    auto connectCb = [&]() -> ErrorType {
         disconnect();
 
         if (version != IpClientSettings::Version::IPv4) {
@@ -85,6 +87,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
             }
         }
 
+        sock = _socket;
         _status.connected = true;
         return ErrorType::Success;
     };

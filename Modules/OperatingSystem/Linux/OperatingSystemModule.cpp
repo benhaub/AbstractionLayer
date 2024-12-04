@@ -2,6 +2,8 @@
 #include "OperatingSystemModule.hpp"
 //C++
 #include <ctime>
+//C
+#include <string.h>
 //Posix
 #include <sys/times.h>
 #include <sys/time.h>
@@ -200,6 +202,10 @@ ErrorType OperatingSystem::createTimer(Id &timer, Milliseconds period, bool auto
     return ErrorType::NotImplemented;
 }
 
+ErrorType OperatingSystem::deleteTimer(Id timer) {
+    return ErrorType::NotImplemented;
+}
+
 ErrorType OperatingSystem::startTimer(Id timer, Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
@@ -270,6 +276,7 @@ ErrorType OperatingSystem::setTimeOfDay(UnixTime utc, Seconds timeZoneDifference
     return ErrorType::NotAvailable;
 }
 
+//TODO: This is definitely calculated wrong.
 ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     ErrorType error = ErrorType::Failure;
     std::string idleTime(4, 0);
@@ -277,8 +284,13 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     std::string elapsedTimeSeconds(16, 0);
     Seconds cpuTime, elapsedTime;
 
-    const std::string commandCpuTime("ps -p $(pgrep -i foundation) -o cputimes");
-    const std::string commandElapsedTime("ps -p $(pgrep -i foundation) -o etimes");
+    std::string programName(program_invocation_short_name, strlen(program_invocation_short_name));
+    std::string commandCpuTime("ps -p $(pgrep -if ");
+    commandCpuTime.append(programName);
+    commandCpuTime.append(" | head -1) -o cputimes");
+    std::string commandElapsedTime("ps -p $(pgrep -if ");
+    commandElapsedTime.append(programName);
+    commandElapsedTime.append("| head -1) -o etimes");
     
     FILE* pipe = popen(commandCpuTime.c_str(), "r");
     if (nullptr != pipe) {

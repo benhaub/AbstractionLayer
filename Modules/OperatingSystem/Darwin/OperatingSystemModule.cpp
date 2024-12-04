@@ -269,7 +269,10 @@ ErrorType OperatingSystem::pid(Id &pid) {
     ErrorType error = ErrorType::Failure;
     std::string pidString(16, 0);
 
-    const std::string commandPid("pgrep -i foundation | tail -1");
+    std::string programName(getprogname(), strlen(getprogname()));
+    std::string commandPid("pgrep -if ");
+    commandPid.append(programName);
+    commandPid.append(" | tail -1");
 
     FILE *pipe = popen(commandPid.c_str(), "r");
     if (nullptr != pipe) {

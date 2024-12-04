@@ -16,7 +16,9 @@
 #include <cstring>
 
 ErrorType IpClient::connectTo(const std::string &hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &sock, const Milliseconds timeout) {
-    auto connectCb = [=, this]() -> ErrorType {
+    sock = -1;
+
+    auto connectCb = [&]() -> ErrorType {
         disconnect();
 
         if (version != IpClientSettings::Version::IPv4) {
@@ -36,8 +38,8 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         dest_ip.sin_port = htons(port);
 
         if (-1 == (_socket = socket(toPosixFamily(version), toPosixSocktype(protocol), IPPROTO_IP))) {
-        CBT_LOGW(TAG, "couldn't create socket");
-        return ErrorType::Failure;
+            CBT_LOGW(TAG, "couldn't create socket");
+            return ErrorType::Failure;
         }
 
         if (-1 == connect(_socket, (struct sockaddr *)&dest_ip, sizeof(dest_ip))) {
@@ -73,6 +75,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
             }
         }
 
+        sock = _socket;
         _status.connected = true;
         return ErrorType::Success;
     };
@@ -159,7 +162,7 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
         return error;
     };
 
-    //For some reason, I could pass buffer as a reference parameter to the callback. It had to be a pointer otherwise the
+    //For some reason, I couldn't pass buffer as a reference parameter to the callback. It had to be a pointer otherwise the
     //pointer to the data inside the string would change.
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpClient>>(std::bind(rx, &buffer, timeout));
     ErrorType error = network().addEvent(event);

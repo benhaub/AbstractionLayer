@@ -68,12 +68,12 @@ static int blockingReceiveTest() {
     ErrorType error;
     Bytes received = 0;
     constexpr Milliseconds timeout = 5000;
-    auto buffer = std::make_shared<std::string>(64, 0);
+    std::string buffer(64, 0);
 
-    assert(ErrorType::Success == (error = wifiNetworkServer.server->receiveNonBlocking(buffer, timeout)));
+    assert(ErrorType::Success == (error = wifiNetworkServer.server->receiveBlocking(buffer, timeout)));
     
-    if (0 != buffer->compare(0, globalDataToSend.length(), globalDataToSend)) {
-        CBT_LOGE(TAG, "Data did not match. Bytes received: %u, Received/Expected %s/%s", buffer->size(), buffer->c_str(), globalDataToSend.c_str());
+    if (0 != buffer.compare(0, globalDataToSend.length(), globalDataToSend)) {
+        CBT_LOGE(TAG, "Data did not match. Bytes received: %u, Received/Expected %s/%s", buffer.size(), buffer.c_str(), globalDataToSend.c_str());
         assert(false);
     }
 
@@ -98,7 +98,7 @@ static int blockingSendTest() {
         OperatingSystem::Instance().delay(1);
     }
 
-    error = wifiNetworkClient.client->sendNonBlocking(std::make_shared<std::string>(globalDataToSend), timeout);
+    error = wifiNetworkClient.client->sendBlocking(globalDataToSend, timeout);
     if (ErrorType::Success != error) {
         assert(false);
     }

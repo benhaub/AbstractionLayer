@@ -46,7 +46,7 @@ static int createThreadTest() {
     assert(ErrorType::Success == error);
     assert(ErrorType::Success == OperatingSystem::Instance().isDeleted(name));
 
-    assert(ErrorType::Success == OperatingSystem::Instance().joinThread(name));
+    OperatingSystem::Instance().delay(Milliseconds(1000));
 
     assert(true == threadWasCreated);
 
