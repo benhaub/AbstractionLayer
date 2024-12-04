@@ -30,6 +30,7 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
     ErrorType decrementSemaphore(std::string name) override;
     ErrorType createTimer(Id &timer, Milliseconds period, bool autoReload, std::function<void(void)> callback) override;
     ErrorType startTimer(Id timer, Milliseconds timeout) override;
+    ErrorType deleteTimer(const Id timer) override;
     ErrorType stopTimer(Id timer, Milliseconds timeout) override;
     ErrorType getSystemTime(UnixTime &currentSystemUnixTime) override;
     ErrorType getSystemTick(Ticks &currentSystemTicks) override;

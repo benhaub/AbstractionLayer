@@ -28,6 +28,7 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
     ErrorType incrementSemaphore(std::string &name) override;
     ErrorType decrementSemaphore(std::string name) override;
     ErrorType createTimer(Id &timer, Milliseconds period, bool autoReload, std::function<void(void)> callback) override;
+    ErrorType deleteTimer(const Id timer) override;
     ErrorType startTimer(Id timer, Milliseconds timeout) override;
     ErrorType stopTimer(Id timer, Milliseconds timeout) override;
     ErrorType getSystemTime(UnixTime &currentSystemUnixTime) override;
@@ -38,6 +39,8 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
     ErrorType reset() override;
     ErrorType setTimeOfDay(UnixTime utc, Seconds timeZoneDifferenceUtc) override;
     ErrorType idlePercentage(Percent &idlePercent) override;
+
+    void callTimerCallback(timer_t timer);
 
     size_t toCc32xxPriority(OperatingSystemConfig::Priority priority) {
         assert(configMAX_PRIORITIES >= 20);
@@ -65,8 +68,19 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
         Id threadId;
     };
 
+    struct Timer {
+        std::function<void(void)> callback;
+        Id id;
+        bool autoReload;
+        Milliseconds period;
+    };
+
+    Id nextTimerId = 0;
+
+
     std::map<std::string, Thread> threads;
     std::map<std::string, sem_t *> semaphores;
+    std::map<timer_t, Timer> timers;
 };
 
 #endif // __OPERATING_SYSTEM_HPP__

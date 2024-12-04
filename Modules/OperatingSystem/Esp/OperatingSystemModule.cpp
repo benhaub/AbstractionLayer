@@ -171,7 +171,8 @@ ErrorType OperatingSystem::createTimer(Id &timer, Milliseconds period, bool auto
     TimerHandle_t timerHandle;
     Timer newTimer = {
         .callback = callback,
-        .id = nextTimerId++
+        .id = nextTimerId++,
+        .autoReload = autoReload
     };
 
     if (nullptr != (timerHandle = xTimerCreate(nullptr, pdMS_TO_TICKS(period), autoReload, nullptr, TimerCallback))) {
@@ -179,8 +180,25 @@ ErrorType OperatingSystem::createTimer(Id &timer, Milliseconds period, bool auto
         timer = newTimer.id;
         return ErrorType::Success;
     }
+    else {
+        deleteTimer(timer);
+        return ErrorType::Failure;
+    }
 
-    return ErrorType::Failure;
+}
+
+ErrorType OperatingSystem::deleteTimer(const Id timer) {
+   auto itr = timers.begin();
+
+    while (itr != timers.end()) {
+        if (timer == itr->second.id) {
+            xTimerDelete(itr->first, 0);
+            timers.erase(itr);
+            return ErrorType::Success;
+        }
+    }
+
+    return ErrorType::NoData;
 }
 
 ErrorType OperatingSystem::startTimer(Id timer, Milliseconds timeout) {
@@ -207,10 +225,6 @@ ErrorType OperatingSystem::stopTimer(Id timer, Milliseconds timeout) {
     }
 
     return ErrorType::Failure;
-}
-
-void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
-    timers[timer].callback();
 }
 
 ErrorType OperatingSystem::getSystemTime(UnixTime &currentSystemUnixTime) {
@@ -286,6 +300,17 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
 
     return ErrorType::Success;
 }
+
+void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
+    timers[timer].callback();
+
+    if (timers[timer].autoReload) {
+        deleteTimer(timers[timer].id)
+    }
+
+    return;
+}
+
 
 #ifdef __cplusplus
 extern "C" {

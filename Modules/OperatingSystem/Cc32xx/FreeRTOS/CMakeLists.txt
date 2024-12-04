@@ -19,10 +19,10 @@ target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC cc32xxOperating
 target_include_directories(cc32xxOperatingSystem PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 #FreeRTOS includes will not work unless the application code helps us out by supplying the headers.
-#We do not have any knowledge of where the application is getting there FreeRTOS headers from.
-#The application will need to add a line into their CMakeFiles.txt along the lines of:
+#We do not have any knowledge of where the application is getting their FreeRTOS headers from.
+#The application will need to add a line into their CMakeLists.txt along the lines of:
 #target_include_directories(OperatingSystem INTERFACE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INTERFACE_INCLUDE_DIRECTORIES>)
-#So that this modules is aware of where the FreeRTOS headers can be found.
+#So that this module is aware of where the FreeRTOS headers can be found.
 
 if (ESP_PLATFORM)
   target_include_directories(cc32xxOperatingSystem PRIVATE $<TARGET_PROPERTY:__idf_main,INTERFACE_INCLUDE_DIRECTORIES>)

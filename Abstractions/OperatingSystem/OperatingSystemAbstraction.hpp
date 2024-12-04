@@ -169,11 +169,19 @@ class OperatingSystemAbstraction {
     */
     virtual ErrorType createTimer(Id &timer, Milliseconds period, bool autoReload, std::function<void(void)> callback) = 0;
     /**
+     * @brief Delete a timer
+     * @param[in] timer The id of the timer to delete
+     * @returns ErrorType::Success if the timer could be deleted
+     * @returns ErrorType::NoData if the timer id does not exist
+     */
+    virtual ErrorType deleteTimer(const Id timer) = 0;
+    /**
      * @brief start timer.
      * @param[in] timer The id of the timer.
      * @param[in] timeout The time to wait for the timer to start.
      * @returns ErrorType::Success if the timer could be started.
      * @returns ErrorType::Timeout if the timer could not be started within the time specified.
+     * @returns ErrorType::NoData if the timer Id was not used to create a prior to this call or it has been deleted.
     */
     virtual ErrorType startTimer(Id timer, Milliseconds timeout) = 0;
     /**
