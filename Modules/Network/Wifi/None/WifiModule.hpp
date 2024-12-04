@@ -8,24 +8,6 @@
 #include <memory>
 #include <string>
 
-namespace WifiConfig {
-
-    enum class Mode : uint8_t {
-        Unknown = 0,
-        AccessPoint, 
-        Station,     
-        AccessPointAndStation ///< Access Point and Station.
-    };
-
-    enum class AuthMode : uint8_t {
-        Unknown = 0, 
-        Open,        
-        Wep,         
-        WpaPsk,      
-        Wpa2Psk      
-    };
-}
-
 class Wifi : public WifiAbstraction {
 
     public:
