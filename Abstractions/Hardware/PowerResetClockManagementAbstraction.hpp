@@ -23,6 +23,6 @@ class PowerResetClockManagementAbstraction {
     virtual ~PowerResetClockManagementAbstraction() = default;
 
     virtual ErrorType init() = 0;
-}
+};
 
 #endif // __POWER_RESET_CLOCK_MANAGEMENT_HPP__
