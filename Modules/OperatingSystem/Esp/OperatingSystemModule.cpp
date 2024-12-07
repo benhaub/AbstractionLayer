@@ -25,6 +25,11 @@ ErrorType OperatingSystem::delay(Milliseconds delay) {
     return ErrorType::Success;
 }
 
+//ESP will handle starting FreeRTOS for you by the time you get to app_main
+ErrorType OperatingSystem::startScheduler() {
+    return ErrorType::NotAvailable;
+}
+
 ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority, std::string name, void * arguments, Bytes stackSize, void *(*startFunction)(void *), Id &number) {
     esp_pthread_cfg_t esp_pthread_cfg;
     pthread_t thread;

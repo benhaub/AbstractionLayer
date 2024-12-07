@@ -63,7 +63,7 @@ class OperatingSystemAbstraction {
     virtual ~OperatingSystemAbstraction() = default;
 
     static constexpr Count MaxThreads = 256; ///< The maximum number of threads.
-    static constexpr char TAG[] = "CbtOperatingSystem"; ///< The tag for logging.
+    static constexpr char TAG[] = "OperatingSystem"; ///< The tag for logging.
     static constexpr Count MaxCountingSemaphore = 10; ///< The maximum value for a counting semaphore.
 
     /**
@@ -72,6 +72,13 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Success if the thread is successfully blocked.
     */
     virtual ErrorType delay(Milliseconds delay) = 0;
+    /**
+     * @brief Start the scheduler
+     * @post Typically never returns. Depends on the implementation.
+     * @returns ErrorType::Success if the scheduler was started.
+     * @returns ErrorType::Failure if the scheduler was not started.
+     */
+    virtual ErrorType startScheduler() = 0;
     /**
      * @brief Create a new thread.
      * @param[in] priority The priority of the new thread.

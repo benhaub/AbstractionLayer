@@ -12,6 +12,10 @@ ErrorType OperatingSystem::delay(Milliseconds delay) {
     return ErrorType::Success;
 }
 
+ErrorType OperatingSystem::startScheduler() {
+    return ErrorType::NotAvailable;
+}
+
 ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority, std::string name, void * arguments, Bytes stackSize, void *(*startFunction)(void *), Id &number) {
     pthread_attr_t attr;
     sched_param param;

@@ -24,6 +24,7 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
     ~OperatingSystem() = default;
 
     ErrorType delay(Milliseconds delay) override;
+    ErrorType startScheduler() override;
     ErrorType createThread(OperatingSystemConfig::Priority priority, std::string name, void * arguments, Bytes stackSize, void *(*startFunction)(void *), Id &number) override;
     ErrorType deleteThread(std::string name) override;
     ErrorType joinThread(std::string name) override;
