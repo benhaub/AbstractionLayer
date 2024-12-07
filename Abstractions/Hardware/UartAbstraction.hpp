@@ -11,8 +11,6 @@
 #include "Error.hpp"
 #include "Types.hpp"
 #include "IcCommunicationProtocol.hpp"
-//C
-#include <stdint.h>
 
 /**
  * @namespace UartConfig
