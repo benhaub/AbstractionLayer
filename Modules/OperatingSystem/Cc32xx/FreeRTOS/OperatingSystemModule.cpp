@@ -317,7 +317,7 @@ ErrorType OperatingSystem::getSystemTick(Ticks &currentSystemTicks) {
 }
 
 ErrorType OperatingSystem::ticksToMilliseconds(Ticks ticks, Milliseconds &timeInMilliseconds) {
-    timeInMilliseconds = static_cast<Milliseconds>(ticks * sysconf(_SC_CLK_TCK) / 1000);
+    timeInMilliseconds = static_cast<Milliseconds>(pdMS_TO_TICKS(timeInMilliseconds));
     return ErrorType::Success;
 }
 
