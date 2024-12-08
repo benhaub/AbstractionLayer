@@ -54,13 +54,9 @@ enum class GpioLogicLevel : uint8_t {
 class GpioAbstraction {
 
     public:
-    /**
-     * @brief Constructor
-    */
+    ///@brief Constructor
     GpioAbstraction() = default;
-    /**
-     * @brief Destructor
-    */
+    ///@brief Destructor
     virtual ~GpioAbstraction() = default;
 
     /**

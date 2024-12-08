@@ -63,7 +63,13 @@ namespace UartConfig {
 class UartAbstraction : public IcCommunicationProtocol{
 
     public:
-    /// @brief Constructor.
+    /**
+     * @brief Constructor.
+     * @details The reason we don't include the parameters from all the set*Config functions in the constructor is because
+     *          on some platforms (especially desktop), the configuration parameters may not apply. We also can't return
+     *          error values from the constructor so if a parameter doesn't apply and we want to notify the caller with a
+     *          return code then it's better to use a member function to do that.
+     */
     UartAbstraction() : IcCommunicationProtocol() {}
     /// @brief Destructor.
     virtual ~UartAbstraction() = default;

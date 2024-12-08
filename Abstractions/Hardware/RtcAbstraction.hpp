@@ -16,6 +16,7 @@
  * @note All member functions can return any of ErrorType::NotImplemented, ErrorType::NotSupported or ErrorType::NotAvailable.
  */
 class RtcAbstraction {
+
     public:
     /// @brief Constructor.
     RtcAbstraction() = default;
