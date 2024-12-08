@@ -1,7 +1,6 @@
-//Common
-#include "Log.hpp"
 //AbstractionLayer
 #include "Error.hpp"
+#include "Log.hpp"
 //C++
 #include <cerrno>
 
