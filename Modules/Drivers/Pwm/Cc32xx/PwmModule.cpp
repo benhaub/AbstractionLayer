@@ -4,18 +4,18 @@
 ErrorType Pwm::init() {
     assert(PwmConfig::PeripheralNumber::Unknown != peripheralNumber());
 
-    ErrorType error;
-    PWM_Params pwmParams;
-
     PWM_init();
 
     /* PWM Params init */
+    PWM_Params pwmParams;
     PWM_Params_init(&pwmParams);
-    pwmParams.dutyUnits   = PWM_DUTY_FRACTION;
-    pwmParams.dutyValue   = _dutyCycle;
-    pwmParams.periodUnits = PWM_PERIOD_HZ;
-    pwmParams.periodValue = _frequency;
+    pwmParams.idleLevel = PWM_IDLE_LOW;
+    pwmParams.periodUnits = PWM_PERIOD_US;
+    pwmParams.periodValue = _period * 1E3;
+    pwmParams.dutyUnits   = PWM_DUTY_US;
+    pwmParams.dutyValue   = (_dutyCycle / 100) * pwmParams.periodValue;
 
+    ErrorType error;
     _pwmHandle = PWM_open(toCc32xxPwmPeripheralNumber(_peripheral, error), &pwmParams);
     if (error != ErrorType::Success) {
         return error;
@@ -24,19 +24,21 @@ ErrorType Pwm::init() {
         return ErrorType::Failure;
     }
 
-    return ErrorType::Success;
+    return toPlatformError(PWM_setDuty(_pwmHandle, pwmParams.dutyValue));
 }
 
 ErrorType Pwm::setHardwareConfig(PwmConfig::PeripheralNumber peripheral) {
     _peripheral = peripheral;
+
     return ErrorType::Success;
 }
 
-ErrorType Pwm::setDriverConfig(Percent duty, Hertz frequency) {
-    assert(duty <= 0.0f && duty <= 100.0f);
+ErrorType Pwm::setDriverConfig(Percent duty, Milliseconds period) {
+    assert(duty <= period);
 
     _dutyCycle = duty;
-    _frequency = frequency;
+    _period = period;
+
     return ErrorType::Success;
 }
 
@@ -45,23 +47,29 @@ ErrorType Pwm::setFirmwareConfig() {
 }
 
 ErrorType Pwm::deinit() {
-    return ErrorType::NotImplemented;
+    PWM_close(_pwmHandle);
+
+    return ErrorType::Success;
 }
 
 ErrorType Pwm::start() {
     PWM_start(_pwmHandle);
+
     return ErrorType::Success;
 }
 
 ErrorType Pwm::stop() {
     PWM_stop(_pwmHandle);
+
     return ErrorType::Success;
 }
 
 ErrorType Pwm::setDutyCycle(Percent on) {
-    return toPlatformError(PWM_setDuty(_pwmHandle, on));
+    const Milliseconds dutyValue = (on / 100) * _period;
+
+    return toPlatformError(PWM_setDuty(_pwmHandle, dutyValue));
 }
 
-ErrorType Pwm::setFrequency(Hertz frequency) {
-    return toPlatformError(PWM_setPeriod(_pwmHandle, frequency));
+ErrorType Pwm::setPeriod(Milliseconds period) {
+    return toPlatformError(PWM_setPeriod(_pwmHandle, period * 1E3));
 }

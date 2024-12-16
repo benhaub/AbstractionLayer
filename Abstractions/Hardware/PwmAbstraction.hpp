@@ -55,7 +55,7 @@ class PwmAbstraction {
      * @returns ErrorType::InvalidParameter if the parameters are invalid
      * @returns ErrorType::Failure otherwise.
      */
-    virtual ErrorType setDriverConfig(Percent duty, Hertz Frequency) = 0;
+    virtual ErrorType setDriverConfig(Percent duty, Milliseconds period) = 0;
     /**
      * @brief Set parameters related to the firmware's interaction with the driver
      * @returns ErrorType::Success if the config was set
@@ -91,29 +91,29 @@ class PwmAbstraction {
      */
     virtual ErrorType setDutyCycle(Percent on) = 0;
     /**
-     * @brief Set the frequency at which the signal switches from high to low
-     * @param[in] frequency The frequency at which the signal switches
-     * @note If the frequency is adjusted and the duty cycle stays the same then
+     * @brief Set the period during which the signal switches from high to low
+     * @param[in] period The period during which the signal switches
+     * @note If the period is adjusted to be longer and the duty cycle stays the same then
      *       the signal will switch less and remain high for longer.
-     *       Typically, frequency is fixed for a given application while the duty cycle
+     *       Typically, period is fixed for a given application while the duty cycle
      *       is adjusted.
-     * @returns ErrorType::Success if the frequency was set.
-     * @returns ErrorType::Failure if the frequency was not set.
+     * @returns ErrorType::Success if the period was set.
+     * @returns ErrorType::Failure if the period was not set.
      */
-    virtual ErrorType setFrequency(Hertz frequency) = 0;
+    virtual ErrorType setPeriod(Milliseconds period) = 0;
 
     Percent &dutyCycle() { return _dutyCycle; }
     const Percent &dutyCycleConst() const { return _dutyCycle; }
-    Hertz &frequency() { return _frequency; }
-    const Hertz &frequencyConst() const { return _frequency; }
+    Milliseconds &period() { return _period; }
+    const Milliseconds &periodConst() const { return _period; }
     PwmConfig::PeripheralNumber &peripheralNumber() { return _peripheral; }
     const PwmConfig::PeripheralNumber &peripheralNumberConst() const { return _peripheral; }
 
     protected:
     /// @brief The duty for the PWM
     Percent _dutyCycle = 0;
-    /// @brief The frequency at which the PWM will switch high to low
-    Hertz _frequency = 0;
+    /// @brief The time to apply the duty cyle to.
+    Milliseconds _period = 0;
     /// @brief The peripheral number for this PWM
     PwmConfig::PeripheralNumber _peripheral = PwmConfig::PeripheralNumber::Unknown;
 };

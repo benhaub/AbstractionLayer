@@ -6,7 +6,7 @@ ErrorType Pwm::init() {
 ErrorType Pwm::setHardwareConfig(PwmConfig::PeripheralNumber peripheral) {
     return ErrorType::NotImplemented;
 }
-ErrorType Pwm::setDriverConfig(Percent duty, Hertz frequency) {
+ErrorType Pwm::setDriverConfig(Percent duty, Milliseconds period) {
     return ErrorType::NotImplemented;
 }
 ErrorType Pwm::setFirmwareConfig() {
@@ -24,6 +24,6 @@ ErrorType Pwm::stop() {
 ErrorType Pwm::setDutyCycle(Percent on) {
     return ErrorType::NotImplemented;
 }
-ErrorType Pwm::setFrequency(Hertz frequency) {
+ErrorType Pwm::setPeriod(Milliseconds frequency) {
     return ErrorType::NotImplemented;
 }
