@@ -9,7 +9,6 @@
 #include <map>
 //Posix
 #include <semaphore.h>
-#include <mqueue.h>
 //FreeRTOS
 #include "FreeRTOS.h"
 #include "task.h"
