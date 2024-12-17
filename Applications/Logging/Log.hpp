@@ -1,11 +1,11 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
 * @file   CbtLog.hpp
-* @details \b Synopsis: \n Pretty printed logs
-* @ingroup FoundationCore
+* @details \b Synopsis: \n Pretty printed logs. Much of this is borrowed from ESPs logging implementation
+* @ingroup AbstractionLayer
 *******************************************************************************/
-#ifndef __CBT_LOG_HPP__
-#define __CBT_LOG_HPP__
+#ifndef __LOG_HPP__
+#define __LOG_HPP__
 
 //Modules
 #include "LoggerModule.hpp"
@@ -58,15 +58,16 @@
 #define LOG_FORMAT(letter, format)  LOG_COLOR_ ## letter #letter " %s: " format LOG_RESET_COLOR "\n"
 
 /**
- * @def CBT_LOG_LEVEL
+ * @def PLT_LOG_LEVEL
  * @brief Print a formatted log message to the terminal.
+ * @details PLT is short for Platform
  * @param[in] type The type of the log
  * @sa Fnd::LogType
  * @param[in] tag The tag of the log. Can be any string you like.
  * @param[in] format The format of the log. Format is a printf-style format string
  * @param[in] ... The arguments to the format string
  */
-#define CBT_LOG_LEVEL(type, tag, format, ...) do {                             \
+#define PLT_LOG_LEVEL(type, tag, format, ...) do {                             \
     if      (type == LogType::Error)   { Logger::Instance().log(type, tag, LOG_FORMAT(E, format), tag, ##__VA_ARGS__); } \
     else if (type == LogType::Warning) { Logger::Instance().log(type, tag, LOG_FORMAT(W, format), tag, ##__VA_ARGS__); } \
     else if (type == LogType::Info)    { Logger::Instance().log(type, tag, LOG_FORMAT(I, format), tag, ##__VA_ARGS__); } \
@@ -74,51 +75,52 @@
 } while(0)
 
 /**
- * @def CBT_LOGE(tag, format, ...)
+ * @def PLT_LOGE(tag, format, ...)
  * @brief Log an error
  * @param[in] tag The tag of the log
  * @param[in] format The format of the log. Format is a printf-style format string
  * @post Logs a message to stdout. If the terminal supports colored output, the message is printed in red.
  */
-#define CBT_LOGE(tag, format, ... ) CBT_LOG_LEVEL(LogType::Error,   tag, format, ##__VA_ARGS__)
+#define PLT_LOGE(tag, format, ... ) PLT_LOG_LEVEL(LogType::Error,   tag, format, ##__VA_ARGS__)
 
 /**
- * @def CBT_LOGW(tag, format, ...)
+ * @def PLT_LOGW(tag, format, ...)
  * @brief Log an error
  * @param[in] tag The tag of the log
  * @param[in] format The format of the log. Format is a printf-style format string
  * @note format is a printf-style format string
  * @post Logs a message to stdout. If the terminal supports colored output, the message is printed in yellow.
  */
-#define CBT_LOGW(tag, format, ... ) CBT_LOG_LEVEL(LogType::Warning, tag, format, ##__VA_ARGS__)
+#define PLT_LOGW(tag, format, ... ) PLT_LOG_LEVEL(LogType::Warning, tag, format, ##__VA_ARGS__)
 
 /**
- * @def CBT_LOGI(tag, format, ...)
+ * @def PLT_LOGI(tag, format, ...)
  * @brief Log an error
  * @param[in] tag The tag of the log
  * @param[in] format The format of the log. Format is a printf-style format string
  * @post Logs a message to stdout. If the terminal supports colored output, the message is printed in green
  */
-#define CBT_LOGI(tag, format, ... ) CBT_LOG_LEVEL(LogType::Info,    tag, format, ##__VA_ARGS__)
+#define PLT_LOGI(tag, format, ... ) PLT_LOG_LEVEL(LogType::Info,    tag, format, ##__VA_ARGS__)
 
 /**
- * @def CBT_LOGD(tag, format, ...)
+ * @def PLT_LOGD(tag, format, ...)
  * @brief Log an error
  * @param[in] tag The tag of the log
  * @param[in] format The format of the log. Format is a printf-style format string
  * @post Logs a message to stdout.
  */
-#define CBT_LOGD(tag, format, ... ) CBT_LOG_LEVEL(LogType::Debug,   tag, format, ##__VA_ARGS__)
+#define PLT_LOGD(tag, format, ... ) PLT_LOG_LEVEL(LogType::Debug,   tag, format, ##__VA_ARGS__)
 
 /**
- * @def CBT_LOG_BUFFER_HEXDUMP(tag, buffer, buff_len, level)
+ * @def PLT_LOG_BUFFER_HEXDUMP(tag, buffer, buff_len, level)
  * @brief Dump the memory contents of a buffer.
  * @param[in] tag The log tag. Can be whatever you want to help you identify where the log came from.
  * @param[in] buffer The buffer to dump
  * @param[in] buff_len The length of the buffer
  * @param[in] type The type of the log
 */
-#define CBT_LOG_BUFFER_HEXDUMP(tag, buffer, buff_len, type) do { \
+#define PLT_LOG_BUFFER_HEXDUMP(tag, buffer, buff_len, type) do { \
     Logger::Instance().logBuffer(type, tag, buffer, buff_len); \
 } while(0);
-#endif // __CBT_LOG_HPP__
+
+#endif // __LOG_HPP__

@@ -1,7 +1,7 @@
 /***************************************************************************//**
 * @author   Ben Haubrich
 * @file     LoggingAbstraction.hpp
-* @details  Logging for Foundation core softwarez.
+* @details  Logging to the terminal or stdout.
 * @ingroup  AbstractionLayer
 *******************************************************************************/
 #ifndef __LOGGING_ABSTRACTION_HPP__
@@ -15,8 +15,7 @@
 
 /**
  * @enum LogType
- * @brief Types of logging messages. Used with CBT_LOGx maacros to print to the terminal in a colour matching the
- *        log type.
+ * @brief Types of logging messages.
 */
 enum class LogType : uint8_t {
     Unknown = 0, ///< Unknown log type.
@@ -28,7 +27,7 @@ enum class LogType : uint8_t {
 
 /**
  * @class LoggingAbstraction
- * @brief A logging abstraction for Foundation core software. Can be implemented by any logging framework
+ * @brief A logging abstraction. Can be implemented by any logging framework
 */
 class LoggingAbstraction {
 
@@ -44,18 +43,17 @@ class LoggingAbstraction {
      * @sa LogType
      * @param tag The tag portion of the log message.
      * @param format Printf-style format string for the message.
-     * @verbatim Message structure: <time> <tag> <message> @endverbatim
+     * @verbatim Message structure: <tag> <message> @endverbatim
     */
     virtual ErrorType log(const LogType logType, const char *tag, const char *format, ...) = 0;
     /**
      * @brief Prints a message to the terminal.
-     * @details The message is printed in a hexdump format.
      * @param logType The type of log message.
      * @sa LogType
      * @param tag The tag portion of the log message.
      * @param data The buffer to be printed in hexdump format.
      * @param length The length of the buffer.
-     * @verbatim Message structure: <time> <tag> <message> @endverbatim
+     * @verbatim Message structure: <tag> <message> @endverbatim
     */
     virtual ErrorType logBuffer(const LogType logType, const char *tag, const char *data, Bytes length) = 0;
 };
