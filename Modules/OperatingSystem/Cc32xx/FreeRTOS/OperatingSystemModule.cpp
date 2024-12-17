@@ -123,10 +123,6 @@ ErrorType OperatingSystem::isDeleted(std::string &name) {
 }
 
 ErrorType OperatingSystem::createSemaphore(Count max, Count initial, std::string name) {
-    //The internal name is the name with a leading / to make it a valid semaphore name on POSIX systems.
-    //For all other purposes inside this operating system abstraction, the name should be used directly.
-    std::string internalName = std::string("/").append(name);
-
     sem_t *semaphore = nullptr;
     int pshared = 0;
     int ret = sem_init(semaphore, pshared, initial);
@@ -140,8 +136,6 @@ ErrorType OperatingSystem::createSemaphore(Count max, Count initial, std::string
 }
 
 ErrorType OperatingSystem::deleteSemaphore(std::string name) {
-    std::string internalName = std::string("/").append(name);
-
     if (0 != sem_destroy(semaphores[name])) {
         return toPlatformError(errno);
     }
@@ -159,8 +153,6 @@ ErrorType OperatingSystem::waitSemaphore(std::string &name, Milliseconds timeout
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
-
-    std::string internalName = std::string("/").append(name);
 
     do {
         if (0 != (result = sem_wait(semaphores[name]))) {
@@ -187,8 +179,6 @@ ErrorType OperatingSystem::incrementSemaphore(std::string &name) {
         return ErrorType::NoData;
     }
 
-    std::string internalName = std::string("/").append(name);
-
     if (0 != sem_post(semaphores[name])) {
         return toPlatformError(errno);
     }
@@ -200,8 +190,6 @@ ErrorType OperatingSystem::decrementSemaphore(std::string name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
-
-    std::string internalName = std::string("/").append(name);
 
     if (0 != sem_trywait(semaphores[name])) {
         return toPlatformError(errno);

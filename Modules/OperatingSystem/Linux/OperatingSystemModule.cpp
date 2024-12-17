@@ -152,8 +152,6 @@ ErrorType OperatingSystem::waitSemaphore(std::string &name, Milliseconds timeout
         return ErrorType::NoData;
     }
 
-    std::string internalName = std::string("/").append(name);
-
     do {
         if (0 != (result = sem_wait(semaphores[name]))) {
             if (timeRemaining > 0) {

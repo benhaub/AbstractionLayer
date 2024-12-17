@@ -141,8 +141,6 @@ ErrorType OperatingSystem::waitSemaphore(std::string &name, Milliseconds timeout
         return ErrorType::NoData;
     }
 
-    std::string internalName = std::string("/").append(name);
-
     do {
         if (0 != (result = sem_wait(semaphores[name]))) {
             if (timeRemaining > 0) {
@@ -168,8 +166,6 @@ ErrorType OperatingSystem::incrementSemaphore(std::string &name) {
         return ErrorType::NoData;
     }
 
-    std::string internalName = std::string("/").append(name);
-
     if (0 != sem_post(semaphores[name])) {
         return toPlatformError(errno);
     }
@@ -181,8 +177,6 @@ ErrorType OperatingSystem::decrementSemaphore(std::string name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
-
-    std::string internalName = std::string("/").append(name);
 
     if (0 != sem_trywait(semaphores[name])) {
         return toPlatformError(errno);
