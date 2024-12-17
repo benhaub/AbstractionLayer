@@ -218,6 +218,26 @@ ErrorType OperatingSystem::stopTimer(Id timer, Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 
+ErrorType OperatingSystem::createQueue(const std::string &name, const Bytes size, const Count length) {
+    return ErrorType::NotImplemented;
+}
+
+ErrorType OperatingSystem::sendToQueue(const std::string &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) {
+    return ErrorType::NotImplemented;
+}
+
+ErrorType OperatingSystem::receiveFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
+    return ErrorType::NotImplemented;
+}
+
+ErrorType OperatingSystem::peekFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
+    return ErrorType::NotImplemented;
+}
+
+ErrorType OperatingSystem::getSystemTime(UnixTime &currentSystemUnixTime) {
+    currentSystemUnixTime = static_cast<UnixTime>(time(nullptr));
+    return ErrorType::Success;
+}
 ErrorType OperatingSystem::getSystemTime(UnixTime &currentSystemUnixTime) {
     currentSystemUnixTime = static_cast<UnixTime>(time(nullptr));
     return ErrorType::Success;
@@ -232,6 +252,10 @@ ErrorType OperatingSystem::getSystemTick(Ticks &currentSystemTicks) {
 ErrorType OperatingSystem::ticksToMilliseconds(Ticks ticks, Milliseconds &timeInMilliseconds) {
     timeInMilliseconds = static_cast<Milliseconds>(ticks * sysconf(_SC_CLK_TCK) / 1000);
     return ErrorType::Success;
+}
+
+ErrorType OperatingSystem::millisecondsToTicks(const Milliseconds milli, Ticks &ticks) {
+    return ErrorType::NotImplemented;
 }
 
 ErrorType OperatingSystem::getSoftwareVersion(std::string &softwareVersion) {

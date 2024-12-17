@@ -9,9 +9,11 @@
 #include <map>
 //Posix
 #include <semaphore.h>
+#include <mqueue.h>
 //FreeRTOS
 #include "FreeRTOS.h"
 #include "task.h"
+#include "queue.h"
 
 class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAbstraction {
 
@@ -35,9 +37,14 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
     ErrorType deleteTimer(const Id timer) override;
     ErrorType startTimer(Id timer, Milliseconds timeout) override;
     ErrorType stopTimer(Id timer, Milliseconds timeout) override;
+    ErrorType createQueue(const std::string &name, const Bytes size, const Count length) override;
+    ErrorType sendToQueue(const std::string &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) override;
+    ErrorType receiveFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) override;
+    ErrorType peekFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) override;
     ErrorType getSystemTime(UnixTime &currentSystemUnixTime) override;
     ErrorType getSystemTick(Ticks &currentSystemTicks) override;
     ErrorType ticksToMilliseconds(Ticks ticks, Milliseconds &timeInMilliseconds) override;
+    ErrorType millisecondsToTicks(const Milliseconds milli, Ticks &ticks) override;
     ErrorType getSoftwareVersion(std::string &softwareVersion) override;
     ErrorType getResetReason(OperatingSystemConfig::ResetReason &resetReason) override;
     ErrorType reset() override;
@@ -81,9 +88,9 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
 
     Id nextTimerId = 0;
 
-
     std::map<std::string, Thread> threads;
     std::map<std::string, sem_t *> semaphores;
+    std::map<std::string, QueueHandle_t> queues;
     std::map<timer_t, Timer> timers;
 };
 

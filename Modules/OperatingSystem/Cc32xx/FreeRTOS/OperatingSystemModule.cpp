@@ -312,6 +312,104 @@ ErrorType OperatingSystem::stopTimer(Id timer, Milliseconds timeout) {
     return ErrorType::NoData;
 }
 
+ErrorType OperatingSystem::createQueue(const std::string &name, const Bytes size, const Count length) {
+    QueueHandle_t handle = nullptr;
+
+    handle = xQueueCreate(length, size);
+
+    if (nullptr == handle) {
+        return ErrorType::NoMemory;
+    }
+
+    queues[name] = handle;
+
+    return ErrorType::Success;
+}
+
+ErrorType OperatingSystem::sendToQueue(const std::string &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) {
+    if (!queues.contains(name)) {
+        return ErrorType::NoData;
+    }
+
+    BaseType_t sent = pdTRUE;
+
+    if (toFront) {
+        if (fromIsr) {
+            sent = xQueueSendToFrontFromISR(queues[name], data, NULL);
+        }
+        else {
+            Ticks ticks;
+            millisecondsToTicks(timeout, ticks);
+            sent = xQueueSendToFront(queues[name], data, ticks);
+        }
+    }
+    else {
+        if (fromIsr) {
+            sent = xQueueSendFromISR(queues[name], data, NULL);
+        }
+        else {
+            Ticks ticks;
+            millisecondsToTicks(timeout, ticks);
+            sent = xQueueSend(queues[name], data, ticks);
+        }
+    }
+
+    if (pdTRUE == sent) {
+        return ErrorType::Success;
+    }
+    else {
+        return ErrorType::Failure;
+    }
+}
+
+ErrorType OperatingSystem::receiveFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
+    if (!queues.contains(name)) {
+        return ErrorType::NoData;
+    }
+
+    BaseType_t sent = pdTRUE;
+
+    if (fromIsr) {
+        sent = xQueueReceiveFromISR(queues[name], buffer, NULL);
+    }
+    else {
+        Ticks ticks;
+        millisecondsToTicks(timeout, ticks);
+        sent = xQueueReceive(queues[name], buffer, ticks);
+    }
+
+    if (pdTRUE == sent) {
+        return ErrorType::Success;
+    }
+    else {
+        return ErrorType::Failure;
+    }
+}
+
+ErrorType OperatingSystem::peekFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
+    if (!queues.contains(name)) {
+        return ErrorType::NoData;
+    }
+
+    BaseType_t sent = pdTRUE;
+
+    if (fromIsr) {
+        sent = xQueuePeekFromISR(queues[name], buffer);
+    }
+    else {
+        Ticks ticks;
+        millisecondsToTicks(timeout, ticks);
+        sent = xQueuePeek(queues[name], buffer, ticks);
+    }
+
+    if (pdTRUE == sent) {
+        return ErrorType::Success;
+    }
+    else {
+        return ErrorType::Failure;
+    }
+}
+
 ErrorType OperatingSystem::getSystemTime(UnixTime &currentSystemUnixTime) {
     currentSystemUnixTime = static_cast<UnixTime>(time(nullptr));
     return ErrorType::Success;
@@ -324,7 +422,12 @@ ErrorType OperatingSystem::getSystemTick(Ticks &currentSystemTicks) {
 }
 
 ErrorType OperatingSystem::ticksToMilliseconds(Ticks ticks, Milliseconds &timeInMilliseconds) {
-    timeInMilliseconds = static_cast<Milliseconds>(pdMS_TO_TICKS(timeInMilliseconds));
+    timeInMilliseconds = static_cast<Ticks>((1000 * ticks) / configTICK_RATE_HZ);
+    return ErrorType::Success;
+}
+
+ErrorType OperatingSystem::millisecondsToTicks(const Milliseconds milli, Ticks &ticks) {
+    ticks = static_cast<Milliseconds>(pdMS_TO_TICKS(milli));
     return ErrorType::Success;
 }
 

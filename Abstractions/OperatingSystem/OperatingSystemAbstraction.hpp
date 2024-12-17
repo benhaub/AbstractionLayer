@@ -200,6 +200,50 @@ class OperatingSystemAbstraction {
     */
     virtual ErrorType stopTimer(Id timer, Milliseconds timeout) = 0;
     /**
+     * @brief Create a queue to safely send and receive information between threads
+     * @param[in] name The name of the queue which you can use to reference the queue
+     * @param[in] size The size in bytes of each queue item
+     * @param[in] length The number of items that can be in the queue at once.
+     * @returns ErrorType::Success if the queue was created
+     * @returns ErrorType::NoMemory if the queue can not be created with the specified size and/or length
+     * @returns ErrorType::Failure otherwise
+     */
+    virtual ErrorType createQueue(const std::string &name, const Bytes size, const Count length) = 0;
+    /**
+     * @brief Insert data into the queue
+     * @param[in] name The name of the queue to send data to.
+     * @param[in] data The data to send
+     * @param[in] timeout The time to wait for the data to be sent to the queue.
+     * @param[in] toFront True if the message should be sent to the front of the queue rather than the back.
+     * @param[in] fromIsr Set to true if sending to this queue is done in ISR context.
+     * @returns ErrorType::Success if the item was sent to the queue
+     * @returns ErrorType::Timeout if the item could not be sent to the queue in time.
+     * @returns ErrorType::Failure otherwise
+     */
+    virtual ErrorType sendToQueue(const std::string &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) = 0;
+    /**
+     * @brief Receive data from the queue
+     * @param[in] name The name of the queue to receive data from
+     * @param[out] buffer The buffer to store the queue item in.
+     * @param[in] timeout The time to wait until the item can be retrieved
+     * @param[in] fromIsr Set to true if receiving from this queue is done in ISR context.
+     * @returns ErrorType::Success if the item was received from the queue
+     * @returns ErrorType::Timeout if the item was not received from the queue in time.
+     * @returns ErrorType::Failure otherwise
+     */
+    virtual ErrorType receiveFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) = 0;
+    /**
+     * @brief Read from the queue without removing an item from it
+     * @param[in] name The name of the queue to peek from
+     * @param[in] buffer The buffer to store the queue item in.
+     * @param[in] timeout The time to wait until the item can be retrieved.
+     * @param[in] fromIsr Set to true if peeking from this queue is done in ISR context
+     * @returns ErrorType::Success if the item was peeked from the queue
+     * @returns ErrorType::Timeout if the item was not peeked from the queue in time.
+     * @returns ErrorType::Failure otherwise
+     */
+    virtual ErrorType peekFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) = 0;
+    /**
      * @brief Get the current system time
      * @param[out] currentSystemUnixTime The current unix time of the system.
      * @returns ErrorType::Success if the system unix time was obtained
@@ -223,6 +267,15 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Failure if the tick could not be converted to milliseconds
      */
     virtual ErrorType ticksToMilliseconds(Ticks ticks, Milliseconds &tickEquivalent) = 0;
+    /**
+     * @brief Convert a millisecond value to a time in ticks
+     * @param[in] milliseconds The time to convert
+     * @param[out] ticks The converted time in ticks
+     * @returns ErrorType::Success if the value was converted
+     * @returns ErrorType::NotImplemented if converting milliseconds to ticks is not implemented
+     * @returns ErrorType::Failure otherwise
+     */
+    virtual ErrorType millisecondsToTicks(const Milliseconds milli, Ticks &ticks) = 0;
     /**
      * @brief Get software version
      * @param[out] softwareVersion The software version in the format a.b.c.d, where a, b, c, and d
