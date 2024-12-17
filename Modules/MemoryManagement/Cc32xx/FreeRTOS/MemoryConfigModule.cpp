@@ -3,7 +3,9 @@
 //FreeRTOS
 #include "FreeRTOS.h"
 static void *allocate(size_t size) {
-    void *ptr = pvPortMalloc(size);
+    void *ptr = nullptr;
+
+    ptr = pvPortMalloc(size);
 
     assert(nullptr != ptr);
     return ptr;
