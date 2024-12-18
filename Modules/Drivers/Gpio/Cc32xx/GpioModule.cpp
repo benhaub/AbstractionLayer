@@ -3,16 +3,20 @@
 //TI driverlib
 #include "ti/drivers/GPIO.h"
 
-ErrorType Gpio::pinWrite(const GpioLogicLevel &logicLevel) {
-    return ErrorType::NotImplemented;
-}
-
-ErrorType Gpio::pinRead(GpioLogicLevel &logicLevel) {
-    return ErrorType::NotImplemented;
-}
-
-ErrorType Gpio::configure(const uint32_t *basePeripheralRegister, const PinNumber pinNumber, const GpioPinDirection direction, const GpioInterruptMode interruptMode, const bool pullUpEnable, const bool pullDownEnable) {
+ErrorType Gpio::init() {
     //Idempotent init.
     GPIO_init();
     return ErrorType::Success;
+}
+
+ErrorType Gpio::setHardwareConfig(const uint32_t *basePeripheralRegister, const PinNumber pinNumber, const GpioTypes::PinDirection direction, const GpioTypes::InterruptMode interruptMode, const bool pullUpEnable, const bool pullDownEnable) {
+    return ErrorType::NotImplemented;
+}
+
+ErrorType Gpio::pinWrite(const GpioTypes::LogicLevel &logicLevel) {
+    return ErrorType::NotImplemented;
+}
+
+ErrorType Gpio::pinRead(GpioTypes::LogicLevel &logicLevel) {
+    return ErrorType::NotImplemented;
 }
