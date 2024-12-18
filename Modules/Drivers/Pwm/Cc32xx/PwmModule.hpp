@@ -16,7 +16,7 @@ class Pwm : public PwmAbstraction {
     ~Pwm() = default;
 
     ErrorType init() override;
-    ErrorType setHardwareConfig(PwmConfig::PeripheralNumber peripheral) override;
+    ErrorType setHardwareConfig(PeripheralNumber peripheral) override;
     ErrorType setDriverConfig(Percent duty, Milliseconds period) override;
     ErrorType setFirmwareConfig() override;
     ErrorType deinit() override;
@@ -28,30 +28,30 @@ class Pwm : public PwmAbstraction {
     private:
     PWM_Handle _pwmHandle = nullptr;
 
-    uint_least8_t toCc32xxPwmPeripheralNumber(PwmConfig::PeripheralNumber peripheral, ErrorType &error) {
+    uint_least8_t toCc32xxPwmPeripheralNumber(PeripheralNumber peripheral, ErrorType &error) {
         uint_least8_t cc32xxPwmPeripheralNumber = 0;
         error = ErrorType::Success;
 
         switch(peripheral) {
-            case PwmConfig::PeripheralNumber::Zero:
+            case PeripheralNumber::Zero:
                 cc32xxPwmPeripheralNumber = 0;
                 break;
-            case PwmConfig::PeripheralNumber::One:
+            case PeripheralNumber::One:
                 cc32xxPwmPeripheralNumber = 1;
                 break;
-            case PwmConfig::PeripheralNumber::Two:
+            case PeripheralNumber::Two:
                 cc32xxPwmPeripheralNumber = 2;
                 break;
-            case PwmConfig::PeripheralNumber::Three:
+            case PeripheralNumber::Three:
                 cc32xxPwmPeripheralNumber = 3;
                 break;
-            case PwmConfig::PeripheralNumber::Four:
+            case PeripheralNumber::Four:
                 cc32xxPwmPeripheralNumber = 4;
                 break;
-            case PwmConfig::PeripheralNumber::Five:
+            case PeripheralNumber::Five:
                 cc32xxPwmPeripheralNumber = 5;
                 break;
-            case PwmConfig::PeripheralNumber::Six:
+            case PeripheralNumber::Six:
                 cc32xxPwmPeripheralNumber = 6;
                 break;
             default:

@@ -36,20 +36,6 @@ namespace I2cConfig {
         HighSpeed = 3400000,  ///< High speed (3.4 Mbps)
         UltraFast = 5000000,  ///< Ultra-fast speed (5 Mbps)
     };
-
-    /**
-     * @enum PeripheralNumber
-     * @brief   UART peripheral number. Refers to the base address of the uart module being used.
-    */
-    enum class PeripheralNumber : uint8_t {
-        Zero = 0, ///< Peripheral number 0.
-        One,      ///< Peripheral number 1.
-        Two,      ///< Peripheral number 2.
-        Three,    ///< Peripheral number 3.
-        Four,     ///< Peripheral number 4.
-        Five,     ///< Peripheral number 5.
-        Unknown   ///< Unknown and invalid peripheral number.
-    };
 }
 
 /**
@@ -97,7 +83,7 @@ class I2cAbstraction : public IcCommunicationProtocol {
      *       It also makes cross-platform development easier since some platforms don't offer a config and having a function
      *       at least allows you to return NotSupported on NotAvailable in this case.
      */
-    virtual ErrorType setHardwareConfig(const I2cConfig::PeripheralNumber peripharal, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullUp, const PinNumber scl, const bool sclPullUp) = 0;
+    virtual ErrorType setHardwareConfig(const PeripheralNumber peripharal, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullUp, const PinNumber scl, const bool sclPullUp) = 0;
     /**
      * @brief enable or disable interrupts.
      * @param[in] arbitrationLost
@@ -148,7 +134,7 @@ class I2cAbstraction : public IcCommunicationProtocol {
     /// @brief The speed of the I2C.
     I2cConfig::Speed _speed = I2cConfig::Speed::Unknown;
     /// @brief Hardware peripheral number
-    I2cConfig::PeripheralNumber _peripheral = I2cConfig::PeripheralNumber::Unknown;
+    PeripheralNumber _peripheral = PeripheralNumber::Unknown;
     /// @brief The pin number for the SDA line.
     PinNumber _sda = -1;
     /// @brief Whether the SDA line should have a pull-up resistor.

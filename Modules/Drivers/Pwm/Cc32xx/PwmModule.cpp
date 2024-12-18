@@ -2,7 +2,7 @@
 #include "PwmModule.hpp"
 
 ErrorType Pwm::init() {
-    assert(PwmConfig::PeripheralNumber::Unknown != peripheralNumber());
+    assert(PeripheralNumber::Unknown != peripheralNumber());
 
     PWM_init();
 
@@ -27,7 +27,7 @@ ErrorType Pwm::init() {
     return toPlatformError(PWM_setDuty(_pwmHandle, pwmParams.dutyValue));
 }
 
-ErrorType Pwm::setHardwareConfig(PwmConfig::PeripheralNumber peripheral) {
+ErrorType Pwm::setHardwareConfig(PeripheralNumber peripheral) {
     _peripheral = peripheral;
 
     return ErrorType::Success;

@@ -123,7 +123,7 @@ ErrorType Uart::flushRxBuffer() {
     return ErrorType::NotAvailable;
 }
 
-ErrorType Uart::setHardwareConfig(int32_t txPinNumber, int32_t rxPinNumber, int32_t rtsPinNumber, int32_t ctsPinNumber, UartConfig::PeripheralNumber peripheralNumber) {
+ErrorType Uart::setHardwareConfig(int32_t txPinNumber, int32_t rxPinNumber, int32_t rtsPinNumber, int32_t ctsPinNumber, PeripheralNumber peripheralNumber) {
     return ErrorType::NotAvailable;
 }
 

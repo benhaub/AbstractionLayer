@@ -31,20 +31,6 @@ namespace UartConfig {
     };
 
     /**
-     * @enum PeripheralNumber
-     * @brief   UART peripheral number. Refers to the base address of the uart module being used.
-    */
-    enum class PeripheralNumber : uint8_t {
-        Zero = 0, ///< Peripheral number 0.
-        One,      ///< Peripheral number 1.
-        Two,      ///< Peripheral number 2.
-        Three,    ///< Peripheral number 3.
-        Four,     ///< Peripheral number 4.
-        Five,     ///< Peripheral number 5.
-        Unknown   ///< Unknown and invalid peripheral number.
-    };
-
-    /**
      * @enum Line
      * @brief UART transmit and receive lines.
     */
@@ -103,7 +89,7 @@ class UartAbstraction : public IcCommunicationProtocol{
      * @returns ErrorType::Success if the hardware configuration was set successfully.
      * @returns ErrorType::InvalidParameter if the txNumber, rxNumber, rtsNumber, ctsNumber, or peripheralNumber are invalid for the underlying hardware implementation.
     */
-    virtual ErrorType setHardwareConfig(PinNumber txNumber, PinNumber rxNumber, PinNumber rtsNumber, PinNumber ctsNumber, UartConfig::PeripheralNumber peripheralNumber) = 0;
+    virtual ErrorType setHardwareConfig(PinNumber txNumber, PinNumber rxNumber, PinNumber rtsNumber, PinNumber ctsNumber, PeripheralNumber peripheralNumber) = 0;
     /**
      * @brief Set driver configuration parameters.
      * @param [in] baudRate The baud rate.
@@ -143,7 +129,7 @@ class UartAbstraction : public IcCommunicationProtocol{
     /// @brief Get the cts pin number
     PinNumber ctsNumber() const { return _ctsNumber; }
     /// @brief Get the peripheral number.
-    UartConfig::PeripheralNumber peripheralNumber() const { return _peripheralNumber; }
+    PeripheralNumber peripheralNumber() const { return _peripheralNumber; }
     /// @brief Get the receive buffer size.
     Bytes receiveBufferSize() const { return _receiveBufferSize; }
     /// @brief Get the transmit buffer size.
@@ -169,7 +155,7 @@ class UartAbstraction : public IcCommunicationProtocol{
     int8_t _terminatingByte = -1;
 
     /// @brief Peripheral number.
-    UartConfig::PeripheralNumber _peripheralNumber = UartConfig::PeripheralNumber::Unknown;
+    PeripheralNumber _peripheralNumber = PeripheralNumber::Unknown;
     /// @brief tx pin number.
     PinNumber _txNumber = Unused;
     /// @brief rx pin number

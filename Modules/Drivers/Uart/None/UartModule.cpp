@@ -21,7 +21,7 @@ ErrorType Uart::rxNonBlocking(std::shared_ptr<std::string> buffer, const Millise
 ErrorType Uart::flushRxBuffer() {
     return ErrorType::NotImplemented;
 }
-ErrorType Uart::setHardwareConfig(PinNumber txNumber, PinNumber rxNumber, PinNumber rtsNumber, PinNumber ctsNumber, UartConfig::PeripheralNumber peripheralNumber) {
+ErrorType Uart::setHardwareConfig(PinNumber txNumber, PinNumber rxNumber, PinNumber rtsNumber, PinNumber ctsNumber, PeripheralNumber peripheralNumber) {
     return ErrorType::NotImplemented;
 }
 ErrorType Uart::setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartConfig::FlowControl flowControl) {

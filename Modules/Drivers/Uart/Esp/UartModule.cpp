@@ -10,7 +10,7 @@ ErrorType Uart::init() {
     ErrorType error;
 
     //Did you call all of the config functions?
-    assert(UartConfig::PeripheralNumber::Unknown != peripheralNumber());
+    assert(PeripheralNumber::Unknown != peripheralNumber());
 
     error = toPlatformError(uart_driver_install(toEspPeripheralNumber(this->peripheralNumber(), error), receiveBufferSize(), transmitBufferSize(), 0, nullptr, 0));
     if (ErrorType::Success != error) {
@@ -135,7 +135,7 @@ ErrorType Uart::flushRxBuffer() {
     }
 }
 
-ErrorType Uart::setHardwareConfig(int32_t txNumber, int32_t rxNumber, int32_t rtsNumber, int32_t ctsNumber, UartConfig::PeripheralNumber peripheralNumber) {
+ErrorType Uart::setHardwareConfig(int32_t txNumber, int32_t rxNumber, int32_t rtsNumber, int32_t ctsNumber, PeripheralNumber peripheralNumber) {
     ErrorType error;
     _txNumber = txNumber;
     _rxNumber = rxNumber;

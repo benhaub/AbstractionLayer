@@ -96,6 +96,33 @@ using PartitionNumber = uint16_t;
 ///@typedef PinNumber
 ///Pin number. Signed so that - can be used to represent unused or not connected pins.
 using PinNumber = int32_t;
+/**
+ * @enum PeripheralNumber
+ * @brief   Hardware peripheral number. Refers to the number or index given to the hardware peripheral being used.
+*/
+enum class PeripheralNumber : uint32_t {
+    Zero = 0, ///< Peripheral number 0.
+    One,      ///< Peripheral number 1.
+    Two,      ///< Peripheral number 2.
+    Three,    ///< Peripheral number 3.
+    Four,     ///< Peripheral number 4.
+    Five,     ///< Peripheral number 5.
+    Six,      ///< Peripheral number 6.
+    Seven,    ///< Peripheral number 7.
+    Unknown   ///< Unknown and invalid peripheral number.
+};
+/**
+ * @enum PeripheralIdentifier
+ * @brief Describes what the number given to hardware configuration is
+ */
+enum class PeripheralIdentifier : uint32_t {
+    Unknown = 0, ///< Unknown identifier.
+    BasePointer, ///< The identifier is the base pointer of the peripheral.
+    Number       ///< The identifier is numbered or indexed.
+};
+///@typedef Register
+///Hardware register address
+using Register = volatile uint32_t *;
 
 //-------------------------------Networks
 ///@typedef Port

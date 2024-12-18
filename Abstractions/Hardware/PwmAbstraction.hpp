@@ -10,20 +10,6 @@
 #include "Error.hpp"
 #include "Types.hpp"
 
-namespace PwmConfig {
-
-    enum class PeripheralNumber : uint8_t {
-        Zero = 0,
-        One,
-        Two,
-        Three,
-        Four,
-        Five,
-        Six,
-        Unknown
-    };
-}
-
 /**
  * @class PwmAbstraction
  * @brief Abstraction layer for PWM
@@ -48,7 +34,7 @@ class PwmAbstraction {
      * @returns ErrorType::InvalidParameter if the parameters are invalid
      * @returns ErrorType::Failure otherwise.
      */
-    virtual ErrorType setHardwareConfig(PwmConfig::PeripheralNumber peripheral) = 0;
+    virtual ErrorType setHardwareConfig(PeripheralNumber peripheral) = 0;
     /**
      * @brief Set parameters related to the driver
      * @returns ErrorType::Success if the config was set
@@ -106,8 +92,8 @@ class PwmAbstraction {
     const Percent &dutyCycleConst() const { return _dutyCycle; }
     Milliseconds &period() { return _period; }
     const Milliseconds &periodConst() const { return _period; }
-    PwmConfig::PeripheralNumber &peripheralNumber() { return _peripheral; }
-    const PwmConfig::PeripheralNumber &peripheralNumberConst() const { return _peripheral; }
+    PeripheralNumber &peripheralNumber() { return _peripheral; }
+    const PeripheralNumber &peripheralNumberConst() const { return _peripheral; }
 
     protected:
     /// @brief The duty for the PWM
@@ -115,7 +101,7 @@ class PwmAbstraction {
     /// @brief The time to apply the duty cyle to.
     Milliseconds _period = 0;
     /// @brief The peripheral number for this PWM
-    PwmConfig::PeripheralNumber _peripheral = PwmConfig::PeripheralNumber::Unknown;
+    PeripheralNumber _peripheral = PeripheralNumber::Unknown;
 };
 
 #endif //__PWM_ABSTRACTION_HPP__

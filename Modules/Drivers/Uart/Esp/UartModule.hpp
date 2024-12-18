@@ -23,20 +23,20 @@ class Uart : public UartAbstraction {
     ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
     ErrorType flushRxBuffer() override;
     
-    ErrorType setHardwareConfig(PinNumber txNumber, PinNumber rxNumber, PinNumber rtsNumber, PinNumber ctsNumber, UartConfig::PeripheralNumber peripheralNumber) override;
+    ErrorType setHardwareConfig(PinNumber txNumber, PinNumber rxNumber, PinNumber rtsNumber, PinNumber ctsNumber, PeripheralNumber peripheralNumber) override;
     ErrorType setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartConfig::FlowControl flowControl) override;
     ErrorType setFirmwareConfig(Bytes receiveBufferSize, Bytes transmitBufferSize, int8_t terminatingByte) override;
 
     private:
-    uart_port_t toEspPeripheralNumber(UartConfig::PeripheralNumber peripheralNumber, ErrorType &error) {
+    uart_port_t toEspPeripheralNumber(PeripheralNumber peripheralNumber, ErrorType &error) {
         switch (peripheralNumber) {
-            case UartConfig::PeripheralNumber::Zero:
+            case PeripheralNumber::Zero:
                 error = ErrorType::Success;
                 return UART_NUM_0;
-            case UartConfig::PeripheralNumber::One:
+            case PeripheralNumber::One:
                 error = ErrorType::Success;
                 return UART_NUM_1;
-            case UartConfig::PeripheralNumber::Two:
+            case PeripheralNumber::Two:
                 error = ErrorType::Success;
                 return UART_NUM_2;
             default:

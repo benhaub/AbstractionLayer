@@ -58,7 +58,7 @@ ErrorType I2c::deinit() {
     return toPlatformError(i2c_driver_delete(i2cPort));
 }
 
-ErrorType I2c::setHardwareConfig(const I2cConfig::PeripheralNumber peripheral, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullup, const PinNumber scl, const bool sclPullup) {
+ErrorType I2c::setHardwareConfig(const PeripheralNumber peripheral, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullup, const PinNumber scl, const bool sclPullup) {
     _mode = mode;
     _speed = speed;
     _peripheral = peripheral;
