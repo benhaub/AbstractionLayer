@@ -10,13 +10,14 @@ class GptmCaptureModule : public GptmCaptureAbstraction {
     ~GptmCaptureModule() = default;
 
     ErrorType init() override;
-    ErrorType setHardwareConfig(PeripheralIdentifier identifier, void * peripheral) override;
+    ErrorType setHardwareConfig(PeripheralIdentifier identifier, void *peripheral) override;
     ErrorType deinit() override;
     ErrorType start() override;
     ErrorType stop() override;
 
     ErrorType setCaptureMode(GptmCaptureTypes::Mode mode) override;
     ErrorType setPeriod(Milliseconds period) override;
+    ErrorType readCaptureValue(Count &captureValue) override;
 };
 
 #endif //__GPTM_CAPTURE_MODULE_HPP__

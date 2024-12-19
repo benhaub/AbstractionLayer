@@ -11,6 +11,8 @@
 #include "Error.hpp"
 #include "Types.hpp"
 #include "GptmAbstraction.hpp"
+//C++
+#include <functional>
 
 namespace GptmCaptureTypes {
 
@@ -38,9 +40,26 @@ class GptmCaptureAbstraction : public GptmAbstraction {
     ///@brief Destructor
     virtual ~GptmCaptureAbstraction() = default;
 
+    /**
+     * @brief Set when the capture should occur on the input signal
+     * @returns ErrorType::Success if the mode was set
+     * @returns ErrorType::Failure otherwise
+     */
     virtual ErrorType setCaptureMode(GptmCaptureTypes::Mode mode) = 0;
+    /**
+     * @brief Set the period of the capture
+     * @returns ErrorType::Success if the period was set
+     * @returns ErrorType::Failure otherwise
+     */
     virtual ErrorType setPeriod(Milliseconds period) = 0;
-
+    /**
+     * @brief Read the capture value
+     * @param[out] captureValue The value of the capture
+     * @returns ErrorType::Success if the value was read
+     * @returns ErrorType::NoData if there is no data to read
+     * @returns ErrorType::Failure otherwise
+     */
+    virtual ErrorType readCaptureValue(Count &captureValue) = 0;
 };
 
 #endif //__GPTM_CAPTURE_ABSTRACTION_HPP__

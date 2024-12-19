@@ -23,6 +23,8 @@ class GptmAbstraction {
     ///@brief Destructor
     virtual ~GptmAbstraction() = default;
 
+    static constexpr char TAG[] = "Gptm";
+
     /**
      * @brief Initialize the counter
      * @pre Call setHardwareConfig first.
@@ -39,7 +41,7 @@ class GptmAbstraction {
      * @returns ErrorType::Success if the hardware was configured
      * @returns ErrorType::Failure otherwise.
      */
-    virtual ErrorType setHardwareConfig(PeripheralIdentifier identifierType, void * peripheral) = 0;
+    virtual ErrorType setHardwareConfig(PeripheralIdentifier identifierType, void *peripheral) = 0;
     /**
      * @brief deinitialize the counter
      * @returns ErrorType::Success if the counter was deinitialized
@@ -58,6 +60,21 @@ class GptmAbstraction {
      * @returns ErrorType::Failure otherwise.
      */
     virtual ErrorType stop() = 0;
+
+    ///@brief Get a mutable reference to the peripheral number
+    PeripheralNumber &peripheralNumber() { return _peripheralNumber; }
+    ///@brief Get a constant reference to the peripheral number
+    const PeripheralNumber &peripheralNumberConst() const { return _peripheralNumber; }
+    ///@brief Get a mutable reference to the base pointer of the peripheral
+    uint32_t &peripheralBasePointer() { return *_peripheralBasePointer; }
+    ///@brief Get a constant reference to the base pointer of the peripheral
+    const uint32_t &peripheralBasePointerConst() const { return *_peripheralBasePointer; }
+
+    protected:
+    ///@brief The peripheral number.
+    PeripheralNumber _peripheralNumber = PeripheralNumber::Unknown;
+    /// @brief The base pointer to the peripheral.
+    uint32_t *_peripheralBasePointer = nullptr;
 };
 
 #endif //__GPTM_ABSTRACTION_HPP__

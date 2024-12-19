@@ -4,7 +4,7 @@ ErrorType GptmCaptureModule::init() {
     return ErrorType::NotImplemented;
 }
 
-ErrorType GptmCaptureModule::setHardwareConfig(PeripheralIdentifier identifier, void * peripheral) {
+ErrorType GptmCaptureModule::setHardwareConfig(PeripheralIdentifier identifier, void *peripheral) {
     return ErrorType::NotImplemented;
 }
 
@@ -25,5 +25,8 @@ ErrorType GptmCaptureModule::setCaptureMode(GptmCaptureTypes::Mode mode) {
 }
 
 ErrorType GptmCaptureModule::setPeriod(Milliseconds period) {
+    return ErrorType::NotImplemented;
+}
+ErrorType GptmCaptureModule::readCaptureValue(Count &captureValue) {
     return ErrorType::NotImplemented;
 }
