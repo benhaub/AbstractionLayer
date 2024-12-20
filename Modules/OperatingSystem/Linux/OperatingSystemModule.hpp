@@ -41,7 +41,7 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
     ErrorType getSystemTime(UnixTime &currentSystemUnixTime) override;
     ErrorType getSystemTick(Ticks &currentSystemTicks) override;
     ErrorType ticksToMilliseconds(Ticks ticks, Milliseconds &timeInMilliseconds) override;
-    ErrorType millisecondsToTicks(Milliseconds milli, Ticks ticks) override;
+    ErrorType millisecondsToTicks(const Milliseconds milli, Ticks &ticks) override;
     ErrorType getSoftwareVersion(std::string &softwareVersion) override;
     ErrorType getResetReason(OperatingSystemConfig::ResetReason &resetReason) override;
     ErrorType reset() override;
