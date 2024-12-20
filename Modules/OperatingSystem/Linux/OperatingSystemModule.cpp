@@ -236,10 +236,6 @@ ErrorType OperatingSystem::getSystemTime(UnixTime &currentSystemUnixTime) {
     currentSystemUnixTime = static_cast<UnixTime>(time(nullptr));
     return ErrorType::Success;
 }
-ErrorType OperatingSystem::getSystemTime(UnixTime &currentSystemUnixTime) {
-    currentSystemUnixTime = static_cast<UnixTime>(time(nullptr));
-    return ErrorType::Success;
-}
 
 ErrorType OperatingSystem::getSystemTick(Ticks &currentSystemTicks) {
     struct tms timeSample;
