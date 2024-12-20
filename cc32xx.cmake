@@ -24,7 +24,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/OperatingSystem/Cc32xx/FreeRT
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Network/Wifi/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Network/Cellular/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Ip/None)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Logging/stdlib)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Logging/Cc32xx)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Storage/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Serialization/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Error/Cc32xx)

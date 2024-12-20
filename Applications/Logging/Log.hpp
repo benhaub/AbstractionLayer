@@ -9,8 +9,6 @@
 
 //Modules
 #include "LoggerModule.hpp"
-//C
-#include <inttypes.h>
 
 #if CONFIG_LOG_COLORS
 #define LOG_COLOR_BLACK   "30"
@@ -67,7 +65,7 @@
  * @param[in] format The format of the log. Format is a printf-style format string
  * @param[in] ... The arguments to the format string
  */
-#define PLT_LOG_LEVEL(type, tag, format, ...) do {                             \
+#define PLT_LOG_LEVEL(type, tag, format, ...) do { \
     if      (type == LogType::Error)   { Logger::Instance().log(type, tag, LOG_FORMAT(E, format), tag, ##__VA_ARGS__); } \
     else if (type == LogType::Warning) { Logger::Instance().log(type, tag, LOG_FORMAT(W, format), tag, ##__VA_ARGS__); } \
     else if (type == LogType::Info)    { Logger::Instance().log(type, tag, LOG_FORMAT(I, format), tag, ##__VA_ARGS__); } \
