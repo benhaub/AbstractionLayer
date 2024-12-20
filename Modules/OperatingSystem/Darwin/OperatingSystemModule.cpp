@@ -2,6 +2,7 @@
 #include "OperatingSystemModule.hpp"
 //C++
 #include <ctime>
+#include <cstring>
 //Posix
 #include <sys/times.h>
 #include <sys/time.h>

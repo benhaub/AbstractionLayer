@@ -3,7 +3,7 @@
 ErrorType Pwm::init() {
     return ErrorType::NotImplemented;
 }
-ErrorType Pwm::setHardwareConfig(PwmConfig::PeripheralNumber peripheral) {
+ErrorType Pwm::setHardwareConfig(PeripheralNumber peripheral) {
     return ErrorType::NotImplemented;
 }
 ErrorType Pwm::setDriverConfig(Percent duty, Milliseconds period) {

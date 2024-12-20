@@ -71,7 +71,7 @@ class File : public FileAbstraction {
             case OpenMode::ReadWriteTruncate:
                 return std::ios_base::in | std::ios_base::out | std::ios_base::trunc;
             default:
-                CBT_LOGW(TAG, "Unknown open mode: %u", mode);
+                PLT_LOGW(TAG, "Unknown open mode: %u", mode);
         }
 
         return std::ios_base::in;

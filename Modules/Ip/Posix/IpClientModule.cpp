@@ -22,13 +22,13 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         disconnect();
 
         if (version != IpClientSettings::Version::IPv4) {
-            CBT_LOGE(TAG, "only IPv4 is implemented");
+            PLT_LOGE(TAG, "only IPv4 is implemented");
             return ErrorType::NotImplemented;
         }
 
         struct hostent *hent = gethostbyname(hostname.c_str());
         if (NULL == hent) {
-            CBT_LOGW(TAG, "couldn't get address for %s", hostname.c_str());
+            PLT_LOGW(TAG, "couldn't get address for %s", hostname.c_str());
             return ErrorType::Failure;
         }
         struct in_addr **addr_list = (struct in_addr **)hent->h_addr_list;
@@ -38,17 +38,17 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         dest_ip.sin_port = htons(port);
 
         if (-1 == (_socket = socket(toPosixFamily(version), toPosixSocktype(protocol), IPPROTO_IP))) {
-            CBT_LOGW(TAG, "couldn't create socket");
+            PLT_LOGW(TAG, "couldn't create socket");
             return ErrorType::Failure;
         }
 
         if (-1 == connect(_socket, (struct sockaddr *)&dest_ip, sizeof(dest_ip))) {
-        CBT_LOGW(TAG, "couldn't connect to %s (%s)", hostname.c_str(), inet_ntoa(*(struct in_addr *)hent->h_addr_list[0]));
+        PLT_LOGW(TAG, "couldn't connect to %s (%s)", hostname.c_str(), inet_ntoa(*(struct in_addr *)hent->h_addr_list[0]));
         close(_socket);
         return ErrorType::Failure;
         }
 
-        CBT_LOGI(TAG, "connection in progress");
+        PLT_LOGI(TAG, "connection in progress");
         fd_set fdset;
         FD_ZERO(&fdset);
         FD_SET(_socket, &fdset);
@@ -56,21 +56,21 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         // Connection in progress -> have to wait until the connecting socket is marked as writable, i.e. connection completes
         int res = select(_socket+1, NULL, &fdset, NULL, NULL);
         if (res < 0) {
-            CBT_LOGW(TAG, "Error during connection: select for socket to be writable %s", strerror(errno));
+            PLT_LOGW(TAG, "Error during connection: select for socket to be writable %s", strerror(errno));
             return ErrorType::Failure;
         } else if (res == 0) {
-            CBT_LOGW(TAG, "Connection timeout: select for socket to be writable %s", strerror(errno));
+            PLT_LOGW(TAG, "Connection timeout: select for socket to be writable %s", strerror(errno));
             return ErrorType::Failure;
         } else {
             int sockerr;
             socklen_t len = (socklen_t)sizeof(int);
 
             if (getsockopt(_socket, SOL_SOCKET, SO_ERROR, (void*)(&sockerr), &len) < 0) {
-                CBT_LOGW(TAG, "Error when getting socket error using getsockopt() %s", strerror(errno));
+                PLT_LOGW(TAG, "Error when getting socket error using getsockopt() %s", strerror(errno));
                 return ErrorType::Failure;
             }
             if (sockerr) {
-                CBT_LOGW(TAG, "Connection error %d", sockerr);
+                PLT_LOGW(TAG, "Connection error %d", sockerr);
                 return ErrorType::Failure;
             }
         }
@@ -83,7 +83,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpClient>>(std::bind(connectCb));
     ErrorType error;
     if (ErrorType::Success != (error = network().addEvent(event))) {
-        CBT_LOGW(TAG, "Could not add connection event to network");
+        PLT_LOGW(TAG, "Could not add connection event to network");
         return error;
     }
 

@@ -40,7 +40,7 @@ static int testReadWrite() {
         return EXIT_SUCCESS;
     }
     else {
-        CBT_LOGE(TAG, "Error reading from file %u. data: %s", (uint8_t)error, readString.c_str());
+        PLT_LOGE(TAG, "Error reading from file %u. data: %s", (uint8_t)error, readString.c_str());
     }
 
     assert(false);
@@ -52,7 +52,7 @@ static int testNonBlockingReadWrite() {
 
     File file(Storage::Instance());
     if (ErrorType::Success != (error = file.open(filename, OpenMode::ReadWriteTruncate))) {
-        CBT_LOGE(TAG, "Error opening file %u", (uint8_t)error);
+        PLT_LOGE(TAG, "Error opening file %u", (uint8_t)error);
         assert(false);
     }
 
@@ -68,7 +68,7 @@ static int testNonBlockingReadWrite() {
             readError = error;
         }
         else {
-            CBT_LOGE(TAG, "Error reading from file Error: %u, data: %s", error, buffer->c_str());
+            PLT_LOGE(TAG, "Error reading from file Error: %u, data: %s", error, buffer->c_str());
             readError = error;
             assert(false);
         }
@@ -79,7 +79,7 @@ static int testNonBlockingReadWrite() {
             writeError = error;
         }
         else {
-            CBT_LOGE(TAG, "Error writing to file Error: %u, written: %u, toWrite: %u", error, written, toWrite);
+            PLT_LOGE(TAG, "Error writing to file Error: %u, written: %u, toWrite: %u", error, written, toWrite);
             writeError = error;
             assert(false);
         }
@@ -121,7 +121,7 @@ static int useWithoutOpening() {
     //Try reading the non-existent file.
     error = file.readBlocking(0, filename);
     if (ErrorType::PrerequisitesNotMet != error) {
-        CBT_LOGE(TAG, "File should not be readable %u", (uint8_t)error);
+        PLT_LOGE(TAG, "File should not be readable %u", (uint8_t)error);
         assert(false);
     }
 
@@ -183,7 +183,7 @@ int main() {
 
     Storage::Init(std::string("testStorage"));
     if (ErrorType::Success != Storage::Instance().initStorage()) {
-        CBT_LOGE(TAG, "initStorage failed");
+        PLT_LOGE(TAG, "initStorage failed");
         assert(false);
     }
 

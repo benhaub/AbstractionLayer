@@ -35,7 +35,7 @@ static void *startServerThread(void *arg) {
 
     error = wifiNetworkServer.server->listenTo(IpServerSettings::Protocol::Tcp, IpServerSettings::Version::IPv4, ServerPort);
     if (ErrorType::Success != error) {
-        CBT_LOGE(TAG, "Failed to listen on port %d", ServerPort);
+        PLT_LOGE(TAG, "Failed to listen on port %d", ServerPort);
         assert(false);
     }
 
@@ -51,12 +51,12 @@ static void *startClientThread(void *arg) {
 
     error = wifiNetworkClient.client->connectTo("localhost", ServerPort, IpClientSettings::Protocol::Tcp, IpClientSettings::Version::IPv4, socket, timeout);
     if (ErrorType::Success != error) {
-        CBT_LOGE(TAG, "Failed to connect to server");
+        PLT_LOGE(TAG, "Failed to connect to server");
         assert(false);
     }
     else {
         assert(-1 != socket);
-        CBT_LOGI(TAG, "Connected to server");
+        PLT_LOGI(TAG, "Connected to server");
     }
 
     while(true);
@@ -73,7 +73,7 @@ static int blockingReceiveTest() {
     assert(ErrorType::Success == (error = wifiNetworkServer.server->receiveBlocking(buffer, timeout)));
     
     if (0 != buffer.compare(0, globalDataToSend.length(), globalDataToSend)) {
-        CBT_LOGE(TAG, "Data did not match. Bytes received: %u, Received/Expected %s/%s", buffer.size(), buffer.c_str(), globalDataToSend.c_str());
+        PLT_LOGE(TAG, "Data did not match. Bytes received: %u, Received/Expected %s/%s", buffer.size(), buffer.c_str(), globalDataToSend.c_str());
         assert(false);
     }
 
@@ -92,7 +92,7 @@ static int blockingSendTest() {
         }
         else {
             assert(-1 != sock);
-            CBT_LOGI(TAG, "Accepted connection");
+            PLT_LOGI(TAG, "Accepted connection");
             break;
         }
         OperatingSystem::Instance().delay(1);
@@ -129,7 +129,7 @@ int main() {
 
     if (ErrorType::Success != (error = testWifi.init())) {
         if (ErrorType::NotAvailable != error) {
-            CBT_LOGE(TAG, "Failed to initialize wifi");
+            PLT_LOGE(TAG, "Failed to initialize wifi");
             return EXIT_FAILURE;
         }
     }

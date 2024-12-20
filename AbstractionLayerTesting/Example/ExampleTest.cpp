@@ -11,11 +11,11 @@ static int exampleTest1() {
     const bool testWillPass = true;
 
     if (testWillPass) {
-        CBT_LOGI(TAG, "exampleTest1 passed");
+        PLT_LOGI(TAG, "exampleTest1 passed");
         return EXIT_SUCCESS;
     }
     else {
-        CBT_LOGE(TAG, "exampleTest1 failed");
+        PLT_LOGE(TAG, "exampleTest1 failed");
         return EXIT_FAILURE;
     }
 }
