@@ -35,10 +35,12 @@ class GptmCaptureModule : public GptmCaptureAbstraction {
 
         uint_least8_t index = static_cast<uint_least8_t>(peripheralNumber);
 
+#ifdef CONFIG_TI_DRIVERS_CAPTURE_COUNT
         if (index > CONFIG_TI_DRIVERS_CAPTURE_COUNT) {
             error = ErrorType::InvalidParameter;
             index = CONFIG_TI_DRIVERS_CAPTURE_COUNT + 1;
         }
+#endif
 
         return index;
     }
