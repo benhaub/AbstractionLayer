@@ -34,8 +34,6 @@ ErrorType Pwm::setHardwareConfig(PeripheralNumber peripheral) {
 }
 
 ErrorType Pwm::setDriverConfig(Percent duty, Milliseconds period) {
-    assert(duty <= period);
-
     _dutyCycle = duty;
     _period = period;
 
