@@ -57,15 +57,15 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
 
         switch (priority) {
             case OperatingSystemConfig::Priority::Highest:
-                return configMAX_PRIORITIES;
+                return configMAX_PRIORITIES-1;
             case OperatingSystemConfig::Priority::High:
-                return configMAX_PRIORITIES - 1;
-            case OperatingSystemConfig::Priority::Normal:
                 return configMAX_PRIORITIES - 2;
-            case OperatingSystemConfig::Priority::Low:
+            case OperatingSystemConfig::Priority::Normal:
                 return configMAX_PRIORITIES - 3;
-            case OperatingSystemConfig::Priority::Lowest:
+            case OperatingSystemConfig::Priority::Low:
                 return configMAX_PRIORITIES - 4;
+            case OperatingSystemConfig::Priority::Lowest:
+                return configMAX_PRIORITIES - 5;
             default:
                 assert(false);
         }
