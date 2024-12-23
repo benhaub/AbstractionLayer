@@ -5,6 +5,7 @@
 #include "ti/drivers/Power.h"
 //TI driverlib
 #include "ti/drivers/PWM.h"
+#include "ti/drivers/net/wifi/errors.h"
 
 ErrorType toPlatformError(int32_t err) {
 
@@ -20,6 +21,13 @@ ErrorType toPlatformError(int32_t err) {
     }
     else if (err == Power_ECHANGE_NOT_ALLOWED || err == Power_EBUSY) {
         return ErrorType::PrerequisitesNotMet;
+    }
+    else if (SL_ERROR_ROLE_STA_ERR || SL_ERROR_ROLE_AP_ERR || SL_ERROR_ROLE_P2P_ERR || SL_ERROR_CALIB_FAIL || SL_ERROR_FS_CORRUPTED_ERR || SL_ERROR_FS_ALERT_ERR ||
+             SL_ERROR_RESTORE_IMAGE_COMPLETE || SL_ERROR_ROLE_TAG_ERR || SL_ERROR_FIPS_ERR || SL_ERROR_GENERAL_ERR) {
+                return ErrorType::Failure;
+    }
+    else if (err < 0) {
+        return ErrorType::Failure;
     }
     else {
         PLT_LOGW("ErrnoError", "Got unhandled error code %d", err);

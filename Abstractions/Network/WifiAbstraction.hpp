@@ -17,9 +17,10 @@ namespace WifiConfig {
     */
     enum class Mode : uint8_t {
         Unknown = 0,
-        AccessPoint, ///< Access Point. You can connect to these from a station.
-        Station,     ///< Station. You can connect these to an access point.
-        AccessPointAndStation ///< Access Point and Station.
+        AccessPoint,           ///< Access Point. You can connect to these from a station.
+        Station,               ///< Station. You can connect these to an access point.
+        AccessPointAndStation, ///< Access Point and Station.
+        PointToPoint           ///< Point to Point. Connects two devices directly without any hosts or other networking in between.
     };
 
     /**

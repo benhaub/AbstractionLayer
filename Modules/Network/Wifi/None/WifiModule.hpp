@@ -28,10 +28,12 @@ class Wifi : public WifiAbstraction {
 
     ErrorType mainLoop() override;
 
-    ErrorType setSsid(WifiConfig::Mode mode, std::string ssid) { return ErrorType::NotImplemented; }
-    ErrorType setPassword(WifiConfig::Mode mode, std::string password) { return ErrorType::NotImplemented; }
-    ErrorType setMode(WifiConfig::Mode mode) { return ErrorType::NotImplemented; }
-    ErrorType setAuthMode(WifiConfig::AuthMode authMode) { return ErrorType::NotImplemented; }
+    ErrorType radioOn() override;
+    ErrorType radioOff() override;
+    ErrorType setSsid(WifiConfig::Mode mode, std::string ssid) override;
+    ErrorType setPassword(WifiConfig::Mode mode, std::string password) override;
+    ErrorType setMode(WifiConfig::Mode mode) override;
+    ErrorType setAuthMode(WifiConfig::AuthMode authMode) override;
 };
 
 #endif // __WIFI_MODULE_HPP__

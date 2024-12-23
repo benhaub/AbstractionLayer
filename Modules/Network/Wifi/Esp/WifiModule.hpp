@@ -39,26 +39,9 @@ class Wifi : public WifiAbstraction {
 
     ErrorType radioOn() override;
     ErrorType radioOff() override;
-
-    /**
-     * @brief Set the ssid for the selected mode.
-     * @param[in] mode The wifi mode to set the SSID for
-     * @param[in] ssid The ssid to set
-     */
     ErrorType setSsid(WifiConfig::Mode mode, std::string ssid) override;
-    /**
-     * @brief Set the password for the selected mode.
-     * @param[in] mode The wifi mode to set the password for
-     * @param[in] password The password to set
-    */
     ErrorType setPassword(WifiConfig::Mode mode, std::string password) override;
-    ///@brief set the wifi mode.
     ErrorType setMode(WifiConfig::Mode mode) override { _mode = mode; return ErrorType::Success; }
-    /**
-     * @brief set the wifi authentication mode.
-     * @param[in] authMode The authentication mode to set.
-     * @sa WifiConfig::AuthMode
-     */
     ErrorType setAuthMode(WifiConfig::AuthMode authMode) override { _authMode = authMode; return ErrorType::Success; }
 
     private:
