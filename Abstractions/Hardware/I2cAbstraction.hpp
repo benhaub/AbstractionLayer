@@ -55,21 +55,6 @@ class I2cAbstraction : public IcCommunicationProtocol {
     static constexpr char TAG[] = "I2c";
 
     /**
-     * @brief Initialize the I2C
-     * @pre Configure the I2C first.
-     * @sa setHardwareConfig()
-     * @sa setDriverConfig()
-     * @returns ErrorType::Success if the I2C was initialized successfully.
-     * @returns ErrorType::Failure otherwise.
-     */
-    virtual ErrorType init() = 0;
-    /**
-     * @brief De-initialize the I2C
-     * @returns ErrorType::Success if the I2C was de-initialized successfully.
-     * @returns ErrorType::Failure otherwise.
-     */
-    virtual ErrorType deinit() = 0;
-    /**
      * @brief Set the hardware configurations
      * @param[in] mode The mode of the I2C.
      * @param[in] sda The pin number for the SDA line.

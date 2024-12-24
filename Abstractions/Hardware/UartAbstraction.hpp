@@ -64,22 +64,6 @@ class UartAbstraction : public IcCommunicationProtocol{
     static constexpr char TAG[] = "Uart";
 
     /**
-     * @brief Initialize the UART.
-     * @pre Configure the hardware first.
-     * @sa setHardwareConfig()
-     * @sa setDriverConfig()
-     * @sa setFirmwareConfig()
-     * @returns ErrorType::Success if the UART was initialized successfully.
-     * @returns ErrorType::Failure otherwise
-    */
-    virtual ErrorType init() = 0;
-    /**
-     * @brief De-initialize the UART.
-     * @returns ErrorType::Success if the UART was initialized successfully.
-     * @returns ErrorType::Failure otherwise
-    */
-    virtual ErrorType deinit() = 0;
-    /**
      * @brief Set hardware configuration parameters.
      * @param [in] txNumber The transmit pin number.
      * @param [in] rxNumber The receive pin number.

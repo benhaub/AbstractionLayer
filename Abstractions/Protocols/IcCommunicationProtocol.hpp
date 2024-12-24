@@ -28,20 +28,30 @@ namespace IcCommunicationProtocolTypes {
 /**
  * @class IcCommunicationProtocol
  * @brief Interface for integrated circuit communication
- * TODO: Why did I suddenly switch from abtractions suffixes to protocol? Do I need two different abstractions?
+ * TODO: Why did I suddenly switch from abtraction suffixes to protocol? Do I need two different abstractions?
 */
 class IcCommunicationProtocol : public EventQueue {
 
     public:
-    /**
-     * @brief constructor
-    */
+    ///@brief constructor
     IcCommunicationProtocol() : EventQueue() {}
-    /**
-     * @brief destructor
-    */
+    ///@brief destructor
     virtual ~IcCommunicationProtocol() = default;
 
+    /**
+     * @brief Initialize the IC device
+     * @pre You may need to call configuration functions before calling this function
+     * @returns ErrorType::Success if the device was initialized successfully
+     * @returns ErrorType::Failure otherwise
+     * @post The device is read to use after this call.
+     */
+    virtual ErrorType init() = 0;
+    /**
+     * @brief Deinitialize the IC device
+     * @returns ErrorType::Success if the device was deinitialized successfully
+     * @returns ErrorType::Failure otherwise
+     */
+    virtual ErrorType deinit() = 0;
     /**
      * @brief transmit data
      * @sa Fnd::CommunicationProtocol::send
