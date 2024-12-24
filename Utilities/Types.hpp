@@ -111,15 +111,6 @@ enum class PeripheralNumber : uint32_t {
     Seven,    ///< Peripheral number 7.
     Unknown   ///< Unknown and invalid peripheral number.
 };
-/**
- * @enum PeripheralIdentifier
- * @brief Describes what the number given to hardware configuration is
- */
-enum class PeripheralIdentifier : uint32_t {
-    Unknown = 0, ///< Unknown identifier.
-    BasePointer, ///< The identifier is the base pointer of the peripheral.
-    Number       ///< The identifier is numbered or indexed.
-};
 ///@typedef Register
 ///Hardware register address
 using Register = volatile uint32_t *;

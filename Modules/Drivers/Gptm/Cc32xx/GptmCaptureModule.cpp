@@ -5,7 +5,6 @@
 static const char intervalQueueName[] = "intervals";
 
 ErrorType GptmCaptureModule::init() {
-    //Call setHardwareConfig first
     assert(PeripheralNumber::Unknown != peripheralNumber());
     constexpr int maxMessages = 10;
 
@@ -26,15 +25,6 @@ ErrorType GptmCaptureModule::init() {
     _captureParams.callbackFxn = captureCallback;
 
     _captureHandle = Capture_open(toTiDriverIndex(peripheralNumber(), error), &_captureParams);
-
-    return ErrorType::Success;
-}
-
-ErrorType GptmCaptureModule::setHardwareConfig(PeripheralIdentifier identifier, void *peripheral) {
-    assert(identifier == PeripheralIdentifier::Number);
-    assert(nullptr != peripheral);
-
-    peripheralNumber() = *static_cast<PeripheralNumber *>(peripheral);
 
     return ErrorType::Success;
 }
