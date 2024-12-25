@@ -242,16 +242,7 @@ ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
 }
 
 ErrorType Wifi::mainLoop() {
-    ErrorType error;
-
-    if (ErrorType::NoData == (error = runNextEvent())) {
-        return error;
-    }
-    else if (ErrorType::Success == error) {
-        return error;
-    }
-
-    return ErrorType::Failure;
+    return runNextEvent();
 }
 
 ErrorType Wifi::setSsid(WifiConfig::Mode mode, std::string ssid) {

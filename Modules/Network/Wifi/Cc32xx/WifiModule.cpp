@@ -87,7 +87,7 @@ ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
 }
 
 ErrorType Wifi::mainLoop() {
-    return ErrorType::NotImplemented;
+    return runNextEvent();
 }
 
 ErrorType Wifi::radioOn() {

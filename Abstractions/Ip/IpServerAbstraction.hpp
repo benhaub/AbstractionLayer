@@ -7,7 +7,8 @@
 #ifndef __IP_SERVER_ABSTRACTION_HPP__
 #define __IP_SERVER_ABSTRACTION_HPP__
 
-//Foundation
+//AbstractionLayer
+#include "CommunicationProtocol.hpp"
 #include "Types.hpp"
 #include "Error.hpp"
 //C++
@@ -54,7 +55,7 @@ class NetworkAbstraction;
  * @brief Creates a server on any network
  * @note You should use the network to handle communication by placing events on it's queue.
  */
-class IpServerAbstraction {
+class IpServerAbstraction : public CommunicationProtocol {
 
     public:
     /// @brief Constructor
@@ -82,63 +83,6 @@ class IpServerAbstraction {
      * @returns Fnd::ErrorType::Success on success
     */
     virtual ErrorType closeConnection() = 0;
-    /**
-     * @brief Send data to a socket
-     * @pre data should be appropriately sized with the correct amount of bytes you want to send, i.e data.resize()
-     * @param[in] data The data to send
-     * @param[in] timeout The amount of time to wait for a response
-     * @returns Fnd::ErrorType::Success on success
-     * @returns Fnd::ErrorType::Failure on failure
-     * @returns Fnd::ErrorType::NotImplemented if not implemented
-     * @returns Fnd::ErrorType::Timeout if a timeout occurred
-    */
-    virtual ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) = 0;
-    /**
-     * @brief Receive data from a socket
-     * @pre buffer should be appropriately sized with the correct amount of bytes you want to receive, i.e buffer.resize()
-     * @param[out] buffer The buffer to receive data into
-     * @param[in] timeout The amount of time to wait for a response
-     * @returns Fnd::ErrorType::Success on success
-     * @returns Fnd::ErrorType::Failure on failure
-     * @returns Fnd::ErrorType::NotImplemented if not implemented
-     * @returns Fnd::ErrorType::Timeout if a timeout occurred
-     * @post The number of bytes received is equal to the size of the buffer (i.e buffer.size())
-    */
-    virtual ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) = 0;
-    /**
-     * @brief Receive data from this client
-     * @pre data should be appropriately sized with the correct amount of bytes you want to send, i.e buffer.resize()
-     * @param[in] data The data to send
-     * @param[in] timeout The amount of time to wait for a response
-     * @param[in] callback The callback to call when the data is received
-     * @code
-     * //TODO: add an example of a callback and how to give it to this function
-     * @endcode
-     * @returns Fnd::ErrorType::Success on success
-     * @returns Fnd::ErrorType::Failure on failure
-     * @returns Fnd::ErrorType::NotImplemented if not implemented
-     * @returns Fnd::ErrorType::Timeout if a timeout occurred
-     * @post If the callback is not nullptr, control is returned to the caller immediately and the callback is called when the data is received.
-     *       The value of timeout is ignored. If callback is nullptr, the function will block until the data is received or the timeout occurs.
-    */
-    virtual ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) = 0;
-    /**
-     * @brief Receive data from this client
-     * @pre buffer should be appropriately sized with the correct amount of bytes you want to receive, i.e buffer.resize()
-     * @param[out] buffer The buffer to receive data into
-     * @param[in] timeout The amount of time to wait for a response
-     * @param[in] callback The callback to call when the data is received
-     * @code
-     * //TODO: add an example of a callback and how to give it to this function
-     * @endcode
-     * @returns Fnd::ErrorType::Success on success
-     * @returns Fnd::ErrorType::Failure on failure
-     * @returns Fnd::ErrorType::NotImplemented if not implemented
-     * @returns Fnd::ErrorType::Timeout if a timeout occurred
-     * @post If the callback is not nullptr, control is returned to the caller immediately and the callback is called when the data is received.
-     *       The value of timeout is ignored. If callback is nullptr, the function will block until the data is received or the timeout occurs.
-    */
-    virtual ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) = 0;
 
     /**
      * @brief Get the socket

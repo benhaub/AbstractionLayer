@@ -9,7 +9,6 @@
 
 //AbstractionLayer
 #include "CommunicationProtocol.hpp"
-//Foundation
 #include "Types.hpp"
 #include "Error.hpp"
 //C++
