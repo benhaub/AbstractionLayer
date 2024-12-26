@@ -49,7 +49,6 @@ namespace IpServerSettings {
 
 class NetworkAbstraction;
 
-
 /**
  * @class IpServerAbstraction
  * @brief Creates a server on any network
@@ -59,9 +58,12 @@ class IpServerAbstraction : public CommunicationProtocol {
 
     public:
     /// @brief Constructor
-    IpServerAbstraction() { _status.listening = false; };
+    IpServerAbstraction() : CommunicationProtocol() { _status.listening = false; }
     /// @brief Destructor
     virtual ~IpServerAbstraction() = default;
+
+    /// @brief The tag for logging.
+    static constexpr char TAG[] =  "IpServer";
 
     /**
      * @brief Listen for connections on a port
@@ -84,35 +86,32 @@ class IpServerAbstraction : public CommunicationProtocol {
     */
     virtual ErrorType closeConnection() = 0;
 
-    /**
-     * @brief Get the socket
-    */
-    Socket getSocket() const { return _socket; }
-    /**
-     * @brief Get the protocol
-    */
-    IpServerSettings::Protocol protocol() const { return _protocol; }
-    /**
-     * @brief Get the version
-    */
-    IpServerSettings::Version version() const { return _version; }
-    /**
-     * @brief Get the port
-    */
-    Port port() const { return _port; }
+    ///@brief Get a mutable reference to the socket
+    Socket &getSocket() { return _socket; }
+    ///@brief Get a constant reference to the socket
+    const Socket &getSocketConst() const { return _socket; }
+    ///@brief Get a mutable reference to the protocol
+    IpServerSettings::Protocol &protocol() { return _protocol; }
+    ///@brief Get a constant reference to the protocol
+    const IpServerSettings::Protocol &protocolConst() const { return _protocol; }
+    ///@brief Get a mutable reference to the version
+    IpServerSettings::Version &version() { return _version; }
+    ///@brief Get a constant reference to the version
+    const IpServerSettings::Version &versionConst() const { return _version; }
+    ///@brief Get a mutable reference to the port
+    Port &port() { return _port; }
+    ///@brief Get a constant reference to the port
+    const Port &portConst() const { return _port; }
     /// @brief Get the network abstraction that this server communicates on as a mutable reference
     NetworkAbstraction &network() { assert(nullptr != _network); return *_network; }
-    /**
-     * @brief Get the network abstraction as a constant reference
-    */
-    const NetworkAbstraction &networkConst() const { return *_network; }
-    /**
-     * @brief Get the status of the server
-    */
-    ServerStatus status() const { return _status; }
-    /**
-     * @brief Set the network abstraction
-    */
+    ///@brief Get the network abstraction as a constant reference
+    const NetworkAbstraction &networkConst() const { assert(nullptr != _network); return *_network; }
+    ///@brief Get a mutable reference to the status of the server
+    ServerStatus &status() { return _status; }
+    ///@brief Get a constant reference to the status of the server
+    const ServerStatus &statusConst() const { return _status; }
+    ///@brief Set the network abstraction
+    ///@param[in] network The network abstraction to set
     ErrorType setNetwork(NetworkAbstraction &network) { _network = &network; return ErrorType::Success; }
 
     protected:

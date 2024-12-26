@@ -6,6 +6,9 @@
 class IpServer : public IpServerAbstraction {
 
     public:
+    IpServer() : IpServerAbstraction() {};
+    ~IpServer() = default;
+
     ErrorType listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) override;
     ErrorType acceptConnection(Socket &socket) override;
     ErrorType closeConnection() override;

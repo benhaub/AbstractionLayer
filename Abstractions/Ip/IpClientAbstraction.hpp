@@ -125,7 +125,7 @@ class IpClientAbstraction : public CommunicationProtocol {
     ClientStatus &status() { return _status; }
 
     /// @brief Set the network abstraction that this client communicates on.
-    /// @param network The network abstraction to use.
+    /// @param[in] network The network abstraction to use.
     ErrorType setNetwork(NetworkAbstraction &network) { _network = &network; return ErrorType::Success; }
 
     protected:
