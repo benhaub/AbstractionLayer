@@ -2,11 +2,19 @@
 #include "WifiModule.hpp"
 #include "OperatingSystemModule.hpp"
 #include "Log.hpp"
+#include "SpiModule.hpp"
 
 ErrorType Wifi::init() {
+    ErrorType error;
+    Spi spi;
+    error = spi.init();
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
     constexpr Kilobytes stackSize = 1024;
     Id thread;
-    ErrorType error = OperatingSystem::Instance().createThread(OperatingSystemConfig::Priority::High,
+    error = OperatingSystem::Instance().createThread(OperatingSystemConfig::Priority::High,
                                              std::string("wifiThread"),
                                              nullptr,
                                              stackSize,
