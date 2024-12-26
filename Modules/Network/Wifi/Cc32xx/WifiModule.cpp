@@ -139,15 +139,6 @@ extern "C" {
 void SimpleLinkFatalErrorEventHandler(SlDeviceFatal_t *slFatalErrorEvent) {
     return;
 }
-void SimpleLinkNetAppRequestMemFreeEventHandler(uint8_t *buffer) {
-    return;
-}
-void SimpleLinkNetAppRequestEventHandler(SlNetAppRequest_t *pNetAppRequest, SlNetAppResponse_t *pNetAppResponse) {
-    return;
-}
-void SimpleLinkHttpServerEventHandler(SlNetAppHttpServerEvent_t *pHttpEvent, SlNetAppHttpServerResponse_t * pHttpResponse) {
-    return;
-}
 void SimpleLinkSockEventHandler(SlSockEvent_t *pSock) {
     return;
 }
