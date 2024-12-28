@@ -3,19 +3,13 @@
 
 //AbstractionLayer
 #include "IpServerAbstraction.hpp"
-#include "OperatingSystemModule.hpp"
 //TI Drivers
 #include "ti/drivers/net/wifi/simplelink.h"
-
-//Global because the SimpleLink C handlers are outside the scope of this class and need to be able to access the queue.
-static constexpr char SimpleLinkEventQueue[] = "SimpleLinkEventQueue";
 
 class IpServer : public IpServerAbstraction {
 
     public:
-    IpServer() : IpServerAbstraction() {
-        OperatingSystem::Instance().createQueue(SimpleLinkEventQueue, sizeof(SlNetAppRequest_t), 10);
-    }
+    IpServer() : IpServerAbstraction() {}
     ~IpServer() = default;
 
     ErrorType listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) override;

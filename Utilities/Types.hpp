@@ -122,6 +122,7 @@ using Port = uint16_t;
 ///@typedef Socket
 ///Network socket number
 using Socket = int32_t;
+using Ipv4Address = uint32_t;
 
 //Adapted from Freescale Semiconductor fsl_snvs_hp.c
 static constexpr UnixTime ToUnixTime(DateTime dt) {
@@ -267,6 +268,19 @@ static constexpr DateTime ToDateTime(UnixTime seconds) {
     dateSince.day = daysSince;
 
     return dateSince;
-} 
+}
+
+constexpr inline uint8_t ipv4AddressToOctet1(Ipv4Address address) {
+    return (address >> 24) & 0xFF;
+}
+constexpr inline uint8_t ipv4AddressToOctet2(Ipv4Address address) {
+    return (address >> 16) & 0xFF;
+}
+constexpr inline uint8_t ipv4AddressToOctet3(Ipv4Address address) {
+    return (address >> 8) & 0xFF;
+}
+constexpr inline uint8_t ipv4AddressToOctet4(Ipv4Address address) {
+    return (address) & 0xFF;
+}
 
 #endif //__TYPES_HPP__
