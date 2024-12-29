@@ -5,54 +5,78 @@
 #include "SpiModule.hpp"
 
 ErrorType Wifi::init() {
-    ErrorType error;
-    Spi spi;
-    error = spi.init();
-    if (ErrorType::Success != error) {
-        return error;
-    }
+    ErrorType error = ErrorType::Success;
 
-    constexpr Kilobytes stackSize = 1024;
     Id thread;
-    error = OperatingSystem::Instance().createThread(OperatingSystemConfig::Priority::High,
-                                             std::string("wifiThread"),
-                                             nullptr,
-                                             stackSize,
-                                             sl_Task,
-                                             thread);
+    const bool wifiNetworkThreadHasNotBeenCreated = ErrorType::NoData == OperatingSystem::Instance().threadId("wifiNetworkThread", thread);
+    if (wifiNetworkThreadHasNotBeenCreated) {
+        Spi spi;
+        error = spi.init();
+        if (ErrorType::Success != error) {
+            return error;
+        }
+
+        constexpr Kilobytes stackSize = 1024;
+        error = OperatingSystem::Instance().createThread(OperatingSystemConfig::Priority::High,
+                                                std::string("wifiNetworkThread"),
+                                                nullptr,
+                                                stackSize,
+                                                sl_Task,
+                                                thread);
+    }
 
     if (ErrorType::Success != error) {
         return error;
     }
 
-    PLT_LOGI(TAG, "Turning on radio");
     error = radioOn();
     if (ErrorType::Success != error) {
         return error;
     }
 
+    //Enable DHCP client
+    sl_NetCfgSet(SL_NETCFG_IPV4_STA_ADDR_MODE, SL_NETCFG_ADDR_DHCP, 0, 0);
 
-    PLT_LOGI(TAG, "Bringing up network");
+    //Disable IPV6
+    uint16_t ifBitmap = 0;
+    sl_NetCfgSet(SL_NETCFG_IF, SL_NETCFG_IF_STATE, sizeof(ifBitmap), (uint8_t *)&ifBitmap);
+
+    //Disable scan
+    uint8_t ucConfigOpt = SL_WLAN_SCAN_POLICY(0, 0);
+    sl_WlanPolicySet(SL_WLAN_POLICY_SCAN, ucConfigOpt, NULL, 0);
+
+    //Set Tx power level for station mode. Number between 0-15, as dB offset from max power - 0 will set max power
+    uint8_t ucPower = sl_WlanSet(SL_WLAN_CFG_GENERAL_PARAM_ID, SL_WLAN_GENERAL_PARAM_OPT_STA_TX_POWER, sizeof(ucPower), (uint8_t *)&ucPower);
+
+    //Set PM policy to normal
+    sl_WlanPolicySet(SL_WLAN_POLICY_PM, SL_WLAN_NORMAL_POLICY, NULL, 0);
+
+    //Unregister mDNS services
+    sl_NetAppMDNSUnRegisterService(0, 0, 0);
+
+    //Remove all 64 filters (8*8)
+    SlWlanRxFilterOperationCommandBuff_t rxFilterIdMask;
+    memset(rxFilterIdMask.FilterBitmap, 0xFF, 8);
+    sl_WlanSet(SL_WLAN_RX_FILTERS_ID, SL_WLAN_RX_FILTER_REMOVE, sizeof(rxFilterIdMask), (uint8_t *)&rxFilterIdMask);
+
+    error = radioOff();
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    error = radioOn();
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
     return networkUp();
 }
 
 ErrorType Wifi::networkUp() {
     assert(WifiConfig::Mode::Unknown != _mode);
-    _u8 provisioningCommand;
     Seconds timeout = 1200;
 
     if (_mode == WifiConfig::Mode::AccessPointAndStation) {
-        return ErrorType::NotSupported;
-    }
-
-    if (WifiConfig::Mode::AccessPoint == _mode) {
-        provisioningCommand = SL_WLAN_PROVISIONING_CMD_START_MODE_APSC;
-    }
-    else if (WifiConfig::Mode::Station == _mode) {
-        provisioningCommand = SL_WLAN_PROVISIONING_CMD_START_MODE_SC;
-
-    }
-    else {
         return ErrorType::NotSupported;
     }
 
@@ -64,11 +88,23 @@ ErrorType Wifi::networkUp() {
     }
 
     constexpr char *smartConfigKey = nullptr;
-    return toPlatformError(sl_WlanProvisioning(provisioningCommand, role, timeout, smartConfigKey, flags));
+    signed short result;
+    result = sl_WlanProvisioning(SL_WLAN_PROVISIONING_CMD_START_MODE_APSC, role, timeout, smartConfigKey, flags);
+    if (0 == result) {
+        _status.isUp = true;
+    }
+
+    return toPlatformError(result);
 }
 
 ErrorType Wifi::networkDown() {
-    return ErrorType::NotImplemented;
+    signed short result;
+    result = sl_WlanProvisioning(SL_WLAN_PROVISIONING_CMD_STOP, 0xFF, 0, NULL, 0x0);
+    if (0 == result) {
+        _status.isUp = false;
+    }
+
+    return toPlatformError(result);
 }
 
 ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) {
@@ -112,25 +148,80 @@ ErrorType Wifi::radioOn() {
 }
 
 ErrorType Wifi::radioOff() {
-    return toPlatformError(sl_Stop(0xFFFF));
+    signed short result = sl_Stop(0xFFFF);
+    if (0 == result) {
+        _status.isUp = false;
+    }
+
+    return toPlatformError(result);
 }
 
 ErrorType Wifi::setSsid(WifiConfig::Mode mode, std::string ssid) {
-    return ErrorType::NotImplemented;
+    if (mode != WifiConfig::Mode::AccessPoint) {
+        return ErrorType::InvalidParameter;
+    }
+
+    signed short result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_SSID, ssid.size(), reinterpret_cast<const unsigned char *>(ssid.c_str()));
+    if (0 == result) {
+        _ssid = ssid;
+    }
+
+    return toPlatformError(result);
 }
 
 ErrorType Wifi::setPassword(WifiConfig::Mode mode, std::string password) {
-    return ErrorType::NotImplemented;
+    //Passwords have length requirements based on the authorization mode
+    assert(WifiConfig::AuthMode::Unknown != _authMode);
+
+    if (WifiConfig::Mode::AccessPoint != mode) {
+        return ErrorType::InvalidParameter;
+    }
+
+    if (WifiConfig::AuthMode::Wpa == _authMode ||WifiConfig::AuthMode::WpaWpa2 == _authMode) {
+        if (password.size() < 8 || password.size() > 63) {
+            return ErrorType::InvalidParameter;
+        }
+    }
+
+    signed short result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_PASSWORD, password.size(), reinterpret_cast<const unsigned char *>(password.c_str()));
+
+    if (0 == result) {
+        _password = password;
+    }
+
+    return toPlatformError(result);
 }
 
 ErrorType Wifi::setMode(WifiConfig::Mode mode) {
-    _mode = mode;
-    return ErrorType::Success;
+    ErrorType error = ErrorType::Failure;
+
+    //TI uses mode and role interchangeably and I wish they wouldn't.
+    _u8 cc32xxMode = toCc32xxRole(mode, error);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+    _i16 result = sl_WlanSetMode(cc32xxMode);
+    if (0 == result) {
+        _mode = mode;
+    }
+
+    return toPlatformError(result);
 }
 
 ErrorType Wifi::setAuthMode(WifiConfig::AuthMode authMode) {
-    _authMode = authMode;
-    return ErrorType::Success;
+    ErrorType error = ErrorType::Failure;
+
+    unsigned short securityType = toCc32xxSecurityType(authMode, error);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    signed short result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_SECURITY_TYPE, 1, (_u8 *)&securityType);
+    if (0 == result) {
+        _authMode = authMode;
+    }
+
+    return toPlatformError(result);
 }
 
 #ifdef __cplusplus

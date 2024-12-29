@@ -28,11 +28,22 @@ namespace WifiConfig {
      * @brief Wifi authentication mode.
     */
     enum class AuthMode : uint8_t {
-        Unknown = 0, ///< Unknown
-        Open,        ///< Open
-        Wep,         ///< WEP
-        WpaPsk,      ///< WPA-PSK
-        Wpa2Psk      ///< WPA2-PSK
+        Unknown = 0,   ///< Unknown
+        Open,          ///< Open
+        Wep,           ///< WEP
+        Wpa,           ///< WPA
+        WpaWpa2,       ///< WPA/WPA2
+        WpsPbc,        ///<WPS/PBC
+        WpsPin,        ///< WPS/PIN
+        WpaEnt,        ///< WPA Enterprise
+        P2pPbc,        ///< P2P Push Button Configuration
+        P2pPinKeypad,  ///< P2P Pin Keypad
+        P2pPinDisplay, ///< P2P Pin Display
+        P2pPinAuto,    ///< P2P Pin Auto
+        WepShared,     ///< WEP Shared
+        Wpa2Plus,      ///< WPA2 Plus
+        Wpa3,          ///< WPA3
+        WpaPmk         ///< WPA PMK
     };
 }
 
@@ -73,6 +84,7 @@ class WifiAbstraction : public NetworkAbstraction {
     virtual ErrorType setSsid(WifiConfig::Mode mode, std::string ssid) = 0;
     /**
      * @brief Set the password for the selected mode.
+     * @pre Since passwords have length requirements based on the authorization mode, you must call setAuthMode first.
      * @param[in] mode The wifi mode to set the password for
      * @param[in] password The password to set
     */

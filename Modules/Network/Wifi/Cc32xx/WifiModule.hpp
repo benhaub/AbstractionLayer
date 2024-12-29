@@ -52,7 +52,7 @@ class Wifi : public WifiAbstraction {
         }
     }
 
-    uint8_t toCc32xxRole(const WifiConfig::Mode mode, ErrorType &error) {
+    _u8 toCc32xxRole(const WifiConfig::Mode mode, ErrorType &error) {
         error = ErrorType::Success;
 
         switch (mode) {
@@ -66,6 +66,46 @@ class Wifi : public WifiAbstraction {
             default:
                 error = ErrorType::InvalidParameter;
                 return ROLE_STA;
+        }
+    }
+
+    signed short toCc32xxSecurityType(const WifiConfig::AuthMode authMode, ErrorType &error) {
+        error = ErrorType::Success;
+
+        switch (authMode) {
+            case WifiConfig::AuthMode::Open:
+                return SL_WLAN_SEC_TYPE_OPEN;
+            case WifiConfig::AuthMode::Wep:
+                return SL_WLAN_SEC_TYPE_WEP;
+            case WifiConfig::AuthMode::Wpa:
+                return SL_WLAN_SEC_TYPE_WPA;
+            case WifiConfig::AuthMode::WpaWpa2:
+                return SL_WLAN_SEC_TYPE_WPA_WPA2;
+            case WifiConfig::AuthMode::WpsPbc:
+                return SL_WLAN_SEC_TYPE_WPS_PBC;
+            case WifiConfig::AuthMode::WpsPin:
+                return SL_WLAN_SEC_TYPE_WPS_PIN;
+            case WifiConfig::AuthMode::WpaEnt:
+                return SL_WLAN_SEC_TYPE_WPA_ENT;
+            case WifiConfig::AuthMode::P2pPbc:
+                return SL_WLAN_SEC_TYPE_P2P_PBC;
+            case WifiConfig::AuthMode::P2pPinKeypad:
+                return SL_WLAN_SEC_TYPE_P2P_PIN_KEYPAD;
+            case WifiConfig::AuthMode::P2pPinDisplay:
+                return SL_WLAN_SEC_TYPE_P2P_PIN_DISPLAY;
+            case WifiConfig::AuthMode::P2pPinAuto:
+                return SL_WLAN_SEC_TYPE_P2P_PIN_AUTO;
+            case WifiConfig::AuthMode::WepShared:
+                return SL_WLAN_SEC_TYPE_WEP_SHARED;
+            case WifiConfig::AuthMode::Wpa2Plus:
+                return SL_WLAN_SEC_TYPE_WPA2_PLUS;
+            case WifiConfig::AuthMode::Wpa3:
+                return SL_WLAN_SEC_TYPE_WPA3;
+            case WifiConfig::AuthMode::WpaPmk:
+                return SL_WLAN_SEC_TYPE_WPA_PMK;
+            default:
+                error = ErrorType::InvalidParameter;
+                return SL_WLAN_SEC_TYPE_OPEN;
         }
     }
 };

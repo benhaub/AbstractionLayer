@@ -26,8 +26,8 @@ ErrorType toPlatformError(int32_t err) {
              SL_ERROR_RESTORE_IMAGE_COMPLETE || SL_ERROR_ROLE_TAG_ERR || SL_ERROR_FIPS_ERR || SL_ERROR_GENERAL_ERR) {
                 return ErrorType::Failure;
     }
-    else if (err < 0) {
-        return ErrorType::Failure;
+    else if (SL_RET_CODE_DEV_ALREADY_STARTED) {
+        return ErrorType::Success;
     }
     else {
         PLT_LOGW("ErrnoError", "Got unhandled error code %d", err);
