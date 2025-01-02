@@ -5,7 +5,7 @@
 
 namespace HttpServerTypes {
 
-    enum class Accept : uint8_t {
+    enum class Type : uint8_t {
         Unknown = 0,
         TextHtml,
         ApplicationJson,
@@ -28,27 +28,52 @@ namespace HttpServerTypes {
         VideoMp
     };
 
-    enum class ContentType : uint8_t {
+    enum class Method : uint8_t {
         Unknown = 0,
-        TextHtml,
-        ApplicationJson,
-        ApplicationXml,
-        ApplicationXhtmlXml,
-        ApplicationOctetStream,
-        ApplicationFormUrlencoded,
-        ApplicationXwwwFormUrlencoded,
-        ImageGif,
-        ImageJpeg,
-        ImagePng,
-        ImageTiff,
-        ImageSvgXml,
-        AudioBasic,
-        AudioMpeg,
-        AudioVorbis,
-        AudioVndWave,
-        AudioWebm,
-        VideoMpeg,
-        VideoMp
+        Get,
+        Post,
+        Put,
+        Delete,
+        Head,
+        Connect,
+        Options,
+        Trace
+    };
+
+    enum class Version : uint8_t {
+        Unknown = 0, ///< Unknown
+        Http1_0,     ///< Hypertext Transfer Protocol 1.0
+        Http1_1,     ///< Hypertext Transfer Protocol 1.1
+        Http2_0,     ///< Hypertext Transfer Protocol 2.0
+        Http3_0      ///< Hypertext Transfer Protocol 3.0
+    };
+
+    enum class Connection : uint8_t {
+        Unknown = 0,
+        KeepAlive,
+        Close
+    };
+
+    enum class Language : uint8_t {
+        Unknown = 0,Afrikaans,Amharic,Arabic_SaudiArabia,Assamese,Azerbaijani_Latin,Belarusian,Bulgarian,Bangla_Bangladesh,Bangla_India,
+        Bosnian_Latin,CatalanSpanish,Valencian,Czech,Welsh,Danish,German_Germany,Greek, English_UnitedKingdom,English_UnitedStates,
+        Spanish_Spain,Spanish_UnitedStates,Spanish_Mexico,Estonian,Basque,Persian,Finnish,Filipino,French_France,French_Canada,Irish,
+        ScottishGaelic,Galician,Gujarati,Hausa_Latin,Hebrew,Hindi,Croation,Hungarian,Armenian,Indonesian,Igbo,Icelandic,Italian_Italy,
+        Japanese,Georgian,Kazakh,Khmer,Kannada,Korean,Konkani,CentralKurdish,Kyrgyz,LuxemBourgish,Lithuanian,Latvian,Maori,Macedonian,
+        Malayalam,Mongolian_Cyrillic,Marathi,Maylay_Maylaysia,Maltese,Norwegian_Bokmal,Nepali_Nepal,Dutch_Netherlands,Norwegian_Nynorsk,
+        SesothoSaLeboa,Odia,Punjabi_Gurmukhi,Punjabi_Arabic,Polish,Dari,Portuguese_Brazil,Portuguese_Portugal,Kiche,Quechua_Peru,
+        Romanian_Romania,Russian,Kinyarwanda,Sindhi_Arabic,Sinhala,Slovak,Slovenian,Albanian,Serbian_Cyrillic_BosniaHerzegovina,
+        Serbian_Cyrillic_Serbia,Serbian_Latin_Serbia,Swedish_Swedin,Kiswahili,Tamil,Telugu,Tajik_Cyrillic,Thai,Tigrinya,Turkmen_Latin,
+        Setswana,Turkish,Tatar_Cyrillic, Uyghu,Ukranian,Urda,Uzbek_Latin,Vietnamese,Wolof,isiXhosa,Yoruba,Chinese_Simplified,Chinese_Traditional,
+        isiZulu
+    };
+
+    enum class Encoding : uint8_t {
+        Unknown = 0,
+        Gzip,
+        Deflate,
+        Br,
+        Identity
     };
 
     struct MessageBody {
@@ -56,12 +81,15 @@ namespace HttpServerTypes {
     };
 
     struct Headers {
-        std::string hostname;
-        Ipv4Address hostAddress;
         std::string userAgent;
-        ContentType contentType;
+        std::string host;
+        std::string referer;
+        std::vector<Language> language;
+        std::vector<Type> accept;
+        std::vector<Encoding> encoding;
+        Type contentType;
+        Connection connection;
         Bytes contentLength;
-        Accept accept;
     };
 
     struct CustomHeaders {
@@ -69,9 +97,9 @@ namespace HttpServerTypes {
     };
 
     struct RequestLine {
-        std::string method;
+        Method method;
         std::string uri;
-        std::string version;        
+        Version version;        
     };
 
     struct Request {
@@ -82,6 +110,7 @@ namespace HttpServerTypes {
     };
 
     struct Response {
+        //TODO: It might be the in the response we have content and in the request we have accept.
         //TODO: I don't know what should go in here. I could maybe even typedef this to a Request.
         std::string data;
     };

@@ -16,11 +16,11 @@ ErrorType Wifi::init() {
             return error;
         }
 
-        constexpr Kilobytes stackSize = 1024;
+        constexpr Bytes kilobyte = 1024;
         error = OperatingSystem::Instance().createThread(OperatingSystemConfig::Priority::High,
                                                 std::string("wifiNetworkThread"),
                                                 nullptr,
-                                                stackSize,
+                                                2*kilobyte,
                                                 sl_Task,
                                                 thread);
     }
