@@ -33,10 +33,10 @@ enum class ErrorType : uint8_t {
 };
 
 /**
- * @brief Converts an integer error code to an ErrorType
+ * @brief returns an ErrorType from a platform specific error code
  * @param error The error code to convert 
  * @returns The ErrorType corresponding to the error code 
  */
-ErrorType toPlatformError(int32_t error);
+ErrorType fromPlatformError(int32_t error);
 
 #endif // __ERROR_HPP__

@@ -94,7 +94,7 @@ ErrorType Wifi::networkUp() {
         _status.isUp = true;
     }
 
-    return toPlatformError(result);
+    return fromPlatformError(result);
 }
 
 ErrorType Wifi::networkDown() {
@@ -104,7 +104,7 @@ ErrorType Wifi::networkDown() {
         _status.isUp = false;
     }
 
-    return toPlatformError(result);
+    return fromPlatformError(result);
 }
 
 ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) {
@@ -123,7 +123,7 @@ ErrorType Wifi::getMacAddress(std::string &macAddress) {
     assert(macAddress.size() >= 6);
     uint16_t macAddressLen = macAddress.size();
 
-    return toPlatformError(sl_NetCfgGet(SL_NETCFG_MAC_ADDRESS_GET, NULL, &macAddressLen, reinterpret_cast<unsigned char *>(macAddress.data())));
+    return fromPlatformError(sl_NetCfgGet(SL_NETCFG_MAC_ADDRESS_GET, NULL, &macAddressLen, reinterpret_cast<unsigned char *>(macAddress.data())));
 }
 
 ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
@@ -143,7 +143,7 @@ ErrorType Wifi::radioOn() {
         return ErrorType::Success;
     }
     else {
-        return toPlatformError(mode);
+        return fromPlatformError(mode);
     }
 }
 
@@ -153,7 +153,7 @@ ErrorType Wifi::radioOff() {
         _status.isUp = false;
     }
 
-    return toPlatformError(result);
+    return fromPlatformError(result);
 }
 
 ErrorType Wifi::setSsid(WifiConfig::Mode mode, std::string ssid) {
@@ -166,7 +166,7 @@ ErrorType Wifi::setSsid(WifiConfig::Mode mode, std::string ssid) {
         _ssid = ssid;
     }
 
-    return toPlatformError(result);
+    return fromPlatformError(result);
 }
 
 ErrorType Wifi::setPassword(WifiConfig::Mode mode, std::string password) {
@@ -189,7 +189,7 @@ ErrorType Wifi::setPassword(WifiConfig::Mode mode, std::string password) {
         _password = password;
     }
 
-    return toPlatformError(result);
+    return fromPlatformError(result);
 }
 
 ErrorType Wifi::setMode(WifiConfig::Mode mode) {
@@ -205,7 +205,7 @@ ErrorType Wifi::setMode(WifiConfig::Mode mode) {
         _mode = mode;
     }
 
-    return toPlatformError(result);
+    return fromPlatformError(result);
 }
 
 ErrorType Wifi::setAuthMode(WifiConfig::AuthMode authMode) {
@@ -221,7 +221,7 @@ ErrorType Wifi::setAuthMode(WifiConfig::AuthMode authMode) {
         _authMode = authMode;
     }
 
-    return toPlatformError(result);
+    return fromPlatformError(result);
 }
 
 #ifdef __cplusplus

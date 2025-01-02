@@ -4,7 +4,7 @@
 //C++
 #include <cerrno>
 
-ErrorType toPlatformError(int32_t err) {
+ErrorType fromPlatformError(int32_t err) {
 
     switch (err) {
         case -1:

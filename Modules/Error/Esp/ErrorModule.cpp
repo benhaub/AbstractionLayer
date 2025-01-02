@@ -6,7 +6,7 @@
 #include "esp_wifi.h" //For wifi error codes.
 #include "nvs.h"     //For NVS error codes.
 
-ErrorType toPlatformError(int32_t err) {
+ErrorType fromPlatformError(int32_t err) {
 
     switch (err) {
         case ESP_FAIL:

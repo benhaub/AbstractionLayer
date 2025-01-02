@@ -1,7 +1,7 @@
 //AbstractionLayer
 #include "Error.hpp"
 
-ErrorType toPlatformError(int32_t err) {
+ErrorType fromPlatformError(int32_t err) {
 
     switch (err) {
         default:

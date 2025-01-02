@@ -7,7 +7,7 @@
 #include "ti/drivers/PWM.h"
 #include "ti/drivers/net/wifi/errors.h"
 
-ErrorType toPlatformError(int32_t err) {
+ErrorType fromPlatformError(int32_t err) {
 
     //A switch statement would be nice but there are duplicate error values.
     if (err == Power_SOK || err == PWM_STATUS_SUCCESS) {

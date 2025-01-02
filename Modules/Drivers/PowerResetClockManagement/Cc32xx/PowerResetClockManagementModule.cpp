@@ -7,5 +7,5 @@
 
 ErrorType PowerResetClockManagement::init() {
     PRCMCC3200MCUInit();
-    return toPlatformError(Power_init());
+    return fromPlatformError(Power_init());
 }

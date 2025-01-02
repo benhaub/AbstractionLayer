@@ -23,7 +23,7 @@ ErrorType GptmPwmModule::init() {
         return ErrorType::Failure;
     }
 
-    return toPlatformError(PWM_setDuty(_pwmHandle, pwmParams.dutyValue));
+    return fromPlatformError(PWM_setDuty(_pwmHandle, pwmParams.dutyValue));
 }
 
 ErrorType GptmPwmModule::deinit() {
@@ -52,7 +52,7 @@ ErrorType GptmPwmModule::setDutyCycle(Percent on) {
 
     const Milliseconds dutyValue = (on / 100) * _period;
 
-    return toPlatformError(PWM_setDuty(_pwmHandle, dutyValue));
+    return fromPlatformError(PWM_setDuty(_pwmHandle, dutyValue));
 }
 
 ErrorType GptmPwmModule::setPeriod(Milliseconds period) {
@@ -61,5 +61,5 @@ ErrorType GptmPwmModule::setPeriod(Milliseconds period) {
         return ErrorType::Success;
     }
 
-    return toPlatformError(PWM_setPeriod(_pwmHandle, period * 1E3));
+    return fromPlatformError(PWM_setPeriod(_pwmHandle, period * 1E3));
 }

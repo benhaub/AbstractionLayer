@@ -47,7 +47,7 @@ ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority
     retc |= pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_DETACHED);
     retc |= pthread_attr_setstacksize(&attrs, stackSize);
     if (retc != 0) {
-        return toPlatformError(retc);
+        return fromPlatformError(retc);
     }
 
     //On cc32xx, the start function is called before pthread_create returns so we have to add our thread before we create it.
@@ -73,7 +73,7 @@ ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority
     }
     else {
         deleteThread(name);
-        error = toPlatformError(retc);
+        error = fromPlatformError(retc);
     }
 
     _status.threadCount = threads.size();
@@ -102,7 +102,7 @@ ErrorType OperatingSystem::joinThread(std::string name) {
     }
 
     ret = pthread_join(threads[name].cc32xxThreadId, nullptr);
-    return toPlatformError(ret);
+    return fromPlatformError(ret);
 }
 
 ErrorType OperatingSystem::threadId(std::string name, Id &thread) {
@@ -127,7 +127,7 @@ ErrorType OperatingSystem::createSemaphore(Count max, Count initial, std::string
     int pshared = 0;
     int ret = sem_init(semaphore, pshared, initial);
     if (0 == ret) {
-        return toPlatformError(ret);
+        return fromPlatformError(ret);
     }
     else {
         semaphores[name] = semaphore;
@@ -137,7 +137,7 @@ ErrorType OperatingSystem::createSemaphore(Count max, Count initial, std::string
 
 ErrorType OperatingSystem::deleteSemaphore(std::string name) {
     if (0 != sem_destroy(semaphores[name])) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
 
     semaphores.erase(name);
@@ -168,7 +168,7 @@ ErrorType OperatingSystem::waitSemaphore(std::string &name, Milliseconds timeout
 
 
     if (0 != result) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
 
     return ErrorType::Success;
@@ -180,7 +180,7 @@ ErrorType OperatingSystem::incrementSemaphore(std::string &name) {
     }
 
     if (0 != sem_post(semaphores[name])) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
 
     return ErrorType::Success;
@@ -192,7 +192,7 @@ ErrorType OperatingSystem::decrementSemaphore(std::string name) {
     }
 
     if (0 != sem_trywait(semaphores[name])) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
 
     return ErrorType::Success;
@@ -242,7 +242,7 @@ ErrorType OperatingSystem::createTimer(Id &timer, Milliseconds period, bool auto
 
     if (0 != res) {
         deleteTimer(timer);
-        return toPlatformError(res);
+        return fromPlatformError(res);
     }
 
     return ErrorType::Success;
