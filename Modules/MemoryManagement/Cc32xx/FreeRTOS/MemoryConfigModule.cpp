@@ -7,6 +7,10 @@
 static void *allocate(size_t size) {
     void *ptr = nullptr;
 
+    if (0 == size) {
+        return nullptr;
+    }
+
     ptr = pvPortMalloc(size);
 
     assert(nullptr != ptr);
