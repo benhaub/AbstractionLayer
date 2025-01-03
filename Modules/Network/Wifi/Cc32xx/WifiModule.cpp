@@ -70,6 +70,8 @@ ErrorType Wifi::init() {
     }
 
     return networkUp();
+
+    return error;
 }
 
 ErrorType Wifi::networkUp() {
@@ -89,7 +91,7 @@ ErrorType Wifi::networkUp() {
 
     constexpr char *smartConfigKey = nullptr;
     signed short result;
-    result = sl_WlanProvisioning(SL_WLAN_PROVISIONING_CMD_START_MODE_APSC, role, timeout, smartConfigKey, flags);
+    result = sl_WlanProvisioning(SL_WLAN_PROVISIONING_CMD_START_MODE_AP, role, timeout, smartConfigKey, flags);
     if (0 == result) {
         _status.isUp = true;
     }

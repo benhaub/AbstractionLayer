@@ -28,6 +28,10 @@ ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const M
 
     error = toHttpRequest(netAppRequest, request);
 
+    //TODO: Mempool?
+    delete netAppRequest.requestData.pMetadata;
+    delete netAppRequest.requestData.pPayload;
+
     return error;
 }
 
