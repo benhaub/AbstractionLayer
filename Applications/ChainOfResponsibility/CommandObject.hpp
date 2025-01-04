@@ -37,20 +37,21 @@ class CommandObject {
     /// @brief Get a mutable reference to the logic signature.
     LogicSignature &logicSignature() { return _logicSignature; }
 
-    static LogicSignature nextUniqueLogicSignature(ErrorType &error) {
+    /**
+     * @brief Get the next unique logic signature.
+     * @returns The next unique logic signature on success.
+     * @returns CommandObject::_InvalidLogicSignature on failure.
+     * @note Logic signatures are best stored globally so that individual software components can easily access them.
+     */
+    static LogicSignature nextUniqueLogicSignature() {
         //System wide unique logic signature for chain of responsibility.
         static LogicSignature _uniqueLogicSignature = __UINT32_MAX__;
-        error = ErrorType::Success;
 
         //In case you update the logic signature type, this will catch it. You can of course change
         //these checks to support the current type required.
         assert(typeid(uint32_t) == typeid(_uniqueLogicSignature));
 
         _uniqueLogicSignature += 1;
-        const bool allLogicSignaturesUsed = _uniqueLogicSignature == __UINT32_MAX__;
-        if (allLogicSignaturesUsed) {
-            error = ErrorType::LimitReached;
-        }
 
         return _uniqueLogicSignature;
     }
