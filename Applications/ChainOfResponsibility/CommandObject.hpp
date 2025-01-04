@@ -8,27 +8,17 @@
 
 //AbstractionLayer
 #include "Types.hpp"
+#include "Error.hpp"
 //C++
 #include <string>
+#include <cassert>
 
-/**
- * @enum LogicSignature
- * @brief The logic signature tells the chain of responsibility where the command object should be processed.
- *        This is meant to be a shortcut so that we can avoid search times of worker threads searching through
- *        the chain looking for objects that they want to process. Using the signature, we can place them individually
- *        into their own chains so that worker threads know exactly where to look to find command objects to process.
-*/
-enum class LogicSignature {
-    Unknown = 0,       ///< The signature is unknown.
-    NetworkData = 1,   ///< The data is network data and origingate from the newtwork.
-    StorageData = 2,   ///< The data is storage data and originates from storage.
-    CleonData = 3,     ///< The data is Cleon data and originates from cleon.
-    FoundationData = 4 ///< The data is Foundation data and originates from Foundation.
-};
+using LogicSignature = uint32_t;
 
 /**
  * @class CommandObject
  * @brief Command object that can be processed by a processing object.
+ * @note It's easiest to create a class with the required data and subclass this class.
 */
 class CommandObject {
     public:
@@ -40,14 +30,34 @@ class CommandObject {
     /// @brief Destructor.
     virtual ~CommandObject() = default;
 
-    /// @brief Get the logic signature constant.
-    LogicSignature logicSignatureConst() const { return _logicSignature; }
-    /// @brief Get the logic signature reference
+    static constexpr LogicSignature _InvalidLogicSignature = __UINT32_MAX__;
+
+    /// @brief Get a constant reference to the logic signature.
+    const LogicSignature logicSignatureConst() const { return _logicSignature; }
+    /// @brief Get a mutable reference to the logic signature.
     LogicSignature &logicSignature() { return _logicSignature; }
+
+    static LogicSignature nextUniqueLogicSignature(ErrorType &error) {
+        //System wide unique logic signature for chain of responsibility.
+        static LogicSignature _uniqueLogicSignature = __UINT32_MAX__;
+        error = ErrorType::Success;
+
+        //In case you update the logic signature type, this will catch it. You can of course change
+        //these checks to support the current type required.
+        assert(typeid(uint32_t) == typeid(_uniqueLogicSignature));
+
+        _uniqueLogicSignature += 1;
+        const bool allLogicSignaturesUsed = _uniqueLogicSignature == __UINT32_MAX__;
+        if (allLogicSignaturesUsed) {
+            error = ErrorType::LimitReached;
+        }
+
+        return _uniqueLogicSignature;
+    }
 
     private:
     /// @brief The logic signature of the command object
-    LogicSignature _logicSignature = LogicSignature::Unknown;
+    LogicSignature _logicSignature;
 };
 
 #endif // __COMMAND_OBJECT_HPP__
