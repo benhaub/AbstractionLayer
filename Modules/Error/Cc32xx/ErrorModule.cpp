@@ -6,6 +6,7 @@
 //TI driverlib
 #include "ti/drivers/PWM.h"
 #include "ti/drivers/net/wifi/errors.h"
+#include "errno.h"
 
 ErrorType fromPlatformError(int32_t err) {
 
@@ -28,6 +29,12 @@ ErrorType fromPlatformError(int32_t err) {
     }
     else if (SL_RET_CODE_DEV_ALREADY_STARTED) {
         return ErrorType::Success;
+    }
+    else if (err == ENOSPC) {
+        return ErrorType::NoMemory;
+    }
+    else if (err == EINVAL) {
+        return ErrorType::InvalidParameter;
     }
     else {
         PLT_LOGW("ErrnoError", "Got unhandled error code %d", err);
