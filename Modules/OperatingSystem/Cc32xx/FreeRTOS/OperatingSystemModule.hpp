@@ -88,7 +88,7 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
     Id nextTimerId = 0;
 
     std::map<std::string, Thread> threads;
-    std::map<std::string, sem_t *> semaphores;
+    std::map<std::string, sem_t> semaphores;
     std::map<std::string, QueueHandle_t> queues;
     std::map<timer_t, Timer> timers;
 };

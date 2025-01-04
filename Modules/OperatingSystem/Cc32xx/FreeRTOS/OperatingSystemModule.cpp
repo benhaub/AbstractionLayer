@@ -123,11 +123,11 @@ ErrorType OperatingSystem::isDeleted(std::string &name) {
 }
 
 ErrorType OperatingSystem::createSemaphore(Count max, Count initial, std::string name) {
-    sem_t *semaphore = nullptr;
+    sem_t semaphore;
     int pshared = 0;
-    int ret = sem_init(semaphore, pshared, initial);
-    if (0 == ret) {
-        return fromPlatformError(ret);
+    int ret = sem_init(&semaphore, pshared, initial);
+    if (-1 == ret) {
+        return fromPlatformError(errno);
     }
     else {
         semaphores[name] = semaphore;
@@ -136,7 +136,7 @@ ErrorType OperatingSystem::createSemaphore(Count max, Count initial, std::string
 }
 
 ErrorType OperatingSystem::deleteSemaphore(std::string name) {
-    if (0 != sem_destroy(semaphores[name])) {
+    if (0 != sem_destroy(&(semaphores[name]))) {
         return fromPlatformError(errno);
     }
 
@@ -155,7 +155,7 @@ ErrorType OperatingSystem::waitSemaphore(std::string &name, Milliseconds timeout
     }
 
     do {
-        if (0 != (result = sem_wait(semaphores[name]))) {
+        if (0 != (result = sem_wait(&(semaphores[name])))) {
             if (timeRemaining > 0) {
                 delay(delayTime);
             }
@@ -179,7 +179,7 @@ ErrorType OperatingSystem::incrementSemaphore(std::string &name) {
         return ErrorType::NoData;
     }
 
-    if (0 != sem_post(semaphores[name])) {
+    if (0 != sem_post(&(semaphores[name]))) {
         return fromPlatformError(errno);
     }
 
@@ -191,7 +191,7 @@ ErrorType OperatingSystem::decrementSemaphore(std::string name) {
         return ErrorType::NoData;
     }
 
-    if (0 != sem_trywait(semaphores[name])) {
+    if (0 != sem_trywait(&(semaphores[name]))) {
         return fromPlatformError(errno);
     }
 

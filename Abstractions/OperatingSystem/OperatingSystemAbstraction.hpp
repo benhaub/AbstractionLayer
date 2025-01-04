@@ -52,6 +52,10 @@ namespace OperatingSystemConfig {
     };
 }
 
+//TODO: Should change a lot of these sigunatures to us const references to strings.
+//Make sure to test on ESP because I do remember having some strange issues when trying
+//to make this change in the past.
+
 /**
  * @class OperatingSystemAbstraction
  * @brief An interface for the operating system.
