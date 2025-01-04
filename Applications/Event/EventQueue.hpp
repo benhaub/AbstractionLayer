@@ -111,10 +111,10 @@ class EventQueue {
         }
 
         private:
-        /// @brief _params Tuple for forwarding parameter packs.
-        std::tuple<Args...> _params;
         /// @brief The callback function of this event.
         std::function<ErrorType(Args...)> _eventCallback;
+        /// @brief _params Tuple for forwarding parameter packs.
+        std::tuple<Args...> _params;
 
         /**
          * @brief Calls the callback with the parameters set in the constructor.
