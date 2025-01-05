@@ -26,14 +26,14 @@ class CommandObject {
      * @brief Constructor.
      * @param signature The logic signature of this command object. Processing objects compare against this to see if they can process it.
      */
-    CommandObject(LogicSignature signature) : _logicSignature(signature) {}
+    CommandObject(LogicSignature signature) : _logicSignature(signature) { assert(_InvalidLogicSignature != signature); }
     /// @brief Destructor.
     virtual ~CommandObject() = default;
 
     static constexpr LogicSignature _InvalidLogicSignature = __UINT32_MAX__;
 
     /// @brief Get a constant reference to the logic signature.
-    const LogicSignature logicSignatureConst() const { return _logicSignature; }
+    const LogicSignature &logicSignatureConst() const { return _logicSignature; }
     /// @brief Get a mutable reference to the logic signature.
     LogicSignature &logicSignature() { return _logicSignature; }
 
@@ -43,7 +43,7 @@ class CommandObject {
      * @returns CommandObject::_InvalidLogicSignature on failure.
      * @note Logic signatures are best stored globally so that individual software components can easily access them.
      */
-    static LogicSignature nextUniqueLogicSignature() {
+    static LogicSignature NextUniqueLogicSignature() {
         //System wide unique logic signature for chain of responsibility.
         static LogicSignature _uniqueLogicSignature = __UINT32_MAX__;
 

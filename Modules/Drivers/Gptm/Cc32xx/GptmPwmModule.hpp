@@ -29,25 +29,53 @@ class GptmPwmModule : public GptmPwmAbstraction {
 
         switch(peripheral) {
             case PeripheralNumber::Zero:
-                cc32xxPwmPeripheralNumber = 0;
+#ifdef CONFIG_PWM_0
+                cc32xxPwmPeripheralNumber = CONFIG_PWM_0;
+#else
+                error = ErrorType::InvalidParameter;
+#endif
                 break;
             case PeripheralNumber::One:
-                cc32xxPwmPeripheralNumber = 1;
+#ifdef CONFIG_PWM_1
+                cc32xxPwmPeripheralNumber = CONFIG_PWM_1;
+#else
+                error = ErrorType::InvalidParameter;
+#endif
                 break;
             case PeripheralNumber::Two:
-                cc32xxPwmPeripheralNumber = 2;
+#ifdef CONFIG_PWM_2
+                cc32xxPwmPeripheralNumber = CONFIG_PWM_2;
+#else
+                error = ErrorType::InvalidParameter;
+#endif
                 break;
             case PeripheralNumber::Three:
-                cc32xxPwmPeripheralNumber = 3;
+#ifdef CONFIG_PWM_3
+                cc32xxPwmPeripheralNumber = CONFIG_PWM_3;
+#else
+                error = ErrorType::InvalidParameter;
+#endif
                 break;
             case PeripheralNumber::Four:
-                cc32xxPwmPeripheralNumber = 4;
+#ifdef CONFIG_PWM_4
+                cc32xxPwmPeripheralNumber = CONFIG_PWM_4;
+#else
+                error = ErrorType::InvalidParameter;
+#endif
                 break;
             case PeripheralNumber::Five:
-                cc32xxPwmPeripheralNumber = 5;
+#ifdef CONFIG_PWM_5
+                cc32xxPwmPeripheralNumber = CONFIG_PWM_5;
+#else
+                error = ErrorType::InvalidParameter;
+#endif
                 break;
             case PeripheralNumber::Six:
-                cc32xxPwmPeripheralNumber = 6;
+#ifdef CONFIG_PWM_6
+                cc32xxPwmPeripheralNumber = CONFIG_PWM_6;
+#else
+                error = ErrorType::InvalidParameter;
+#endif
                 break;
             default:
                 error = ErrorType::InvalidParameter;
