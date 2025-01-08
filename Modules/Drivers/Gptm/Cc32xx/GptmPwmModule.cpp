@@ -44,7 +44,7 @@ ErrorType GptmPwmModule::stop() {
     return ErrorType::Success;
 }
 
-ErrorType GptmPwmModule::setDutyCycle(Percent on) {
+ErrorType GptmPwmModule::setDutyCycle(const Percent on) {
     if (nullptr == _pwmHandle) {
         _dutyCycle = on;
         return ErrorType::Success;
@@ -55,7 +55,7 @@ ErrorType GptmPwmModule::setDutyCycle(Percent on) {
     return fromPlatformError(PWM_setDuty(_pwmHandle, dutyValue));
 }
 
-ErrorType GptmPwmModule::setPeriod(Milliseconds period) {
+ErrorType GptmPwmModule::setPeriod(const Milliseconds period) {
     if (nullptr == _pwmHandle) {
         _period = period;
         return ErrorType::Success;

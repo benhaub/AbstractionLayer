@@ -32,7 +32,7 @@ class GptmPwmAbstraction : public GptmAbstraction {
      * @returns ErrorType::Success if the duty cycle was set
      * @returns ErrorType::Failure if the duty cycle was not set
      */
-    virtual ErrorType setDutyCycle(Percent on) = 0;
+    virtual ErrorType setDutyCycle(const Percent on) = 0;
     /**
      * @brief Set the period during which the signal switches from high to low
      * @param[in] period The period during which the signal switches
@@ -43,7 +43,7 @@ class GptmPwmAbstraction : public GptmAbstraction {
      * @returns ErrorType::Success if the period was set.
      * @returns ErrorType::Failure if the period was not set.
      */
-    virtual ErrorType setPeriod(Milliseconds period) = 0;
+    virtual ErrorType setPeriod(const Milliseconds period) = 0;
 
     Percent &dutyCycle() { return _dutyCycle; }
     const Percent &dutyCycleConst() const { return _dutyCycle; }

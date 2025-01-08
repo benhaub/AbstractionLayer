@@ -21,8 +21,7 @@ class GptmCaptureModule : public GptmCaptureAbstraction {
     ErrorType start() override;
     ErrorType stop() override;
 
-    ErrorType setCaptureMode(GptmCaptureTypes::Mode mode) override;
-    ErrorType setPeriod(Milliseconds period) override;
+    ErrorType setCaptureMode(const GptmCaptureTypes::Mode mode) override;
     ErrorType readCaptureValue(Count &captureValue) override;
 
     private:

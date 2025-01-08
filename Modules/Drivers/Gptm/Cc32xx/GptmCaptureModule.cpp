@@ -44,7 +44,7 @@ ErrorType GptmCaptureModule::stop() {
     return ErrorType::Success;
 }
 
-ErrorType GptmCaptureModule::setCaptureMode(GptmCaptureTypes::Mode mode) {
+ErrorType GptmCaptureModule::setCaptureMode(const GptmCaptureTypes::Mode mode) {
     ErrorType error = ErrorType::Success;
 
     switch (mode) {
@@ -62,10 +62,6 @@ ErrorType GptmCaptureModule::setCaptureMode(GptmCaptureTypes::Mode mode) {
     }
 
     return error;
-}
-
-ErrorType GptmCaptureModule::setPeriod(Milliseconds period) {
-    return ErrorType::NotImplemented;
 }
 
 ErrorType GptmCaptureModule::readCaptureValue(Count &captureValue) {

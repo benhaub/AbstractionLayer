@@ -12,6 +12,7 @@
 //C++
 #include <string>
 #include <cassert>
+#include <typeinfo> //For making sure the LogicSignature type is compatible with the type you've set it to.
 
 using LogicSignature = uint32_t;
 

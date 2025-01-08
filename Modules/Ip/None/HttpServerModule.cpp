@@ -1,0 +1,26 @@
+//AbstractionLayer
+#include "HttpServerModule.hpp"
+
+ErrorType HttpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
+    return ErrorType::NotImplemented;
+}
+ErrorType HttpServer::acceptConnection(Socket &socket) {
+    return ErrorType::NotImplemented;
+}
+ErrorType HttpServer::closeConnection() {
+    return ErrorType::NotImplemented;
+}
+ErrorType HttpServer::sendBlocking(HttpServerTypes::Response response, Milliseconds timeout) {
+    return ErrorType::NotImplemented;
+}
+ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const Milliseconds timeout) {
+    return ErrorType::NotImplemented;
+}
+
+ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+    return ErrorType::NotImplemented;
+}
+
+ErrorType HttpServer::receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
+    return ErrorType::NotImplemented;
+}

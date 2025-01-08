@@ -45,13 +45,7 @@ class GptmCaptureAbstraction : public GptmAbstraction {
      * @returns ErrorType::Success if the mode was set
      * @returns ErrorType::Failure otherwise
      */
-    virtual ErrorType setCaptureMode(GptmCaptureTypes::Mode mode) = 0;
-    /**
-     * @brief Set the period of the capture
-     * @returns ErrorType::Success if the period was set
-     * @returns ErrorType::Failure otherwise
-     */
-    virtual ErrorType setPeriod(Milliseconds period) = 0;
+    virtual ErrorType setCaptureMode(const GptmCaptureTypes::Mode mode) = 0;
     /**
      * @brief Read the capture value
      * @param[out] captureValue The value of the capture
