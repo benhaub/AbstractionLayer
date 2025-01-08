@@ -34,7 +34,7 @@ ErrorType Storage::maxStorageSize(Bytes &size, std::string partitionName) {
         size = fiData.f_blocks * fiData.f_frsize;
     }
     else {
-        error = toPlatformError(errno);
+        error = fromPlatformError(errno);
         size = 0;
     }
 
@@ -49,7 +49,7 @@ ErrorType Storage::availableStorage(Bytes &size, std::string partitionName) {
         size = fiData.f_bavail * fiData.f_frsize;
     }
     else {
-        error = toPlatformError(errno);
+        error = fromPlatformError(errno);
         size = 0;
     }
 

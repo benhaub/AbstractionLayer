@@ -22,7 +22,7 @@ ErrorType Wifi::networkDown() {
 
 ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) {
     if (-1 == send(socket, frame.data(), frame.size(), 0)) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
 
     return ErrorType::Success;
@@ -50,13 +50,13 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
     int ret;
     ret = select(socket + 1, &readfds, NULL, NULL, &timeoutval);
     if (ret < 0) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
     }
 
     if (FD_ISSET(socket, &readfds)) {
         if (-1 == (bytesReceived = recv(socket, frameBuffer.data(), frameBuffer.size(), 0))) {
-            error = toPlatformError(errno);
+            error = fromPlatformError(errno);
         }
         else if ((size_t)bytesReceived > frameBuffer.size()) {
             error = ErrorType::PrerequisitesNotMet;

@@ -28,7 +28,7 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
     assert(snprintf(portString, sizeof(portString), "%u", port) > 0);
 
     if (0 != getaddrinfo(nullptr, portString, &hints, &servinfo)) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
 
     for (p = servinfo; p != nullptr; p = p->ai_next) {
@@ -38,7 +38,7 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
         
         int enable = 1;
         if (-1 == setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable))) {
-            return toPlatformError(errno);
+            return fromPlatformError(errno);
         }
 
         if (-1 == bind(sock, p->ai_addr, p->ai_addrlen)) {
@@ -53,7 +53,7 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
     _status.listening = true;
     if (-1 == listen(sock, 1)) {
         _status.listening = false;
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
 
     freeaddrinfo(servinfo);
@@ -73,7 +73,7 @@ ErrorType IpServer::acceptConnection(Socket &socket) {
     socklen_t receiveSocketSize;
 
     if (-1 == (socket = accept(_socket, (struct sockaddr *)&clientAddress, &receiveSocketSize))) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
 
         //Overwrite the socket we used to listen for connections with the one that will be used to send and received

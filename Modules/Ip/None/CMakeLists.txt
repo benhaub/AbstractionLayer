@@ -2,6 +2,7 @@ target_sources(${PROJECT_NAME}${EXECUTABLE_SUFFIX}
 PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
   IpClientModule.hpp
   IpServerModule.hpp
+  HttpServerModule.hpp
 )
 #Client
 add_library(NoneIpClient
@@ -19,6 +20,7 @@ target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC NoneIpClient)
 add_library(NoneIpServer
 STATIC
   IpServerModule.cpp
+  HttpServerModule.cpp
 )
 
 target_link_libraries(NoneIpServer PUBLIC abstractionLayer)

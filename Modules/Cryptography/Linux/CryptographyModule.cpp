@@ -161,23 +161,23 @@ ErrorType Cryptography::hash(HashFunction hashFunction, const std::string &key, 
 ErrorType Cryptography::hashBlake2b(const std::string &data, const std::string &key, std::string hashedData, const HashPart hashPart) {
     switch (hashPart) {
         case HashPart::Single:
-            return toPlatformError(crypto_generichash(reinterpret_cast<unsigned char *>(hashedData.data()),
+            return fromPlatformError(crypto_generichash(reinterpret_cast<unsigned char *>(hashedData.data()),
                                                       hashedData.size(),
                                                       data.empty() ? NULL : reinterpret_cast<const unsigned char *>(data.data()),
                                                       data.size(),
                                                       key.empty() ? NULL : reinterpret_cast<const unsigned char *>(key.data()),
                                                       key.size()));
         case HashPart::Init:
-            return toPlatformError(crypto_generichash_init(&genericHashState,
+            return fromPlatformError(crypto_generichash_init(&genericHashState,
                                                            key.empty() ? NULL : reinterpret_cast<const unsigned char *>(key.data()),
                                                            key.size(),
                                                            hashedData.size()));
         case HashPart::Update:
-            return toPlatformError(crypto_generichash_update(&genericHashState,
+            return fromPlatformError(crypto_generichash_update(&genericHashState,
                                                              reinterpret_cast<const unsigned char *>(data.data()),
                                                              data.size()));
         case HashPart::Final:
-            return toPlatformError(crypto_generichash_final(&genericHashState,
+            return fromPlatformError(crypto_generichash_final(&genericHashState,
                                                             reinterpret_cast<unsigned char *>(hashedData.data()),
                                                             hashedData.size()));
         default:

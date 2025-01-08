@@ -62,7 +62,7 @@ ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority
     }
     else {
         deleteThread(name);
-        error = toPlatformError(res);
+        error = fromPlatformError(res);
     }
 
     return error;
@@ -89,7 +89,7 @@ ErrorType OperatingSystem::joinThread(std::string name) {
     }
 
     ret = pthread_join(threads[name].posixThreadId, nullptr);
-    return toPlatformError(ret);
+    return fromPlatformError(ret);
 }
 
 ErrorType OperatingSystem::threadId(std::string name, Id &thread) {
@@ -123,7 +123,7 @@ ErrorType OperatingSystem::createSemaphore(Count max, Count initial, std::string
     deleteSemaphore(name); //Using name and not internalName is NOT a bug.
     sem_t *semaphore = sem_open(internalName.c_str(), O_CREAT | O_EXCL, S_IRWXU, initial);
     if (SEM_FAILED == semaphore) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
     else {
         semaphores[name] = semaphore;
@@ -135,7 +135,7 @@ ErrorType OperatingSystem::deleteSemaphore(std::string name) {
     std::string internalName = std::string("/").append(name);
 
     if (0 != sem_unlink(internalName.c_str())) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
 
     semaphores.erase(name);
@@ -166,7 +166,7 @@ ErrorType OperatingSystem::waitSemaphore(std::string &name, Milliseconds timeout
 
 
     if (0 != result) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
 
     return ErrorType::Success;
@@ -180,7 +180,7 @@ ErrorType OperatingSystem::incrementSemaphore(std::string &name) {
     std::string internalName = std::string("/").append(name);
 
     if (0 != sem_post(semaphores[name])) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
 
     return ErrorType::Success;
@@ -194,7 +194,7 @@ ErrorType OperatingSystem::decrementSemaphore(std::string name) {
     std::string internalName = std::string("/").append(name);
 
     if (0 != sem_trywait(semaphores[name])) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
 
     return ErrorType::Success;
