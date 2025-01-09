@@ -121,7 +121,7 @@ class HttpServerAbstraction : public IpServerAbstraction {
     HttpServerAbstraction() : IpServerAbstraction() {}
     virtual ~HttpServerAbstraction() = default;
 
-    virtual ErrorType sendBlocking(HttpServerTypes::Response response, Milliseconds timeout) = 0;
+    virtual ErrorType sendBlocking(const HttpServerTypes::Response &response, const Milliseconds timeout) = 0;
     virtual ErrorType receiveBlocking(HttpServerTypes::Request &request, const Milliseconds timeout) = 0;
     virtual ErrorType sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
     virtual ErrorType receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) = 0;

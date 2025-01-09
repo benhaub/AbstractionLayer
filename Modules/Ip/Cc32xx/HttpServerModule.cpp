@@ -3,15 +3,16 @@
 #include "Log.hpp"
 
 ErrorType HttpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
-    return ErrorType::NotImplemented;
+    //The ROM includes an HTTP server that is already listening
+    return ErrorType::NotAvailable;
 }
 ErrorType HttpServer::acceptConnection(Socket &socket) {
-    return ErrorType::NotImplemented;
+    return ErrorType::NotAvailable;
 }
 ErrorType HttpServer::closeConnection() {
-    return ErrorType::NotImplemented;
+    return ErrorType::NotAvailable;
 }
-ErrorType HttpServer::sendBlocking(HttpServerTypes::Response response, Milliseconds timeout) {
+ErrorType HttpServer::sendBlocking(const HttpServerTypes::Response &response, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const Milliseconds timeout) {

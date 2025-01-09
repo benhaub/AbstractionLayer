@@ -26,7 +26,7 @@ class HttpServer : public HttpServerAbstraction {
     ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override { return ErrorType::NotSupported; }
     ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override { return ErrorType::NotSupported; }
 
-    ErrorType sendBlocking(HttpServerTypes::Response response, Milliseconds timeout) override;
+    ErrorType sendBlocking(const HttpServerTypes::Response &response, const Milliseconds timeout) override;
     ErrorType receiveBlocking(HttpServerTypes::Request &request, const Milliseconds timeout) override;
     ErrorType sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
     ErrorType receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
