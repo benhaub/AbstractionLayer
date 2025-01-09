@@ -26,7 +26,7 @@ ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority
 
     res = pthread_attr_init(&attr);
     assert(0 == res);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_attr_setstacksize(&attr, stackSize);
     pthread_attr_setschedpolicy(&attr, SCHED_RR);
     pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
