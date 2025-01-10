@@ -24,6 +24,10 @@ struct ServerStatus {
     bool listening; ///< True when the server is listening for connections.
 };
 
+/**
+ * @namespace IpServerSettings
+ * @brief Settings and confifguration for the Internet Protocol server.
+ */
 namespace IpServerSettings {
 
     /**
@@ -77,7 +81,9 @@ class IpServerAbstraction : public CommunicationProtocol {
     /**
      * @brief Accept a connection from a client connecting to the socket given
      * @param[out] socket The socket that the connection was accepted on
-     * @returns Fnd::ErrorType::Success on success
+     * @returns ErrorType::Success on success
+     * @returns ErrorType::LimitReached if the maximum number of connections has been accepted
+     * @returns ErrorType::Failure otherwise
     */
     virtual ErrorType acceptConnection(Socket &socket) = 0;
     /**
@@ -87,9 +93,9 @@ class IpServerAbstraction : public CommunicationProtocol {
     virtual ErrorType closeConnection() = 0;
 
     ///@brief Get a mutable reference to the socket
-    Socket &getSocket() { return _socket; }
+    Socket &sock() { return _socket; }
     ///@brief Get a constant reference to the socket
-    const Socket &getSocketConst() const { return _socket; }
+    const Socket &sockConst() const { return _socket; }
     ///@brief Get a mutable reference to the protocol
     IpServerSettings::Protocol &protocol() { return _protocol; }
     ///@brief Get a constant reference to the protocol

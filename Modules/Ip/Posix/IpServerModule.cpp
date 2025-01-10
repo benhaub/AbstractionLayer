@@ -59,7 +59,7 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
     freeaddrinfo(servinfo);
 
     //Socket is still invalid. The socket we just had is only for listening for connections.
-    //The socket we get from accept can be used to send and received which is the one we want
+    //The socket we get from accept can be used to send and receive which is the one we want
     //to return to the user.
     _socket = sock;
     _protocol = protocol;
@@ -71,14 +71,22 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
 ErrorType IpServer::acceptConnection(Socket &socket) {
     struct sockaddr_storage clientAddress;
     socklen_t receiveSocketSize;
+    static bool noConnectionAccepted = true;
 
-    if (-1 == (socket = accept(_socket, (struct sockaddr *)&clientAddress, &receiveSocketSize))) {
-        return fromPlatformError(errno);
+    if (noConnectionAccepted) {
+        if (-1 == (socket = accept(_socket, (struct sockaddr *)&clientAddress, &receiveSocketSize))) {
+            return fromPlatformError(errno);
+        }
+    }
+    else {
+        return ErrorType::LimitReached;
     }
 
-        //Overwrite the socket we used to listen for connections with the one that will be used to send and received
-        //Since we only accept one connection per class.
-        _socket = socket;
+    //Overwrite the socket we used to listen for connections with the one that will be used to send and receive
+    //Since we only accept one connection per class.
+    noConnectionAccepted = false;
+    _socket = socket;
+
     return ErrorType::Success;
 }
 
@@ -125,19 +133,17 @@ ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds tim
 ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds timeout) {
     bool received = false;
 
-    auto rx = [this, &received](std::string *buffer, const Milliseconds timeout) -> ErrorType {
+    auto rx = [this, &received](std::string &buffer, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         assert(0 != _socket);
-        error = network().rxBlocking(*buffer, _socket, timeout);
+        error = network().rxBlocking(buffer, _socket, timeout);
 
         received = true;
         return error;
     };
 
-    //For some reason, I couldn't pass buffer as a reference parameter to the callback. It had to be a pointer otherwise the
-    //pointer to the data inside the string would change.
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(rx, &buffer, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(rx, buffer, timeout));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
