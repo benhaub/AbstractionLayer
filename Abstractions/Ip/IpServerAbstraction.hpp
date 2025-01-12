@@ -22,6 +22,7 @@
 */
 struct ServerStatus {
     bool listening; ///< True when the server is listening for connections.
+    Count activeConnections;
 };
 
 /**
@@ -81,21 +82,68 @@ class IpServerAbstraction : public CommunicationProtocol {
     /**
      * @brief Accept a connection from a client connecting to the socket given
      * @param[out] socket The socket that the connection was accepted on
+     * @param[in] timeout The time to wait to accept a connection.
      * @returns ErrorType::Success on success
      * @returns ErrorType::LimitReached if the maximum number of connections has been accepted
+     * @returns ErrorType::Timeout if no connections were accepted within the given timeout.
      * @returns ErrorType::Failure otherwise
     */
-    virtual ErrorType acceptConnection(Socket &socket) = 0;
+    virtual ErrorType acceptConnection(Socket &socket, const Milliseconds timeout) = 0;
     /**
      * @brief Close the connection
+     * @param[in] socket The socket to close
      * @returns Fnd::ErrorType::Success on success
     */
-    virtual ErrorType closeConnection() = 0;
+    virtual ErrorType closeConnection(const Socket socket) = 0;
 
-    ///@brief Get a mutable reference to the socket
-    Socket &sock() { return _socket; }
-    ///@brief Get a constant reference to the socket
-    const Socket &sockConst() const { return _socket; }
+    //Try casting to an IpServerAbstraction or IpServerModule if you are calling using a CommunicationProtocol pointer.
+    ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) override { return ErrorType::NotSupported; }
+    ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override { return ErrorType::NotSupported; }
+    ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) override { return ErrorType::NotSupported; }
+    ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override { return ErrorType::NotSupported; }
+
+    //Send and receive functions include a socket since multiple sockets may be returned by accepting multiple connections.
+
+    /**
+     * @brief Sends data.
+     * @param[in] data The data to send.
+     * @param[in] timeout The timeout in milliseconds.
+     * @param[in] socket The socket to send the data to.
+     * @returns ErrorType::Success if the data was sent.
+     * @returns ErrorType::Failure if the data was not sent.
+     * @returns ErrorType::Timeout if the timeout was reached.
+     * @post The amount of data to transmit is equal to the size of the data. See std::string::size(), std::string::resize().
+    */
+    virtual ErrorType sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) = 0;
+    /**
+     * @brief Sends data.
+     * @param[in] data The data to send.
+     * @param[in] callback The callback to call when the data is sent.
+     * @param[in] socket The socket to send the data to.
+     * @returns ErrorType::Success if the data was sent.
+     * @returns ErrorType::Failure if the data was not sent.
+     * @post The callback will be called when the data has been sent. The bytes written is valid if and only if error is equal to ErrorType::Success.
+    */
+    virtual ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
+    /**
+     * @brief Receives data.
+     * @param[in] buffer The data to receive.
+     * @param[in] timeout The timeout in milliseconds.
+     * @param[out] socket The socket in which the data was received from.
+     * @returns ErrorType::Success if the data was received.
+     * @returns ErrorType::Failure if the data was not received.
+     * @returns ErrorType::Timeout if the timeout was reached.
+     * @post The amount of data received is equal to the size of the data. See std::string::size(), std::string::resize().
+    */
+    virtual ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket) = 0;
+    /**
+     * @brief Receives data.
+     * @param[in] buffer The buffer to receive the data into.
+     * @param[in] callback The callback to call when the data has been received.
+     * @post The callback will be called when the data has been received. The buffer is valid if and only if error is equal to ErrorType::Success.
+    */
+    virtual ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) = 0;
+
     ///@brief Get a mutable reference to the protocol
     IpServerSettings::Protocol &protocol() { return _protocol; }
     ///@brief Get a constant reference to the protocol
@@ -121,8 +169,8 @@ class IpServerAbstraction : public CommunicationProtocol {
     ErrorType setNetwork(NetworkAbstraction &network) { _network = &network; return ErrorType::Success; }
 
     protected:
-    /// @brief The socket
-    Socket _socket = -1;
+    /// @brief The socket on which we listen for new connections
+    Socket _listenerSocket = -1;
     /// @brief The protocol
     IpServerSettings::Protocol _protocol = IpServerSettings::Protocol::Unknown;
     /// @brief The IP version
@@ -131,6 +179,8 @@ class IpServerAbstraction : public CommunicationProtocol {
     Port _port = 0;
     /// @brief The status of the server
     ServerStatus _status;
+    /// @brief list of all the sockets we have accepted connection for
+    std::vector<Socket> _connectedSockets;
 
     private:
     /// @brief The network abstraction that this server communicates on.

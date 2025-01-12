@@ -61,53 +61,84 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
     //Socket is still invalid. The socket we just had is only for listening for connections.
     //The socket we get from accept can be used to send and receive which is the one we want
     //to return to the user.
-    _socket = sock;
+    _listenerSocket = sock;
     _protocol = protocol;
     _version = version;
     _port = port;
 
     return ErrorType::Success;
 }
-ErrorType IpServer::acceptConnection(Socket &socket) {
+ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout) {
     struct sockaddr_storage clientAddress;
     socklen_t receiveSocketSize;
-    static bool noConnectionAccepted = true;
 
-    if (noConnectionAccepted) {
-        if (-1 == (socket = accept(_socket, (struct sockaddr *)&clientAddress, &receiveSocketSize))) {
-            return fromPlatformError(errno);
-        }
-    }
-    else {
+    if (connectionsAcceptedIsAtMaximum()) {
+        socket = -1;
         return ErrorType::LimitReached;
     }
+    else {
 
-    //Overwrite the socket we used to listen for connections with the one that will be used to send and receive
-    //Since we only accept one connection per class.
-    noConnectionAccepted = false;
-    _socket = socket;
+        struct timeval timeoutval = {
+            .tv_sec = timeout / 1000,
+            .tv_usec = 0
+        };
+        fd_set readfds;
+
+        FD_ZERO(&readfds);
+        FD_SET(_listenerSocket, &readfds);
+
+        {
+        int ret;
+        ret = select(_listenerSocket + 1, &readfds, NULL, NULL, &timeoutval);
+        if (ret < 0) {
+            return fromPlatformError(errno);
+        }
+        }
+
+        if (FD_ISSET(_listenerSocket, &readfds)) {
+            if (-1 == (socket = accept(_listenerSocket, (struct sockaddr *)&clientAddress, &receiveSocketSize))) {
+                return fromPlatformError(errno);
+            }
+        }
+        else {
+            return ErrorType::Timeout;
+        }
+    }
+
+    _connectedSockets.push_back(socket);
+    _status.activeConnections = _connectedSockets.size();
 
     return ErrorType::Success;
 }
 
-ErrorType IpServer::closeConnection() {
-    return ErrorType::NotImplemented;
+ErrorType IpServer::closeConnection(const Socket socket) {
+    if (-1 == close(socket)) {
+        return fromPlatformError(errno);
+    }
+
+    const auto closedSocket = std::find(_connectedSockets.begin(), _connectedSockets.end(), socket);
+    if (_connectedSockets.end() != closedSocket) {
+        _connectedSockets.erase(closedSocket);
+        _status.activeConnections = _connectedSockets.size();
+        return ErrorType::Success;
+    }
+
+    return ErrorType::NoData;
 }
 
-ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds timeout) {
-    assert(0 != _socket);
+ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) {
     bool sent = false;
 
-    auto tx = [this, &sent](const std::string &frame, const Milliseconds timeout) -> ErrorType {
+    auto tx = [this, &sent](const std::string &frame, const Socket socket, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
-        error = network().txBlocking(frame, _socket, timeout);
+        error = network().txBlocking(frame, socket, timeout);
 
         sent = true;
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(tx, data, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(tx, data, socket, timeout));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -130,16 +161,30 @@ ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds tim
     }
 }
 
-ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds timeout) {
+//TODO: You can easily create a case (by giving 0 for a timeout as an example) where you timeout before
+//the event has been processed by the network thread. Therefore, depending on thread prioirties, there is
+//some minimum time that must be given on each system for the timeout to function properly otherwise you
+//may time out, read and drop the data. There shouldn't be a timeout in the blocking family of calls.
+//It should block until the data can be read or determined to not be available to read. The non-blocking
+//calls are more suitable to provide a timeout to since they call a callback.
+ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket) {
     bool received = false;
+    socket = -1;
 
-    auto rx = [this, &received](std::string &buffer, const Milliseconds timeout) -> ErrorType {
+    auto rx = [this, &socket, &received](std::string &buffer, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
-        assert(0 != _socket);
-        error = network().rxBlocking(buffer, _socket, timeout);
+        //TODO: What if we only receive part of the data. We will need to keep this socket in play until we receive the whole thing.
+        for (size_t i = _previousReceivedSocketIndex; i < _connectedSockets.size(); i++) {
+            error = network().rxBlocking(buffer, _connectedSockets[i], 0);
+            if (ErrorType::Success == error) {
+                received = true;
+                socket = _connectedSockets[i];
+                _previousReceivedSocketIndex = i;
+                break;
+            }
+        }
 
-        received = true;
         return error;
     };
 
@@ -150,6 +195,7 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
     }
 
     Milliseconds i;
+    //TODO: Just block until received is true. If that is forever then so be it.
     for (i = 0; i < timeout / 10 && !received; i++) {
         OperatingSystem::Instance().delay(10);
     }
@@ -165,17 +211,17 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
     }
 }
 
-ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     bool sent = false;
 
-    auto tx = [this, callback, &sent](const std::shared_ptr<std::string> frame, const Milliseconds timeout) -> ErrorType {
+    auto tx = [this, callback, &sent](const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         if (nullptr == frame.get()) {
             return ErrorType::NoData;
         }
 
-        error = network().txBlocking(*frame, _socket, timeout);
+        error = network().txBlocking(*frame, socket, timeout);
 
         assert(nullptr != callback);
         callback(error, frame->size());
@@ -184,12 +230,11 @@ ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, con
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(tx, data, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(tx, data, socket, timeout));
     return network().addEvent(event);
 }
 
-ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
-    assert(0 != _socket);
+ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) {
     bool received = false;
 
     auto rx = [this, callback, &received](const std::shared_ptr<std::string> buffer, const Milliseconds timeout) -> ErrorType {
@@ -199,10 +244,10 @@ ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, cons
             return ErrorType::NoData;
         }
 
-        error = network().rxBlocking(*buffer, _socket, timeout);
+        //error = network().rxBlocking(*buffer, _socket, timeout);
 
-        assert(nullptr != callback);
-        callback(error, buffer);
+        //assert(nullptr != callback);
+        //callback(error, socket, buffer);
 
         received = true;
         return error;

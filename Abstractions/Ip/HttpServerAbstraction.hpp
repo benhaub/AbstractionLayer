@@ -117,13 +117,21 @@ namespace HttpServerTypes {
 };
 
 class HttpServerAbstraction : public IpServerAbstraction {
+
     public:
     HttpServerAbstraction() : IpServerAbstraction() {}
     virtual ~HttpServerAbstraction() = default;
 
-    virtual ErrorType sendBlocking(const HttpServerTypes::Response &response, const Milliseconds timeout) = 0;
-    virtual ErrorType receiveBlocking(HttpServerTypes::Request &request, const Milliseconds timeout) = 0;
-    virtual ErrorType sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
-    virtual ErrorType receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) = 0;
+    //Http servers take and and return responses and requests. If using an IpServerPointer, try casting to an HttpServer
+    ErrorType sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) override { return ErrorType::NotSupported; }
+    ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override { return ErrorType::NotSupported; }
+    ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket) override { return ErrorType::NotSupported; }
+    ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) override { return ErrorType::NotSupported; }
+
+    virtual ErrorType sendBlocking(const HttpServerTypes::Response &response, const Milliseconds timeout, const Socket socket) = 0;
+    virtual ErrorType receiveBlocking(HttpServerTypes::Request &request, const Milliseconds timeout, Socket &socket) = 0;
+    virtual ErrorType sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
+    virtual ErrorType receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) = 0;
+
 };
 #endif // __HTTP_SERVER_SBSTRACTION_HPP__

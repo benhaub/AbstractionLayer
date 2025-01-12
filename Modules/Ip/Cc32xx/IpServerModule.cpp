@@ -5,7 +5,7 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
     return ErrorType::NotImplemented;
 }
 
-ErrorType IpServer::acceptConnection(Socket &socket) {
+ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 
@@ -25,7 +25,7 @@ ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, con
     return ErrorType::NotImplemented;
 }
 
-ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
+ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) {
     return ErrorType::NotImplemented;
 }
 
