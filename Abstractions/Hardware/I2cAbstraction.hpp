@@ -109,6 +109,7 @@ class I2cAbstraction : public IcCommunicationProtocol {
     */
     virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, uint8_t deviceAddress, uint8_t registerAddress, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) = 0;
 
+    //If you are using the I2C peripheral through an IcCommunicationProtocol pointer then you will need to cast it to an I2C Abstraction or module first.
     ErrorType txBlocking(const std::string &data, const Milliseconds timeout) override { assert(false); return ErrorType::NotSupported; }
     ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override { assert(false); return ErrorType::NotSupported; }
     ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout) override { assert(false); return ErrorType::NotSupported; }
