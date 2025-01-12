@@ -128,10 +128,9 @@ ErrorType IpServer::closeConnection(const Socket socket) {
 
 ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) {
     bool sent = false;
+    ErrorType error = ErrorType::Failure;
 
-    auto tx = [this, &sent](const std::string &frame, const Socket socket, const Milliseconds timeout) -> ErrorType {
-        ErrorType error = ErrorType::Failure;
-
+    auto tx = [this, &error, &sent](const std::string &frame, const Socket socket, const Milliseconds timeout) -> ErrorType {
         error = network().txBlocking(frame, socket, timeout);
 
         sent = true;
@@ -139,44 +138,27 @@ ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds tim
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(tx, data, socket, timeout));
-    ErrorType error = network().addEvent(event);
+    error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
-    //Block for the timeout specified if no callback is provided
-    Milliseconds i;
-    for (i = 0; i < timeout / 10 && !sent; i++) {
-        OperatingSystem::Instance().delay(10);
+    while (!sent) {
+        OperatingSystem::Instance().delay(timeout);
     }
 
-    if (!sent && (timeout / 10) == i) {
-        return ErrorType::Timeout;
-    }
-    else if (!sent) {
-        return ErrorType::Failure;
-    }
-    else {
-        return ErrorType::Success;
-    }
+    return error;
 }
 
-//TODO: You can easily create a case (by giving 0 for a timeout as an example) where you timeout before
-//the event has been processed by the network thread. Therefore, depending on thread prioirties, there is
-//some minimum time that must be given on each system for the timeout to function properly otherwise you
-//may time out, read and drop the data. There shouldn't be a timeout in the blocking family of calls.
-//It should block until the data can be read or determined to not be available to read. The non-blocking
-//calls are more suitable to provide a timeout to since they call a callback.
 ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket) {
     bool received = false;
     socket = -1;
+    ErrorType error = ErrorType::Failure;
 
-    auto rx = [this, &socket, &received](std::string &buffer, const Milliseconds timeout) -> ErrorType {
-        ErrorType error = ErrorType::Failure;
-
+    auto rx = [this, &error, &received](std::string &buffer, Socket &socket, const Milliseconds timeout) -> ErrorType {
         //TODO: What if we only receive part of the data. We will need to keep this socket in play until we receive the whole thing.
         for (size_t i = _previousReceivedSocketIndex; i < _connectedSockets.size(); i++) {
-            error = network().rxBlocking(buffer, _connectedSockets[i], 0);
+            error = network().rxBlocking(buffer, _connectedSockets[i], timeout);
             if (ErrorType::Success == error) {
                 received = true;
                 socket = _connectedSockets[i];
@@ -188,27 +170,17 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(rx, buffer, timeout));
-    ErrorType error = network().addEvent(event);
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(rx, buffer, socket, timeout));
+    error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
-    Milliseconds i;
-    //TODO: Just block until received is true. If that is forever then so be it.
-    for (i = 0; i < timeout / 10 && !received; i++) {
-        OperatingSystem::Instance().delay(10);
+    while (!received) {
+        OperatingSystem::Instance().delay(timeout);
     }
 
-    if (!received && (timeout / 10) == i) {
-        return ErrorType::Timeout;
-    }
-    else if (!received) {
-        return ErrorType::Failure;
-    }
-    else {
-        return ErrorType::Success;
-    }
+    return error;
 }
 
 ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {

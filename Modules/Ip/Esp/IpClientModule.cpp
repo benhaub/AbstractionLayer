@@ -186,6 +186,7 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
         return error;
     }
 
+    //TODO: This is a timer on top of a timer that we already use in rxBlocking and should be removed to mimic the posix implementation.
     Milliseconds i;
     for (i = 0; i < timeout / 10 && !received; i++) {
         OperatingSystem::Instance().delay(10);

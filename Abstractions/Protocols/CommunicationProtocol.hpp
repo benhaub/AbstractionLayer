@@ -39,6 +39,9 @@ class CommunicationProtocol : public EventQueue {
      * @returns ErrorType::Failure if the data was not sent.
      * @returns ErrorType::Timeout if the timeout was reached.
      * @post The amount of data to transmit is equal to the size of the data. See std::string::size(), std::string::resize().
+     * @note If the actual send is queued as an event for some other thread (i.e a network thread that actually sends the data)
+     *       then the delay will be the timeout plus any additional scheduling delay incurred by the operating system as a result
+     *       of thread priorities.
     */
     virtual ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) = 0;
     /**
@@ -58,6 +61,9 @@ class CommunicationProtocol : public EventQueue {
      * @returns ErrorType::Failure if the data was not received.
      * @returns ErrorType::Timeout if the timeout was reached.
      * @post The amount of data received is equal to the size of the data. See std::string::size(), std::string::resize().
+     * @note If the actual send is queued as an event for some other thread (i.e a network thread that actually sends the data)
+     *       then the delay will be the timeout plus any additional scheduling delay incurred by the operating system as a result
+     *       of thread priorities.
     */
     virtual ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) = 0;
     /**
