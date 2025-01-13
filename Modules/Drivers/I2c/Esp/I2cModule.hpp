@@ -61,19 +61,19 @@ class I2c : public I2cAbstraction {
         return 0;
     }
 
-    i2c_port_t toEspPort(const I2cConfig::PeripheralNumber peripheral, ErrorType &error) {
+    i2c_port_t toEspPort(const PeripheralNumber peripheral, ErrorType &error) {
         error = ErrorType::Success;
 
         switch (peripheral) {
-            case I2cConfig::PeripheralNumber::Zero:
+            case PeripheralNumber::Zero:
                 return I2C_NUM_0;
-            case I2cConfig::PeripheralNumber::One:
+            case PeripheralNumber::One:
                 return I2C_NUM_1;
-            case I2cConfig::PeripheralNumber::Two:
-            case I2cConfig::PeripheralNumber::Three:
-            case I2cConfig::PeripheralNumber::Four:
-            case I2cConfig::PeripheralNumber::Five:
-            case I2cConfig::PeripheralNumber::Unknown:
+            case PeripheralNumber::Two:
+            case PeripheralNumber::Three:
+            case PeripheralNumber::Four:
+            case PeripheralNumber::Five:
+            case PeripheralNumber::Unknown:
             default:
                 error = ErrorType::NotSupported;
         }

@@ -7,7 +7,7 @@
 
 ErrorType I2c::init() {
     //You have to configure before initializing
-    if ((I2cConfig::Mode::Unknown == _mode) || (I2cConfig::Speed::Unknown == _speed) || (I2cConfig::PeripheralNumber::Unknown == _peripheral)) {
+    if ((I2cConfig::Mode::Unknown == _mode) || (I2cConfig::Speed::Unknown == _speed) || (PeripheralNumber::Unknown == _peripheral)) {
         return ErrorType::PrerequisitesNotMet;
     }
 
@@ -39,7 +39,7 @@ ErrorType I2c::init() {
     i2c_param_config(i2cPort, &conf);
 
     if (I2cConfig::Mode::Controller == _mode) {
-        error = toPlatformError(i2c_driver_install(i2cPort, conf.mode, 0, 0, 0));
+        error = fromPlatformError(i2c_driver_install(i2cPort, conf.mode, 0, 0, 0));
     }
     else {
         error = ErrorType::NotImplemented;
@@ -55,7 +55,7 @@ ErrorType I2c::deinit() {
         return error;
     }
 
-    return toPlatformError(i2c_driver_delete(i2cPort));
+    return fromPlatformError(i2c_driver_delete(i2cPort));
 }
 
 ErrorType I2c::setHardwareConfig(const PeripheralNumber peripheral, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullup, const PinNumber scl, const bool sclPullup) {
@@ -90,13 +90,13 @@ ErrorType I2c::txBlocking(const std::string &data, uint8_t deviceAddress, uint8_
     writeData.append(data);
 
 #if I2C_ESP_MODULE_DEBUG
-    CBT_LOGI(TAG, "Tx");
-    CBT_LOG_BUFFER_HEXDUMP(TAG, writeData.data(), writeData.size(), LogType::Info);
+    PLT_LOGI(TAG, "Tx");
+    PLT_LOG_BUFFER_HEXDUMP(TAG, writeData.data(), writeData.size(), LogType::Info);
 #endif
 
     if (I2cConfig::Mode::Controller == _mode) {
         //TODO: Need millisecondsToTicks
-        error = toPlatformError(i2c_master_write_to_device(i2cPort, deviceAddress, reinterpret_cast<const uint8_t *>(writeData.data()), writeData.size(), timeout));
+        error = fromPlatformError(i2c_master_write_to_device(i2cPort, deviceAddress, reinterpret_cast<const uint8_t *>(writeData.data()), writeData.size(), timeout));
     }
     else if (I2cConfig::Mode::Target == _mode) {
         error = ErrorType::NotImplemented;
@@ -120,7 +120,7 @@ ErrorType I2c::rxBlocking(std::string &buffer, uint8_t deviceAddress, uint8_t re
     }
 
     if (I2cConfig::Mode::Controller == _mode) {
-        error = toPlatformError(i2c_master_write_read_device(i2cPort, deviceAddress, &registerAddress, 1, reinterpret_cast<uint8_t *>(buffer.data()), buffer.size(), timeout));
+        error = fromPlatformError(i2c_master_write_read_device(i2cPort, deviceAddress, &registerAddress, 1, reinterpret_cast<uint8_t *>(buffer.data()), buffer.size(), timeout));
     }
     else if (I2cConfig::Mode::Target == _mode) {
         error = ErrorType::NotImplemented;
@@ -130,8 +130,8 @@ ErrorType I2c::rxBlocking(std::string &buffer, uint8_t deviceAddress, uint8_t re
     }
 
 #if I2C_ESP_MODULE_DEBUG
-    CBT_LOGI(TAG, "Rx");
-    CBT_LOG_BUFFER_HEXDUMP(TAG, buffer.data(), buffer.size(), LogType::Info);
+    PLT_LOGI(TAG, "Rx");
+    PLT_LOG_BUFFER_HEXDUMP(TAG, buffer.data(), buffer.size(), LogType::Info);
 #endif
 
     return error;
