@@ -13,7 +13,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR})
 #To remove modules, use the "None" port since at least a function stub must exist for the main application
 #to call.
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/Uart/Esp)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/Watchdog/Kevin)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/Watchdog/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/Gpio/Esp)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/I2c/Esp)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/Spi/None)

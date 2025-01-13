@@ -49,11 +49,6 @@ add_dependencies(LinuxCryptography libsodium-stable)
 
 target_link_libraries(LinuxCryptography PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-stable/src/libsodium/.libs/libsodium.a)
 
-if (ESP_PLATFORM)
-  target_include_directories(LinuxCryptography PRIVATE $<TARGET_PROPERTY:__idf_main,INTERFACE_INCLUDE_DIRECTORIES>)
-  target_include_directories(__idf_main PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-else()
-  target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-endif()
+target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 target_compile_options(LinuxCryptography PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)

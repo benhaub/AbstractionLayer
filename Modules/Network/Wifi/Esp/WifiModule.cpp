@@ -167,6 +167,7 @@ ErrorType Wifi::txNonBlocking(const std::shared_ptr<std::string> frame, const So
     return ErrorType::NotImplemented;
 }
 
+//TODO: Needs to look like POSIX so that NoData is returned properly
 ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
     ErrorType error = ErrorType::Failure;
     ssize_t bytesReceived = 0;

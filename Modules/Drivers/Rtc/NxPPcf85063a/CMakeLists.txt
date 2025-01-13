@@ -14,11 +14,6 @@ target_link_libraries(NxpPcf85063aRtc PUBLIC I2c)
 target_link_libraries(NxpPcf85063aRtc PUBLIC Logging)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC NxpPcf85063aRtc)
 
-if (ESP_PLATFORM)
-  target_include_directories(NxpPcf85063aRtc PRIVATE $<TARGET_PROPERTY:__idf_main,INTERFACE_INCLUDE_DIRECTORIES>)
-  target_include_directories(__idf_main PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-else()
-  target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-endif()
+target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 target_compile_options(NxpPcf85063aRtc PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)

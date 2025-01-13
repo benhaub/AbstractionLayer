@@ -13,10 +13,6 @@ target_link_libraries(NoneWifi PUBLIC abstractionLayer)
 target_link_libraries(NoneWifi PUBLIC Network)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC NoneWifi)
 
-if (ESP_PLATFORM)
-  target_include_directories(__idf_main PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-else()
-  target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-endif()
+target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 target_compile_options(NoneWifi PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
