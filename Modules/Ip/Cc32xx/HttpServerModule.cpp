@@ -6,10 +6,10 @@ ErrorType HttpServer::listenTo(const IpServerSettings::Protocol protocol, const 
     //The ROM includes an HTTP server that is already listening
     return ErrorType::NotAvailable;
 }
-ErrorType HttpServer::acceptConnection(Socket &socket) {
+ErrorType HttpServer::acceptConnection(Socket &socket, const Milliseconds timeout) {
     return ErrorType::NotAvailable;
 }
-ErrorType HttpServer::closeConnection() {
+ErrorType HttpServer::closeConnection(const Socket socket) {
     return ErrorType::NotAvailable;
 }
 ErrorType HttpServer::sendBlocking(const HttpServerTypes::Response &response, const Milliseconds timeout) {

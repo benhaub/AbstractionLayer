@@ -25,6 +25,9 @@ class HttpServer : public HttpServerAbstraction {
 
     private:
     std::unique_ptr<IpServer> _ipServer;
+
+    ErrorType toHttpRequest(const std::string &buffer, HttpServerTypes::Request &request);
+    ErrorType findHeaderValue(const std::string &request, const std::string &headerName, const std::string &value);
 };
 
 #endif // __HTTP_SERVER_MODULE_HPP__

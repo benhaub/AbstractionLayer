@@ -19,7 +19,7 @@ class HttpServer : public HttpServerAbstraction {
 
     ErrorType listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) override;
     ErrorType acceptConnection(Socket &socket, const Milliseconds timeout) override;
-    ErrorType closeConnection() override;
+    ErrorType closeConnection(const Socket socket) override;
     //These functions could perhaps be used to implement websockets
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) override { return ErrorType::NotSupported; }
     ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) override { return ErrorType::NotSupported; }
