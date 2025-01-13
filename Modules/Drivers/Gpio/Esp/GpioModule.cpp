@@ -3,10 +3,10 @@
 #include "Log.hpp"
 
 ErrorType Gpio::init() {
-    return toPlatformError(gpio_config(&_gpioConfig));
+    return fromPlatformError(gpio_config(&_gpioConfig));
 }
 
-ErrorType Gpio::setHardwareConfig(const uint32_t *basePeripheralRegister, const PinNumber pinNumber, const GpioTypes::PinDirection direction, const GpioTpyes::InterruptMode interruptMode, const bool pullUpEnable, const bool pullDownEnable) {
+ErrorType Gpio::setHardwareConfig(const uint32_t *basePeripheralRegister, const PinNumber pinNumber, const GpioTypes::PinDirection direction, const GpioTypes::InterruptMode interruptMode, const bool pullUpEnable, const bool pullDownEnable) {
     switch (interruptMode) {
         case GpioTypes::InterruptMode::Disabled:
             _gpioConfig.intr_type = GPIO_INTR_DISABLE;
@@ -62,14 +62,16 @@ ErrorType Gpio::setHardwareConfig(const uint32_t *basePeripheralRegister, const 
     else {
         _gpioConfig.pull_up_en = GPIO_PULLUP_DISABLE;
     }
+
+    return ErrorType::Success;
 }
 
 ErrorType Gpio::pinWrite(const GpioTypes::LogicLevel &logicLevel) {
     if (GpioTypes::LogicLevel::High == logicLevel) {
-        return toPlatformError(gpio_set_level(toEspPinNumber(pinNumber()), 1));
+        return fromPlatformError(gpio_set_level(toEspPinNumber(pinNumber()), 1));
     }
     else if (GpioTypes::LogicLevel::Low == logicLevel) {
-        return toPlatformError(gpio_set_level(toEspPinNumber(pinNumber()), 0));
+        return fromPlatformError(gpio_set_level(toEspPinNumber(pinNumber()), 0));
     }
     else {
         return ErrorType::InvalidParameter;

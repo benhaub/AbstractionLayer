@@ -9,6 +9,7 @@ STATIC
 )
 
 target_include_directories(Gpio INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(Gpio INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspGpio PUBLIC abstractionLayer)
 target_link_libraries(EspGpio PUBLIC Gpio)
