@@ -11,9 +11,11 @@ STATIC
 )
 
 target_include_directories(Storage INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(Storage INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspStorage PUBLIC abstractionLayer)
 target_link_libraries(EspStorage PUBLIC Utilities)
+target_link_libraries(EspStorage PUBLIC Storage)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC EspStorage)
 
 target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})

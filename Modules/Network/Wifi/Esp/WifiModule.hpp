@@ -51,9 +51,9 @@ class Wifi : public WifiAbstraction {
                 return WIFI_AUTH_OPEN;
             case WifiConfig::AuthMode::Wep:
                 return WIFI_AUTH_WEP;
-            case WifiConfig::AuthMode::WpaPsk:
+            case WifiConfig::AuthMode::Wpa:
                 return WIFI_AUTH_WPA_PSK;
-            case WifiConfig::AuthMode::Wpa2Psk:
+            case WifiConfig::AuthMode::WpaWpa2:
                 return WIFI_AUTH_WPA2_PSK;
             default:
                 return WIFI_AUTH_OPEN;

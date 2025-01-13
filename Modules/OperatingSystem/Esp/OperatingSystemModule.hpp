@@ -45,7 +45,7 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
     ErrorType peekFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) override;
     ErrorType getSystemTime(UnixTime &currentSystemUnixTime) override;
     ErrorType ticksToMilliseconds(Ticks ticks, Milliseconds &timeInMilliseconds) override;
-    ErrorType millisecondsToTicks(Milliseconds milli, Ticks ticks) override;
+    ErrorType millisecondsToTicks(const Milliseconds milli, Ticks &ticks) override;
     ErrorType getSystemTick(Ticks &currentSystemTicks) override;
     ErrorType getSoftwareVersion(std::string &softwareVersion) override;
     ErrorType getResetReason(OperatingSystemConfig::ResetReason &resetReason) override;

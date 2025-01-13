@@ -32,30 +32,30 @@ ErrorType Wifi::init() {
     if (ESP_OK != (err = esp_event_loop_create_default())) {
         bool isCriticalErrror = !(err = ESP_ERR_INVALID_STATE);
         if (isCriticalErrror) {
-            return toPlatformError(err);
+            return fromPlatformError(err);
         }
     }
 
     err = esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_START, &WifiEventHandler, this);
     if (ESP_OK != err) {
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
     err = esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &WifiEventHandler, this);
     if (ESP_OK != err) {
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
     err = esp_event_handler_register(IP_EVENT, WIFI_EVENT_STA_CONNECTED, &WifiEventHandler, this);
     if (ESP_OK != err) {
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
     err = esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &WifiEventHandler, this);
     if (ESP_OK != err) {
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     if (ESP_OK != (err = esp_wifi_init(&cfg))) {
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
 
     esp_wifi_set_mode(toEspWifiMode(mode()));
@@ -97,7 +97,7 @@ ErrorType Wifi::init() {
     const Milliseconds oneHundred = 100;
     bool interfaceIsNotUp = _ipAddress.empty();
     bool weHaveNotRetried100Times = i < 100;
-    CBT_LOGI(TAG, "Waiting for interface to come up");
+    PLT_LOGI(TAG, "Waiting for interface to come up");
     while (interfaceIsNotUp && weHaveNotRetried100Times) {
         OperatingSystem::Instance().delay(oneHundred);
         i++;
@@ -134,30 +134,30 @@ ErrorType Wifi::networkUp() {
 
     err = esp_netif_init();
     if (ESP_OK != err) {
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
 
     return ErrorType::Success;
 }
 
 ErrorType Wifi::networkDown() {
-    ErrorType error = toPlatformError(esp_wifi_stop());
+    ErrorType error = fromPlatformError(esp_wifi_stop());
     _ipAddress.clear();
     _status.isUp = false;
     return error;
 }
 
 ErrorType Wifi::radioOn() {
-    return toPlatformError(esp_wifi_start());
+    return fromPlatformError(esp_wifi_start());
 }
 
 ErrorType Wifi::radioOff() {
-    return toPlatformError(esp_wifi_deinit());
+    return fromPlatformError(esp_wifi_deinit());
 }
 
 ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) {
     if (-1 == send(socket, frame.data(), frame.size(), 0)) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
 
     return ErrorType::Success;
@@ -186,13 +186,13 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
     int ret;
     ret = select(socket + 1, &readfds, NULL, NULL, &timeoutval);
     if (ret < 0) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
     }
 
     if (FD_ISSET(socket, &readfds)) {
         if (-1 == (bytesReceived = recv(socket, frameBuffer.data(), frameBuffer.size(), 0))) {
-            error = toPlatformError(errno);
+            error = fromPlatformError(errno);
         }
         else if ((size_t)bytesReceived > frameBuffer.size()) {
             error = ErrorType::PrerequisitesNotMet;
@@ -223,7 +223,7 @@ ErrorType Wifi::getMacAddress(std::string &macAddress) {
 
     err = esp_read_mac(macAddressByteArray, ESP_MAC_WIFI_STA);
     if (ESP_OK != err) {
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
 
     assert(snprintf(macAddress.data(), macAddress.size(), MACSTR, MAC2STR(macAddressByteArray)) > 0);
@@ -248,7 +248,6 @@ ErrorType Wifi::mainLoop() {
 
 ErrorType Wifi::setSsid(WifiConfig::Mode mode, std::string ssid) {
     wifi_config_t wifiConfig;
-    esp_err_t err;
 
     if (ssid.length() > sizeof(wifiConfig.sta.ssid) - 1) {
         return ErrorType::InvalidParameter;
@@ -273,7 +272,7 @@ ErrorType Wifi::setStationSsid(std::string ssid) {
 
     err = esp_wifi_get_config(WIFI_IF_STA, &wifiConfig);
     if (ESP_OK != err) {
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
 
     memcpy(wifiConfig.sta.ssid, ssid.c_str(), ssid.length());
@@ -284,10 +283,10 @@ ErrorType Wifi::setStationSsid(std::string ssid) {
 
     esp_wifi_set_config(WIFI_IF_STA, &wifiConfig);
     if (ESP_OK != err) {
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
 
-    return toPlatformError(err);
+    return fromPlatformError(err);
 }
 
 ErrorType Wifi::setAccessPointSsid(std::string ssid) {
@@ -296,17 +295,17 @@ ErrorType Wifi::setAccessPointSsid(std::string ssid) {
 
     err = esp_wifi_get_config(WIFI_IF_AP, &wifiConfig);
     if (ESP_OK != err) {
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
 
     memcpy(wifiConfig.ap.ssid, ssid.c_str(), ssid.length());
 
     err = esp_wifi_set_config(WIFI_IF_AP, &wifiConfig);
     if (ESP_OK != err) {
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
 
-    return toPlatformError(err);
+    return fromPlatformError(err);
 }
 
 ErrorType Wifi::setPassword(WifiConfig::Mode mode, std::string password) {
@@ -320,28 +319,28 @@ ErrorType Wifi::setPassword(WifiConfig::Mode mode, std::string password) {
     if (WifiConfig::Mode::Station == mode) {
         err = esp_wifi_get_config(WIFI_IF_STA, &wifiConfig);
         if (ESP_OK != err) {
-            return toPlatformError(err);
+            return fromPlatformError(err);
         }
 
         memcpy(wifiConfig.sta.password, password.c_str(), password.length());
 
         err = esp_wifi_set_config(WIFI_IF_STA, &wifiConfig);
         if (ESP_OK != err) {
-            return toPlatformError(err);
+            return fromPlatformError(err);
         }
     }
 
     if (WifiConfig::Mode::AccessPoint == mode) {
         err = esp_wifi_get_config(WIFI_IF_AP, &wifiConfig);
         if (ESP_OK != err) {
-            return toPlatformError(err);
+            return fromPlatformError(err);
         }
 
         memcpy(wifiConfig.ap.password, password.c_str(), password.length());
 
         err = esp_wifi_set_config(WIFI_IF_AP, &wifiConfig);
         if (ESP_OK != err) {
-            return toPlatformError(err);
+            return fromPlatformError(err);
         }
     }
     else {
@@ -364,24 +363,24 @@ static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t even
 
     if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_AP_STACONNECTED) {
         wifi_event_ap_staconnected_t *event = (wifi_event_ap_staconnected_t *) eventData;
-        CBT_LOGI(Wifi::TAG, "Station " "MACSTR" " left, AID=%d",
+        PLT_LOGI(Wifi::TAG, "Station " "MACSTR" " left, AID=%d",
                  MAC2STR(event->mac), event->aid);
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_AP_STADISCONNECTED) {
         wifi_event_ap_stadisconnected_t *event = (wifi_event_ap_stadisconnected_t *) eventData;
-        CBT_LOGI(Wifi::TAG, "Station " "MACSTR" " left, AID=%d",
+        PLT_LOGI(Wifi::TAG, "Station " "MACSTR" " left, AID=%d",
                  MAC2STR(event->mac), event->aid);
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_CONNECTED) {
-        CBT_LOGI(Wifi::TAG, "Station connected");
+        PLT_LOGI(Wifi::TAG, "Station connected");
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
-        CBT_LOGI(Wifi::TAG, "Station started");
+        PLT_LOGI(Wifi::TAG, "Station started");
     }
     else if (eventBase == IP_EVENT && eventId == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *) eventData;
-        CBT_LOGI(Wifi::TAG, "Got IP:" IPSTR, IP2STR(&event->ip_info.ip));
+        PLT_LOGI(Wifi::TAG, "Got IP:" IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
     }
 

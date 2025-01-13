@@ -9,8 +9,10 @@ STATIC
 )
 
 target_include_directories(OperatingSystem INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(OperatingSystem INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspOperatingSystem PUBLIC abstractionLayer)
+target_link_libraries(EspOperatingSystem PUBLIC OperatingSystem)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC EspOperatingSystem)
 
 target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})

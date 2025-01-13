@@ -44,7 +44,7 @@ ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority
     esp_pthread_cfg.prio = toEspPriority(priority);
     esp_pthread_cfg.thread_name = name.c_str();
 
-    if (ErrorType::Success != (error = toPlatformError(esp_pthread_set_cfg(&esp_pthread_cfg)))) {
+    if (ErrorType::Success != (error = fromPlatformError(esp_pthread_set_cfg(&esp_pthread_cfg)))) {
         return error;
     }
 
@@ -71,7 +71,7 @@ ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority
     }
     else {
         deleteThread(name);
-        error = toPlatformError(res);
+        error = fromPlatformError(res);
     }
 
     _status.threadCount = threads.size();
@@ -97,7 +97,7 @@ ErrorType OperatingSystem::joinThread(std::string name) {
         return ErrorType::NoData;
     }
 
-    return toPlatformError(pthread_join(threads[name].posixThreadId, nullptr));
+    return fromPlatformError(pthread_join(threads[name].posixThreadId, nullptr));
 }
 
 ErrorType OperatingSystem::threadId(std::string name, Id &thread) {
@@ -300,7 +300,7 @@ ErrorType OperatingSystem::setTimeOfDay(UnixTime utc, Seconds timeZoneDifference
     struct timeval tv;
     tv.tv_sec = utc + timeZoneDifferenceUtc;
     tv.tv_usec = 0;
-    return toPlatformError(settimeofday(&tv, nullptr));
+    return fromPlatformError(settimeofday(&tv, nullptr));
 }
 
 ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
@@ -331,7 +331,7 @@ void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
     timers[timer].callback();
 
     if (timers[timer].autoReload) {
-        deleteTimer(timers[timer].id)
+        deleteTimer(timers[timer].id);
     }
 
     return;

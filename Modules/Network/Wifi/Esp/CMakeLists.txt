@@ -9,6 +9,7 @@ STATIC
 )
 
 target_include_directories(Network INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(Network INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspWifi PUBLIC abstractionLayer)
 target_link_libraries(EspWifi PUBLIC Network)

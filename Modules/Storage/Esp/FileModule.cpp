@@ -6,8 +6,8 @@ ErrorType File::open(const std::string &filename, OpenMode mode) {
     assert(filename.size() > 0);
     esp_err_t err;
     _handle = nvs::open_nvs_handle(storage().name().c_str(), NVS_READWRITE, &err);
-    if (ErrorType::Success != toPlatformError(err)) {
-        return toPlatformError(err);
+    if (ErrorType::Success != fromPlatformError(err)) {
+        return fromPlatformError(err);
     }
 
     _filename.assign(filename);
@@ -23,7 +23,7 @@ ErrorType File::seek(const FileOffset &offset) {
 }
 
 ErrorType File::remove() {
-    return toPlatformError(_handle->erase_item(path().c_str()));
+    return fromPlatformError(_handle->erase_item(path().c_str()));
 }
 
 ErrorType File::readBlocking(FileOffset offset, std::string &buffer) {
@@ -36,7 +36,7 @@ ErrorType File::readBlocking(FileOffset offset, std::string &buffer) {
         buffer.resize(0);
     }
 
-    return toPlatformError(err);
+    return fromPlatformError(err);
 }
 
 ErrorType File::readNonBlocking(FileOffset offset, std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
@@ -55,7 +55,7 @@ ErrorType File::writeBlocking(FileOffset offset, const std::string &data) {
         return ErrorType::InvalidParameter;
     }
 
-    return toPlatformError(_handle->set_blob(path().c_str(), data.c_str(), data.size()));
+    return fromPlatformError(_handle->set_blob(path().c_str(), data.c_str(), data.size()));
 }
 
 ErrorType File::writeNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
@@ -67,7 +67,7 @@ ErrorType File::writeNonBlocking(const std::shared_ptr<std::string> data, std::f
 }
 
 ErrorType File::synchronize() {
-    return toPlatformError(_handle->commit());
+    return fromPlatformError(_handle->commit());
 }
 
 std::string File::path() const {

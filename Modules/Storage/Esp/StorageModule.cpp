@@ -17,6 +17,7 @@ ErrorType Storage::deinitStorage() {
 ErrorType Storage::maxStorageSize(Kilobytes &size, std::string partitionName) {
     nvs_stats_t stats;
     esp_err_t err;
+
     if (partitionName.empty()) {
         err = nvs_get_stats(NULL, &stats);
     }
@@ -28,7 +29,7 @@ ErrorType Storage::maxStorageSize(Kilobytes &size, std::string partitionName) {
     //One entry is 32 bytes.
     size = (stats.total_entries * 32) / 1024;
     
-    return toPlatformError(err);
+    return fromPlatformError(err);
 }
 
 ErrorType Storage::availableStorage(Kilobytes &size, std::string partitionName) {
@@ -46,7 +47,7 @@ ErrorType Storage::availableStorage(Kilobytes &size, std::string partitionName) 
     //One entry is 32 bytes.
     size = (stats.free_entries * 32) / 1024;
 
-    return toPlatformError(err);
+    return fromPlatformError(err);
 }
 
 /**
@@ -118,16 +119,16 @@ ErrorType Storage::initStorageInternal() {
         // NVS partition was truncated and needs to be erased
         // Retry nvs_flash_init
         //TODO: What should I do here? Try to ship off data to the cloud before resetting? Does Mark support that?
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
 
     _nvsHandle = nvs::open_nvs_handle(name().c_str(), NVS_READWRITE, &err);
     if (err != ESP_OK) {
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
 
     _status.isInitialized = true;
-    return toPlatformError(err);
+    return fromPlatformError(err);
 } 
     
 ErrorType Storage::deinitStorageInternal() {
@@ -135,13 +136,13 @@ ErrorType Storage::deinitStorageInternal() {
             _nvsHandle.release();
         }
 
-        return toPlatformError(nvs_flash_deinit());
+        return fromPlatformError(nvs_flash_deinit());
 } 
     
 ErrorType Storage::erasePartitionInternal(const std::string &partitionName) {
-    return toPlatformError(nvs_flash_erase_partition(partitionName.c_str()));
+    return fromPlatformError(nvs_flash_erase_partition(partitionName.c_str()));
 }
 
 ErrorType Storage::eraseAllPartitionsInternal() {
-    return toPlatformError(_nvsHandle->erase_all());
+    return fromPlatformError(_nvsHandle->erase_all());
 }
