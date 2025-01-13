@@ -1,10 +1,9 @@
 #ifndef __STORAGE_MODULE_HPP__
 #define __STORAGE_MODULE_HPP__
 
-//AbstractionLayer applications
+//AbstractionLayer
 #include "Global.hpp"
 #include "EventQueue.hpp"
-//AbstractionLayer
 #include "StorageAbstraction.hpp"
 
 /**

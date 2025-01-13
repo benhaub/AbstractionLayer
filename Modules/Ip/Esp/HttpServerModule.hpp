@@ -3,15 +3,11 @@
 
 //AbstractionLayer
 #include "HttpServerAbstraction.hpp"
-#include "IpServerModule.hpp"
 
 class HttpServer : public HttpServerAbstraction {
 
     public:
-    HttpServer() : HttpServerAbstraction() {
-        _ipServer = std::make_unique<IpServer>();
-        assert(nullptr != _ipServer.get());
-    }
+    HttpServer() : HttpServerAbstraction() {}
     virtual ~HttpServer() = default;
 
     ErrorType listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) override;
@@ -22,12 +18,6 @@ class HttpServer : public HttpServerAbstraction {
     ErrorType receiveBlocking(HttpServerTypes::Request &request, const Milliseconds timeout, Socket &socket) override;
     ErrorType sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
     ErrorType receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) override;
-
-    private:
-    std::unique_ptr<IpServer> _ipServer;
-
-    ErrorType toHttpRequest(const std::string &buffer, HttpServerTypes::Request &request);
-    ErrorType findHeaderValue(const std::string &request, const std::string &headerName, const std::string &value);
 };
 
 #endif // __HTTP_SERVER_MODULE_HPP__

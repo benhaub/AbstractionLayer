@@ -1,9 +1,8 @@
 #ifndef __FILE_MODULE_HPP__
 #define __FILE_MODULE_HPP__
 
-//Common
-#include "Log.hpp"
 //AbstractionLayer
+#include "Log.hpp"
 #include "FileAbstraction.hpp"
 #include "StorageAbstraction.hpp"
 //C++

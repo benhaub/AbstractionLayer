@@ -10,9 +10,7 @@
 
 //AbstractionLayer
 #include "Error.hpp"
-//Common
 #include "Global.hpp"
-//ChainOfResponsibility
 #include "CommandObject.hpp"
 //C++
 #include <memory>

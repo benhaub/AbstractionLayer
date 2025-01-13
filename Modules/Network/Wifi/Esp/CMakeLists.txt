@@ -13,7 +13,7 @@ target_include_directories(Network INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUD
 
 target_link_libraries(EspWifi PUBLIC abstractionLayer)
 target_link_libraries(EspWifi PUBLIC Network)
-target_link_libraries(EspWifi PUBLIC Common)
+target_link_libraries(EspWifi PUBLIC Utilities)
 target_link_libraries(EspWifi PUBLIC Logging)
 target_link_libraries(EspWifi PUBLIC OperatingSystem)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC EspWifi)

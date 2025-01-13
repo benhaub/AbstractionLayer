@@ -1,8 +1,11 @@
 #ifndef __CYCLIC_REDUNDANCY_CHECK_MODULE_HPP__
 #define __CYCLIC_REDUNDANCY_CHECK_MODULE_HPP__
 
-#include "CbtError.hpp"
-#include "CbtTypes.hpp"
+//AbstractionLayer
+#include "Error.hpp"
+#include "Types.hpp"
+//C++
+#include <string>
 
 namespace Crc {
 

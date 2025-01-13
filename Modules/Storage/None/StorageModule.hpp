@@ -3,7 +3,6 @@
 
 //AbstractionLayer
 #include "StorageAbstraction.hpp"
-//Utilities
 #include "Error.hpp"
 #include "Global.hpp"
 #include "EventQueue.hpp"

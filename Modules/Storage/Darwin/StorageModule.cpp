@@ -1,8 +1,6 @@
-//Modules
-#include "StorageModule.hpp"
 //AbstractionLayer
 #include "Error.hpp"
-//Common
+#include "StorageModule.hpp"
 #include "Log.hpp"
 //Posix
 #include <sys/statvfs.h>
@@ -14,7 +12,7 @@
 ErrorType Storage::initStorage() {
     ErrorType error;
     _rootPrefix = getEnvironment("HOME", error);
-    _rootPrefix += "/fnddData";
+    _rootPrefix += "/_Data";
     mkdir(_rootPrefix.c_str(), S_IRWXU);
     
 
@@ -35,7 +33,7 @@ ErrorType Storage::maxStorageSize(Kilobytes &size, std::string partitionName) {
         size = fiData.f_blocks * (fiData.f_frsize / 1024);
     }
     else {
-        error = toPlatformError(errno);
+        error = fromPlatformError(errno);
         size = 0;
     }
 
@@ -50,7 +48,7 @@ ErrorType Storage::availableStorage(Kilobytes &size, std::string partitionName) 
         size = fiData.f_bavail * (fiData.f_frsize / 1024);
     }
     else {
-        error = toPlatformError(errno);
+        error = fromPlatformError(errno);
         size = 0;
     }
 

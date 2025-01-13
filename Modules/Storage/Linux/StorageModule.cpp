@@ -1,8 +1,6 @@
-//Modules
-#include "StorageModule.hpp"
 //AbstractionLayer
 #include "Error.hpp"
-//Common
+#include "StorageModule.hpp"
 #include "Log.hpp"
 //Posix
 #include <sys/statvfs.h>
@@ -13,7 +11,7 @@
 ErrorType Storage::initStorage() {
     ErrorType error;
     _rootPrefix = getEnvironment("HOME", error);
-    _rootPrefix += "/fnddData";
+    _rootPrefix += "/_Data";
     mkdir(_rootPrefix.c_str(), S_IRWXU);
     
 

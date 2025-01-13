@@ -90,11 +90,14 @@ crc16_t crc16_arc_finalize(crc16_t crc) { return (crc ^ 0x0000) & 0xffff; }
  * poly=0x800e init=0x0000 reflect-in=True reflect-out=True xor-out=0x0000
  * check=0xbb3d
  */
+#pragma GCC diagnostic error "-Wincompatible-pointer-types"
+#pragma GCC diagnostic push
 const crc16_api_t crc_api_crc16_arc = {
     .init = 0x00000000,
     .update = crc16_arc_update,
     .finalize = crc16_arc_finalize,
 };
+#pragma GCC diagnostic pop
 
 /*
  * generation with pycrc

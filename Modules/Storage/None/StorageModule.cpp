@@ -1,6 +1,5 @@
-//Modules
+//AbstractionLayer
 #include "StorageModule.hpp"
-//Common
 #include "Error.hpp"
 
 ErrorType Storage::initStorage() {

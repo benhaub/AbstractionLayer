@@ -1,11 +1,11 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
-* @file   CbtGlobal.hpp
+* @file   Global.hpp
 * @details \b Synopsis: \n Makes a class globally accessible when inherited from
-* @ingroup Common
+* @ingroup AbstractionLayer
 *******************************************************************************/
-#ifndef __CBT_GLOBAL_HPP__
-#define __CBT_GLOBAL_HPP__
+#ifndef __GLOBAL_HPP__
+#define __GLOBAL_HPP__
 
 //C++
 #include <memory>
@@ -76,4 +76,4 @@ template <class T, typename... Args> class Global {
     }
 };
 
-#endif // __CBT_GLOBAL_HPP__
+#endif // __GLOBAL_HPP__

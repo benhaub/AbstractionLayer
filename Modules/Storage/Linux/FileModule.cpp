@@ -1,8 +1,7 @@
-//Modules
+//AbstractionLayer
+#include "EventQueue.hpp"
 #include "FileModule.hpp"
 #include "StorageModule.hpp"
-//Abstraction Layer
-#include "EventQueue.hpp"
 
 ErrorType File::open(const std::string &filename, const OpenMode mode) {
     assert(filename.size() > 0);
