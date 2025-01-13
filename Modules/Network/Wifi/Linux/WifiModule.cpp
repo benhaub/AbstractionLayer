@@ -63,14 +63,16 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
         }
         else {
             frameBuffer.resize(bytesReceived);
-            return ErrorType::Success;
+            error = ErrorType::Success;
         }
     }
     else {
         error = ErrorType::Timeout;
     }
 
-    frameBuffer.resize(0);
+    if (0 == frameBuffer.size()) {
+        error = ErrorType::NoData;
+    }
 
     return error;
 }

@@ -155,22 +155,24 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
     socket = -1;
     ErrorType error = ErrorType::Failure;
 
-    auto rx = [this, &error, &received](std::string &buffer, Socket &socket, const Milliseconds timeout) -> ErrorType {
+    auto rx = [this, &error, &received](std::string *buffer, Socket &socket, const Milliseconds timeout) -> ErrorType {
         //TODO: What if we only receive part of the data. We will need to keep this socket in play until we receive the whole thing.
         for (size_t i = _previousReceivedSocketIndex; i < _connectedSockets.size(); i++) {
-            error = network().rxBlocking(buffer, _connectedSockets[i], timeout);
+            error = network().rxBlocking(*buffer, _connectedSockets[i], timeout);
             if (ErrorType::Success == error) {
-                received = true;
                 socket = _connectedSockets[i];
                 _previousReceivedSocketIndex = i;
                 break;
             }
         }
 
+        received = true;
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(rx, buffer, socket, timeout));
+    //For some reason, the buffer can't be passed as a reference parameter to the callback. It has to be a pointer otherwise the
+    //pointer to the data inside the string will change.
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(rx, &buffer, socket, timeout));
     error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;

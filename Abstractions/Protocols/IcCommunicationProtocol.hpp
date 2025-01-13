@@ -54,7 +54,7 @@ class IcCommunicationProtocol : public EventQueue {
     virtual ErrorType deinit() = 0;
     /**
      * @brief transmit data
-     * @sa Fnd::CommunicationProtocol::send
+     * @sa Fnd::CommunicationProtocol::sendBlocking
     */
     virtual ErrorType txBlocking(const std::string &data, const Milliseconds timeout) = 0;
     /**
@@ -64,7 +64,7 @@ class IcCommunicationProtocol : public EventQueue {
     virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
     /**
      * @brief receive data
-     * @sa Fnd::CommunicationProtocol::receive
+     * @sa Fnd::CommunicationProtocol::receiveBlocking
     */
     virtual ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout) = 0;
     /**
