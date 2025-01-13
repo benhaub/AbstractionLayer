@@ -6,13 +6,12 @@
 #include <string>
 
 ErrorType Uart::init() {
-    uart_port_t uartNumber;
     ErrorType error;
 
     //Did you call all of the config functions?
     assert(PeripheralNumber::Unknown != peripheralNumber());
 
-    error = toPlatformError(uart_driver_install(toEspPeripheralNumber(this->peripheralNumber(), error), receiveBufferSize(), transmitBufferSize(), 0, nullptr, 0));
+    error = fromPlatformError(uart_driver_install(toEspPeripheralNumber(this->peripheralNumber(), error), receiveBufferSize(), transmitBufferSize(), 0, nullptr, 0));
     if (ErrorType::Success != error) {
         return error;
     }
@@ -22,11 +21,10 @@ ErrorType Uart::init() {
 
 ErrorType Uart::deinit() {
     ErrorType error;
-    return toPlatformError(uart_driver_delete(toEspPeripheralNumber(this->peripheralNumber(), error)));
+    return fromPlatformError(uart_driver_delete(toEspPeripheralNumber(this->peripheralNumber(), error)));
 }
 
 ErrorType Uart::txBlocking(const std::string &data, Milliseconds timeout) {
-    uart_port_t uartNumber;
     ErrorType error;
 
     if (-1 != uart_write_bytes(toEspPeripheralNumber(this->peripheralNumber(), error), data.data(), data.size())) {
@@ -101,12 +99,8 @@ ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout) {
 }
 
 ErrorType Uart::rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
-    ErrorType error;
-
     auto rx = [this, callback](std::shared_ptr<std::string> buffer, Bytes size) -> ErrorType {
         ErrorType error = ErrorType::Failure;
-        Bytes received = 0;
-        const FileOffset offset = 0;
         const Milliseconds timeout = 1000;
 
         error = rxBlocking(*(buffer.get()), timeout);
@@ -131,7 +125,7 @@ ErrorType Uart::flushRxBuffer() {
         return error;
     }
     else {
-        return toPlatformError(err);
+        return fromPlatformError(err);
     }
 }
 
