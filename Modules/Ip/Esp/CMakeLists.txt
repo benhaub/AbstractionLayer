@@ -9,6 +9,7 @@ STATIC
 )
 
 target_include_directories(IpClient INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(IpClient INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspIp PUBLIC abstractionLayer)
 target_link_libraries(EspIp PUBLIC IpClient)
