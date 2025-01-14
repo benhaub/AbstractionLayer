@@ -96,6 +96,9 @@ class IpServerAbstraction : public CommunicationProtocol {
     */
     virtual ErrorType closeConnection(const Socket socket) = 0;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Woverloaded-virtual"
+
     //Try casting to an IpServerAbstraction or IpServerModule if you are calling using a CommunicationProtocol pointer.
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) override { return ErrorType::NotSupported; }
     ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override { return ErrorType::NotSupported; }
@@ -143,6 +146,8 @@ class IpServerAbstraction : public CommunicationProtocol {
      * @post The callback will be called when the data has been received. The buffer is valid if and only if error is equal to ErrorType::Success.
     */
     virtual ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) = 0;
+
+#pragma GCC diagnostic pop
 
     ///@brief Get a mutable reference to the protocol
     IpServerSettings::Protocol &protocol() { return _protocol; }

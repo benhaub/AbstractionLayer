@@ -3,6 +3,7 @@ STATIC
   ErrorModule.cpp
 )
 
+target_link_libraries(NoneError PUBLIC Utilities)
 target_include_directories(Network INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(Gpio INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(Uart INTERFACE ${CMAKE_CURRENT_LIST_DIR})
@@ -14,3 +15,7 @@ target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC NoneError)
 target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 target_compile_options(NoneError PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
+
+if (ESP_PLATFORM)
+  target_include_directories(__idf_main PUBLIC $<TARGET_PROPERTY:Utilities,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()

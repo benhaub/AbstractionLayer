@@ -15,11 +15,11 @@ ErrorType HttpServer::closeConnection(const Socket socket) {
     return ErrorType::NotAvailable;
 }
 
-ErrorType HttpServer::sendBlocking(const HttpServerTypes::Response &response, const Milliseconds timeout) {
+ErrorType HttpServer::sendBlocking(const HttpServerTypes::Response &response, const Milliseconds timeout, const Socket socket) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const Milliseconds timeout) {
+ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const Milliseconds timeout, Socket &socket) {
     ErrorType error = ErrorType::Failure;
     SlNetAppRequest_t netAppRequest;
     error = OperatingSystem::Instance().receiveFromQueue(SimpleLinkEventQueue, &netAppRequest, timeout, false);
@@ -40,7 +40,7 @@ ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const M
     return error;
 }
 
-ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     return ErrorType::NotImplemented;
 }
 

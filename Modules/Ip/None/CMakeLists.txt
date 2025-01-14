@@ -33,3 +33,8 @@ target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CU
 
 target_compile_options(NoneIpServer PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
 target_compile_options(NoneIpClient PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
+
+if (ESP_PLATFORM)
+  target_include_directories(__idf_main PUBLIC $<TARGET_PROPERTY:IpServer,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_include_directories(__idf_main PUBLIC $<TARGET_PROPERTY:IpClient,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
