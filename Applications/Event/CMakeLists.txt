@@ -12,7 +12,7 @@ target_include_directories(abstractionLayer INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(Event PUBLIC OperatingSystem)
 target_link_libraries(Event PUBLIC Utilities)
-target_link_libraries(EspWifi PUBLIC Logging)
+target_link_libraries(Event PUBLIC Logging)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC Event)
 
 target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
