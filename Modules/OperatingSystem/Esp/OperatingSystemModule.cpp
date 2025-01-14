@@ -313,6 +313,7 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     runtime_total = runtime_total_now;
     // get the idle time between calls
     uint32_t idle_time_between_calls;
+    //You have to enable run time statistics for this to compile.
     uint32_t idle_runtime = ulTaskGetIdleRunTimeCounter() * 1E-6;
     if (idle_runtime < idle_task_runtime_last) {
     idle_time_between_calls = idle_task_runtime_last - idle_runtime;
