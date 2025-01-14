@@ -27,7 +27,7 @@ ErrorType fromPlatformError(int32_t err) {
         case ESP_ERR_NVS_NOT_FOUND:
             return ErrorType::FileNotFound;
         default:
-            ESP_LOGW("EspError", "Got unhandled error code %d", err);
+            ESP_LOGW("EspError", "Got unhandled error code %ld", err);
             return ErrorType::Failure;
     }
 }
