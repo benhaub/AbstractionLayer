@@ -15,6 +15,8 @@
 
 ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
     Socket sock = -1;
+    bool doneListening = false;
+    ErrorType error = ErrorType::Failure;
 
     auto listenCb = [&]() -> ErrorType {
         struct addrinfo hints;
@@ -30,7 +32,9 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
         assert(snprintf(portString, sizeof(portString), "%u", port) > 0);
 
         if (0 != getaddrinfo(nullptr, portString, &hints, &servinfo)) {
-            return fromPlatformError(errno);
+            error = fromPlatformError(errno);
+            doneListening = true;
+            return error;
         }
 
         for (p = servinfo; p != nullptr; p = p->ai_next) {
@@ -40,7 +44,9 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
             
             int enable = 1;
             if (-1 == setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable))) {
-                return fromPlatformError(errno);
+                error = fromPlatformError(errno);
+                doneListening = true;
+                return error;
             }
 
             if (-1 == bind(sock, p->ai_addr, p->ai_addrlen)) {
@@ -55,7 +61,10 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
         _status.listening = true;
         if (-1 == listen(sock, 1)) {
             _status.listening = false;
-            return fromPlatformError(errno);
+            error = fromPlatformError(errno);
+        }
+        else {
+            error = ErrorType::Success;
         }
 
         freeaddrinfo(servinfo);
@@ -67,12 +76,21 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
         _protocol = protocol;
         _version = version;
         _port = port;
+
+        doneListening = true;
+        return error;
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(listenCb));
     if (ErrorType::Success != network().addEvent(event)) {
         return ErrorType::Failure;
     }
+
+    while (!doneListening) {
+        OperatingSystem::Instance().delay(10);
+    }
+
+    return error;
 }
 ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout) {
     struct sockaddr_storage clientAddress;
