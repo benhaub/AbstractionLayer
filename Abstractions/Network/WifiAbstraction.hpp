@@ -50,12 +50,20 @@ namespace WifiConfig {
 /**
  * @class WifiAbstraction
  * @brief Interface for communication over the wifi.
+ * @code
+ * //Initialization should be done in this order
+ * Wifi wifi; //Call anything that is necessary to allow config to be set
+ * wifi.setMode();
+ * wifi.setAuthMode();
+ * wifi.setSsid();
+ * wifi.setPassword();
+ * wifi.init(); //Turn on the radio, bring up the network. Network is ready to use.
+ * @endcode
 */
 class WifiAbstraction : public NetworkAbstraction {
     public:
     /**
-     * @fn WifiAbstraction
-     * @sa WifiFactory::Factory
+     * @brief Anything that should be called before init should be called in the constructor
     */
     WifiAbstraction() = default;
     virtual ~WifiAbstraction() = default;

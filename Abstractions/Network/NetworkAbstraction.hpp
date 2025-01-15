@@ -60,12 +60,11 @@ class NetworkAbstraction : public EventQueue {
     * @brief Initialize the interface.
     * @returns ErrorType::Success if the network interface was initialized and ready for clients to connect.
     * @returns ErrorType::Failure if the network interface was not initialzed and is not ready for clients to connect.
-    * @attention Esp wifi You must set the WifiConfig::Mode before calling.
-    * @sa setMode
     * @post May block for up to a maximum of 10 seconds to bring the interface up.
-    * @post Clients are able to connect to a host after this function returns ErrorType::Success.
+    * @post Network can be used to connect after this function returns ErrorType::Success.
+    * @post Will init with a default setting if network parameters are not set prior to this call.
     */
-        virtual ErrorType init() = 0;
+    virtual ErrorType init() = 0;
     /**
      * @brief Bring up the network interface so that it is ready for use (e.g. IP connections)
      * @returns ErrorType::Success if the network interface was brought up successfully

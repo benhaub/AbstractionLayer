@@ -4,35 +4,25 @@
 #include "Log.hpp"
 #include "SpiModule.hpp"
 
-ErrorType Wifi::init() {
-    ErrorType error = ErrorType::Success;
+Wifi::Wifi() : WifiAbstraction() {
+    _status.isUp = false;
 
+    Spi spi;
     Id thread;
-    const bool wifiNetworkThreadHasNotBeenCreated = ErrorType::NoData == OperatingSystem::Instance().threadId("wifiNetworkThread", thread);
-    if (wifiNetworkThreadHasNotBeenCreated) {
-        Spi spi;
-        error = spi.init();
-        if (ErrorType::Success != error) {
-            return error;
-        }
-
-        constexpr Bytes kilobyte = 1024;
-        error = OperatingSystem::Instance().createThread(OperatingSystemConfig::Priority::High,
-                                                std::string("wifiNetworkThread"),
-                                                nullptr,
-                                                2*kilobyte,
-                                                sl_Task,
-                                                thread);
-    }
-
+    ErrorType error = spi.init();
     if (ErrorType::Success != error) {
-        return error;
+        return;
     }
 
-    error = radioOn();
-    if (ErrorType::Success != error) {
-        return error;
-    }
+    constexpr Bytes kilobyte = 1024;
+    error = OperatingSystem::Instance().createThread(OperatingSystemConfig::Priority::High,
+                                            std::string("wifiNetworkThread"),
+                                            nullptr,
+                                            2*kilobyte,
+                                            sl_Task,
+                                            thread);
+
+    radioOn();
 
     //Enable DHCP client
     sl_NetCfgSet(SL_NETCFG_IPV4_STA_ADDR_MODE, SL_NETCFG_ADDR_DHCP, 0, 0);
@@ -58,7 +48,18 @@ ErrorType Wifi::init() {
     SlWlanRxFilterOperationCommandBuff_t rxFilterIdMask;
     memset(rxFilterIdMask.FilterBitmap, 0xFF, 8);
     sl_WlanSet(SL_WLAN_RX_FILTERS_ID, SL_WLAN_RX_FILTER_REMOVE, sizeof(rxFilterIdMask), (uint8_t *)&rxFilterIdMask);
+}
 
+ErrorType Wifi::init() {
+    ErrorType error = ErrorType::Success;
+
+    Id thread;
+    const bool wifiNetworkThreadHasNotBeenCreated = ErrorType::NoData == OperatingSystem::Instance().threadId("wifiNetworkThread", thread);
+    if (wifiNetworkThreadHasNotBeenCreated) {
+        return ErrorType::PrerequisitesNotMet;
+    }
+
+    //Turn off and on for changes to take affect.
     error = radioOff();
     if (ErrorType::Success != error) {
         return error;
