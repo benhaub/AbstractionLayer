@@ -15,58 +15,64 @@
 
 ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
     Socket sock = -1;
-    struct addrinfo hints;
-    struct addrinfo *servinfo = nullptr;
-    struct addrinfo *p = nullptr;
-    char portString[] = "65535";
 
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = toPosixFamily(version);
-    hints.ai_socktype = toPosixSocktype(protocol);
-    hints.ai_flags = AI_PASSIVE;
+    auto listenCb = [&]() -> ErrorType {
+        struct addrinfo hints;
+        struct addrinfo *servinfo = nullptr;
+        struct addrinfo *p = nullptr;
+        char portString[] = "65535";
 
-    assert(snprintf(portString, sizeof(portString), "%u", port) > 0);
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = toPosixFamily(version);
+        hints.ai_socktype = toPosixSocktype(protocol);
+        hints.ai_flags = AI_PASSIVE;
 
-    if (0 != getaddrinfo(nullptr, portString, &hints, &servinfo)) {
-        return fromPlatformError(errno);
-    }
+        assert(snprintf(portString, sizeof(portString), "%u", port) > 0);
 
-    for (p = servinfo; p != nullptr; p = p->ai_next) {
-        if (-1 == (sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol))) {
-            continue;
-        }
-        
-        int enable = 1;
-        if (-1 == setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable))) {
+        if (0 != getaddrinfo(nullptr, portString, &hints, &servinfo)) {
             return fromPlatformError(errno);
         }
 
-        if (-1 == bind(sock, p->ai_addr, p->ai_addrlen)) {
-            close(sock);
-            continue;
+        for (p = servinfo; p != nullptr; p = p->ai_next) {
+            if (-1 == (sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol))) {
+                continue;
+            }
+            
+            int enable = 1;
+            if (-1 == setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable))) {
+                return fromPlatformError(errno);
+            }
+
+            if (-1 == bind(sock, p->ai_addr, p->ai_addrlen)) {
+                close(sock);
+                continue;
+            }
+
+            break;
         }
 
-        break;
+        //For more connections, create another instance of this class.
+        _status.listening = true;
+        if (-1 == listen(sock, 1)) {
+            _status.listening = false;
+            return fromPlatformError(errno);
+        }
+
+        freeaddrinfo(servinfo);
+
+        //Socket is still invalid. The socket we just had is only for listening for connections.
+        //The socket we get from accept can be used to send and receive which is the one we want
+        //to return to the user.
+        _listenerSocket = sock;
+        _protocol = protocol;
+        _version = version;
+        _port = port;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(listenCb));
+    if (ErrorType::Success != network().addEvent(event)) {
+        return ErrorType::Failure;
     }
-
-    //For more connections, create another instance of this class.
-    _status.listening = true;
-    if (-1 == listen(sock, 1)) {
-        _status.listening = false;
-        return fromPlatformError(errno);
-    }
-
-    freeaddrinfo(servinfo);
-
-    //Socket is still invalid. The socket we just had is only for listening for connections.
-    //The socket we get from accept can be used to send and receive which is the one we want
-    //to return to the user.
-    _listenerSocket = sock;
-    _protocol = protocol;
-    _version = version;
-    _port = port;
-
-    return ErrorType::Success;
 }
 ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout) {
     struct sockaddr_storage clientAddress;

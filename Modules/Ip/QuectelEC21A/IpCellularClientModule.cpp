@@ -52,24 +52,31 @@ static int8_t ToQuectelAccessMode(const CellularConfig::AccessMode accessMode) {
 }
 
 ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &socket, const Milliseconds timeout) {
+    bool doneConnecting = false;
+    ErrorType error = ErrorType::Failure;
+
     auto connectCb = [&]() -> ErrorType {
         _cellNetworkInterface = dynamic_cast<Cellular *>(&network());
         if (nullptr == _cellNetworkInterface) {
-            CBT_LOGE(TAG, "Can't connect to network without a cellular interface");
+            PLT_LOGE(TAG, "Can't connect to network without a cellular interface");
             return ErrorType::NotSupported;
         }
 
         disconnect();
 
         if (version != IpClientSettings::Version::IPv4) {
-            CBT_LOGE(TAG, "only IPv4 is implemented");
-            return ErrorType::NotImplemented;
+            PLT_LOGE(TAG, "only IPv4 is supported");
+            error = ErrorType::NotSupported;
+            doneConnecting = true;
+            return error;
         }
 
         if (ErrorType::LimitReached == _cellNetworkInterface->nextAvailableConnectionId(socket)) {
-            CBT_LOGW(TAG, "No more sockets available");
+            PLT_LOGW(TAG, "No more sockets available");
             socket = -1;
-            return ErrorType::LimitReached;
+            error = ErrorType::LimitReached;
+            doneConnecting = true;
+            return error;
         }
 
         ErrorType error = _cellNetworkInterface->pdpContextIsActive(Cellular::_IpContext);
@@ -79,16 +86,19 @@ ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port po
             const bool pdpContextCouldNotBeActivated = ErrorType::Success != error;
             if (pdpContextCouldNotBeActivated) {
                 socket = -1;
-                CBT_LOGW(TAG, "Failed to activate PDP context");
+                PLT_LOGW(TAG, "Failed to activate PDP context");
+                doneConnecting = true;
                 return error;
             }
         }
 
         std::string quectelProtocol = ToQuectelProtocol(protocol);
         if (quectelProtocol.empty()) {
-            CBT_LOGE(TAG, "Invalid protocol");
+            PLT_LOGE(TAG, "Invalid protocol");
             socket = -1;
-            return ErrorType::InvalidParameter;
+            error = ErrorType::InvalidParameter;
+            doneConnecting = true;
+            return error;
         }
 
         std::string openSocketCommand("AT+QIOPEN=");
@@ -103,7 +113,8 @@ ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port po
         error = _cellNetworkInterface->sendCommand(openSocketCommand, 1000, 10);
         if (ErrorType::Success != error) {
             socket = -1;
-            CBT_LOGW(TAG, "AT command failed <error:%u>", openSocketCommand);
+            PLT_LOGW(TAG, "AT command failed <error:%u>", openSocketCommand);
+            doneConnecting = true;
             return error;
         }
 
@@ -113,8 +124,9 @@ ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port po
         error = _cellNetworkInterface->receiveCommand(openSocketCommand, 1000, 10, "OK");
         if (ErrorType::Success != error) {
             socket = -1;
-            CBT_LOGW(TAG, "AT command failed <error:%u>", openSocketCommand);
-            CBT_LOG_BUFFER_HEXDUMP(TAG, receiveBuffer.data(), receiveBuffer.size(), LogType::Warning);
+            PLT_LOGW(TAG, "AT command failed <error:%u>", openSocketCommand);
+            PLT_LOG_BUFFER_HEXDUMP(TAG, receiveBuffer.data(), receiveBuffer.size(), LogType::Warning);
+            doneConnecting = true;
             return error;
         }
 
@@ -129,22 +141,11 @@ ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port po
         return ErrorType::Failure;
     }
 
-    {
-    Milliseconds i;
-    for (i = 0; i < timeout / 10 && !_status.connected; i++) {
+    while (!doneConnecting) {
         OperatingSystem::Instance().delay(10);
     }
 
-    if (!_status.connected && (timeout / 10) == i) {
-        return ErrorType::Timeout;
-    }
-    else if (!_status.connected) {
-        return ErrorType::Failure;
-    }
-    else {
-        return ErrorType::Success;
-    }
-    }
+    return error;
 }
 
 ErrorType IpCellularClient::disconnect() {
@@ -173,29 +174,29 @@ ErrorType IpCellularClient::sendBlocking(const std::string &data, const Millisec
 
             error = _cellNetworkInterface->sendCommand(command, timeout, 10);
             if (ErrorType::Success != error) {
-                CBT_LOGW(TAG, "AT command error:");
-                CBT_LOG_BUFFER_HEXDUMP(TAG, command.c_str(), command.size(), LogType::Warning);
+                PLT_LOGW(TAG, "AT command error:");
+                PLT_LOG_BUFFER_HEXDUMP(TAG, command.c_str(), command.size(), LogType::Warning);
                 return error;
             }
 
             error = _cellNetworkInterface->receiveCommand(receiveBuffer, 1000, 10, ">");
             if (ErrorType::Timeout == error) {
-                CBT_LOGW(TAG, "Failed to receive command:");
-                CBT_LOG_BUFFER_HEXDUMP(TAG, command.c_str(), command.size(), LogType::Warning);
+                PLT_LOGW(TAG, "Failed to receive command:");
+                PLT_LOG_BUFFER_HEXDUMP(TAG, command.c_str(), command.size(), LogType::Warning);
             }
 
             const uint16_t maxSegmentSize = 1460;
             if (data.size() < maxSegmentSize) {
                 error = _cellNetworkInterface->_ic->txBlocking(data, timeout);
                 if (ErrorType::Success != error) {
-                    CBT_LOGW(TAG, "Failed to send data");
+                    PLT_LOGW(TAG, "Failed to send data");
                     return error;
                 }
 
                 error = _cellNetworkInterface->receiveCommand(receiveBuffer, timeout, maxRetries, "SEND OK");
                 if (ErrorType::Timeout == error) {
-                    CBT_LOGW(TAG, "Receive error: SEND OK");
-                    CBT_LOG_BUFFER_HEXDUMP(TAG, receiveBuffer.c_str(), receiveBuffer.size(), LogType::Warning);
+                    PLT_LOGW(TAG, "Receive error: SEND OK");
+                    PLT_LOG_BUFFER_HEXDUMP(TAG, receiveBuffer.c_str(), receiveBuffer.size(), LogType::Warning);
                     return error;
                 }
             }
@@ -205,8 +206,8 @@ ErrorType IpCellularClient::sendBlocking(const std::string &data, const Millisec
                     _cellNetworkInterface->_ic->txBlocking(data.data() + (data.size() - remaining), remaining > maxSegmentSize ? remaining : maxSegmentSize);
                     error = _cellNetworkInterface->receiveCommand(receiveBuffer, timeout, maxRetries, "SEND OK");
                     if (ErrorType::Timeout == error) {
-                        CBT_LOGW(TAG, "Receive error: SEND OK");
-                        CBT_LOG_BUFFER_HEXDUMP(TAG, receiveBuffer.c_str(), receiveBuffer.size(), LogType::Warning);
+                        PLT_LOGW(TAG, "Receive error: SEND OK");
+                        PLT_LOG_BUFFER_HEXDUMP(TAG, receiveBuffer.c_str(), receiveBuffer.size(), LogType::Warning);
                         return error;
                     }
                 } while (remaining > 0 && sendRetries++ < maxRetries);
@@ -252,8 +253,8 @@ ErrorType IpCellularClient::receiveBlocking(std::string &buffer, const Milliseco
 
             error = _cellNetworkInterface->sendCommand(readCommand, maxRetries, timeout);
             if (ErrorType::Success != error) {
-                CBT_LOGW(TAG, "AT command error:");
-                CBT_LOG_BUFFER_HEXDUMP(TAG, readCommand.c_str(), readCommand.size(), LogType::Warning);
+                PLT_LOGW(TAG, "AT command error:");
+                PLT_LOG_BUFFER_HEXDUMP(TAG, readCommand.c_str(), readCommand.size(), LogType::Warning);
                 return error;
             }
 
@@ -268,8 +269,8 @@ ErrorType IpCellularClient::receiveBlocking(std::string &buffer, const Milliseco
                     error = _cellNetworkInterface->receiveCommand(multipleReadBuffer, maxRetries, timeout, "OK");
 
                     if (ErrorType::Timeout == error) {
-                        CBT_LOGW(TAG, "AT command error:");
-                        CBT_LOG_BUFFER_HEXDUMP(TAG, readCommand.c_str(), readCommand.size(), LogType::Warning);
+                        PLT_LOGW(TAG, "AT command error:");
+                        PLT_LOG_BUFFER_HEXDUMP(TAG, readCommand.c_str(), readCommand.size(), LogType::Warning);
                         return error;
                     }
 
@@ -280,8 +281,8 @@ ErrorType IpCellularClient::receiveBlocking(std::string &buffer, const Milliseco
                 error = _cellNetworkInterface->receiveCommand(buffer, maxRetries, timeout, "OK");
 
                 if (ErrorType::Timeout == error) {
-                    CBT_LOGW(TAG, "AT command error:");
-                    CBT_LOG_BUFFER_HEXDUMP(TAG, readCommand.c_str(), readCommand.size(), LogType::Warning);
+                    PLT_LOGW(TAG, "AT command error:");
+                    PLT_LOG_BUFFER_HEXDUMP(TAG, readCommand.c_str(), readCommand.size(), LogType::Warning);
                     return error;
                 }
             }
@@ -304,7 +305,7 @@ ErrorType IpCellularClient::receiveBlocking(std::string &buffer, const Milliseco
 
                     const Bytes toRead = std::strtoul(buffer.c_str(), nullptr, 10);
                     if (toRead > buffer.size()) {
-                        CBT_LOGW(TAG, "Bytes to read is larger than the buffer size <toRead:%u, bufferSize:%u>", toRead, buffer.size());
+                        PLT_LOGW(TAG, "Bytes to read is larger than the buffer size <toRead:%u, bufferSize:%u>", toRead, buffer.size());
                         return ErrorType::PrerequisitesNotMet;
                     }
                     if (0 == toRead) {
@@ -312,7 +313,7 @@ ErrorType IpCellularClient::receiveBlocking(std::string &buffer, const Milliseco
                         return ErrorType::NoData;
                     }
 #if IP_CELLULAR_CLIENT_DEBUG
-                    CBT_LOGI(TAG, "Bytes to read: %u", toRead);
+                    PLT_LOGI(TAG, "Bytes to read: %u", toRead);
 #endif
                     //Move the payload over and overwrite the remaining preamble so that all we've got left is the payload.
                     //There is still the OK message at the end, but we can just reduce the buffer size to remove it.
@@ -415,7 +416,7 @@ ErrorType IpCellularClient::pollForData(const Socket socket, const Milliseconds 
     }
 
     if (timeNow > timeout) {
-        CBT_LOGW(TAG, "No data available to read.");
+        PLT_LOGW(TAG, "No data available to read.");
         return ErrorType::Timeout;
     }
 

@@ -23,13 +23,17 @@
 */
 ErrorType IpClient::connectTo(const std::string &hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &sock, const Milliseconds timeout) {
     sock = -1;
+    bool doneConnecting = false;
+    ErrorType error = ErrorType::Failure;
 
-    auto connectCb = [&]() -> ErrorType {
+    auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
         disconnect();
 
         if (version != IpClientSettings::Version::IPv4) {
-            PLT_LOGE(TAG, "only IPv4 is implemented");
-            return ErrorType::NotImplemented;
+            PLT_LOGE(TAG, "only IPv4 is supported");
+            error =  ErrorType::NotSupported;
+            doneConnecting = true;
+            return error;
         }
 
         //While I think I have the code to do the rest of this in Ipv6, I don't know the code to do the DNS stuff in Ipv6.
@@ -41,7 +45,9 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         struct hostent *hent = gethostbyname(hostname.c_str());
         if (NULL == hent) {
             PLT_LOGE(TAG, "couldn't get address for %s", hostname.c_str());
-            return ErrorType::Failure;
+            error = ErrorType::Failure;
+            doneConnecting = true;
+            return error;
         }
         struct in_addr **addr_list = (struct in_addr **)hent->h_addr_list;
         struct sockaddr_in dest_ip;
@@ -50,14 +56,18 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         dest_ip.sin_port = htons(port);
 
         if (-1 == (_socket = socket(toPosixFamily(version), toPosixSocktype(protocol), IPPROTO_IP))) {
-        PLT_LOGE(TAG, "couldn't create socket");
-        return ErrorType::Failure;
+            PLT_LOGE(TAG, "couldn't create socket");
+            error = ErrorType::Failure;
+            doneConnecting = true;
+            return error;
         }
 
         if (-1 == connect(_socket, (struct sockaddr *)&dest_ip, sizeof(dest_ip))) {
-        PLT_LOGE(TAG, "couldn't connect to %s (%s)", hostname.c_str(), inet_ntoa(*(struct in_addr *)hent->h_addr_list[0]));
-        close(_socket);
-        return ErrorType::Failure;
+            PLT_LOGE(TAG, "couldn't connect to %s (%s)", hostname.c_str(), inet_ntoa(*(struct in_addr *)hent->h_addr_list[0]));
+            close(_socket);
+            error = ErrorType::Failure;
+            doneConnecting = true;
+            return error;
         }
 
         PLT_LOGI(TAG, "connection in progress");
@@ -65,25 +75,40 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         FD_ZERO(&fdset);
         FD_SET(_socket, &fdset);
 
+        struct timeval timeoutval = {
+            .tv_sec = timeout / 1000,
+            .tv_usec = 0
+        };
+
         // Connection in progress -> have to wait until the connecting socket is marked as writable, i.e. connection completes
-        int res = select(_socket+1, NULL, &fdset, NULL, NULL);
+        int res = select(_socket+1, NULL, &fdset, NULL, &timeoutval);
         if (res < 0) {
             PLT_LOGE(TAG, "Error during connection: select for socket to be writable %s", strerror(errno));
-            return ErrorType::Failure;
-        } else if (res == 0) {
+            error = ErrorType::Failure;
+            doneConnecting = true;
+            return error;
+        }
+        else if (res == 0) {
             PLT_LOGE(TAG, "Connection timeout: select for socket to be writable %s", strerror(errno));
-            return ErrorType::Failure;
-        } else {
+            error = ErrorType::Timeout;
+            doneConnecting = true;
+            return error;
+        }
+        else {
             int sockerr;
             socklen_t len = (socklen_t)sizeof(int);
 
             if (getsockopt(_socket, SOL_SOCKET, SO_ERROR, (void*)(&sockerr), &len) < 0) {
                 PLT_LOGE(TAG, "Error when getting socket error using getsockopt() %s", strerror(errno));
-                return ErrorType::Failure;
+                error = ErrorType::Failure;
+                doneConnecting = true;
+                return error;
             }
             if (sockerr) {
                 PLT_LOGE(TAG, "Connection error %d", sockerr);
-                return ErrorType::Failure;
+                error = ErrorType::Failure;
+                doneConnecting = true;
+                return error;
             }
         }
 
@@ -92,24 +117,20 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         return ErrorType::Success;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpClient>>(std::bind(connectCb));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpClient>>(std::bind(connectCb, timeout));
     if (ErrorType::Success != network().addEvent(event)) {
         return ErrorType::Failure;
     }
 
-    Milliseconds i;
-    for (i = 0; i < timeout / 10 && !_status.connected; i++) {
+    while (!doneConnecting) {
         OperatingSystem::Instance().delay(10);
     }
 
-    if (!_status.connected && (timeout / 10) == i) {
-        return ErrorType::Timeout;
-    }
-    else if (!_status.connected) {
-        return ErrorType::Failure;
+    if (statusConst().connected) {
+        return ErrorType::Success;
     }
     else {
-        return ErrorType::Success;
+        return error;
     }
 }
 
@@ -125,9 +146,9 @@ ErrorType IpClient::disconnect() {
 
 ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds timeout) {
     assert(0 != _socket);
-    bool sent = false;
+    bool doneSending = false;
 
-    auto tx = [this, &sent](const std::string &frame, const Milliseconds timeout) -> ErrorType {
+    auto tx = [this, &doneSending](const std::string &frame, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         error = network().txBlocking(frame, _socket, timeout);
@@ -135,7 +156,7 @@ ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds tim
             _status.connected = false;
         }
 
-        sent = true;
+        doneSending = true;
         return error;
     };
 
@@ -145,27 +166,17 @@ ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds tim
         return error;
     }
 
-    //Block for the timeout specified if no callback is provided
-    Milliseconds i;
-    for (i = 0; i < timeout / 10 && !sent; i++) {
+    while (!doneSending) {
         OperatingSystem::Instance().delay(10);
     }
 
-    if (!sent && (timeout / 10) == i) {
-        return ErrorType::Timeout;
-    }
-    else if (!sent) {
-        return ErrorType::Failure;
-    }
-    else {
-        return ErrorType::Success;
-    }
+    return error;
 }
 
 ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds timeout) {
-    bool received = false;
+    bool doneReceiving = false;
 
-    auto rx = [this, &received](std::string *buffer, const Milliseconds timeout) -> ErrorType {
+    auto rx = [this, &doneReceiving](std::string *buffer, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         assert(0 != _socket);
@@ -174,7 +185,7 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
             _status.connected = false;
         }
 
-        received = true;
+        doneReceiving = true;
         return error;
     };
 
@@ -186,22 +197,11 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
         return error;
     }
 
-    //TODO: This is a timer on top of a timer that we already use in rxBlocking and should be removed to mimic the posix implementation.
-    //Make sure to adjust both sending and receiving functions
-    Milliseconds i;
-    for (i = 0; i < timeout / 10 && !received; i++) {
+    while (!doneReceiving) {
         OperatingSystem::Instance().delay(10);
     }
 
-    if (!received && (timeout / 10) == i) {
-        return ErrorType::Timeout;
-    }
-    else if (!received) {
-        return ErrorType::Failure;
-    }
-    else {
-        return ErrorType::Success;
-    }
+    return error;
 }
 
 ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
