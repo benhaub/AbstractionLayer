@@ -109,12 +109,14 @@ class StorageAbstraction {
     */
     virtual ErrorType eraseAllPartitions() = 0;
 
-    /// @brief Get the status of the storage
-    StorageStatus status() const { return _status; }
+    /// @brief Get the status of the storage as a mutable reference
+    StorageStatus &status() { return _status; }
+    /// @brief Get the status of the storage as a constant reference
+    const StorageStatus &statusConst() const { return _status; }
     /// @brief Get the name of the storage
-    std::string name() const { return _name; }
+    const std::string &name() const { return _name; }
     /// @brief Get the root prefix
-    std::string rootPrefix() const { return _rootPrefix; }
+    const std::string &rootPrefix() const { return _rootPrefix; }
 
     /// @brief Tag for logging
     static constexpr char TAG[] = "Storage";

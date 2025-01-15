@@ -4,6 +4,7 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "esp_heap_caps.h"
+
 ErrorType Storage::initStorage() {
     std::unique_ptr<EventAbstraction> event = std::make_unique<Event<Storage>>(std::bind(&Storage::initStorageInternal, this));
     return addEvent(event);
