@@ -19,10 +19,7 @@
 class Wifi : public WifiAbstraction {
 
     public:
-    Wifi() : WifiAbstraction() {
-        _status.isUp = false;
-        _status.technology = NetworkTypes::Technology::Wifi;
-    }
+    Wifi();
     ~Wifi() = default;
 
     ErrorType init() override;
