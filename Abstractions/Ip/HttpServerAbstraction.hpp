@@ -123,7 +123,7 @@ class HttpServerAbstraction : public IpServerAbstraction {
     virtual ~HttpServerAbstraction() = default;
 
 #pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Woverloaded-virtual"
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
 
     //Http servers take and and return responses and requests. If using an IpServerPointer, try casting to an HttpServer
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) override { return ErrorType::NotSupported; }

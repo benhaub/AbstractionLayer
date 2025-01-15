@@ -97,7 +97,7 @@ class IpServerAbstraction : public CommunicationProtocol {
     virtual ErrorType closeConnection(const Socket socket) = 0;
 
 #pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Woverloaded-virtual"
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
 
     //Try casting to an IpServerAbstraction or IpServerModule if you are calling using a CommunicationProtocol pointer.
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) override { return ErrorType::NotSupported; }
