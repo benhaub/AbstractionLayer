@@ -20,7 +20,7 @@ void TimerCallback(TimerHandle_t timer);
 }
 #endif
 
-ErrorType OperatingSystem::delay(Milliseconds delay) {
+ErrorType OperatingSystem::delay(const Milliseconds delay) {
     usleep(delay * 1000);
     return ErrorType::Success;
 }
@@ -30,7 +30,7 @@ ErrorType OperatingSystem::startScheduler() {
     return ErrorType::NotAvailable;
 }
 
-ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority, std::string name, void * arguments, Bytes stackSize, void *(*startFunction)(void *), Id &number) {
+ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority priority, const std::string &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
     esp_pthread_cfg_t esp_pthread_cfg;
     pthread_t thread;
     int res;
@@ -79,7 +79,7 @@ ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority
     return error;
 }
 
-ErrorType OperatingSystem::deleteThread(std::string name) {
+ErrorType OperatingSystem::deleteThread(const std::string &name) {
     ErrorType error = ErrorType::NoData;
 
     if (threads.contains(name)) {
@@ -91,7 +91,7 @@ ErrorType OperatingSystem::deleteThread(std::string name) {
     return error;
 }
 
-ErrorType OperatingSystem::joinThread(std::string name) {
+ErrorType OperatingSystem::joinThread(const std::string &name) {
     Id thread;
     if (ErrorType::NoData == threadId(name, thread)) {
         return ErrorType::NoData;
@@ -100,7 +100,7 @@ ErrorType OperatingSystem::joinThread(std::string name) {
     return fromPlatformError(pthread_join(threads[name].posixThreadId, nullptr));
 }
 
-ErrorType OperatingSystem::threadId(std::string name, Id &thread) {
+ErrorType OperatingSystem::threadId(const std::string &name, Id &thread) {
     if (threads.contains(name)) {
         thread = threads[name].threadId;
         return ErrorType::Success;
@@ -109,7 +109,7 @@ ErrorType OperatingSystem::threadId(std::string name, Id &thread) {
     return ErrorType::NoData;
 }
 
-ErrorType OperatingSystem::isDeleted(std::string &name) {
+ErrorType OperatingSystem::isDeleted(const std::string &name) {
     if (threads.contains(name)) {
         return ErrorType::Success;
     }
@@ -117,7 +117,7 @@ ErrorType OperatingSystem::isDeleted(std::string &name) {
     return ErrorType::NoData;
 }
 
-ErrorType OperatingSystem::createSemaphore(Count max, Count initial, std::string name) {
+ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::string &name) {
     SemaphoreHandle_t freertosSemaphore;
     freertosSemaphore = xSemaphoreCreateCounting(max, initial);
 
@@ -126,7 +126,7 @@ ErrorType OperatingSystem::createSemaphore(Count max, Count initial, std::string
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::deleteSemaphore(std::string name) {
+ErrorType OperatingSystem::deleteSemaphore(const std::string &name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -136,7 +136,7 @@ ErrorType OperatingSystem::deleteSemaphore(std::string name) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::waitSemaphore(std::string &name, Milliseconds timeout) {
+ErrorType OperatingSystem::waitSemaphore(const std::string &name, const Milliseconds timeout) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -148,7 +148,7 @@ ErrorType OperatingSystem::waitSemaphore(std::string &name, Milliseconds timeout
     return ErrorType::Timeout;
 }
 
-ErrorType OperatingSystem::incrementSemaphore(std::string &name) {
+ErrorType OperatingSystem::incrementSemaphore(const std::string &name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -160,7 +160,7 @@ ErrorType OperatingSystem::incrementSemaphore(std::string &name) {
     return ErrorType::Failure;
 }
 
-ErrorType OperatingSystem::decrementSemaphore(std::string name) {
+ErrorType OperatingSystem::decrementSemaphore(const std::string &name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -172,7 +172,7 @@ ErrorType OperatingSystem::decrementSemaphore(std::string name) {
     return ErrorType::Failure;
 }
 
-ErrorType OperatingSystem::createTimer(Id &timer, Milliseconds period, bool autoReload, std::function<void(void)> callback) {
+ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, const bool autoReload, std::function<void(void)> callback) {
     TimerHandle_t timerHandle;
     Timer newTimer = {
         .callback = callback,
@@ -206,7 +206,7 @@ ErrorType OperatingSystem::deleteTimer(const Id timer) {
     return ErrorType::NoData;
 }
 
-ErrorType OperatingSystem::startTimer(Id timer, Milliseconds timeout) {
+ErrorType OperatingSystem::startTimer(const Id timer, const Milliseconds timeout) {
     auto itr = timers.begin();
     while(itr != timers.end()) {
         if (itr->second.id == timer) {
@@ -219,7 +219,7 @@ ErrorType OperatingSystem::startTimer(Id timer, Milliseconds timeout) {
     return ErrorType::Failure;
 }
 
-ErrorType OperatingSystem::stopTimer(Id timer, Milliseconds timeout) {
+ErrorType OperatingSystem::stopTimer(const Id timer, const Milliseconds timeout) {
     auto itr = timers.begin();
     while(itr != timers.end()) {
         if (itr->second.id == timer) {
@@ -258,7 +258,7 @@ ErrorType OperatingSystem::getSystemTick(Ticks &currentSystemTick) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::ticksToMilliseconds(Ticks ticks, Milliseconds &timeInMilliseconds) {
+ErrorType OperatingSystem::ticksToMilliseconds(const Ticks ticks, Milliseconds &timeInMilliseconds) {
     timeInMilliseconds = static_cast<Ticks>((1000 * ticks) / configTICK_RATE_HZ);
     return ErrorType::Success;
 }
@@ -296,7 +296,7 @@ ErrorType OperatingSystem::reset() {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::setTimeOfDay(UnixTime utc, Seconds timeZoneDifferenceUtc) {
+ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) {
     struct timeval tv;
     tv.tv_sec = utc + timeZoneDifferenceUtc;
     tv.tv_usec = 0;

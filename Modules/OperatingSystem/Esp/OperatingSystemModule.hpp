@@ -23,18 +23,18 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
     OperatingSystem() : Global<OperatingSystem>(), OperatingSystemAbstraction() {}
     ~OperatingSystem() = default;
 
-    ErrorType delay(Milliseconds delay) override;
+    ErrorType delay(const Milliseconds delay) override;
     ErrorType startScheduler() override;
-    ErrorType createThread(OperatingSystemConfig::Priority priority, std::string name, void * arguments, Bytes stackSize, void *(*startFunction)(void *), Id &number) override;
-    ErrorType deleteThread(std::string name) override;
-    ErrorType joinThread(std::string name) override;
-    ErrorType threadId(std::string name, Id &id) override;
-    ErrorType isDeleted(std::string &name) override;
-    ErrorType createSemaphore(Count max, Count initial, std::string name) override;
-    ErrorType deleteSemaphore(std::string name) override;
-    ErrorType waitSemaphore(std::string &name, Milliseconds timeout) override;
-    ErrorType incrementSemaphore(std::string &name) override;
-    ErrorType decrementSemaphore(std::string name) override;
+    ErrorType createThread(const OperatingSystemConfig::Priority priority, const std::string &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) override;
+    ErrorType deleteThread(const std::string &name) override;
+    ErrorType joinThread(const std::string &name) override;
+    ErrorType threadId(const std::string &name, Id &thread) override;
+    ErrorType isDeleted(const std::string &name) override;
+    ErrorType createSemaphore(const Count max, const Count initial, const std::string &name) override;
+    ErrorType deleteSemaphore(const std::string &name) override;
+    ErrorType waitSemaphore(const std::string &name, const Milliseconds timeout) override;
+    ErrorType incrementSemaphore(const std::string &name) override;
+    ErrorType decrementSemaphore(const std::string &name) override;
     ErrorType createTimer(Id &timer, Milliseconds period, bool autoReload, std::function<void(void)> callback) override;
     ErrorType deleteTimer(const Id timer) override;
     ErrorType startTimer(Id timer, Milliseconds timeout) override;
@@ -44,13 +44,13 @@ class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAb
     ErrorType receiveFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) override;
     ErrorType peekFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) override;
     ErrorType getSystemTime(UnixTime &currentSystemUnixTime) override;
-    ErrorType ticksToMilliseconds(Ticks ticks, Milliseconds &timeInMilliseconds) override;
-    ErrorType millisecondsToTicks(const Milliseconds milli, Ticks &ticks) override;
     ErrorType getSystemTick(Ticks &currentSystemTicks) override;
+    ErrorType ticksToMilliseconds(const Ticks ticks, Milliseconds &timeInMilliseconds) override;
+    ErrorType millisecondsToTicks(const Milliseconds milli, Ticks &ticks) override;
     ErrorType getSoftwareVersion(std::string &softwareVersion) override;
     ErrorType getResetReason(OperatingSystemConfig::ResetReason &resetReason) override;
     ErrorType reset() override;
-    ErrorType setTimeOfDay(UnixTime utc, Seconds timeZoneDifferenceUtc) override;
+    ErrorType setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) override;
     ErrorType idlePercentage(Percent &idlePercent) override;
 
     void callTimerCallback(TimerHandle_t timer);

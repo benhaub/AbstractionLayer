@@ -75,7 +75,7 @@ class OperatingSystemAbstraction {
      * @param[in] delay The amount of time to block for.
      * @returns ErrorType::Success if the thread is successfully blocked.
     */
-    virtual ErrorType delay(Milliseconds delay) = 0;
+    virtual ErrorType delay(const Milliseconds delay) = 0;
     /**
      * @brief Start the scheduler
      * @post Typically never returns. Depends on the implementation.
@@ -96,12 +96,12 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::LimitReached if the maximum number of threads is reached.
      * @returns toPlatformError for all other errors produced by the underlying implementation
     */
-    virtual ErrorType createThread(OperatingSystemConfig::Priority priority, std::string name, void * arguments, Bytes stackSize, void *(*startFunction)(void *), Id &number) = 0;
+    virtual ErrorType createThread(const OperatingSystemConfig::Priority priority, const std::string &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) = 0;
     /**
      * @brief Delete a thread
      * @param[in] name The name of the thread to delete.
     */
-    virtual ErrorType deleteThread(std::string name) = 0;
+    virtual ErrorType deleteThread(const std::string &name) = 0;
     /**
      * @brief Blocks the calling thread until the thread given by name terminates
      * @param[in] name The name of the thread to wait for.
@@ -110,7 +110,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NoData if no thread with the name given has been created.
      * @returns toPlatformError() for all other errors produced by the underlying implementation
     */
-    virtual ErrorType joinThread(std::string name) = 0;
+    virtual ErrorType joinThread(const std::string &name) = 0;
     /**
      * @brief Gets the Id of the thread given by name.
      * @param[in] name The name of the thread.
@@ -120,7 +120,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NoData if no thread with the name given has been created.
      * @returns toPlatformError() for all other errors produced by the underlying implementation
     */
-    virtual ErrorType threadId(std::string name, Id &id) = 0;
+    virtual ErrorType threadId(const std::string &name, Id &id) = 0;
     /**
      * @brief Check if the thread has been deleted by the operating system.
      * @details The operating system keeps a record of the threads it has created. Since the OperatingSystemAbstraction is decoupled from the main application,
@@ -131,21 +131,21 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NotImplemented if isDeleted is not implemented.
      * @returns ErrorType::NoData if no thread with the name given is deleted.
     */
-    virtual ErrorType isDeleted(std::string &name) = 0;
+    virtual ErrorType isDeleted(const std::string &name) = 0;
     /**
      * @brief creates a semaphore.
      * @param[in] max The maximum value of the semaphore.
      * @param[in] initial The initial value of the semaphore.
      * @param[in] name The name of the semaphore.
     */
-    virtual ErrorType createSemaphore(Count max, Count initial, std::string name) = 0;
+    virtual ErrorType createSemaphore(const Count max, const Count initial, const std::string &name) = 0;
     /**
      * @brief deletes a semaphore.
      * @param[in] name The name of the semaphore.
      * @returns ErrorType::Success if the semaphore was deleted.
      * @returns ErrorType::NoData if the semaphore does not exist.
     */
-    virtual ErrorType deleteSemaphore(std::string name) = 0;
+    virtual ErrorType deleteSemaphore(const std::string &name) = 0;
     /**
      * @brief waits for a semaphore.
      * @param[in] name The name of the semaphore.
@@ -154,21 +154,21 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Success if the was decremented.
      * @returns ErrorType::NoData if the semaphore does not exist.
     */
-    virtual ErrorType waitSemaphore(std::string &name, Milliseconds timeout) = 0;
+    virtual ErrorType waitSemaphore(const std::string &name, const Milliseconds timeout) = 0;
     /**
      * @brief increments a semaphore.
      * @param[in] name The name of the semaphore.
      * @returns ErrorType::Success if the semaphore was incremented
      * @returns ErrorType::NoData if the semaphore does not exist.
     */
-    virtual ErrorType incrementSemaphore(std::string &name) = 0;
+    virtual ErrorType incrementSemaphore(const std::string &name) = 0;
     /**
      * @brief decrements a semaphore.
      * @param[in] name The name of the semaphore.
      * @returns ErrorType::Success if the semaphore was incremented
      * @returns ErrorType::NoData if the semaphore does not exist.
     */
-    virtual ErrorType decrementSemaphore(std::string name) = 0;
+    virtual ErrorType decrementSemaphore(const std::string &name) = 0;
     /**
      * @brief Create a timer.
      * @param[out] timer The id of the timer.
@@ -178,7 +178,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Success if the timer is successfully created.
      * @returns ErrorType::Failure if the timer could not be created.
     */
-    virtual ErrorType createTimer(Id &timer, Milliseconds period, bool autoReload, std::function<void(void)> callback) = 0;
+    virtual ErrorType createTimer(Id &timer, const Milliseconds period, const bool autoReload, std::function<void(void)> callback) = 0;
     /**
      * @brief Delete a timer
      * @param[in] timer The id of the timer to delete
@@ -194,7 +194,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Timeout if the timer could not be started within the time specified.
      * @returns ErrorType::NoData if the timer Id was not used to create a prior to this call or it has been deleted.
     */
-    virtual ErrorType startTimer(Id timer, Milliseconds timeout) = 0;
+    virtual ErrorType startTimer(const Id timer, const Milliseconds timeout) = 0;
     /**
      * @brief stop timer.
      * @param[in] timer The id of the timer.
@@ -202,7 +202,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Success if the timer could be stopped.
      * @returns ErrorType::Timeout if the timer could not be stopped within the time specified.
     */
-    virtual ErrorType stopTimer(Id timer, Milliseconds timeout) = 0;
+    virtual ErrorType stopTimer(const Id timer, const Milliseconds timeout) = 0;
     /**
      * @brief Create a queue to safely send and receive information between threads
      * @param[in] name The name of the queue which you can use to reference the queue
@@ -270,7 +270,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NotImplemented if converting the tick to milliseconds is not implemented
      * @returns ErrorType::Failure if the tick could not be converted to milliseconds
      */
-    virtual ErrorType ticksToMilliseconds(Ticks ticks, Milliseconds &tickEquivalent) = 0;
+    virtual ErrorType ticksToMilliseconds(const Ticks ticks, Milliseconds &tickEquivalent) = 0;
     /**
      * @brief Convert a millisecond value to a time in ticks
      * @param[in] milliseconds The time to convert
@@ -312,7 +312,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NotAvailable if setting the time of day is not available on the host system.
      * @returns ErrorType::Failure if an error occurred while setting the time of day.
     */
-    virtual ErrorType setTimeOfDay(UnixTime utc, Seconds timeZoneDifferenceUtc) = 0;
+    virtual ErrorType setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) = 0;
     /**
      * @brief Get the percentage of time that the Operating system is idle.
      * @details Differs for Darwin and Linux. This percentage is how often we used the CPU vs how much we've been running.

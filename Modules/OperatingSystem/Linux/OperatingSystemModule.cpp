@@ -10,7 +10,7 @@
 #include <limits.h>
 #include <fcntl.h>
 
-ErrorType OperatingSystem::delay(Milliseconds delay) {
+ErrorType OperatingSystem::delay(const Milliseconds delay) {
     usleep(delay*1000);
     return ErrorType::Success;
 }
@@ -19,7 +19,7 @@ ErrorType OperatingSystem::startScheduler() {
     return ErrorType::NotAvailable;
 }
 
-ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority, std::string name, void * arguments, Bytes stackSize, void *(*startFunction)(void *), Id &number) {
+ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority priority, const std::string &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
     pthread_attr_t attr;
     sched_param param;
     int res;
@@ -71,7 +71,7 @@ ErrorType OperatingSystem::createThread(OperatingSystemConfig::Priority priority
 //I want to use pthreads since I like the portability of them, however, ESP does not implement pthread_kill.
 //The work around is to set the thread in the deatched state and then have the main loops of each thread regularly check their status
 //to see if they have been terminated by the operating system, which will set isTerminated when the thread is detached.
-ErrorType OperatingSystem::deleteThread(std::string name) {
+ErrorType OperatingSystem::deleteThread(const std::string &name) {
     ErrorType error = ErrorType::NoData;
 
     if (threads.contains(name)) {
@@ -81,7 +81,7 @@ ErrorType OperatingSystem::deleteThread(std::string name) {
     return error;
 }
 
-ErrorType OperatingSystem::joinThread(std::string name) {
+ErrorType OperatingSystem::joinThread(const std::string &name) {
     Id thread;
     int ret;
     if (ErrorType::NoData == threadId(name, thread)) {
@@ -92,7 +92,7 @@ ErrorType OperatingSystem::joinThread(std::string name) {
     return fromPlatformError(ret);
 }
 
-ErrorType OperatingSystem::threadId(std::string name, Id &thread) {
+ErrorType OperatingSystem::threadId(const std::string &name, Id &thread) {
     if (threads.contains(name)) {
         thread = threads[name].threadId;
         return ErrorType::Success;
@@ -101,7 +101,7 @@ ErrorType OperatingSystem::threadId(std::string name, Id &thread) {
     return ErrorType::NoData;
 }
 
-ErrorType OperatingSystem::isDeleted(std::string &name) {
+ErrorType OperatingSystem::isDeleted(const std::string &name) {
     if (threads.contains(name)) {
         return ErrorType::Success;
     }
@@ -109,7 +109,7 @@ ErrorType OperatingSystem::isDeleted(std::string &name) {
     return ErrorType::NoData;
 }
 
-ErrorType OperatingSystem::createSemaphore(Count max, Count initial, std::string name) {
+ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::string &name) {
     //The internal name is the name with a leading / to make it a valid semaphore name on POSIX systems.
     //For all other purposes inside this operating system abstraction, the name should be used directly.
     std::string internalName = std::string("/").append(name);
@@ -131,7 +131,7 @@ ErrorType OperatingSystem::createSemaphore(Count max, Count initial, std::string
     }
 }
 
-ErrorType OperatingSystem::deleteSemaphore(std::string name) {
+ErrorType OperatingSystem::deleteSemaphore(const std::string &name) {
     std::string internalName = std::string("/").append(name);
 
     if (0 != sem_unlink(internalName.c_str())) {
@@ -143,7 +143,7 @@ ErrorType OperatingSystem::deleteSemaphore(std::string name) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::waitSemaphore(std::string &name, Milliseconds timeout) {
+ErrorType OperatingSystem::waitSemaphore(const std::string &name, const Milliseconds timeout) {
     Milliseconds timeRemaining = timeout;
     constexpr Milliseconds delayTime = 1;
     int result;
@@ -172,7 +172,7 @@ ErrorType OperatingSystem::waitSemaphore(std::string &name, Milliseconds timeout
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::incrementSemaphore(std::string &name) {
+ErrorType OperatingSystem::incrementSemaphore(const std::string &name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -186,7 +186,7 @@ ErrorType OperatingSystem::incrementSemaphore(std::string &name) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::decrementSemaphore(std::string name) {
+ErrorType OperatingSystem::decrementSemaphore(const std::string &name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -200,19 +200,19 @@ ErrorType OperatingSystem::decrementSemaphore(std::string name) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::createTimer(Id &timer, Milliseconds period, bool autoReload, std::function<void(void)> callback) {
+ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, const bool autoReload, std::function<void(void)> callback) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType OperatingSystem::deleteTimer(Id timer) {
+ErrorType OperatingSystem::deleteTimer(const Id timer) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType OperatingSystem::startTimer(Id timer, Milliseconds timeout) {
+ErrorType OperatingSystem::startTimer(const Id timer, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType OperatingSystem::stopTimer(Id timer, Milliseconds timeout) {
+ErrorType OperatingSystem::stopTimer(const Id timer, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 
@@ -243,7 +243,7 @@ ErrorType OperatingSystem::getSystemTick(Ticks &currentSystemTicks) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::ticksToMilliseconds(Ticks ticks, Milliseconds &timeInMilliseconds) {
+ErrorType OperatingSystem::ticksToMilliseconds(const Ticks ticks, Milliseconds &timeInMilliseconds) {
     timeInMilliseconds = static_cast<Milliseconds>(ticks * sysconf(_SC_CLK_TCK) / 1000);
     return ErrorType::Success;
 }
@@ -294,7 +294,7 @@ ErrorType OperatingSystem::reset() {
 
 //On system that use Posix, you shouldn't attempt to set the time of day, and the time that can be obtained
 //using the posix API will already be the correct time that you need as soon as you start your application.
-ErrorType OperatingSystem::setTimeOfDay(UnixTime utc, Seconds timeZoneDifferenceUtc) {
+ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) {
     return ErrorType::NotAvailable;
 }
 
