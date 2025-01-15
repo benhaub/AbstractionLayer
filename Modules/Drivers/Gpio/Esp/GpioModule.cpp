@@ -3,6 +3,10 @@
 #include "Log.hpp"
 
 ErrorType Gpio::init() {
+    if (-1 == pinNumber() || GpioTypes::PinDirection::DigitalUnknown == direction() || GpioTypes::InterruptMode::Unknown == interruptMode()) {
+        return ErrorType::PrerequisitesNotMet;
+    }
+
     return fromPlatformError(gpio_config(&_gpioConfig));
 }
 
