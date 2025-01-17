@@ -177,7 +177,7 @@ ErrorType HttpServer::toHttpRequest(const SlNetAppRequest_t &netAppRequest, Http
             case SL_NETAPP_REQUEST_METADATA_TYPE_HTTP_NONE:
                 break;
         default:
-            break;
+            return ErrorType::NotSupported;
        }
 
        requestMetaData += strlen(reinterpret_cast<const char *>(requestMetaData)) + 1;

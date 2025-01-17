@@ -369,8 +369,11 @@ ErrorType OperatingSystem::receiveFromQueue(const std::string &name, void *buffe
     if (pdTRUE == sent) {
         return ErrorType::Success;
     }
-    else {
+    else if (uxQueueMessagesWaiting(queues[name]) > 0) {
         return ErrorType::Failure;
+    }
+    else {
+        return ErrorType::Timeout;
     }
 }
 
