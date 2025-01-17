@@ -26,6 +26,7 @@ class IpCellularClient : public IpClientAbstraction {
     ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
 
     private:
+    //TODO: Should use the dynamic cast method like the http server.
     Cellular *_cellNetworkInterface = nullptr;
 
     /**

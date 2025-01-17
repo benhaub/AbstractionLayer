@@ -153,6 +153,7 @@ ErrorType IpCellularClient::disconnect() {
     return ErrorType::Success;
 }
 
+//TODO: Not thread safe. Should be using the netowrk thread to perform this.
 ErrorType IpCellularClient::sendBlocking(const std::string &data, const Milliseconds timeout) {
 
     switch (_cellNetworkInterface->accessModeConst()) {
@@ -220,6 +221,7 @@ ErrorType IpCellularClient::sendBlocking(const std::string &data, const Millisec
     return ErrorType::NotSupported;
 }
 
+//TODO: Not thread safe. Should be using the netowrk thread to perform this.
 ErrorType IpCellularClient::receiveBlocking(std::string &buffer, const Milliseconds timeout) {
     constexpr Count maxRetries = 10;
 
@@ -332,9 +334,7 @@ ErrorType IpCellularClient::receiveBlocking(std::string &buffer, const Milliseco
 }
 
 ErrorType IpCellularClient::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    bool sent = false;
-
-    auto tx = [this, callback, &sent](const std::shared_ptr<std::string> frame, const Milliseconds timeout) -> ErrorType {
+    auto tx = [this, callback](const std::shared_ptr<std::string> frame, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         if (nullptr == frame.get()) {
@@ -348,7 +348,6 @@ ErrorType IpCellularClient::sendNonBlocking(const std::shared_ptr<std::string> d
             callback(error, frame->size());
         }
 
-        sent = true;
         return error;
     };
 
@@ -362,9 +361,7 @@ ErrorType IpCellularClient::sendNonBlocking(const std::shared_ptr<std::string> d
 }
 
 ErrorType IpCellularClient::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
-    bool received = false;
-
-    auto rx = [this, callback, &received](const std::shared_ptr<std::string> buffer, const Milliseconds timeout) -> ErrorType {
+    auto rx = [this, callback](const std::shared_ptr<std::string> buffer, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         if (nullptr == buffer.get()) {
@@ -378,7 +375,6 @@ ErrorType IpCellularClient::receiveNonBlocking(std::shared_ptr<std::string> buff
             callback(error, buffer);
         }
 
-        received = true;
         return error;
     };
 

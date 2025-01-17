@@ -1,6 +1,7 @@
+//AbstractionLayer
 #include "IpServerModule.hpp"
-#include "WifiModule.hpp"
 #include "OperatingSystemModule.hpp"
+#include "NetworkAbstraction.hpp"
 
 //Posix
 #include <netdb.h>

@@ -14,8 +14,6 @@ class IpCellularClient : public IpClientAbstraction {
     ErrorType disconnect() override;
     ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
     ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
-
-    private:
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) override;
     ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) override;
 };
