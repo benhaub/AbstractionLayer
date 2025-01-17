@@ -1,5 +1,6 @@
 //AbstractionLayer
 #include "HttpServerModule.hpp"
+#include "NetworkAbstraction.hpp"
 #include "Log.hpp"
 
 ErrorType HttpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
@@ -37,11 +38,50 @@ ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const M
     delete netAppRequest.requestData.pMetadata;
     delete netAppRequest.requestData.pPayload;
 
+    socket = netAppRequest.Handle;
+
     return error;
 }
 
 ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    return ErrorType::NotImplemented;
+    auto tx = [this, callback](const std::shared_ptr<HttpServerTypes::Response> response, const Socket socket, const Milliseconds timeout) -> ErrorType {
+        ErrorType error = ErrorType::Failure;
+        assert(nullptr != callback);
+
+        if (nullptr == response.get()) {
+            error = ErrorType::NoData;
+            callback(error, Bytes(0));
+            return error;
+        }
+
+        std::string frame(256, '\0');
+        error = toSlNetAppResponse(*response, frame);
+        if (ErrorType::Success != error) {
+            callback(error, Bytes(0));
+            return error;
+        }
+
+        assert(frame.size() <= SL_NETAPP_REQUEST_MAX_METADATA_LEN);
+        assert(response->messageBody.size() <= SL_NETAPP_REQUEST_MAX_DATA_LEN);
+
+        error = fromPlatformError(sl_NetAppSend(socket, frame.size(), reinterpret_cast<uint8_t *>(frame.data()), SL_NETAPP_REQUEST_RESPONSE_FLAGS_CONTINUATION | SL_NETAPP_REQUEST_RESPONSE_FLAGS_METADATA));
+        if (ErrorType::Success != error) {
+            callback(error, Bytes(0));
+            return error;
+        }
+        constexpr _u32 markAsLastFragment = 0;
+        error = fromPlatformError(sl_NetAppSend(socket, response->messageBody.size(), reinterpret_cast<uint8_t *>(response->messageBody.data()), markAsLastFragment));
+        if (ErrorType::Success != error) {
+            callback(error, Bytes(0));
+            return error;
+        }
+
+        callback(error, Bytes(0));
+        return error;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<HttpServer>>(std::bind(tx, data, socket, timeout));
+    return network().addEvent(event);
 }
 
 ErrorType HttpServer::receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) {
@@ -50,7 +90,7 @@ ErrorType HttpServer::receiveNonBlocking(std::shared_ptr<HttpServerTypes::Reques
 
 ErrorType HttpServer::toHttpRequest(const SlNetAppRequest_t &netAppRequest, HttpServerTypes::Request &request) {
     //The request has been converted to a TLV structure by the ROM HTTP server.
-    //Pg. 177, Network Process User Guide.
+    //Pg. 177, Network Processor User Guide.
     uint8_t *requestMetaData = netAppRequest.requestData.pMetadata;
     const uint16_t metaDataLength = netAppRequest.requestData.MetadataLen - 1;
     const uint8_t *metaDataEnd = requestMetaData + metaDataLength;
@@ -143,6 +183,37 @@ ErrorType HttpServer::toHttpRequest(const SlNetAppRequest_t &netAppRequest, Http
        requestMetaData += strlen(reinterpret_cast<const char *>(requestMetaData)) + 1;
        type = *(requestMetaData - (sizeof(type) + sizeof(valueLength)));
        valueLength = *((uint16_t *)(requestMetaData - sizeof(valueLength)));
+    }
+
+    return ErrorType::Success;
+}
+
+//We are using the same TLV structure as we used when receiving the request. We are following the suggested response outlined
+//on Pg. 181 of the Network Processor User Guide.
+ErrorType HttpServer::toSlNetAppResponse(const HttpServerTypes::Response &response, std::string &slNetAppResponse) {
+
+    slNetAppResponse.resize(0);
+
+    {
+    slNetAppResponse.push_back(SL_NETAPP_REQUEST_METADATA_TYPE_STATUS);
+    uint16_t statusCodeSize = sizeof(uint16_t);
+    slNetAppResponse.append(reinterpret_cast<const char *>(&statusCodeSize), sizeof(statusCodeSize));
+    slNetAppResponse.append(reinterpret_cast<const char *>(&response.statusLine.statusCode), sizeof(response.statusLine.statusCode));
+    }
+
+    {
+    slNetAppResponse.push_back(SL_NETAPP_REQUEST_METADATA_TYPE_HTTP_CONTENT_TYPE);
+    std::string contentType = fromHttpServerType(response.representationHeaders.contentType);
+    uint16_t contentTypeLength = contentType.size();
+    slNetAppResponse.append(reinterpret_cast<const char *>(&contentTypeLength), sizeof(contentTypeLength));
+    slNetAppResponse.append(contentType);
+    }
+
+    {
+    slNetAppResponse.push_back(SL_NETAPP_REQUEST_METADATA_TYPE_HTTP_CONTENT_LEN);
+    uint16_t contentLengthSize = sizeof(uint32_t);
+    slNetAppResponse.append(reinterpret_cast<const char *>(&contentLengthSize), sizeof(contentLengthSize));
+    slNetAppResponse.append(reinterpret_cast<const char *>(&response.representationHeaders.contentLength), sizeof(response.representationHeaders.contentLength));
     }
 
     return ErrorType::Success;

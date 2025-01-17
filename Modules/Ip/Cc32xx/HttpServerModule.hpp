@@ -10,6 +10,9 @@
 //Global because the SimpleLink C handlers are outside the scope of this class and need to be able to access the queue.
 static constexpr char SimpleLinkEventQueue[] = "SimpleLinkEventQueue";
 
+//I am aware of the Network Services API that includes various servers and clients pre-made by TI and that one of them is an HTTP server.
+//For some reason, the example code in the SDK does not use this API so unfortunately I only became aware of this API after I started working
+//on this implementation using the lower level Host Driver API.
 class HttpServer : public HttpServerAbstraction {
     public:
     HttpServer() : HttpServerAbstraction() {
@@ -216,6 +219,36 @@ class HttpServer : public HttpServerAbstraction {
         if (std::string::npos != acceptLanguage.find("zu")) {acceptLanguages.push_back(HttpServerTypes::Language::isiZulu);}
 
         return acceptLanguages;
+    }
+
+    ErrorType toSlNetAppResponse(const HttpServerTypes::Response &response, std::string &slNetAppResponse);
+    std::string fromHttpServerType(const HttpServerTypes::Type type) {
+        switch (type) {
+            case HttpServerTypes::Type::TextHtml:
+                return "text/html";
+            case HttpServerTypes::Type::ApplicationJson:
+                return "application/json";
+            case HttpServerTypes::Type::ApplicationXml:
+                return "application/xml";
+            case HttpServerTypes::Type::ApplicationXhtmlXml:
+                return "application/xhtml+xml";
+            case HttpServerTypes::Type::ApplicationOctetStream:
+                return "application/octet-stream";
+            case HttpServerTypes::Type::ApplicationFormUrlencoded:
+                return "application/x-www-form-urlencoded";
+            case HttpServerTypes::Type::ImageGif:
+                return "image/gif";
+            case HttpServerTypes::Type::ImageJpeg:
+                return "image/jpeg";
+            case HttpServerTypes::Type::ImagePng:
+                return "image/png";
+            case HttpServerTypes::Type::ImageTiff:
+                return "image/tiff";
+            case HttpServerTypes::Type::ImageSvgXml:
+                return "image/svg+xml";
+            default:
+                return "";
+        }
     }
 };
 

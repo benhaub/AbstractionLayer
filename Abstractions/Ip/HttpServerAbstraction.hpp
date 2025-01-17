@@ -13,7 +13,6 @@ namespace HttpServerTypes {
         ApplicationXhtmlXml,
         ApplicationOctetStream,
         ApplicationFormUrlencoded,
-        ApplicationXwwwFormUrlencoded,
         ImageGif,
         ImageJpeg,
         ImagePng,
@@ -76,10 +75,6 @@ namespace HttpServerTypes {
         Identity
     };
 
-    struct MessageBody {
-        std::string data;
-    };
-
     struct Headers {
         std::string userAgent;
         std::string host;
@@ -106,13 +101,74 @@ namespace HttpServerTypes {
         RequestLine requestLine;
         Headers headers;
         CustomHeaders customHeaders;
-        MessageBody messageBody;
+        std::string messageBody;
+    };
+
+    enum class StatusCode : uint16_t {
+        Unknown = 0,
+        Continue = 100,
+        SwitchingProtocols = 101,
+        Processing = 102,
+        EarlyHints = 103,
+        Ok = 200,
+        Created = 201,
+        Accepted = 202,
+        NonAuthoritativeInformation = 203,
+        NoContent = 204,
+        ResetContent = 205,
+        PartialContent = 206,
+        MultiStatus = 207,
+        AlreadyReported = 208,
+        ImUsed = 226,
+        MultipleChoices = 300,
+        MovedPermanently = 301,
+        Found = 302,
+        SeeOther = 303,
+        NotModified = 304,
+        UseProxy = 305,
+        TemporaryRedirect = 307,
+        PermanentRedirect = 308,
+        BadRequest = 400,
+        Unauthorized = 401,
+        PaymentRequired = 402,
+        Forbidden = 403,
+        NotFound = 404,
+        MethodNotAllowed = 405,
+        NotAcceptable = 406,
+        ProxyAuthenticationRequired = 407,
+        RequestTimeout = 408,
+        Conflict = 409,
+        Gone = 410,
+        LengthRequired = 411,
+        PreconditionFailed = 412,
+        RequestEntityTooLarge = 413,
+        RequestUriTooLong = 414,
+        UnsupportedMediaType = 415,
+    };
+
+    struct StatusLine {
+        Version version;
+        StatusCode statusCode;
+        char statusMessage[64];
+    };
+
+    struct ResponseHeaders {
+        char server[64];
+        char date[32];
+    };
+
+    struct RepresentationHeaders {
+        Type contentType;
+        Encoding contentEncoding;
+        Bytes contentLength;
+        Language contentLanguage;
     };
 
     struct Response {
-        //TODO: It might be the in the response we have content and in the request we have accept.
-        //TODO: I don't know what should go in here. I could maybe even typedef this to a Request.
-        std::string data;
+        StatusLine statusLine;
+        ResponseHeaders responseHeaders;
+        RepresentationHeaders representationHeaders;
+        std::string messageBody;
     };
 };
 
