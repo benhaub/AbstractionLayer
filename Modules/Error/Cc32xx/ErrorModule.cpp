@@ -30,7 +30,7 @@ ErrorType fromPlatformError(int32_t err) {
     else if (SL_RET_CODE_DEV_ALREADY_STARTED) {
         return ErrorType::Success;
     }
-    else if (err == ENOSPC) {
+    else if (err == ENOSPC || SL_ERROR_BSD_ENOMEM) {
         return ErrorType::NoMemory;
     }
     else if (err == EINVAL) {
