@@ -18,8 +18,28 @@
 #include <vector>
 
 /**
+ * @namespace ChainOfResponsibilityTypes
+ * @brief Chain of Responsibility types
+ */
+namespace ChainOfResponsibilityTypes {
+    /**
+     * @struct Status
+     * @brief The status of the Chain of Responsibility
+     */
+    struct Status {
+        Count commandObjectCount; ///< The number of command objects currently queue accross all queues.
+    };
+};
+
+/**
  * @class ChainOfResponsibility
  * @brief Stores all the command objects so that the processing objects can retreive them
+ * @details This implementation of the Chain of Responsibility is a little different than the tradional approach.
+ * Instead of having every single processing object subscribing and looking at each command object and using
+ * the logic signature to determine if it can process the command object or if it should pass it on, this
+ * implementation places in each command object in a queue that is accessed only by the processing objects
+ * that explictiely want to process a particular command. This allows threads to know if there are any objects to
+ * process and allows them to sleep and let other threads execute if there are no command objects to process.
 */
 class ChainOfResponsibility : public Global<ChainOfResponsibility> {
     public:
@@ -51,10 +71,23 @@ class ChainOfResponsibility : public Global<ChainOfResponsibility> {
     static constexpr Count MaxCommandObjectSize = 8;
     static constexpr Milliseconds SemaphoreTimeout = 0;
     std::string binarySemaphore;
+    ChainOfResponsibilityTypes::Status _status;
 
     std::map<LogicSignature, std::vector<std::unique_ptr<CommandObject>>> _commandObjects;
     bool isCommandWaiting(LogicSignature signature);
 
+    ///@brief Get a constant reference to the status.
+    const ChainOfResponsibilityTypes::Status &statusConst() {
+        Count numberOfCommandObjects = 0;
+
+        for (const auto &commandObjectQueue : _commandObjects) {
+            numberOfCommandObjects += commandObjectQueue.second.size();
+        }
+
+        _status.commandObjectCount = numberOfCommandObjects;
+
+        return _status;
+    }
 };
 
 #endif // __CHAIN_OF_RESPONSIBILITY_HPP__

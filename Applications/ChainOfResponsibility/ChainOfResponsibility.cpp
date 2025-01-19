@@ -7,6 +7,8 @@ ChainOfResponsibility::ChainOfResponsibility() {
 
     ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, binarySemaphore);
     assert(ErrorType::Success == error);
+
+    _status.commandObjectCount = 0;
 }
 
 ErrorType ChainOfResponsibility::addCommandObject(std::unique_ptr<CommandObject> &commandObject) {
