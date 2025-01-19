@@ -4,6 +4,7 @@
 * @details \b Synopsis: \n Stores all the command objects so that the processing objects can retreive them.
 * Processing objects check one or more queues of a particular LogicSignature that matches signatures that they
 * are capable of handling and extract those command objects from the queue in order to process them.
+* @see https://en.wikipedia.org/wiki/Chain-of-responsibility_pattern
 *******************************************************************************/
 #ifndef __CHAIN_OF_RESPONSIBILITY_HPP__
 #define __CHAIN_OF_RESPONSIBILITY_HPP__
