@@ -10,22 +10,26 @@
 #include "NetworkAbstraction.hpp"
 #include "IcCommunicationProtocol.hpp"
 
+/**
+ * @namespace CellularConfig
+ * @brief Configuration and types for the cellular network
+ */
 namespace CellularConfig {
 
     /**
      * @enum RadioAccessTechnology
-     * @brief Cellular radio access technology.
+     * @brief Cellular RAT
     */
     enum class RadioAccessTechnology : uint8_t {
-        Unknown = 0,
-        Gsm,
-        Cdma,
-        Lte,
-        NbIoT,
-        GsmAndCdma,
-        GsmAndLte,
-        CdmaAndLte,
-        GsmAndCdmaAndLte
+        Unknown = 0,      ///< Unknown
+        Gsm,              ///< Global System for Mobile
+        Cdma,             ///< Code-devision multiple access
+        Lte,              ///< Long Term Evolution (4G)
+        NbIoT,            ///< Narrowband IoT
+        GsmAndCdma,       ///< Global System for Mobile and Code-devision multiple access
+        GsmAndLte,        ///< Global System for Mobile and Long Term Evolution (3G and 4G)
+        CdmaAndLte,       ///< Code-devision multiple access and Long Term Evolution
+        GsmAndCdmaAndLte  ///< Global System for Mobile and Code-devision multiple access and Long Term Evolution
     };
 
     /**
@@ -33,24 +37,23 @@ namespace CellularConfig {
      * @brief The access mode used to communicate with the cellular device.
      */
     enum class AccessMode : uint8_t {
-        Unknown = 0,
-        Transparent,
-        Buffer,
-        DirectPush
+        Unknown = 0, ///< Unknown
+        Transparent, ///< Transparent. Commands and responses are sent over pure uart.
+        Buffer,      ///< Buffer. Commands and responses are sent using AT commands.
+        DirectPush   ///< Direct push. Commands are sent using an AT command and responses are sent over pure uart
     };
 }
 
 /**
- * @class WifiAbstraction
- * @brief Interface for communication over the wifi.
+ * @class CellularAbstraction
+ * @brief Interface for communication over the cellular network.
 */
 class CellularAbstraction : public NetworkAbstraction {
+
     public:
-    /**
-     * @fn CellularAbstraction
-     * @sa CellularFactory::Factory
-    */
+    /// @brief Default constructor
     CellularAbstraction() = default;
+    /// @brief Default destructor
     virtual ~CellularAbstraction() = default;
 
     /// @brief Tag for logging
@@ -130,4 +133,4 @@ class CellularAbstraction : public NetworkAbstraction {
     CellularConfig::AccessMode _accessMode = CellularConfig::AccessMode::Unknown;
 };
 
-#endif
+#endif // __CELLULAR_ABSTRACTION_HPP__

@@ -1,6 +1,6 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
-* @file   CbtLog.hpp
+* @file   Log.hpp
 * @details \b Synopsis: \n Pretty printed logs. Much of this is borrowed from ESPs logging implementation
 * @ingroup Applications
 *******************************************************************************/

@@ -8,8 +8,6 @@
 #ifndef __I2C_ABSTRACTION_HPP__
 #define __I2C_ABSTRACTION_HPP__
 
-#include "Error.hpp"
-#include "Types.hpp"
 #include "IcCommunicationProtocol.hpp"
 
 namespace I2cConfig {

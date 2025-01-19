@@ -1,15 +1,13 @@
 /***************************************************************************//**
-* @author   Ben Haubrich
-* @file     UartAbstraction.hpp
-* @details  Abstraction layer for UART communication.
-* @ingroup  Abstractions
+* @author  Ben Haubrich
+* @file    UartAbstraction.hpp
+* @details Abstraction for UART communication.
+* @ingroup Abstractions
 *******************************************************************************/
 #ifndef __UART_ABSTRACTION_HPP__
 #define __UART_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include "Error.hpp"
-#include "Types.hpp"
 #include "IcCommunicationProtocol.hpp"
 
 /**

@@ -12,6 +12,10 @@
 //C++
 #include <string>
 
+/**
+ * @namespace NetworkTypes
+ * @brief Namespace for types related to the network interface.
+ */
 namespace NetworkTypes {
     
     /**
@@ -29,7 +33,7 @@ namespace NetworkTypes {
     };
 
     /**
-     * @struct NetworkStatus
+     * @struct Status
      * @brief The status of the network interface.
     */
     struct Status {
@@ -45,12 +49,11 @@ namespace NetworkTypes {
  * @brief Interface for communication over the network.
 */
 class NetworkAbstraction : public EventQueue {
+
     public:
-    /**
-     * @fn NetworkAbstraction
-     * @sa NetworkFactory::Factory
-    */
+    /// @brief Default constructor
     NetworkAbstraction() = default;
+    /// @brief Default destructor
     virtual ~NetworkAbstraction() = default;
 
     /// @brief Tag for logging

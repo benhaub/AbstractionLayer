@@ -1,15 +1,13 @@
 /***************************************************************************//**
-* @author   Ben Haubrich
-* @file     Gptm/TimerAbstraction.hpp
-* @details  Abstraction layer for Serial Peripheral Interface
-* @ingroup  Abstractions
+* @author  Ben Haubrich
+* @file    SpiAbstraction.hpp
+* @details Abstraction for Serial Peripheral Interface
+* @ingroup Abstractions
 *******************************************************************************/
 #ifndef __SPI_ABSTRACTION_HPP__
 #define __SPI_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include "Error.hpp"
-#include "Types.hpp"
 #include "IcCommunicationProtocol.hpp"
 
 /**

@@ -1,20 +1,18 @@
 /***************************************************************************//**
-* @author   Ben Haubrich
-* @file     Gptm/PwmAbstraction.hpp
-* @details  Abstraction layer for GPTM PWM
-* @ingroup  Abstractions
+* @author  Ben Haubrich
+* @file    GptmPwmAbstraction.hpp
+* @details Abstraction for GPTM PWM
+* @ingroup Abstractions
 *******************************************************************************/
 #ifndef __GPTM_PWM_ABSTRACTION_HPP__
 #define __GPTM_PWM_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include "Error.hpp"
-#include "Types.hpp"
 #include "GptmAbstraction.hpp"
 
 /**
  * @class GptmPwmAbstraction
- * @brief Abstraction layer for GPTM.
+ * @brief Abstraction layer for GPTM PWM
 */
 class GptmPwmAbstraction : public GptmAbstraction {
 

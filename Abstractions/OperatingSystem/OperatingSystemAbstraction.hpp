@@ -16,6 +16,10 @@
 #include <functional>
 #include <string>
 
+/**
+ * @namespace OperatingSystemConfig
+ * @brief Configuration and types for the operating system
+ */
 namespace OperatingSystemConfig {
 
     /**
@@ -47,14 +51,14 @@ namespace OperatingSystemConfig {
         Sdio         //!< Reset over SDIO
     };
 
+    /**
+     * @struct Status
+     * @brief The status of the operating system
+     */
     struct Status {
         Count threadCount; ///< The number of threads currently running.
     };
 }
-
-//TODO: Should change a lot of these sigunatures to us const references to strings.
-//Make sure to test on ESP because I do remember having some strange issues when trying
-//to make this change in the past.
 
 /**
  * @class OperatingSystemAbstraction
@@ -63,12 +67,17 @@ namespace OperatingSystemConfig {
 class OperatingSystemAbstraction {
 
     public:
+    /// @brief Default constructor
     OperatingSystemAbstraction() = default;
+    /// @brief Default destructor
     virtual ~OperatingSystemAbstraction() = default;
 
-    static constexpr Count MaxThreads = 256; ///< The maximum number of threads.
-    static constexpr char TAG[] = "OperatingSystem"; ///< The tag for logging.
-    static constexpr Count MaxCountingSemaphore = 10; ///< The maximum value for a counting semaphore.
+    /// @brief The maximum number of threads
+    static constexpr Count MaxThreads = 256;
+    /// @brief The tag for logging.
+    static constexpr char TAG[] = "OperatingSystem";
+    /// @brief The maximum value for a counting semaphore.
+    static constexpr Count MaxCountingSemaphore = 10;
 
     /**
      * @brief delays a thread by placing it in the blocking state.
@@ -331,7 +340,8 @@ class OperatingSystemAbstraction {
     const OperatingSystemConfig::Status &statusConst() const { return _status; }
 
     protected:
-    OperatingSystemConfig::Status _status; ///< The status of the operating system.
+    /// @brief The status of the operating system
+    OperatingSystemConfig::Status _status;
 
 };
 

@@ -1,15 +1,13 @@
 /***************************************************************************//**
-* @author   Ben Haubrich
-* @file     Gptm/CaptureAbstraction.hpp
-* @details  Abstraction layer for GPTM Capture
-* @ingroup  Abstractions
+* @author  Ben Haubrich
+* @file    GptmCaptureAbstraction.hpp
+* @details Abstraction for GPTM Capture
+* @ingroup Abstractions
 *******************************************************************************/
 #ifndef __GPTM_CAPTURE_ABSTRACTION_HPP__
 #define __GPTM_CAPTURE_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include "Error.hpp"
-#include "Types.hpp"
 #include "GptmAbstraction.hpp"
 //C++
 #include <functional>

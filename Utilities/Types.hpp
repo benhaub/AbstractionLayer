@@ -31,7 +31,7 @@ using UnixTime = uint32_t;
 ///CPU tick. Must use a system dependant conversion to get elapsed time in seconds.
 using Ticks = uint32_t;
 ///@struct DateTime
-///Date and time
+///@brief Date and time
 struct DateTime {
     uint8_t second; ///< Seconds. 0-59
     uint8_t minute; ///< minutes. 0-59
@@ -269,17 +269,36 @@ static constexpr DateTime ToDateTime(UnixTime seconds) {
 
     return dateSince;
 }
-
-constexpr inline uint8_t ipv4AddressToOctet1(Ipv4Address address) {
+/**
+ * @brief Converts an IPv4 address to its first octet
+ * @param address The IPv4 address to convert
+ * @return The first octet of the IPv4 address (123.xxx.xxx.xxx)
+ */
+constexpr inline uint8_t ipv4AddressToOctet1(const Ipv4Address address) {
     return (address >> 24) & 0xFF;
 }
-constexpr inline uint8_t ipv4AddressToOctet2(Ipv4Address address) {
+/**
+ * @brief Converts an IPv4 address to its second octet
+ * @param address The IPv4 address to convert
+ * @return The second octet of the IPv4 address (xxx.xxx.123.xxx)
+ */
+constexpr inline uint8_t ipv4AddressToOctet2(const Ipv4Address address) {
     return (address >> 16) & 0xFF;
 }
-constexpr inline uint8_t ipv4AddressToOctet3(Ipv4Address address) {
+/**
+ * @brief Converts an IPv4 address to its third octet
+ * @param address The IPv4 address to convert
+ * @return The third octet of the IPv4 address (xxx.xxx.123.xxx)
+ */
+constexpr inline uint8_t ipv4AddressToOctet3(const Ipv4Address address) {
     return (address >> 8) & 0xFF;
 }
-constexpr inline uint8_t ipv4AddressToOctet4(Ipv4Address address) {
+/**
+ * @brief Converts an IPv4 address to its fourth octet
+ * @param address The IPv4 address to convert
+ * @return The fourth octet of the IPv4 address (xxx.xxx.xxx.123)
+ */
+constexpr inline uint8_t ipv4AddressToOctet4(const Ipv4Address address) {
     return (address) & 0xFF;
 }
 

@@ -1,7 +1,7 @@
 /***************************************************************************//**
-* @author   Ben Haubrich
-* @file     GpioAbstraction.hpp
-* @details  Abstraction layer for GPIO
+* @author  Ben Haubrich
+* @file    GpioAbstraction.hpp
+* @details Abstraction for GPIO
 * @ingroup Abstractions
 *******************************************************************************/
 #ifndef __GPIO_ABSTRACTION_HPP__

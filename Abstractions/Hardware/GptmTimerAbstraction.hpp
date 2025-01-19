@@ -1,15 +1,13 @@
 /***************************************************************************//**
-* @author   Ben Haubrich
-* @file     Gptm/TimerAbstraction.hpp
-* @details  Abstraction layer for GPTM Timer
-* @ingroup  Abstractions
+* @author  Ben Haubrich
+* @file    GptmTimerAbstraction.hpp
+* @details Abstraction for GPTM Timer
+* @ingroup Abstractions
 *******************************************************************************/
 #ifndef __GPTM_TIMER_ABSTRACTION_HPP__
 #define __GPTM_TIMER_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include "Error.hpp"
-#include "Types.hpp"
 #include "GptmAbstraction.hpp"
 
 /**

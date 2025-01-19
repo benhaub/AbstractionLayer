@@ -1,8 +1,8 @@
 /***************************************************************************//**
-* @author   Ben Haubrich
-* @file     GptmAbstraction.hpp
-* @details  Abstraction layer for GPTM
-* @ingroup  Abstractions
+* @author  Ben Haubrich
+* @file    GptmAbstraction.hpp
+* @details Abstraction for GPTM
+* @ingroup Abstractions
 *******************************************************************************/
 #ifndef __GPTM_ABSTRACTION_HPP__
 #define __GPTM_ABSTRACTION_HPP__

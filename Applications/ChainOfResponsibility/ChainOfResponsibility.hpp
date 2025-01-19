@@ -44,8 +44,11 @@ namespace ChainOfResponsibilityTypes {
  * process and allows them to sleep and let other threads execute if there are no command objects to process.
 */
 class ChainOfResponsibility : public Global<ChainOfResponsibility> {
+    
     public:
+    /// @brief Default constructor
     ChainOfResponsibility();
+    /// @brief Default destructor
     virtual ~ChainOfResponsibility() = default;
 
     /**
@@ -69,16 +72,31 @@ class ChainOfResponsibility : public Global<ChainOfResponsibility> {
     std::unique_ptr<CommandObject> getNextCommand(LogicSignature signature, ErrorType &error);
 
     private:
+    /// @brief Tag for logging
     static constexpr char TAG[] = "ChainOfResponsibility";
+    /// @brief The maximum amount of command objects that can be in a queue at the same time
     static constexpr Count MaxCommandObjectSize = 8;
+    /// @brief The maximum amount of time to wait for a semaphore
     static constexpr Milliseconds SemaphoreTimeout = 0;
+    /// @brief The name of the semaphore
     std::string binarySemaphore;
+    /// @brief The status of the Chain of Responsibility
     ChainOfResponsibilityTypes::Status _status;
 
+    /// @brief The queues of command objects
     std::map<LogicSignature, std::vector<std::unique_ptr<CommandObject>>> _commandObjects;
+
+    /**
+     * @brief Checks if a command object is waiting in the queue
+     * @param[in] signature The logic signature of the command object to check
+     * @returns True if the command object is waiting in the queue
+     */
     bool isCommandWaiting(LogicSignature signature);
 
-    ///@brief Get a constant reference to the status.
+    /**
+     * @brief Get a constant reference to the status.
+     * @post Updates the status before it's returned.
+     */
     const ChainOfResponsibilityTypes::Status &statusConst() {
         Count numberOfCommandObjects = 0;
 
