@@ -1,2 +1,0 @@
-# Chain of Responsibility
-This application is based off the well-known design pattern of the same name. The only difference being that instead of passing `CommandObjects` down a chain of ProcessingObjects one-by-one, the `CommandObject` is placed in a queue that is accessed by the `LogicSignature` (key/value). You can find `CommandObject`s that your `ProcessingObject`s can handle by checking the queues for a non-zero size and removing the items for processing.
