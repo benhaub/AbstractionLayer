@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     CellularAbstraction.hpp
 * @details  \b Synopsis: \n Interface for communication over the network.
-* @ingroup  AbstractionLayer
+* @ingroup Abstractions
 *******************************************************************************/
 #ifndef __CELLULAR_ABSTRACTION_HPP__
 #define __CELLULAR_ABSTRACTION_HPP__

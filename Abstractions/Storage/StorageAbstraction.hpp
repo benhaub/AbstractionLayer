@@ -2,7 +2,7 @@
 * @author Ben Haubrich                                        
 * @file   StorageAbstraction.hpp
 * @details \b Synopsis: \n Interface for any storage type
-* @ingroup AbstractionLayer
+* @ingroup Abstractions
 ******************************************************************************/
 #ifndef __STORAGE_ABSTRACTION_HPP__
 #define __STORAGE_ABSTRACTION_HPP__

@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     CommunicationProtocol.hpp
 * @details  \b Synopsis: \n Interface for communication that involves sending and receiving bytes of data.
-* @ingroup  AbstractionLayer
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __COMMUNICATION_PROTOCOL_HPP__
 #define __COMMUNICATION_PROTOCOL_HPP__

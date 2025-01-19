@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     Gptm/PwmAbstraction.hpp
 * @details  Abstraction layer for GPTM PWM
-* @ingroup  AbstractionLayer
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __GPTM_PWM_ABSTRACTION_HPP__
 #define __GPTM_PWM_ABSTRACTION_HPP__

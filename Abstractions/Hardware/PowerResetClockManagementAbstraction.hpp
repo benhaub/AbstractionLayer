@@ -1,8 +1,8 @@
 /***************************************************************************//**
 * @author   Ben Haubrich
 * @file     PowerResetClockManagementAbstraction.hpp
-* @details  Abstraction layer for power and clock management
-* @ingroup  AbstractionLayer
+* @details  Abstraction layer for power, reset and clock management
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __POWER_RESET_CLOCK_MANAGEMENT_HPP__
 #define __POWER_RESET_CLOCK_MANAGEMENT_HPP__

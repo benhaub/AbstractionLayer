@@ -1,8 +1,8 @@
 /***************************************************************************//**
 * @author   Ben Haubrich
 * @file     LoggingAbstraction.hpp
-* @details  Logging to the terminal or stdout.
-* @ingroup  AbstractionLayer
+* @details  Abstraction layer for logging
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __LOGGING_ABSTRACTION_HPP__
 #define __LOGGING_ABSTRACTION_HPP__

@@ -3,7 +3,7 @@
 * @file     I2cAbstraction.hpp
 * @details  Abstraction layer for I2C communication.
 * @sa       <https://www.nxp.com/docs/en/user-guide/UM10204.pdf>
-* @ingroup  AbstractionLayer
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __I2C_ABSTRACTION_HPP__
 #define __I2C_ABSTRACTION_HPP__

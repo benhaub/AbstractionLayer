@@ -2,7 +2,7 @@
 * @author Ben Haubrich                                        
 * @file   Global.hpp
 * @details \b Synopsis: \n Makes a class globally accessible when inherited from
-* @ingroup AbstractionLayer
+* @ingroup Utilities
 *******************************************************************************/
 #ifndef __GLOBAL_HPP__
 #define __GLOBAL_HPP__

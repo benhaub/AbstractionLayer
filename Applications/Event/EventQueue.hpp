@@ -3,7 +3,7 @@
 * @file   EventQueue.hpp
 * @details \b Synopsis: \n Synchronization for calling function members of the
            base class.
-* @ingroup AbstractionLayer
+* @ingroup Applications
 *******************************************************************************/
 #ifndef __EVENT_QUEUE_HPP__
 #define __EVENT_QUEUE_HPP__

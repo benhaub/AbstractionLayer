@@ -2,7 +2,10 @@
 * @author Ben Haubrich                                        
 * @file   Error.hpp
 * @details \b Synopsis: \n Error types.
-* @ingroup AbstractionLayer
+* @defgroup AbstractionLayer Abstractions
+* @defgroup Utilities Abstraction Layer Utilites
+* @defgroup Applications Abstraction Layer Applications
+* @ingroup Utilities
 *******************************************************************************/
 
 #ifndef __ERROR_HPP__

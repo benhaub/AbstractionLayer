@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     PwmAbstraction.hpp
 * @details  Abstraction layer for PWM
-* @ingroup  AbstractionLayer
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __PWM_ABSTRACTION_HPP__
 #define __PWM_ABSTRACTION_HPP__

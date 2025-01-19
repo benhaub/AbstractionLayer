@@ -2,7 +2,7 @@
 * @author Ben Haubrich                                        
 * @file   CbtLog.hpp
 * @details \b Synopsis: \n Pretty printed logs. Much of this is borrowed from ESPs logging implementation
-* @ingroup AbstractionLayer
+* @ingroup Applications
 *******************************************************************************/
 #ifndef __LOG_HPP__
 #define __LOG_HPP__

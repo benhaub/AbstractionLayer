@@ -2,7 +2,7 @@
 * @author Ben Haubrich                                        
 * @file   Types.hpp
 * @details \b Synopsis: \n Variable types for enhanced readability.
-* @ingroup AbstractionLayer
+* @ingroup Utilities
 *******************************************************************************/
 
 #ifndef __TYPES_HPP__

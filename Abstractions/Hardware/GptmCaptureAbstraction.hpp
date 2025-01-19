@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     Gptm/CaptureAbstraction.hpp
 * @details  Abstraction layer for GPTM Capture
-* @ingroup  AbstractionLayer
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __GPTM_CAPTURE_ABSTRACTION_HPP__
 #define __GPTM_CAPTURE_ABSTRACTION_HPP__

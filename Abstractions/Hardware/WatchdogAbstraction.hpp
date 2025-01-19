@@ -1,8 +1,8 @@
 /***************************************************************************//**
 * @author   Ben Haubrich
 * @file     WatchdogAbstraction.hpp
-* @details  Abstraction layer for watchdog
-* @ingroup  AbstractionLayer
+* @details  Abstraction layer for watchdog timer
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __WATCHDOG_ABSTRACTION_HPP__
 #define __WATCHDOG_ABSTRACTION_HPP__

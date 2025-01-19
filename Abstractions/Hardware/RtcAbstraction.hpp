@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     RtcAbstraction.hpp
 * @details  Abstraction layer for RTC communication.
-* @ingroup  AbstractionLayer
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __RTC_ABSTRACTION_HPP__
 #define __RTC_ABSTRACTION_HPP__

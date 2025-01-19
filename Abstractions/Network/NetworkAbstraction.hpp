@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     NetworkAbstraction.hpp
 * @details  \b Synopsis: \n Interface for communication over the network.
-* @ingroup  AbstractionLayer
+* @ingroup Abstractions
 *******************************************************************************/
 #ifndef __NETWORK_ABSTRACTION_HPP__
 #define __NETWORK_ABSTRACTION_HPP__

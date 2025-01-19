@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     IcCommunicationProtocol.hpp
 * @details  \b Synopsis: \n Interface for integrated circuit communication
-* @ingroup  AbstractionLayer
+* @ingroup Abstractions
 *******************************************************************************/
 #ifndef __IC_COMMUNICATION_PROTOCOL_HPP__
 #define __IC_COMMUNICATION_PROTOCOL_HPP__

@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     IpClientAbstraction.hpp
 * @details  \b Synopsis: \n Interface for creating a client on any network
-* @ingroup  AbstractionLayer
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __IP_CLIENT_ABSTRACTION_HPP__
 #define __IP_CLIENT_ABSTRACTION_HPP__

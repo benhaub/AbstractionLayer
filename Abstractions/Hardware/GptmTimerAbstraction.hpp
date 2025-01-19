@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     Gptm/TimerAbstraction.hpp
 * @details  Abstraction layer for GPTM Timer
-* @ingroup  AbstractionLayer
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __GPTM_TIMER_ABSTRACTION_HPP__
 #define __GPTM_TIMER_ABSTRACTION_HPP__

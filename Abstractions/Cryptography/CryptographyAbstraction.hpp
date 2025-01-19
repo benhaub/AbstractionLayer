@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     CryptographyAbstraction.hpp
 * @details  Abstraction layer for Cryptography
-* @ingroup  AbstractionLayer
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __CRYPTOGRAPHY_ABSTRACTION_HPP__
 #define __CRYPTOGRAPHY_ABSTRACTION_HPP__

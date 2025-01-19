@@ -2,7 +2,7 @@
 * @author Ben Haubrich                                        
 * @file   SerializationAbstraction.hpp
 * @details \b Synopsis: \n Provides an abstraction serialization.
-* @ingroup AbstractionLayer
+* @ingroup Abstractions
 *******************************************************************************/
 #ifndef __SERIALIZATION_ABSTRACTION_HPP__
 #define __SERIALIZATION_ABSTRACTION_HPP__

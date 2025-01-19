@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     Gptm/TimerAbstraction.hpp
 * @details  Abstraction layer for Serial Peripheral Interface
-* @ingroup  AbstractionLayer
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __SPI_ABSTRACTION_HPP__
 #define __SPI_ABSTRACTION_HPP__

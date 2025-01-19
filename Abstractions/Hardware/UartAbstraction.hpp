@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     UartAbstraction.hpp
 * @details  Abstraction layer for UART communication.
-* @ingroup  AbstractionLayer
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __UART_ABSTRACTION_HPP__
 #define __UART_ABSTRACTION_HPP__

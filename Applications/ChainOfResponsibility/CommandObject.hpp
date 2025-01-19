@@ -2,6 +2,7 @@
 * @author Ben Haubrich                                        
 * @file   CommandObject.hpp
 * @details \b Synopsis: \n Command object that can be processed by a processing object.
+* @ingroup Applications
 *******************************************************************************/
 #ifndef __COMMAND_OBJECT_HPP__
 #define __COMMAND_OBJECT_HPP__

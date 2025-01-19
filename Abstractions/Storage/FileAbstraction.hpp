@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     FileAbstraction.hpp
 * @details  General file operations that can implement any file system.
-* @ingroup  AbstractionLayer
+* @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __FILE_ABSTRACTION_HPP__
 #define __FILE_ABSTRACTION_HPP__

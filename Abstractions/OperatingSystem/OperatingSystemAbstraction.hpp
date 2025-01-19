@@ -4,7 +4,7 @@
 * @file   OperatingSystemAbstraction.hpp
 * @details \b Synopsis: \n Encapsulates the operating system. Provides info and functions.
            base class.
-* @ingroup AbstractionLayer
+* @ingroup Abstractions
 *******************************************************************************/
 #ifndef __OPERATING_SYSTEM_ABSTRACTION_HPP__
 #define __OPERATING_SYSTEM_ABSTRACTION_HPP__

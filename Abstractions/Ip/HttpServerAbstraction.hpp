@@ -1,3 +1,9 @@
+/***************************************************************************//**
+* @author   Ben Haubrich
+* @file     HttpServerAbstraction.hpp
+* @details  \b Synopsis: \n Interface for creating a client on any network
+* @ingroup  Abstractions
+*******************************************************************************/
 #ifndef __HTTP_SERVER_SBSTRACTION_HPP__
 #define __HTTP_SERVER_SBSTRACTION_HPP__
 
