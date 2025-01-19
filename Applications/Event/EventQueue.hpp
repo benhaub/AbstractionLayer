@@ -2,7 +2,8 @@
 * @author Ben Haubrich                                        
 * @file   EventQueue.hpp
 * @details \b Synopsis: \n Synchronization for calling function members of the
-           base class.
+* base class.
+* @see https://en.wikipedia.org/wiki/Reactor_pattern
 * @ingroup Applications
 *******************************************************************************/
 #ifndef __EVENT_QUEUE_HPP__
@@ -76,22 +77,26 @@ class EventQueue {
          * @sa run
          * @code //Bind a function member. Can have any signature, any number of args.
          * ErrorType Class::functionMember(uint8_t arg1, uint32_t arg2, ErrorType &arg3) {
-         *   return ErrorType::Success;
+         *     return ErrorType::Success;
          * }
          * 
-         * ErrorType Class::bindFunctionMember() {
-         *   std::bind(&Class::functionMember, this, arg1, arg2, arg3, ...argn);
+         * ErrorType Class::addEventToEventQueue() {
+         *     std::unique_ptr<EventAbstraction> event = std::make_unique<Event<Class, const std::string &>>(std::bind(&Class::eventToRun, this, std::placeholders::_1), param);
+         *     return addEvent(event);
          * 
-         *   return ErrorType::Success;
+         *     return ErrorType::Success;
+         * }
+         * 
+         * ErrorType Class::eventToRun(const std::string &param) {
+         *     return ErrorType::Success;
          * }
          * @endcode
          * @code //Bind a lambda expression. Can have any signature, any number of args.
-         * ErrorType Class::bindFunctionMember(uint8_t arg1, uint32_t arg2, ErrorType &arg3, std::shared_ptr<uint8_t> ptr) {
-         *   auto lambdaFunc = [](uint8_t arg1, uint32_t arg2, ErrorType &arg3, std::shared_ptr<uint8_t> ptr) -> ErrorType {};
+         * ErrorType Class::lambdaEvent(uint8_t arg1, uint32_t arg2, ErrorType &arg3, std::shared_ptr<uint8_t> ptr) {
+         *     auto lambdaFunc = [](uint8_t arg1, uint32_t arg2, ErrorType &arg3, std::shared_ptr<uint8_t> ptr) -> ErrorType {
+         *         return ErrorType::Success;
+         *     };
          *   
-         *   //Set it to a function pointer.
-         *   std::function<ErrorType(uint8_t arg1, uint32_t arg2, ErrorType &arg3, std::shared_ptr<uint8_t> ptr)> lambdaCallback = lambdaFunc;
-         *
          *   //Pass it off as a parameter to Event. Do not need to pass `this` as the first argument as we did in function members.
          *   std::unique_ptr<EventAbstraction> event = std::bind(lambdaFunc, arg1, arg2, arg3, ptr);
          * 
