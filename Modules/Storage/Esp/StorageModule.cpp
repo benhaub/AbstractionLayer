@@ -6,12 +6,12 @@
 #include "esp_heap_caps.h"
 
 ErrorType Storage::initStorage() {
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<Storage>>(std::bind(&Storage::initStorageInternal, this));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(&Storage::initStorageInternal, this));
     return addEvent(event);
 } 
 
 ErrorType Storage::deinitStorage() {
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<Storage>>(std::bind(&Storage::deinitStorageInternal, this));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(&Storage::deinitStorageInternal, this));
     return addEvent(event);
 } 
 
@@ -91,12 +91,12 @@ ErrorType Storage::availableRam(Kilobytes &size, std::string memoryRegionName) {
 }
 
 ErrorType Storage::erasePartition(const std::string &partitionName) {
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<Storage, const std::string &>>(std::bind(&Storage::erasePartitionInternal, this, std::placeholders::_1), partitionName);
+    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<const std::string &>>(std::bind(&Storage::erasePartitionInternal, this, std::placeholders::_1), partitionName);
     return addEvent(event);
 }
 
 ErrorType Storage::eraseAllPartitions() {
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<Storage>>(std::bind(&Storage::eraseAllPartitionsInternal, this));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(&Storage::eraseAllPartitionsInternal, this));
     return addEvent(event);
 }
 

@@ -20,7 +20,7 @@ ErrorType Storage::initStorage() {
 } 
 
 ErrorType Storage::deinitStorage() {
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<Storage>>(std::bind(&Storage::deinitStorageInternal, this));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(&Storage::deinitStorageInternal, this));
     return addEvent(event);
 } 
 

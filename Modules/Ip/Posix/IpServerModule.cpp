@@ -82,7 +82,7 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(listenCb));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(listenCb));
     if (ErrorType::Success != network().addEvent(event)) {
         return ErrorType::Failure;
     }
@@ -162,7 +162,7 @@ ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds tim
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(tx, data, socket, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(tx, data, socket, timeout));
     error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -197,7 +197,7 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
 
     //For some reason, the buffer can't be passed as a reference parameter to the callback. It has to be a pointer otherwise the
     //pointer to the data inside the string will change.
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(rx, &buffer, socket, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx, &buffer, socket, timeout));
     error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -229,7 +229,7 @@ ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, con
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(tx, data, socket, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(tx, data, socket, timeout));
     return network().addEvent(event);
 }
 
@@ -252,6 +252,6 @@ ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, cons
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpServer>>(std::bind(rx, buffer, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx, buffer, timeout));
     return network().addEvent(event);
 }

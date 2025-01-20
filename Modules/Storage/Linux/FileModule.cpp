@@ -111,7 +111,7 @@ ErrorType File::readNonBlocking(const FileOffset offset, std::shared_ptr<std::st
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<File>>(std::bind(read, offset, buffer));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(read, offset, buffer));
     return static_cast<Storage *>(&storage())->addEvent(event);    
 }
 
@@ -156,7 +156,7 @@ ErrorType File::writeNonBlocking(const std::shared_ptr<std::string> data, std::f
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<File>>(std::bind(write, data));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(write, data));
 
     return static_cast<Storage *>(&storage())->addEvent(event);
 }

@@ -80,7 +80,7 @@ ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpServerTypes::Res
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<HttpServer>>(std::bind(tx, data, socket, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(tx, data, socket, timeout));
     return network().addEvent(event);
 }
 

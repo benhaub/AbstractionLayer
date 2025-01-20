@@ -61,16 +61,13 @@ class EventQueue {
     /**
      * @class Event
      * @brief Runs the function and parameters passed to it by the constructor
-     * @tparam T The class which contains the function member to call
      * @tparam Args Optional arguments types that the function needs passed to it.
     */
-    template <class T, class ...Args> class Event : public EventAbstraction { 
+    template <class ...Args> class Event : public EventAbstraction { 
 
         public:
         /**
          * @brief Constructor.
-         * @tparam T The class which contains the function member or lambda expression callback to call
-         * @tparam Args The arguments that the callback function needs.
          * @param eventCallback The function member to call.
          * @param params The parameters to pass to the function member.
          * @post The eventCallback is not called.
