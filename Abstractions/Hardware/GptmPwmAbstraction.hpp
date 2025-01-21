@@ -43,9 +43,9 @@ class GptmPwmAbstraction : public GptmAbstraction {
      */
     virtual ErrorType setPeriod(const Milliseconds period) = 0;
 
-    Percent &dutyCycle() { return _dutyCycle; }
+    /// @brief Get the duty cycle as a const reference
     const Percent &dutyCycleConst() const { return _dutyCycle; }
-    Milliseconds &period() { return _period; }
+    /// @brief Get the period as a const reference
     const Milliseconds &periodConst() const { return _period; }
 
     protected:

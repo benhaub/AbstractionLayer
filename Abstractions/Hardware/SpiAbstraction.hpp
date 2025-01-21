@@ -22,8 +22,23 @@ class SpiAbstraction : public IcCommunicationProtocol {
     ///@brief Destructor
     virtual ~SpiAbstraction() = default;
 
+    /**
+     * @brief Set the hardware configuration for SPI
+     * @return ErrorType::Success if the configuration was set successfully
+     * @returns ErrorType::Failure otherwise
+     */
     virtual ErrorType setHardwareConfig() = 0;
+    /**
+     * @brief Set the driver configuration for SPI
+     * @return ErrorType::Success if the configuration was set successfully
+     * @returns ErrorType::Failure otherwise
+     */
     virtual ErrorType setDriverConfig() = 0;
+    /**
+     * @brief Set the firmware configuration for SPI
+     * @return ErrorType::Success if the configuration was set successfully
+     * @returns ErrorType::Failure otherwise
+     */
     virtual ErrorType setFirmwareConfig() = 0;
 };
 

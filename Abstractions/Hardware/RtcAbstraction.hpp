@@ -8,7 +8,7 @@
 #define __RTC_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include <IcCommunicationProtocol.hpp>
+#include "IcCommunicationProtocol.hpp"
 
 /**
  * @class RtcAbstraction
@@ -23,6 +23,7 @@ class RtcAbstraction {
     /// @brief Destructor.
     virtual ~RtcAbstraction() = default;
 
+    /// @brief The tag for logging
     static constexpr char TAG[] = "Rtc";
 
     /**
@@ -88,7 +89,7 @@ class RtcAbstraction {
     IcCommunicationProtocol &ic() { assert(nullptr != _ic); return *_ic; }
 
     /// @brief Set the network abstraction that this client communicates on.
-    /// @param network The network abstraction to use.
+    /// @param ic The network abstraction to use.
     ErrorType setIcDevice(IcCommunicationProtocol &ic) { _ic = &ic; return ErrorType::Success; }
 
     protected:

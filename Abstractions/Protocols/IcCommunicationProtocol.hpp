@@ -12,8 +12,8 @@
 
 namespace IcCommunicationProtocolTypes {
     /**
-     * @enum CellularIcDevice
-     * @brief Enumeration for different types of Cellular IC devices.
+     * @enum IcDevice
+     * @brief Enumeration for different types of IC devices.
     */
     enum class IcDevice : uint8_t {
         Unknown = 0, ///< Unknown peripheral

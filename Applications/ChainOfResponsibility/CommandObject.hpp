@@ -32,6 +32,7 @@ class CommandObject {
     /// @brief Destructor.
     virtual ~CommandObject() = default;
 
+    /// @brief The invalid logic signature
     static constexpr LogicSignature _InvalidLogicSignature = __UINT32_MAX__;
 
     /// @brief Get a constant reference to the logic signature.

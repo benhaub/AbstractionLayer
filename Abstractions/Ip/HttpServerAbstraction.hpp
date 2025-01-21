@@ -58,6 +58,10 @@ namespace HttpServerTypes {
         Trace,       ///< TRACE
     };
 
+    /**
+     * @enum Version
+     * @brief Http version
+     */
     enum class Version : uint8_t {
         Unknown = 0, ///< Unknown
         Http1_0,     ///< Hypertext Transfer Protocol 1.0
@@ -66,6 +70,10 @@ namespace HttpServerTypes {
         Http3_0      ///< Hypertext Transfer Protocol 3.0
     };
 
+    /**
+     * @enum Connection
+     * @brief Connection types for the HTTP session
+     */
     enum class Connection : uint8_t {
         Unknown = 0, ///< Unknown
         KeepAlive,   ///< Keep the connection alive

@@ -22,6 +22,11 @@ class PowerResetClockManagementAbstraction {
     ///@brief destructor
     virtual ~PowerResetClockManagementAbstraction() = default;
 
+    /**
+     * @brief Initialize the power, reset, and clock management
+     * @returns ErrorType::Success if the power, reset, and clock management was initialized successfully
+     * @returns ErrorType::Failure otherwise
+     */
     virtual ErrorType init() = 0;
 };
 

@@ -110,21 +110,35 @@ class WifiAbstraction : public NetworkAbstraction {
      */
     virtual ErrorType setAuthMode(WifiConfig::AuthMode authMode) = 0;
 
+    /// @brief  Get the mode as a constant reference
     const WifiConfig::Mode &mode() const { return _mode; }
+    /// @brief Get the SSID as a constant reference
     const std::string &ssid() const { return _ssid; }
+    /// @brief Get the password as a constant reference
     const std::string &password() const { return _password; }
+    /// @brief Get the channel as a constant reference
     const uint8_t &channel() const { return _channel; }
+    /// @brief Get the max connections as a constant reference
     const uint8_t &maxConnections() const { return _maxConnections; }
+    /// @brief Get the authentication mode as a constant reference
     const WifiConfig::AuthMode &authMode() const { return _authMode; }
+    /// @brief Get the ip address as a constant reference
     const std::string &ipAddress() const { return _ipAddress; }
 
     protected:
+    /// @brief The current wifi mode
     WifiConfig::Mode _mode = WifiConfig::Mode::Unknown;
+    /// @brief The current ssid
     std::string _ssid = std::string(32, '\0');
+    /// @brief The current password
     std::string _password;
+    /// @brief The current ip address
     std::string _ipAddress;
+    /// @brief The current channel
     uint8_t _channel = 0;
+    /// @brief The current limit on the number of connections
     uint8_t _maxConnections = 0;
+    /// @brief The current authentication mode
     WifiConfig::AuthMode _authMode = WifiConfig::AuthMode::Unknown;
 };
 

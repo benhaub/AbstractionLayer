@@ -21,8 +21,8 @@
  * @brief Server status
 */
 struct ServerStatus {
-    bool listening; ///< True when the server is listening for connections.
-    Count activeConnections;
+    bool listening;          ///< True when the server is listening for connections.
+    Count activeConnections; ///< The number of simultaneous active connections.
 };
 
 /**

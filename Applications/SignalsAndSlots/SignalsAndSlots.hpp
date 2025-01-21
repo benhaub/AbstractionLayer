@@ -1,6 +1,6 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
-* @file   SignalAndSlots.hpp
+* @file   SignalsAndSlots.hpp
 * @details \b Synopsis: \n Allows you to connect to emitted signals which call a callback.
 * @see https://doc.qt.io/qt-5/signalsandslots.html
 * @see https://en.wikipedia.org/wiki/Observer_pattern
@@ -19,7 +19,7 @@
 #include <memory>
 
 /**
- * @namespace SignalAndSlots
+ * @namespace SignalsAndSlots
  * @brief Allows you to connect to signals which call a callback when emitted.
  * @code
  *     //Foo inherits from EventQueue.

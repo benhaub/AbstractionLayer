@@ -13,11 +13,14 @@
 //Standard library
 #include <stdint.h>
 
-
+/**
+ * @namespace GpioTypes
+ * @brief GPIO types
+ */
 namespace GpioTypes {
 
     /**
-     * @enum GpioPinDirection
+     * @enum PinDirection
      * @brief Pin direction
     */
     enum class PinDirection : uint8_t {
@@ -27,7 +30,7 @@ namespace GpioTypes {
     };
 
     /**
-     * @enum GpioInterruptMode
+     * @enum InterruptMode
      * @brief The state of the signal that will trigger an interrupt
     */
     enum class InterruptMode : uint8_t {
@@ -41,13 +44,13 @@ namespace GpioTypes {
     };
 
     /**
-     * @enum GpioLogicLevel
+     * @enum LogicLevel
      * @brief Logic level
     */
     enum class LogicLevel : uint8_t {
         Unknown = 0, ///< Unknown logic level
-        Low,        ///< Low logic level
-        High        ///< High logic level
+        Low,         ///< Low logic level
+        High         ///< High logic level
     };
 }
 
