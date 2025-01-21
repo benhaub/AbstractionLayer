@@ -12,7 +12,6 @@
 //AbstractionLayer
 #include "Error.hpp"
 #include "Types.hpp"
-//TODO: I could move this to the cpp file if I create one.
 #include "OperatingSystemModule.hpp"
 #include "EventQueue.hpp"
 //C++
@@ -23,24 +22,12 @@
  * @namespace SignalAndSlots
  * @brief Allows you to connect to signals which call a callback when emitted.
  * @code
- *     auto observerCallback = [](bool complete, Milliseconds timestamp, const std::shared_ptr<std::string> ptr) {
- *         PLT_LOGI(TAG, "<Signal complete> <status:%s, message:%s, timestamp:%lld>", complete ? "true" : "false", ptr->c_str(), timestamp);
- *     };
- * 
- *     std::unique_ptr<SignalsAndSlots::SignalAbstraction> signal = std::make_unique<SignalsAndSlots::Signal<this, bool, std::shared_ptr<std::string>, Milliseconds>>(true, timestamp, ptr);
- * 
- *     bool complete = true;
- *     Milliseconds timestamp = 0;
- *     std::shared_ptr<std::string> ptr = std::make_shared<std::string>("Hello, world!");
- *  
- *     signal->connect(this, std::bind(observerCallback, true, timestamp, ptr));
- *     //
- *     // If the lambda was a member function declared as:
- *     // ErrorType Class::observerCallback(bool complete, Milliseconds timestamp, const std::shared_ptr<std::string> ptr) {
- *     //     return ErrorType::Success;
- *     // }
- *     // signal->connect(std::bind(&Class::observerCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), true, timestamp, ptr));
- *     //
+ *     //Foo inherits from EventQueue.
+ *     Foo foo;
+ *     SignalsAndSlots::Signal<bool> baz;
+ *     std::function<ErrorType(bool)> observerCallback = std::bind(&Foo::bar, &foo, std::placeholders::_1);
+ *     baz.connect(&foo, observerCallback);
+ * @endcode
  */
 namespace SignalsAndSlots {
     /// @brief The number of semaphores that have been created for all signals. Used to generate unique names.
@@ -58,7 +45,7 @@ namespace SignalsAndSlots {
          * @brief Constructor
          * @tparam Args Optional arguments types that will be passed to observer callback functions
          */
-        Signal(Args ...params) : _params(std::forward_as_tuple(params...)) {
+        Signal() {
             _SemaphoreCount++;
             _binarySemaphore = std::string("eventQueueBinarySemaphore").append(std::to_string(_SemaphoreCount));
             ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _binarySemaphore);
@@ -80,7 +67,7 @@ namespace SignalsAndSlots {
             if (_slots.size() == _MaxNumberOfObservers) {
                 return ErrorType::LimitReached;
             }
-            if (nullptr == callback.target()) {
+            if (nullptr == callback) {
                 return ErrorType::InvalidParameter;
             }
 
@@ -89,7 +76,7 @@ namespace SignalsAndSlots {
                 return ErrorType::Timeout;
             }
 
-            _slots.push_back(std::make_pair(eventQueue, callback));
+            _slots.emplace_back(eventQueue, callback);
 
             error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
             assert(ErrorType::Success == error);
@@ -98,15 +85,19 @@ namespace SignalsAndSlots {
         }
 
         /**
-         * @brief emit the signal and notify all the slots
+         * @brief Emit the signal and notify all the observers who have connected themselves to a slot.
          * @sa connect
          * @details convenience function so that you can call emit with no arguments which is more intuitive.
          * @returns ErrorType::NoData if there are no observers
-         * @returns ErrorType::Success if the signal was emitted successfully
-         * @returns ErrorType::Failure otherwise
+         * @returns ErrorType::PrerequisitesNotMet if eventQueue is nullptr
+         * @returns The errors described in SignalsAndSlots::Signal::_emit
         */
-        ErrorType emit() {
-            return _emit(_params, std::index_sequence_for<Args...>());
+        ErrorType emit(const Args... args) {
+            if (0 == _slots.size()) {
+                return ErrorType::NoData;
+            }
+
+            return _emit(std::forward_as_tuple(args...), std::index_sequence_for<Args...>());
         }
 
         /**
@@ -117,24 +108,24 @@ namespace SignalsAndSlots {
          * @returns ErrorType::Failure otherwise
          */
         ErrorType disconnect(std::function<ErrorType(Args...)> callback) {
-            //if (nullptr == callback.target()) {
-            //    return ErrorType::InvalidParameter;
-            //}
+            if (nullptr == callback.target()) {
+                return ErrorType::InvalidParameter;
+            }
 
-            //ErrorType error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout);
-            //if (ErrorType::Success != error) {
-            //    return ErrorType::Timeout;
-            //}
+            ErrorType error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout);
+            if (ErrorType::Success != error) {
+                return ErrorType::Timeout;
+            }
 
-            //std::erase_if(_slots, [&callback](const auto &observer) {
-            //    if (nullptr != observer.target() && observer.second.target() == callback.target())
-            //        return true;
-            //    });
+            std::erase_if(_slots, [&callback](const auto &observer) {
+                if (nullptr != observer.target() && observer.second.target() == callback.target())
+                    return true;
+                });
             
-            //error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
-            //assert(ErrorType::Success == error);
+            error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
+            assert(ErrorType::Success == error);
 
-            return ErrorType::NotImplemented;
+            return ErrorType::Success;
         }
 
         private:
@@ -145,30 +136,35 @@ namespace SignalsAndSlots {
 
         /// @brief List of all observer callbacks
         std::vector<std::pair<EventQueue &, std::function<ErrorType(Args...)>>> _slots;
-        /// @brief _params Tuple for forwarding parameter packs.
-        std::tuple<Args...> _params;
         /// @brief The semaphore used to synchronize access to _slots.
         std::string _binarySemaphore;
-        /// @brief the event queue for this signal.
-        EventQueue *_eventQueue = nullptr;
 
 
 
         /**
          * @brief Calls all of the observers with the callbacks they have registered using the connect() call
          * @sa SignalsAndSlots::connect
-         * @returns The error code of the function pointed to by the callback.
+         * @returns ErrorType::Success if all observers had their callbacks queued to their event queues successfully.
+         * @returns Any error returned by EventQueue::addEvent if one or more events failed. Only the error code of the
+         *          last failure will be returned.
         */
-        //TODO: If a class calls emit, then it will be responsible for executing all of the slot callbacks which is probably not what we want
-        //The slots have to be executed on the thread that owns the observer callback. I think right now this class is not given enough information
-        //to do that.
-        //I think that if you are going to connect to a signal, you have to pass in your event queue so that this class can place the callback on
-        //it for the thread to run later. If not, then maybe there could be some kind of option where the signal just sets a flag and it's up to the
-        //observer to check the flag and do any necessary work.... but that's kind of just like the chain of responsibility class. I think the key
-        //difference with the chain and with these signals and slots however is that the chain is first come, first serve. Whoever can process the
-        //object does so and it is removed from the chain. In signals and slots, everyone gets a chance to process the event if it is observed.
-        template <std::size_t... IndexSequence> ErrorType _emit(std::tuple<Args...> &params, std::index_sequence<IndexSequence...>) const {
-            return ErrorType::NotImplemented;
+        template <std::size_t... IndexSequence>
+        ErrorType _emit(const std::tuple<Args...> params, const std::index_sequence<IndexSequence...>) const {
+            ErrorType returnError = ErrorType::Failure;
+
+            for (const auto &slot : _slots) {
+                EventQueue &eventQueue = slot.first;
+                const std::function<ErrorType(Args...)> &callback = slot.second;
+
+                std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(callback, std::get<IndexSequence>(params)...));
+                assert(nullptr != event.get());
+                ErrorType addEventError = eventQueue.addEvent(event);
+                if (ErrorType::Success != addEventError) {
+                    returnError = addEventError;
+                }
+            }
+
+            return returnError;
         }
     };
 };
