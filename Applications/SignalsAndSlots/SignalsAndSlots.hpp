@@ -139,8 +139,6 @@ namespace SignalsAndSlots {
         /// @brief The semaphore used to synchronize access to _slots.
         std::string _binarySemaphore;
 
-
-
         /**
          * @brief Calls all of the observers with the callbacks they have registered using the connect() call
          * @sa SignalsAndSlots::connect
