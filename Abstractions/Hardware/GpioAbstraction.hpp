@@ -68,7 +68,9 @@ class GpioAbstraction {
 
     /**
      * @brief Init the gpio after configuring.
+     * @pre Call setHardwareConfig first.
      * @returns ErrorType::Success if the GPIO was initialized
+     * @returns ErrorType::PrerequisitesNotMet if pinDirection(), interruptMode() or pinNumber() are not valid.
      * @returns ErrorType::Failure otherwise.
      */
     virtual ErrorType init() = 0;
