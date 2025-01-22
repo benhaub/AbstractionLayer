@@ -128,7 +128,7 @@ namespace HttpServerTypes {
 
     /**
      * @struct CustomHeaders
-     * @brief Any customer headers that you include with your request or response
+     * @brief Any custom headers that you include with your request or response
      */
     struct CustomHeaders {
         std::array<std::string, 10> headers; ///< Array for the custom headers
@@ -254,6 +254,12 @@ namespace HttpServerTypes {
 /**
  * @class HttpServerAbstraction
  * @brief An Http server
+ * @note This is almost a decorator pattern execpt that the parameters of an HttpServerAbstraction overload (instead of override) the base class
+ *       and the base class virtual functions are now deprecated. This is probably in violation of Liskov Substitution but from a user perspective
+ *       it seems to perform well. You just have to remember to cast this class if you're storing it in an IpServerAbstraction or CommunicationProtocol
+ *       and if you don't and call the functions anyway they will return an appropriate error code which you could actually argue does not break the program.
+ * @sa For other examples of this, see I2cAbstraction which adds device address and register address to the parameter list and IpServerAbstraction which adds sockets.
+ * https://en.wikipedia.org/wiki/Decorator_pattern
  */
 class HttpServerAbstraction : public IpServerAbstraction {
 
