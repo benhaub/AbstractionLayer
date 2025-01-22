@@ -24,9 +24,10 @@
  * @code
  *     //Foo inherits from EventQueue.
  *     Foo foo;
- *     SignalsAndSlots::Signal<bool> baz;
- *     std::function<ErrorType(bool)> observerCallback = std::bind(&Foo::bar, &foo, std::placeholders::_1);
- *     baz.connect(&foo, observerCallback);
+ *     SignalsAndSlots::Signal<bool> bar;
+ *     std::function<ErrorType(bool)> observerCallback = std::bind(&Foo::baz, &foo, std::placeholders::_1);
+ *     //You pass in foo so that SignalsAndSlots knows what event queue to add the callback to
+ *     bar.connect(&foo, observerCallback);
  * @endcode
  */
 namespace SignalsAndSlots {
@@ -54,7 +55,7 @@ namespace SignalsAndSlots {
         ~Signal() = default;
 
         /**
-         * @brief Observer a signal and call the callback when it is emitted
+         * @brief Observe a signal and call the callback when it is emitted
          * @param callback The observers callback
          * @param eventQueue The event queue to add the callback to
          * @sa emit
@@ -87,7 +88,6 @@ namespace SignalsAndSlots {
         /**
          * @brief Emit the signal and notify all the observers who have connected themselves to a slot.
          * @sa connect
-         * @details convenience function so that you can call emit with no arguments which is more intuitive.
          * @returns ErrorType::NoData if there are no observers
          * @returns ErrorType::PrerequisitesNotMet if eventQueue is nullptr
          * @returns The errors described in SignalsAndSlots::Signal::_emit
