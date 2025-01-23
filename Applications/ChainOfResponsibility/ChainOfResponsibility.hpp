@@ -58,7 +58,7 @@ class ChainOfResponsibility : public Global<ChainOfResponsibility> {
      * @returns ErrorType::Success if the command object could be added.
      * @returns ErrorType::LimitReach if the maximum amount of command objects allowed in the queue is in the queue.
      * @returns ErrorType::Timeout if access to the queue could not be secured.
-     * @post Ownership of commandObject is relinquished to the ChainOfResponsibility if, and only if, the return value is ErrorType::Success.
+     * @post Ownership of commandObject is relinquished to the ChainOfResponsibility if, and only if, ErrorType::Success is returned.
     */
     ErrorType addCommandObject(std::unique_ptr<CommandObject> &commandObject);
     /**
