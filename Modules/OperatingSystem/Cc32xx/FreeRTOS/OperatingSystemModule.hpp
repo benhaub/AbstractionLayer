@@ -14,10 +14,10 @@
 #include "task.h"
 #include "queue.h"
 
-class OperatingSystem : public Global<OperatingSystem>, public OperatingSystemAbstraction {
+class OperatingSystem : public OperatingSystemAbstraction, public Global<OperatingSystem> {
 
     public:
-    OperatingSystem() : Global<OperatingSystem>(), OperatingSystemAbstraction() {}
+    OperatingSystem() : OperatingSystemAbstraction(), Global<OperatingSystem>() {}
     ~OperatingSystem() = default;
 
     ErrorType delay(const Milliseconds delay) override;

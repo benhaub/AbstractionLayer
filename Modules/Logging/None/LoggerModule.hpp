@@ -1,15 +1,13 @@
 #ifndef __LOGGER_MODULE_HPP__
 #define __LOGGER_MODULE_HPP__
 
-//Abstractions
+//AbstractionLayer
 #include "LoggingAbstraction.hpp"
-//Utilities
 #include "Global.hpp"
-#include "EventQueue.hpp"
 
-class Logger : public LoggingAbstraction, public Global<Logger>, public EventQueue {
+class Logger : public LoggingAbstraction, public Global<Logger> {
     public:
-    Logger() : LoggingAbstraction() {}
+    Logger() : LoggingAbstraction(), Global<Logger>() {}
     virtual ~Logger() = default;
 
     virtual ErrorType log(const LogType type, const char *tag, const char *format, ...) override;

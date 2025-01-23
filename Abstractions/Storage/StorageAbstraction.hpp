@@ -7,12 +7,8 @@
 #ifndef __STORAGE_ABSTRACTION_HPP__
 #define __STORAGE_ABSTRACTION_HPP__
 
-//Utilities
-#include "Types.hpp"
-#include "Error.hpp"
-//C++
-#include <string>
-#include <memory>
+//AbstractionLayer
+#include "EventQueue.hpp"
 
 /**
  * @struct StorageStatus
@@ -26,14 +22,14 @@ struct StorageStatus {
  * @class StorageAbstraction
  * @brief Foundation core functions for any storage type
 */
-class StorageAbstraction {
+class StorageAbstraction : public EventQueue {
 
     public:
     /**
      * @brief Constructor
      * @param [in] name The name of the storage
     */
-    StorageAbstraction(std::string name) :  _name(name) {}
+    StorageAbstraction(std::string name) : EventQueue(), _name(name) {}
     /// @brief Destructor
     virtual ~StorageAbstraction() = default;
 

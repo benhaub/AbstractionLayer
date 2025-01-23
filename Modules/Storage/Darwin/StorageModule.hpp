@@ -1,19 +1,17 @@
 #ifndef __STORAGE_MODULE_HPP__
 #define __STORAGE_MODULE_HPP__
 
-//AbstractionLayer applications
-#include "Global.hpp"
-#include "EventQueue.hpp"
 //AbstractionLayer
+#include "Global.hpp"
 #include "StorageAbstraction.hpp"
 
 /**
  * @class Storage
 */
-class Storage : public StorageAbstraction, public Global<Storage, std::string>, public EventQueue {
+class Storage : public StorageAbstraction, public Global<Storage, std::string> {
 
     public:
-    Storage(std::string name) : StorageAbstraction(name) {
+    Storage(std::string name) : StorageAbstraction(name), Global<Storage, std::string>() {
         _status.isInitialized = false;
     }
     virtual ~Storage() = default;
