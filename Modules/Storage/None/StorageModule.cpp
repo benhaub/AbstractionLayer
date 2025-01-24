@@ -1,6 +1,5 @@
 //AbstractionLayer
 #include "StorageModule.hpp"
-#include "Error.hpp"
 
 ErrorType Storage::initStorage() {
     return ErrorType::NotImplemented;

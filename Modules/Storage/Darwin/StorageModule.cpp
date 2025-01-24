@@ -12,7 +12,7 @@
 ErrorType Storage::initStorage() {
     ErrorType error;
     _rootPrefix = getEnvironment("HOME", error);
-    _rootPrefix += "/_Data";
+    _rootPrefix += "/" + name();
     mkdir(_rootPrefix.c_str(), S_IRWXU);
     
 
