@@ -19,7 +19,7 @@
 class Wifi : public WifiAbstraction {
 
     public:
-    Wifi();
+    Wifi() : WifiAbstraction() {}
     ~Wifi() = default;
 
     ErrorType init() override;

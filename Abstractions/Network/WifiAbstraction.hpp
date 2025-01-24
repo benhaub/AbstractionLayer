@@ -65,7 +65,10 @@ class WifiAbstraction : public NetworkAbstraction {
     /**
      * @brief Anything that should be called before init should be called in the constructor
     */
-    WifiAbstraction() = default;
+    WifiAbstraction() {
+        _status.isUp = false;
+        _status.technology = NetworkTypes::Technology::Wifi;
+    }
     virtual ~WifiAbstraction() = default;
 
     /// @brief Tag for logging

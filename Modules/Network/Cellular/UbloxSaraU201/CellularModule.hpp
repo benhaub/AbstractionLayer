@@ -9,12 +9,9 @@
 
 #include "NetworkAbstraction.hpp"
 
-class Cellular : public NetworkAbstraction {
+class Cellular : public CellularAbstraction {
     public:
-    Cellular() : NetworkAbstraction() {
-        _status.isUp = false;
-        _status.technology = NetworkTypes::Technology::Cellular;
-    }
+    Cellular() : CellularAbstraction() {}
     ~Cellular() = default;
 
     ErrorType init() override;

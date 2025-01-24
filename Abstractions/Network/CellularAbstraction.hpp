@@ -52,7 +52,10 @@ class CellularAbstraction : public NetworkAbstraction {
 
     public:
     /// @brief Default constructor
-    CellularAbstraction() = default;
+    CellularAbstraction() {
+        _status.isUp = false;
+        _status.technology = NetworkTypes::Technology::Cellular;
+    }
     /// @brief Default destructor
     virtual ~CellularAbstraction() = default;
 

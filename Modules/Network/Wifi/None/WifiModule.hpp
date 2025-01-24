@@ -11,9 +11,7 @@
 class Wifi : public WifiAbstraction {
 
     public:
-    Wifi() : WifiAbstraction() {
-        _status.isUp = false;
-    }
+    Wifi() : WifiAbstraction() {}
     ~Wifi() = default;
 
     ErrorType init() override;

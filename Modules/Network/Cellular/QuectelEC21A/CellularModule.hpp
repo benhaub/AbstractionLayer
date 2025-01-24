@@ -24,8 +24,6 @@ enum class ContextType : uint8_t {
 class Cellular : public CellularAbstraction {
     public:
     Cellular() : CellularAbstraction() {
-        _status.isUp = false;
-        _status.technology = NetworkTypes::Technology::Cellular;
         _connectionIds.fill(-1);
     }
     ~Cellular() = default;

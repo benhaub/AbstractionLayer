@@ -20,7 +20,6 @@ class Wifi : public WifiAbstraction {
     Wifi() : WifiAbstraction() {
         //Wifi on a posix system is always up.
         _status.isUp = true;
-        _status.technology = NetworkTypes::Technology::Wifi;
     }
     ~Wifi() = default;
 

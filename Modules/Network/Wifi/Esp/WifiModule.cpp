@@ -19,11 +19,6 @@ static void WifiEventHandler(void *eventHandleArg, esp_event_base_t event_base, 
 }
 #endif
 
-Wifi::Wifi() : WifiAbstraction() {
-    _status.isUp = false;
-    _status.technology = NetworkTypes::Technology::Wifi;
-}
-
 ErrorType Wifi::init() {
     esp_err_t err;
     ErrorType error;

@@ -5,8 +5,6 @@
 #include "SpiModule.hpp"
 
 Wifi::Wifi() : WifiAbstraction() {
-    _status.isUp = false;
-
     Spi spi;
     Id thread;
     ErrorType error = spi.init();
