@@ -20,7 +20,7 @@ class Storage : public StorageAbstraction, public Global<Storage, std::string> {
      * @param[in] os The operating system
      * @attention Stdlib version is a Global class that is constructed with Init()
     */
-    Storage(std::string name) : StorageAbstraction(name) {
+    Storage(std::string name, StorageTypes::Medium medium) : StorageAbstraction(name, medium) {
         _status.isInitialized = false;
     }
     virtual ~Storage() = default;

@@ -7,7 +7,7 @@
 
 class Storage : public StorageAbstraction, public Global<Storage, std::string> {
     public:
-    Storage(std::string name) : StorageAbstraction(name), Global<Storage, std::string>(){
+    Storage(std::string name, StorageTypes::Medium medium) : StorageAbstraction(name, medium), Global<Storage, std::string>(){
         _status.isInitialized = false;
     }
     virtual ~Storage() = default;

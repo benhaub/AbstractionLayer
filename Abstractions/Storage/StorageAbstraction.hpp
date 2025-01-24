@@ -11,12 +11,32 @@
 #include "EventQueue.hpp"
 
 /**
- * @struct StorageStatus
- * @brief The status of the storage.
-*/
-struct StorageStatus {
-    bool isInitialized; ///< Is the storage initialized and ready to use.
-};
+ * @namespace StorageTypes
+ * @brief Types related to storage
+ */
+namespace StorageTypes {
+
+    /**
+     * @struct StorageStatus
+     * @brief The status of the storage.
+    */
+    struct StorageStatus {
+        bool isInitialized; ///< Is the storage initialized and ready to use.
+    };
+
+    /**
+     * @enum Medium
+     * @brief The type of storage medium being used.
+     */
+    enum class Medium : uint8_t {
+        Unknown = 0, ///< Unknown
+        Flash,       ///< Flash
+        Eeprom,      ///< Electrically Eraseable Programmable Memory
+        Ram,         ///< Random Access Memory
+        Sd,          ///< Secure Digital
+        Otp          ///< One Time Programmable
+    };
+}
 
 /**
  * @class StorageAbstraction
@@ -27,9 +47,12 @@ class StorageAbstraction : public EventQueue {
     public:
     /**
      * @brief Constructor
-     * @param [in] name The name of the storage
+     * @param[in] name The name of the storage
+     * @param[in] medium The storage medium to use
+     * @note For various storage mediums, the recommendation is to create classes for each medium within your modules and use switch cases
+     *       in the StorageModule to dispatch the correct implementation
     */
-    StorageAbstraction(std::string name) : EventQueue(), _name(name) {}
+    StorageAbstraction(std::string name, StorageTypes::Medium medium) : EventQueue(), _name(name), _medium(medium) {}
     /// @brief Destructor
     virtual ~StorageAbstraction() = default;
 
@@ -105,11 +128,9 @@ class StorageAbstraction : public EventQueue {
     */
     virtual ErrorType eraseAllPartitions() = 0;
 
-    /// @brief Get the status of the storage as a mutable reference
-    StorageStatus &status() { return _status; }
     /// @brief Get the status of the storage as a constant reference
-    const StorageStatus &statusConst() const { return _status; }
-    /// @brief Get the name of the storage
+    const StorageTypes::StorageStatus &statusConst() const { return _status; }
+    /// @brief Get the name of the storage as a constant reference
     const std::string &name() const { return _name; }
     /// @brief Get the root prefix
     const std::string &rootPrefix() const { return _rootPrefix; }
@@ -120,10 +141,12 @@ class StorageAbstraction : public EventQueue {
     private:
     /// @brief The name of the storage.
     std::string _name;
+    /// @brief The storage medium.
+    StorageTypes::Medium _medium;
 
     protected:
     /// @brief The status of the storage.
-    StorageStatus _status = { .isInitialized = false };
+    StorageTypes::StorageStatus _status = { .isInitialized = false };
     /// @brief A path that is prepened to all file names for storage
     std::string _rootPrefix;
 };

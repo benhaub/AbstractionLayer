@@ -9,7 +9,7 @@ ErrorType File::open(const std::string &filename, const OpenMode mode) {
     if (nullptr == _handle.get()) {
         _handle = std::make_unique<std::fstream>();
     }
-    if (isOpen() || !storage().status().isInitialized) {
+    if (isOpen() || !storage().statusConst().isInitialized) {
         //Failure because the file mode can't be set if it's already open.
         return ErrorType::PrerequisitesNotMet;
     }
