@@ -16,7 +16,7 @@ Wifi::Wifi() : WifiAbstraction() {
 
     constexpr Bytes kilobyte = 1024;
     error = OperatingSystem::Instance().createThread(OperatingSystemConfig::Priority::High,
-                                            std::string("wifiNetworkThread"),
+                                            std::string("simplelinkTask"),
                                             nullptr,
                                             2*kilobyte,
                                             sl_Task,
