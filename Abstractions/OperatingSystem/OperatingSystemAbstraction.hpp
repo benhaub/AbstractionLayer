@@ -332,6 +332,24 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Failure if the idleTime could not be obtained.
      */
     virtual ErrorType idlePercentage(Percent &idlePercent) = 0;
+    /**
+     * @brief get the size of the heap that's been allocated
+     * @param[out] size The size of the heap that's been allocated
+     * @param[in] memoryRegionName The name of the memory region to get the heap size from.
+     * @returns ErrorType::Success if the size was obtained
+     * @returns ErrorType::NotImplemented if getting the heap size is not implemented
+     * @returns ErrorType::Failure otherwise
+     */
+    virtual ErrorType maxHeapSize(Bytes &size, const std::string &memoryRegionName) = 0;
+    /**
+     * @brief Get the amount of heap that is allocatable
+     * @param size[out] The amount of heap that is allocatable
+     * @param[in] memoryRegionName The name of the memory region to get the heap size from.
+     * @returns ErrorType::Success if the size was obtained
+     * @returns ErrorType::NotImplemented if getting the heap size is not implemented
+     * @returns ErrorType::Failure otherwise
+     */
+    virtual ErrorType availableHeapSize(Bytes &size, const std::string &memoryRegionName) = 0;
 
     /**
      * @brief Get the status of the operatings system as a const reference.

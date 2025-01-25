@@ -9,6 +9,7 @@
 #include "esp_pthread.h"
 #include "esp_app_desc.h"
 #include "esp_log.h"
+#include "esp_heap_caps.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -324,6 +325,34 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     idle_task_runtime_last = idle_runtime;
 
     idlePercent = 100.0f * (float)idle_time_between_calls / runtime_between_calls;
+
+    return ErrorType::Success;
+}
+
+ErrorType OperatingSystem::maxHeapSize(Kilobytes &size, const std::string &memoryRegionName) {
+    if (memoryRegionName.empty()) {
+        size = heap_caps_get_total_size(MALLOC_CAP_DEFAULT) / 1024;
+    }
+    else if (memoryRegionName == "DRAM") {
+        size = heap_caps_get_total_size(MALLOC_CAP_8BIT) / 1024;
+    }
+    else if (memoryRegionName == "SPIRAM") {
+        size = heap_caps_get_total_size(MALLOC_CAP_SPIRAM) / 1024;
+    }
+
+    return ErrorType::Success;
+}
+
+ErrorType OperatingSystem::availableHeapSize(Kilobytes &size, const std::string &memoryRegionName) {
+    if (memoryRegionName.empty()) {
+        size = heap_caps_get_free_size(MALLOC_CAP_DEFAULT) / 1024;
+    }
+    else if (memoryRegionName == "DRAM") {
+        size = heap_caps_get_free_size(MALLOC_CAP_8BIT) / 1024;
+    }
+    else if (memoryRegionName == "SPIRAM") {
+        size = heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024;
+    }
 
     return ErrorType::Success;
 }

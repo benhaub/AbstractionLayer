@@ -446,6 +446,14 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     return ErrorType::NotImplemented;
 }
 
+ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::string &memoryRegionName) {
+    return ErrorType::NotImplemented;
+}
+
+ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &memoryRegionName) {
+    return ErrorType::NotImplemented;
+}
+
 void OperatingSystem::callTimerCallback(timer_t timer) {
     timers[timer].callback();
 

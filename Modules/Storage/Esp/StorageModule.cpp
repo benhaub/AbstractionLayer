@@ -3,7 +3,6 @@
 //ESP
 #include "nvs.h"
 #include "nvs_flash.h"
-#include "esp_heap_caps.h"
 
 ErrorType Storage::initStorage() {
     std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(&Storage::initStorageInternal, this));
@@ -49,45 +48,6 @@ ErrorType Storage::availableStorage(Kilobytes &size, std::string partitionName) 
     size = (stats.free_entries * 32) / 1024;
 
     return fromPlatformError(err);
-}
-
-/**
- * @brief Returns the total size of the specified memory region.
- * @details It's generally not that useful to know the total ram size dynamically but rather the total size of the heap in ram.
- *          Static analysis of total RAM usage is preferred and can be done by summing up your .data and .bss sections and then adding
- *          on to that what your typical heap usage is during runtime.
- *          You can use idf.py size
- */
-ErrorType Storage::maxRamSize(Kilobytes &size, std::string memoryRegionName) {
-    if (memoryRegionName.empty()) {
-        size = heap_caps_get_total_size(MALLOC_CAP_DEFAULT) / 1024;
-    }
-    else if (memoryRegionName == "DRAM") {
-        size = heap_caps_get_total_size(MALLOC_CAP_8BIT) / 1024;
-    }
-    else if (memoryRegionName == "SPIRAM") {
-        size = heap_caps_get_total_size(MALLOC_CAP_SPIRAM) / 1024;
-    }
-
-    return ErrorType::Success;
-}
-
-/**
- * @brief Returns the available size of the specified memory region.
- * @sa maxRamSize
- */
-ErrorType Storage::availableRam(Kilobytes &size, std::string memoryRegionName) {
-    if (memoryRegionName.empty()) {
-        size = heap_caps_get_free_size(MALLOC_CAP_DEFAULT) / 1024;
-    }
-    else if (memoryRegionName == "DRAM") {
-        size = heap_caps_get_free_size(MALLOC_CAP_8BIT) / 1024;
-    }
-    else if (memoryRegionName == "SPIRAM") {
-        size = heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024;
-    }
-
-    return ErrorType::Success;
 }
 
 ErrorType Storage::erasePartition(const std::string &partitionName) {

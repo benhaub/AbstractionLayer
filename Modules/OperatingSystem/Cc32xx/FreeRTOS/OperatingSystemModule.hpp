@@ -49,6 +49,8 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
     ErrorType reset() override;
     ErrorType setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) override;
     ErrorType idlePercentage(Percent &idlePercent) override;
+    ErrorType maxHeapSize(Bytes &size, const std::string &memoryRegionName) override;
+    ErrorType availableHeapSize(Bytes &size, const std::string &memoryRegionName) override;
 
     void callTimerCallback(timer_t timer);
 

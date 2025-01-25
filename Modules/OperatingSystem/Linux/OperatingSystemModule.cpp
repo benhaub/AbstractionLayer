@@ -2,6 +2,7 @@
 #include "OperatingSystemModule.hpp"
 //C++
 #include <ctime>
+#include <cstdio>
 //C
 #include <string.h>
 //Posix
@@ -9,6 +10,8 @@
 #include <sys/time.h>
 #include <limits.h>
 #include <fcntl.h>
+#include <sys/statvfs.h>
+#include <sys/stat.h>
 
 ErrorType OperatingSystem::delay(const Milliseconds delay) {
     usleep(delay*1000);
@@ -356,6 +359,60 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     else {
         idlePercent = 100.0f;
     }
+
+    return error;
+}
+
+ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::string &memoryRegionName) {
+    ErrorType error = ErrorType::Failure;
+
+    //Will return the size of RAM in bytes.
+    std::string commandFinal("free -b | egrep Mem | tr -s \" \" | cut -d \" \" -f2");
+    std::string ramSize(4, 0);
+    
+    FILE* pipe = popen(commandFinal.c_str(), "r");
+    if (nullptr != pipe) {
+        size_t bytesRead = fread(ramSize.data(), sizeof(uint8_t), ramSize.capacity(), pipe);
+        if (feof(pipe) || bytesRead == ramSize.capacity()) {
+            error = ErrorType::Success;
+            ramSize.resize(bytesRead);
+            while (ramSize.back() == '\n') {
+                ramSize.pop_back();
+            }
+        }
+        else if (ferror(pipe)) {
+            pclose(pipe);
+            error = ErrorType::Failure;
+        }
+    }
+    size = std::strtoul(ramSize.c_str(), nullptr, 10);
+
+    return error;
+}
+
+ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &memoryRegionName) {
+    ErrorType error = ErrorType::Failure;
+
+    //Will return the size of available RAM in bytes.
+    std::string commandFinal("free -b | egrep Mem | tr -s \" \" | cut -d \" \" -f4");
+    std::string ramSize(4, 0);
+    
+    FILE* pipe = popen(commandFinal.c_str(), "r");
+    if (nullptr != pipe) {
+        size_t bytesRead = fread(ramSize.data(), sizeof(uint8_t), ramSize.capacity(), pipe);
+        if (feof(pipe) || bytesRead == ramSize.capacity()) {
+            error = ErrorType::Success;
+            ramSize.resize(bytesRead);
+            while (ramSize.back() == '\n') {
+                ramSize.pop_back();
+            }
+        }
+        else if (ferror(pipe)) {
+            pclose(pipe);
+            error = ErrorType::Failure;
+        }
+    }
+    size = std::strtoul(ramSize.c_str(), nullptr, 10);
 
     return error;
 }

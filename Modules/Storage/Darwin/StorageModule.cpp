@@ -5,9 +5,6 @@
 //Posix
 #include <sys/statvfs.h>
 #include <sys/stat.h>
-//C++
-#include <cstdlib>
-#include <cstdio>
 
 ErrorType Storage::initStorage() {
     ErrorType error;
@@ -51,65 +48,6 @@ ErrorType Storage::availableStorage(Kilobytes &size, std::string partitionName) 
         error = fromPlatformError(errno);
         size = 0;
     }
-
-    return error;
-}
-
-ErrorType Storage::maxRamSize(Kilobytes &size, std::string memoryRegionName) {
-    ErrorType error = ErrorType::Failure;
-
-    //Will return the size of RAM in GB.
-    std::string commandFinal("system_profiler SPMemoryDataType | egrep Memory | tail -2 | tr -s \" \" | cut -d \" \" -f3 | tail -1");
-    std::string ramSize(4, 0);
-    
-    FILE* pipe = popen(commandFinal.c_str(), "r");
-    if (nullptr != pipe) {
-        size_t bytesRead = fread(ramSize.data(), sizeof(uint8_t), ramSize.capacity(), pipe);
-        if (feof(pipe) || bytesRead == ramSize.capacity()) {
-            error = ErrorType::Success;
-            ramSize.resize(bytesRead);
-            while (ramSize.back() == '\n') {
-                ramSize.pop_back();
-            }
-        }
-        else if (ferror(pipe)) {
-            pclose(pipe);
-            error = ErrorType::Failure;
-        }
-    }
-    size = std::strtoul(ramSize.c_str(), nullptr, 10);
-    size = size * 1024 * 1024;
-
-    return error;
-}
-
-ErrorType Storage::availableRam(Kilobytes &size, std::string memoryRegionName) {
-    ErrorType error = ErrorType::Failure;
-
-    //Will return the size of RAM used in kilobytes
-    std::string commandFinal("ps -o rss | awk '{sum += $1} END {print sum}'");
-    std::string ramUsed(6, 0);
-    
-    FILE* pipe = popen(commandFinal.c_str(), "r");
-    if (nullptr != pipe) {
-        size_t bytesRead = fread(ramUsed.data(), sizeof(uint8_t), ramUsed.capacity(), pipe);
-        if (feof(pipe) || bytesRead == ramUsed.capacity()) {
-            error = ErrorType::Success;
-            ramUsed.resize(bytesRead);
-            while (ramUsed.back() == '\n') {
-                ramUsed.pop_back();
-            }
-        }
-        else if (ferror(pipe)) {
-            pclose(pipe);
-            error = ErrorType::Failure;
-        }
-    }
-
-    Kilobytes totalRam;
-    maxRamSize(totalRam);
-
-    size = totalRam - std::strtoul(ramUsed.c_str(), nullptr, 10);
 
     return error;
 }
