@@ -32,7 +32,6 @@ namespace StorageTypes {
         Unknown = 0, ///< Unknown
         Flash,       ///< Flash
         Eeprom,      ///< Electrically Eraseable Programmable Memory
-        Ram,         ///< Random Access Memory
         Sd,          ///< Secure Digital
         Otp          ///< One Time Programmable
     };
