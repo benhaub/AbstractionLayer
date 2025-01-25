@@ -56,6 +56,14 @@ class LoggingAbstraction {
      * @verbatim Message structure: <tag> <message> @endverbatim
     */
     virtual ErrorType logBuffer(const LogType logType, const char *tag, const char *data, Bytes length) = 0;
+
+    /**
+     * @brief Prints a message to the terminal.
+     * @param logType The type of log message.
+     * @sa LogType
+     * @param tag The tag portion of the log message.
+    */
+    virtual ErrorType periodicSystemStateLog(const LogType logType, const char *tag) = 0;
 };
 
 #endif // __LOGGING_ABSTRACTION_HPP__
