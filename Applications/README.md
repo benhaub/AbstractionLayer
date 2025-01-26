@@ -29,13 +29,13 @@ code size.
 a memory pool.
 
 ### Reception
-`SignalsAndSlots` can be thought of as a notification while the `Chain of Responsibility` can be thought of as a command. A command must be received but a notification can be ignored. A command sent to the `Chain of Responsibility` will occupy memory in a queue until it is read.
+`SignalsAndSlots` can be thought of as a notification while the `ChainofResponsibility` can be thought of as a command. A command must be received but a notification can be ignored. A command sent to the `ChainofResponsibility` will occupy memory in a queue until it is read.
 A signal that is emitted with no observers will be discarded. If it is important that another module be alerted of an action and it is expected
-that that module will respond to these alerts, then use the `Chain of Responsibility`. If it is not important that anybody responds to some alert then use `SignalsAndSlots`.
+that that module will respond to these alerts, then use the `ChainofResponsibility`. If it is not important that anybody responds to some alert then use `SignalsAndSlots`.
 
 ### Summary
 - If you need multiple observers, use `SignalsAndSlots`.
-- If you strictly need one, and only one, observer, use `ChainOfResponsibility`.
-- If an alert must have a corresponding action, use the `ChainOfResponsibility`.
+- If you strictly need one, and only one, observer, use `ChainofResponsibility`.
+- If an alert must have a corresponding action, use the `ChainofResponsibility`.
 - If it does not matter whether an alert is acted upon, use `SignalsAndSlots`.
 - If none of the above matter, use `ChainOfResponsibility`.
