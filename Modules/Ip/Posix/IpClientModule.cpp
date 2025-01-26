@@ -62,7 +62,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         FD_SET(_socket, &fdset);
 
         struct timeval timeoutval = {
-            .tv_sec = timeout / 1000,
+            .tv_sec = timeout * 1000,
             .tv_usec = 0
         };
 

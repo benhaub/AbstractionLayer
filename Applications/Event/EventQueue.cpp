@@ -9,6 +9,7 @@ EventQueue::EventQueue() {
     assert(ErrorType::Success == error);
 }
 
+//TODO: This needs an optimization for when a module adds to it's own event queue. The module can just process the event right away.
 ErrorType EventQueue::addEvent(std::unique_ptr<EventAbstraction> &event) {
 
     ErrorType error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout);
