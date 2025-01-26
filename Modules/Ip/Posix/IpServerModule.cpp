@@ -104,7 +104,8 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
 
         if (connectionsAcceptedIsAtMaximum()) {
             socket = -1;
-            error = ErrorType::LimitReached;
+            acceptConnectionDone = true;
+            return ErrorType::LimitReached;
         }
         else {
             struct timeval timeoutval = {
