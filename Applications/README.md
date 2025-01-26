@@ -1,6 +1,9 @@
 # Abstraction Layer Applications
 Applications are applications of the AbstractionLayer. They are software components that use the AbstractionLayer. They are general purpose and have no outside dependancies other than the C++ standard library so they can be used on any platform.
 
+Do not abuse Event-driven architecture components like the `ChainOfResponsibility` or `SignalsAndSlots`. They are not a catch all, asynchronous solution for all implementations and can be difficult to debug if over-done.
+https://youtu.be/STKCRSUsyP0?t=795
+
 ## SignalsAndSlots Vs. ChainOfResponsibility
 Both of these applications are examples of observer patterns with a few key differences.
 
