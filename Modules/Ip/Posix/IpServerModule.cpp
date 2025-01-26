@@ -93,76 +93,119 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
 
     return error;
 }
+
 ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout) {
-    struct sockaddr_storage clientAddress;
-    socklen_t receiveSocketSize;
+    bool acceptConnectionDone = false;
+    ErrorType error = ErrorType::Failure;
 
-    if (connectionsAcceptedIsAtMaximum()) {
-        socket = -1;
-        return ErrorType::LimitReached;
-    }
-    else {
+    auto acceptConnectionCallback = [this, &error, &acceptConnectionDone](Socket &socket, const Milliseconds timeout) -> ErrorType {
+        struct sockaddr_storage clientAddress;
+        socklen_t receiveSocketSize;
 
-        struct timeval timeoutval = {
-            .tv_sec = timeout / 1000,
-            .tv_usec = 0
-        };
-        fd_set readfds;
-
-        FD_ZERO(&readfds);
-        FD_SET(_listenerSocket, &readfds);
-
-        {
-        int ret;
-        ret = select(_listenerSocket + 1, &readfds, NULL, NULL, &timeoutval);
-        if (ret < 0) {
-            return fromPlatformError(errno);
-        }
-        }
-
-        if (FD_ISSET(_listenerSocket, &readfds)) {
-            if (-1 == (socket = accept(_listenerSocket, (struct sockaddr *)&clientAddress, &receiveSocketSize))) {
-                return fromPlatformError(errno);
-            }
+        if (connectionsAcceptedIsAtMaximum()) {
+            socket = -1;
+            error = ErrorType::LimitReached;
         }
         else {
-            return ErrorType::Timeout;
+            struct timeval timeoutval = {
+                .tv_sec = timeout / 1000,
+                .tv_usec = 0
+            };
+            fd_set readfds;
+
+            FD_ZERO(&readfds);
+            FD_SET(_listenerSocket, &readfds);
+
+            {
+            int ret;
+            ret = select(_listenerSocket + 1, &readfds, NULL, NULL, &timeoutval);
+            if (ret < 0) {
+                acceptConnectionDone = true;
+                return fromPlatformError(errno);
+            }
+            }
+
+            if (FD_ISSET(_listenerSocket, &readfds)) {
+                if (-1 == (socket = accept(_listenerSocket, (struct sockaddr *)&clientAddress, &receiveSocketSize))) {
+                    acceptConnectionDone = true;
+                    return fromPlatformError(errno);
+                }
+            }
+            else {
+                error = ErrorType::Timeout;
+            }
         }
+
+        _connectedSockets.push_back(socket);
+        _status.activeConnections = _connectedSockets.size();
+
+        acceptConnectionDone = true;
+        return ErrorType::Success;
+        
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(acceptConnectionCallback, socket, timeout));
+    error = network().addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
     }
 
-    _connectedSockets.push_back(socket);
-    _status.activeConnections = _connectedSockets.size();
+    while (!acceptConnectionDone) {
+        OperatingSystem::Instance().delay(10);
+    }
 
-    return ErrorType::Success;
+    return error;
 }
 
 ErrorType IpServer::closeConnection(const Socket socket) {
-    if (-1 == close(socket)) {
-        return fromPlatformError(errno);
+    bool closeConnectionDone = false;
+    ErrorType error = ErrorType::Failure;
+
+    auto closeConnection = [this, &error, &closeConnectionDone](const Socket socket) -> ErrorType {
+        if (-1 == close(socket)) {
+            closeConnectionDone = true;
+            return fromPlatformError(errno);
+        }
+
+        const auto closedSocket = std::find(_connectedSockets.begin(), _connectedSockets.end(), socket);
+        if (_connectedSockets.end() != closedSocket) {
+            _connectedSockets.erase(closedSocket);
+            _status.activeConnections = _connectedSockets.size();
+            error = ErrorType::Success;
+        }
+        else {
+            error = ErrorType::NoData;
+        }
+
+        closeConnectionDone = true;
+        return error;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(closeConnection, socket));
+    error = network().addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
     }
 
-    const auto closedSocket = std::find(_connectedSockets.begin(), _connectedSockets.end(), socket);
-    if (_connectedSockets.end() != closedSocket) {
-        _connectedSockets.erase(closedSocket);
-        _status.activeConnections = _connectedSockets.size();
-        return ErrorType::Success;
+    while (!closeConnectionDone) {
+        OperatingSystem::Instance().delay(10);
     }
 
-    return ErrorType::NoData;
+    return error;
 }
 
 ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) {
     bool sent = false;
     ErrorType error = ErrorType::Failure;
 
-    auto tx = [this, &error, &sent](const std::string &frame, const Socket socket, const Milliseconds timeout) -> ErrorType {
-        error = network().txBlocking(frame, socket, timeout);
+    auto tx = [this, &error, &sent](const std::string *frame, const Socket socket, const Milliseconds timeout) -> ErrorType {
+        error = network().txBlocking(*frame, socket, timeout);
 
         sent = true;
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(tx, data, socket, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(tx, &data, socket, timeout));
     error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -243,6 +286,7 @@ ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, cons
             return ErrorType::NoData;
         }
 
+        //TODO: Function needs a socket param. Not just in the callback? How do we know who to receive from?
         //error = network().rxBlocking(*buffer, _socket, timeout);
 
         //assert(nullptr != callback);
