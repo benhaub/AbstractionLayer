@@ -13,12 +13,21 @@ Wifi::Wifi() : WifiAbstraction() {
     }
 
     constexpr Bytes kilobyte = 1024;
-    error = OperatingSystem::Instance().createThread(OperatingSystemConfig::Priority::High,
-                                            std::string("simplelinkTask"),
-                                            nullptr,
-                                            2*kilobyte,
-                                            sl_Task,
-                                            thread);
+    //SIMPLELINK_THREAD_NAME is defined at compile time in cc32xx.cmake. Both Wifi and storage must create this thread in order to access the
+    //API for Wifi and storage and may do so independently of each other. The Operating System must be check for this presence of this thread
+    //before attempting to start it. Checking the return value of sl_start() is not sufficient since the wifi radio can be turned on or off at
+    //any time.
+    if (ErrorType::NoData == OperatingSystem::Instance().threadId(SIMPLELINK_THREAD_NAME, thread)) {
+        
+        error = OperatingSystem::Instance().createThread(OperatingSystemConfig::Priority::High,
+                                                std::string(SIMPLELINK_THREAD_NAME),
+                                                nullptr,
+                                                2*kilobyte,
+                                                sl_Task,
+                                                thread);
+        
+        assert(ErrorType::Success == error);
+    }
 
     radioOn();
 
@@ -50,12 +59,6 @@ Wifi::Wifi() : WifiAbstraction() {
 
 ErrorType Wifi::init() {
     ErrorType error = ErrorType::Success;
-
-    Id thread;
-    const bool wifiNetworkThreadHasNotBeenCreated = ErrorType::NoData == OperatingSystem::Instance().threadId("wifiNetworkThread", thread);
-    if (wifiNetworkThreadHasNotBeenCreated) {
-        return ErrorType::PrerequisitesNotMet;
-    }
 
     //Turn off and on for changes to take affect.
     error = radioOff();

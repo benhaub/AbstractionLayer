@@ -26,7 +26,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Network/Wifi/Cc32xx)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Network/Cellular/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Ip/Cc32xx)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Logging/Cc32xx)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Storage/None)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Storage/Cc32xx)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Serialization/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Error/Cc32xx)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Tools/None/Crc)
@@ -37,3 +37,8 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Logging)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/ChainOfResponsibility)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Event)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/SignalsAndSlots)
+
+target_compile_definitions(${PROJECT_NAME}${EXECUTABLE_SUFFIX}
+PRIVATE
+  SIMPLELINK_THREAD_NAME="simplelinkTask" 
+)

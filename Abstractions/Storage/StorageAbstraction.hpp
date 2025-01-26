@@ -57,50 +57,45 @@ class StorageAbstraction : public EventQueue {
 
     /**
      * @brief Initializes the storage
-     * @returns ErrorType::Success if initiatized.\n
-     * @returns ErrorType::Failure if failed.\n
-     * @returns ErrorType::NotImplemented if not be implemented.\n
-     * @returns ErrorType::NotAvailable if the storage does not need to be initialized.\n
+     * @returns ErrorType::Success if the storage was initialized
+     * @returns ErrorType::Failure otherwise.
     */
     virtual ErrorType initStorage() = 0;
     /**
      * @brief Deinitializes the storage
-     * @returns ErrorType::Success if the storage was deinitialized.
-     * @returns ErrorType::Failure if it was not deinitialized.
+     * @returns ErrorType::Success if the storage was deinitialized
+     * @returns ErrorType::Failure otherwise.
     */
     virtual ErrorType deinitStorage() = 0;
     /**
      * @brief Get the size of the storage
+     * @pre initStorage must be called first
      * @param[out] size The size of the storage
      * @param[in] partitionName The name of the partition to get the max storage size from. Default partition name used if not provided.
-     * @pre initStorage must be called first
-     * @returns ErrorType::Success if the operation is successful, otherwise an error code
-     * @returns ErrorType::NotImplemented if not be implemented
-     * @returns ErrorType::Failure for any other failure that prevents the operation from returning the max storage size to size
+     * @returns ErrorType::Success if the size was retrieved
+     * @returns ErrorType::Failure otherwise
      */
     virtual ErrorType maxStorageSize(Kilobytes &size, std::string partitionName = std::string()) = 0;
     /**
      * @brief Get the size of the storage
+     * @pre initStorage must be called first
      * @param[out] size The size of the storage
      * @param[in] partitionName The name of the partition to get the max storage size from. Default partition name used if not provided.
-     * @pre initStorage must be called first
-     * @returns ErrorType::Success if the operation is successful, otherwise an error code
-     * @returns ErrorType::PrerequisiteNotMet if initStorage has not been called
-     * @returns ErrorType::NotImplemented if not implemented
-     * @returns ErrorType::Failure for any other failure that prevents the operation from returning the available storage size to size
+     * @returns ErrorType::Success if the size was retrieved
+     * @returns ErrorType::Failure otherwise
      */
     virtual ErrorType availableStorage(Kilobytes &size, std::string partitionName = std::string()) = 0;
     /**
      * @brief erase the specified partition
      * @param[in] partitionName The name of the partition to erase
-     * @returns ErrorType::Success if the operation is successful.
-     * @returns ErrorType::Failure if the operation fails.
+     * @returns ErrorType::Success if the partition was erased
+     * @returns ErrorType::Failure otherwise
     */
     virtual ErrorType erasePartition(const std::string &partitionName) = 0;
     /**
      * @brief erase all partitions
-     * @returns ErrorType::Success if the operation is successful.
-     * @returns ErrorType::Failure if the operation fails.
+     * @returns ErrorType::Success if all partitions were erased
+     * @returns ErrorType::Failure otherwise
     */
     virtual ErrorType eraseAllPartitions() = 0;
 
@@ -110,6 +105,8 @@ class StorageAbstraction : public EventQueue {
     const std::string &name() const { return _name; }
     /// @brief Get the root prefix
     const std::string &rootPrefix() const { return _rootPrefix; }
+    /// @brief Get the storage medium
+    StorageTypes::Medium medium() const { return _medium; }
 
     /// @brief Tag for logging
     static constexpr char TAG[] = "Storage";

@@ -61,16 +61,7 @@ ErrorType Storage::eraseAllPartitions() {
 }
 
 ErrorType Storage::mainLoop() {
-    ErrorType error;
-
-    if (ErrorType::NoData == (error = runNextEvent())) {
-        return error;
-    }
-    else if (ErrorType::Success == error) {
-        return error;
-    }
-
-    return ErrorType::Failure;
+    return runNextEvent();
 }
 
 ErrorType Storage::initStorageInternal() {
