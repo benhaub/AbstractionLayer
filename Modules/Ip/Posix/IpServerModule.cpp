@@ -15,9 +15,14 @@
 #include <cstring>
 
 ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
-    Socket sock = -1;
+    Socket sock = _listenerSocket = -1;
     bool doneListening = false;
     ErrorType error = ErrorType::Failure;
+    _protocol = IpServerSettings::Protocol::Unknown;
+    _version = IpServerSettings::Version::Unknown;
+    _port = 0;
+
+    close(_listenerSocket);
 
     auto listenCb = [&]() -> ErrorType {
         struct addrinfo hints;
@@ -59,26 +64,24 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
         }
 
         //For more connections, create another instance of this class.
-        _status.listening = true;
-        if (-1 == listen(sock, 1)) {
-            _status.listening = false;
-            error = fromPlatformError(errno);
-        }
-        else {
+        if (0 == listen(sock, 1)) {
+            //Socket is still invalid. The socket we just had is only for listening for connections.
+            //The socket we get from accept can be used to send and receive which is the one we want
+            //to return to the user.
+            _listenerSocket = sock;
+            _protocol = protocol;
+            _version = version;
+            _port = port;
             error = ErrorType::Success;
         }
+        else {
+            error = fromPlatformError(errno);
+        }
 
+        ErrorType::Success == error ? _status.listening = true : _status.listening = false;
+        doneListening = true;
         freeaddrinfo(servinfo);
 
-        //Socket is still invalid. The socket we just had is only for listening for connections.
-        //The socket we get from accept can be used to send and receive which is the one we want
-        //to return to the user.
-        _listenerSocket = sock;
-        _protocol = protocol;
-        _version = version;
-        _port = port;
-
-        doneListening = true;
         return error;
     };
 
@@ -88,7 +91,7 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
     }
 
     while (!doneListening) {
-        OperatingSystem::Instance().delay(10);
+        OperatingSystem::Instance().delay(1);
     }
 
     return error;
@@ -97,20 +100,21 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
 ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout) {
     bool acceptConnectionDone = false;
     ErrorType error = ErrorType::Failure;
+    socket = -1;
 
     auto acceptConnectionCallback = [this, &error, &acceptConnectionDone](Socket &socket, const Milliseconds timeout) -> ErrorType {
         struct sockaddr_storage clientAddress;
         socklen_t receiveSocketSize;
 
         if (connectionsAcceptedIsAtMaximum()) {
-            socket = -1;
             acceptConnectionDone = true;
-            return ErrorType::LimitReached;
+            error = ErrorType::LimitReached;
+            return error;
         }
         else {
             struct timeval timeoutval = {
-                .tv_sec = timeout / 1000,
-                .tv_usec = 0
+                .tv_sec = 0,
+                .tv_usec = timeout * 1000
             };
             fd_set readfds;
 
@@ -122,18 +126,22 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
             ret = select(_listenerSocket + 1, &readfds, NULL, NULL, &timeoutval);
             if (ret < 0) {
                 acceptConnectionDone = true;
-                return fromPlatformError(errno);
+                error = fromPlatformError(errno);
+                return error;
             }
             }
 
             if (FD_ISSET(_listenerSocket, &readfds)) {
                 if (-1 == (socket = accept(_listenerSocket, (struct sockaddr *)&clientAddress, &receiveSocketSize))) {
                     acceptConnectionDone = true;
-                    return fromPlatformError(errno);
+                    error = fromPlatformError(errno);
+                    return error;
                 }
             }
             else {
+                acceptConnectionDone = true;
                 error = ErrorType::Timeout;
+                return error;
             }
         }
 
@@ -141,8 +149,8 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
         _status.activeConnections = _connectedSockets.size();
 
         acceptConnectionDone = true;
-        return ErrorType::Success;
-        
+        error = ErrorType::Success;
+        return error;
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(acceptConnectionCallback, socket, timeout));
@@ -152,7 +160,7 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
     }
 
     while (!acceptConnectionDone) {
-        OperatingSystem::Instance().delay(10);
+        OperatingSystem::Instance().delay(1);
     }
 
     return error;
@@ -165,7 +173,8 @@ ErrorType IpServer::closeConnection(const Socket socket) {
     auto closeConnection = [this, &error, &closeConnectionDone](const Socket socket) -> ErrorType {
         if (-1 == close(socket)) {
             closeConnectionDone = true;
-            return fromPlatformError(errno);
+            error = fromPlatformError(errno);
+            return error;
         }
 
         const auto closedSocket = std::find(_connectedSockets.begin(), _connectedSockets.end(), socket);
@@ -189,7 +198,7 @@ ErrorType IpServer::closeConnection(const Socket socket) {
     }
 
     while (!closeConnectionDone) {
-        OperatingSystem::Instance().delay(10);
+        OperatingSystem::Instance().delay(1);
     }
 
     return error;
@@ -213,7 +222,7 @@ ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds tim
     }
 
     while (!sent) {
-        OperatingSystem::Instance().delay(timeout);
+        OperatingSystem::Instance().delay(1);
     }
 
     return error;
@@ -248,7 +257,7 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
     }
 
     while (!received) {
-        OperatingSystem::Instance().delay(timeout);
+        OperatingSystem::Instance().delay(1);
     }
 
     return error;

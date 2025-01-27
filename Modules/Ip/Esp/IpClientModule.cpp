@@ -76,8 +76,8 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         FD_SET(_socket, &fdset);
 
         struct timeval timeoutval = {
-            .tv_sec = timeout * 1000,
-            .tv_usec = 0
+            .tv_sec = 0,
+            .tv_usec = timeout * 1000
         };
 
         // Connection in progress -> have to wait until the connecting socket is marked as writable, i.e. connection completes
