@@ -126,7 +126,11 @@ class EventQueue {
             return (_eventCallback)(std::get<IndexSequence>(params)...);
         }
     };
-    
+
+    /// @brief Get the number of events available in the queue.
+    /// @return The number of events available in the queue.
+    Count eventsAvailable() const { return _maxEvents - events.size(); }
+
     /**
      * @brief The main loop for the eventQueue which can be used to continually check for and run events.
      * @sa runNextEvent
@@ -135,6 +139,7 @@ class EventQueue {
     */
     virtual ErrorType mainLoop() { return ErrorType::NotImplemented; }
 
+    protected: 
     /**
      * @fn runNextEvent
      * @brief Runs the next event in the queue.
@@ -143,10 +148,6 @@ class EventQueue {
      * @returns The error code of the callback function pointed to by the Event.
     */
     ErrorType runNextEvent();
-
-    /// @brief Get the number of events available in the queue.
-    /// @return The number of events available in the queue.
-    Count eventsAvailable() const { return _maxEvents - events.size(); }
 
     private:
     /// @brief The maximum number of events that can be queued.
