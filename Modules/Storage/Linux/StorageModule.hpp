@@ -26,12 +26,6 @@ class Storage : public StorageAbstraction, public Global<Storage, std::string> {
     ErrorType mainLoop() override;
 
     private:
-    ErrorType deinitStorageInternal();
-    ErrorType maxStorageSizeInternal(Bytes &size, std::string partitionName);
-    ErrorType availableStorageInternal(Bytes &size, std::string partitionName);
-    ErrorType erasePartitionInternal(const std::string &partitionName);
-    ErrorType eraseAllPartitionsInternal();
-
     std::string getEnvironment(std::string variable, ErrorType &error);
 };
 

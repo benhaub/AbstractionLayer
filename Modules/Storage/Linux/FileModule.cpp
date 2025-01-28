@@ -2,45 +2,91 @@
 #include "EventQueue.hpp"
 #include "FileModule.hpp"
 #include "StorageModule.hpp"
+#include "OperatingSystemModule.hpp"
 
 ErrorType File::open(const std::string &filename, const OpenMode mode) {
+    bool openDone = false;
+    ErrorType error = ErrorType::Failure;
     assert(filename.size() > 0);
 
-    if (nullptr == _handle.get()) {
-        _handle = std::make_unique<std::fstream>();
+    auto openCallback = [this, &openDone, &error](const std::string &filename, const OpenMode mode) -> ErrorType {
+        if (nullptr == _handle.get()) {
+            _handle = std::make_unique<std::fstream>();
+        }
+        if (isOpen() || !storage().statusConst().isInitialized) {
+            //Failure because the file mode can't be set if it's already open.
+            openDone = true;
+            error = ErrorType::PrerequisitesNotMet;
+            return error;
+        }
+
+        std::ios_base::openmode openMode = toStdOpenMode(mode);
+        _handle->open(storage().rootPrefix() + filename, openMode);
+
+        if (!isOpen()) {
+            openDone = true;
+            error = ErrorType::Failure;
+            return error;
+        }
+
+        _filename = std::string(filename);
+        _mode = mode;
+        _handle->imbue(std::locale::classic());
+
+        openDone = true;
+        error = ErrorType::Success;
+        return error;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(openCallback, filename, mode));
+    error = storage().addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
     }
-    if (isOpen() || !storage().statusConst().isInitialized) {
-        //Failure because the file mode can't be set if it's already open.
-        return ErrorType::PrerequisitesNotMet;
+
+    while (!openDone) {
+        OperatingSystem::Instance().delay(1);
     }
 
-    std::ios_base::openmode openMode = toStdOpenMode(mode);
-    _handle->open(storage().rootPrefix() + filename, openMode);
-
-    if (!isOpen()) {
-        return ErrorType::Failure;
-    }
-
-    _filename = std::string(filename);
-    _mode = mode;
-    _handle->imbue(std::locale::classic());
-
-    return ErrorType::Success;
+    return error;
 }
 
 ErrorType File::close() {
-    if (!isOpen()) {
-        return ErrorType::PrerequisitesNotMet;
+    bool closeDone = false;
+    ErrorType error = ErrorType::Failure;
+
+    auto closeCallback = [this, &closeDone, &error]() -> ErrorType {
+        if (!isOpen()) {
+            error = ErrorType::PrerequisitesNotMet;
+            closeDone = true;
+            return error;
+        }
+
+        if (ErrorType::Success != synchronize()) {
+            error = ErrorType::Failure;
+            closeDone = true;
+            return error;
+        }
+
+        _handle->close();
+        _mode = OpenMode::Unknown;
+
+        closeDone = true;
+        error = ErrorType::Success;
+        return error;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(closeCallback));
+    error = storage().addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
     }
 
-    if (ErrorType::Success != synchronize()) {
-        return ErrorType::Failure;
+    while (!closeDone) {
+        OperatingSystem::Instance().delay(1);
     }
 
-    _handle->close();
-    _mode = OpenMode::Unknown;
-
-    return ErrorType::Success;
+    return error;
 }
 
 ErrorType File::seek(const FileOffset &offset) {
@@ -48,53 +94,94 @@ ErrorType File::seek(const FileOffset &offset) {
 }
 
 ErrorType File::remove() {
-    ErrorType error;
+    bool removeDone = false;
+    ErrorType error = ErrorType::Failure;
 
-    error = close();   
-    if (ErrorType::Failure == error) {
-        return error;
-    }
-
-    int returnValue = std::remove(path().c_str());
-
-    if (0 == returnValue) {
-        _filename.clear();
-        _handle.reset();
-        return error;
-    }
-    else {
-        return ErrorType::Failure;
-    }
-}
-
-//TODO: Not thread safe. Should work the same as we've done in the IP module.
-ErrorType File::readBlocking(const FileOffset offset, std::string &buffer) {
-    //If the buffer doesn't have a size, you won't be able to read anything.
-    assert(buffer.size() > 0);
-
-    if (!canReadFromFile()) {
-        return ErrorType::PrerequisitesNotMet;
-    }
-
-    if (_handle->tellg() != offset) {
-        if (!_handle->seekg(offset, std::ios_base::beg).good()) {
-            _handle->clear();
-            return ErrorType::Failure;
+    auto removeCallback = [this, &removeDone, &error]() -> ErrorType {
+        error = close();   
+        if (ErrorType::Failure == error) {
+            removeDone = true;
+            return error;
         }
 
-        assert(_handle->tellg() == offset);
+        int returnValue = std::remove(path().c_str());
+
+        if (0 == returnValue) {
+            _filename.clear();
+            _handle.reset();
+            removeDone = true;
+            return error;
+        }
+        else {
+            error = ErrorType::Failure;
+            removeDone = true;
+            return error;
+        }
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(removeCallback));
+    error = storage().addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
     }
 
-    std::istream &is = _handle->read(buffer.data(), buffer.size());
-    buffer.resize(is.gcount());
-
-    if (_handle->gcount() < static_cast<std::streamsize>(buffer.size())) {
-        return ErrorType::EndOfFile;
+    while (!removeDone) {
+        OperatingSystem::Instance().delay(1);
     }
 
-    //Very important to clear otherwise future calls to fstream functions may fail because the bits are set.
-    _handle->clear();
-    return ErrorType::Success;
+    return error;
+}
+
+ErrorType File::readBlocking(const FileOffset offset, std::string &buffer) {
+    bool readDone = false;
+    ErrorType error = ErrorType::Failure;
+
+    auto readCallback = [this, &readDone, &error](FileOffset offset, std::string *buffer) {
+        //If the buffer doesn't have a size, you won't be able to read anything.
+        assert(buffer->size() > 0);
+
+        if (!canReadFromFile()) {
+            return ErrorType::PrerequisitesNotMet;
+        }
+
+        if (_handle->tellg() != offset) {
+            if (!_handle->seekg(offset, std::ios_base::beg).good()) {
+                _handle->clear();
+                readDone = true;
+                error = ErrorType::Failure;
+                return error;
+            }
+
+            assert(_handle->tellg() == offset);
+        }
+
+        std::istream &is = _handle->read(buffer->data(), buffer->size());
+        buffer->resize(is.gcount());
+
+        if (_handle->gcount() < static_cast<std::streamsize>(buffer->size())) {
+            readDone = true;
+            error = ErrorType::EndOfFile;
+            return error;
+        }
+
+        //Very important to clear otherwise future calls to fstream functions may fail because the bits are set.
+        _handle->clear();
+        readDone = true;
+        error = ErrorType::Success;
+        return error;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(readCallback, offset, &buffer));
+    error = storage().addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!readDone) {
+        OperatingSystem::Instance().delay(1);
+    }
+
+    return error;
 }
 
 ErrorType File::readNonBlocking(const FileOffset offset, std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
@@ -116,29 +203,55 @@ ErrorType File::readNonBlocking(const FileOffset offset, std::shared_ptr<std::st
 }
 
 ErrorType File::writeBlocking(const FileOffset offset, const std::string &data) {
-    if (!isOpen()) {
-        return ErrorType::PrerequisitesNotMet;
-    }
-    if (!canWriteToFile()) {
-        return ErrorType::PrerequisitesNotMet;
-    }
+    bool writeDone = false;
+    ErrorType error = ErrorType::Failure;
 
-    if (_handle->tellp() != offset) {
-        if (!_handle->seekp(offset, std::ios_base::beg).good()) {
-            _handle->clear();
-            return ErrorType::Failure;
+    auto writeCallback = [this, &writeDone, &error](const FileOffset offset, const std::string &data) -> ErrorType {
+        if (!isOpen()) {
+            error = ErrorType::PrerequisitesNotMet;
+            writeDone = true;
+            return error;
+        }
+        if (!canWriteToFile()) {
+            error = ErrorType::PrerequisitesNotMet;
+            writeDone = true;
+            return error;
         }
 
-        assert(_handle->tellp() == offset);
+        if (_handle->tellp() != offset) {
+            if (!_handle->seekp(offset, std::ios_base::beg).good()) {
+                _handle->clear();
+                writeDone = true;
+                error = ErrorType::Failure;
+                return error;
+            }
+
+            assert(_handle->tellp() == offset);
+        }
+
+        if (_handle->write(data.c_str(), static_cast<std::streamsize>(data.size())).good()) {
+            error = synchronize();
+            writeDone = true;
+            return error;
+        }
+
+        _handle->clear();
+        error = ErrorType::Failure;
+        writeDone = true;
+        return error;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(writeCallback, offset, data));
+    error = storage().addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
     }
 
-    if (_handle->write(data.c_str(), static_cast<std::streamsize>(data.size())).good()) {
-        //Now make this a blocking call by waiting for the data to sync
-        return synchronize();
+    while (!writeDone) {
+        OperatingSystem::Instance().delay(1);
     }
 
-    _handle->clear();
-    return ErrorType::Failure;
+    return error;
 }
 
 ErrorType File::writeNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
@@ -158,24 +271,49 @@ ErrorType File::writeNonBlocking(const std::shared_ptr<std::string> data, std::f
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(write, data));
 
-    return static_cast<Storage *>(&storage())->addEvent(event);
+    return storage().addEvent(event);
 }
 
 ErrorType File::synchronize() {
-    if (nullptr == _handle.get()) {
-        return ErrorType::PrerequisitesNotMet;
-    }
-    else if (!_handle->is_open()) {
-        return ErrorType::PrerequisitesNotMet;
+    bool synchronizeDone = false;
+    ErrorType error = ErrorType::Failure;
+
+    auto synchronizeCallback = [this, &synchronizeDone, &error]() -> ErrorType {
+        if (nullptr == _handle.get()) {
+            error = ErrorType::PrerequisitesNotMet;
+            synchronizeDone = true;
+            return error;
+        }
+        else if (!_handle->is_open()) {
+            error = ErrorType::PrerequisitesNotMet;
+            synchronizeDone = true;
+            return error;
+        }
+
+        if (_handle->flush().good()) {
+            error = ErrorType::Success;
+            synchronizeDone = true;
+            return error;
+        }
+        else {
+            _handle->clear();
+            error = ErrorType::Failure;
+            synchronizeDone = true;
+            return error;
+        }
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(synchronizeCallback));
+    error = storage().addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
     }
 
-    if (_handle->flush().good()) {
-        return ErrorType::Success;
+    while (!synchronizeDone) {
+        OperatingSystem::Instance().delay(1);
     }
-    else {
-        _handle->clear();
-        return ErrorType::Failure;
-    }
+
+    return error;
 }
 
 std::string File::path() const {

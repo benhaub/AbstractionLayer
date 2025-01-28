@@ -102,7 +102,7 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
     ErrorType error = ErrorType::Failure;
     socket = -1;
 
-    auto acceptConnectionCallback = [this, &error, &acceptConnectionDone](Socket &socket, const Milliseconds timeout) -> ErrorType {
+    auto acceptConnectionCallback = [&]() -> ErrorType {
         struct sockaddr_storage clientAddress;
         socklen_t receiveSocketSize;
 
@@ -134,6 +134,7 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
             if (FD_ISSET(_listenerSocket, &readfds)) {
                 if (-1 == (socket = accept(_listenerSocket, (struct sockaddr *)&clientAddress, &receiveSocketSize))) {
                     acceptConnectionDone = true;
+                    assert(false);
                     error = fromPlatformError(errno);
                     return error;
                 }
@@ -153,7 +154,7 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(acceptConnectionCallback, socket, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(acceptConnectionCallback));
     error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -233,12 +234,12 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
     socket = -1;
     ErrorType error = ErrorType::Failure;
 
-    auto rx = [this, &error, &received](std::string *buffer, Socket &socket, const Milliseconds timeout) -> ErrorType {
+    auto rx = [this, &error, &received](std::string *buffer, Socket *socket, const Milliseconds timeout) -> ErrorType {
         //TODO: What if we only receive part of the data. We will need to keep this socket in play until we receive the whole thing.
         for (size_t i = _previousReceivedSocketIndex; i < _connectedSockets.size(); i++) {
             error = network().rxBlocking(*buffer, _connectedSockets[i], timeout);
             if (ErrorType::Success == error) {
-                socket = _connectedSockets[i];
+                *socket = _connectedSockets[i];
                 _previousReceivedSocketIndex = i;
                 break;
             }
@@ -250,7 +251,7 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
 
     //For some reason, the buffer can't be passed as a reference parameter to the callback. It has to be a pointer otherwise the
     //pointer to the data inside the string will change.
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx, &buffer, socket, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx, &buffer, &socket, timeout));
     error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
