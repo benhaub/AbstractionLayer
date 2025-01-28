@@ -31,12 +31,15 @@ ErrorType EventQueue::addEvent(std::unique_ptr<EventAbstraction> &event) {
 
     if (_ownerThreadId != currentThreadId) {
         events.push_back(std::move(event));
-    } else {
-        event->run();
     }
 
     error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
     assert(ErrorType::Success == error);
+
+    //Run the event outside of the sempahore protection so we don't block the event queue.
+    if (_ownerThreadId == currentThreadId) {
+        return event->run();
+    }
 
     return ErrorType::Success;
 }
