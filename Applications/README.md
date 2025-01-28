@@ -1,6 +1,7 @@
 # Abstraction Layer Applications
-Applications are applications of the AbstractionLayer. They are software components that use the AbstractionLayer. They are general purpose and have no outside dependancies other than the C++ standard library so they can be used on any platform.
+Applications are applications of the AbstractionLayer. They are software components that use the AbstractionLayer.
 
+## Using the applications
 Do not abuse Event-driven architecture components like the `ChainOfResponsibility` or `SignalsAndSlots`. They are not a catch all, asynchronous solution for all implementations and can be difficult to debug if over-done.
 https://youtu.be/STKCRSUsyP0?t=795
 
@@ -37,7 +38,7 @@ that that module will respond to these alerts, then use the `ChainOfResponsibili
 
 ### Summary
 - If you need multiple observers, use `SignalsAndSlots`.
-- If you strictly need one, and only one, observer, use `ChainOfResponsibility`.
+- If you strictly need one, and only one, observer to take action on an alert, use `ChainOfResponsibility`.
 - If an alert must have a corresponding action, use the `ChainOfResponsibility`.
 - If it does not matter whether an alert is acted upon, use `SignalsAndSlots`.
 - If none of the above matter, use `ChainOfResponsibility`.
