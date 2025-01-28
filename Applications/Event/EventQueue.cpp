@@ -2,14 +2,16 @@
 #include "OperatingSystemModule.hpp"
 
 int EventQueue::_SemaphoreCount = 0;
+
 EventQueue::EventQueue() {
     _SemaphoreCount++;
     _binarySemaphore = std::string("eventQueueBinarySemaphore").append(std::to_string(_SemaphoreCount));
     ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _binarySemaphore);
     assert(ErrorType::Success == error);
+    error = OperatingSystem::Instance().currentThreadId(_ownerThreadId);
+    assert(ErrorType::Success == error);
 }
 
-//TODO: This needs an optimization for when a module adds to it's own event queue. The module can just process the event right away.
 ErrorType EventQueue::addEvent(std::unique_ptr<EventAbstraction> &event) {
 
     ErrorType error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout);
@@ -23,7 +25,15 @@ ErrorType EventQueue::addEvent(std::unique_ptr<EventAbstraction> &event) {
         return ErrorType::LimitReached;
     }
 
-    events.push_back(std::move(event));
+    Id currentThreadId;
+    OperatingSystem::Instance().currentThreadId(currentThreadId);
+    assert(ErrorType::Success == error);
+
+    if (_ownerThreadId != currentThreadId) {
+        events.push_back(std::move(event));
+    } else {
+        event->run();
+    }
 
     error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
     assert(ErrorType::Success == error);

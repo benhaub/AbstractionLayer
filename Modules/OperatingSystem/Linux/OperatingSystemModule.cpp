@@ -95,6 +95,18 @@ ErrorType OperatingSystem::joinThread(const std::string &name) {
     return fromPlatformError(ret);
 }
 
+ErrorType OperatingSystem::currentThreadId(Id &thread) const {
+    pthread_t task = pthread_self();
+    auto it = std::find_if(threads.begin(), threads.end(), [task](const auto &pair) { return pair.second.posixThreadId == task; });
+    if (threads.end() == it) {
+        return ErrorType::NoData;
+    }
+
+    thread = it->second.threadId;
+
+    return ErrorType::Success;
+}
+
 ErrorType OperatingSystem::threadId(const std::string &name, Id &thread) {
     if (threads.contains(name)) {
         thread = threads[name].threadId;

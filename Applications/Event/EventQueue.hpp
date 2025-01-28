@@ -9,7 +9,7 @@
 #ifndef __EVENT_QUEUE_HPP__
 #define __EVENT_QUEUE_HPP__
 
-//AbstractionLayer utilities
+//AbstractionLayer
 #include "Error.hpp"
 #include "Types.hpp"
 //C++
@@ -39,6 +39,12 @@ class EventAbstraction {
  * @class EventQueue
  * @details Queue is FIFO
  * @brief Provides an interface for synchronizing calls to base classes.
+ * @post The current thread on which the event queue is created is the onwer thread.
+ *       When subsequent events are called from this thread, the event queue will call them immediately
+ *       when addEvent is called instead of queing them for runNextEvent.
+ * @note Take care not to create the event queue from a thread that you do not intend to run the mainLoop from
+ *       or the events will not be able to skip queing and will have to wait until runNextEvent is called. Remember
+ *       that event queues are created at the point when any other class is created that inherits from EventQueue.
 */
 class EventQueue {
     
@@ -137,7 +143,7 @@ class EventQueue {
      * @returns ErrorType::NoData if there are no events to process.
      * @returns The error codes of any functions called by runNextEvent.
     */
-    virtual ErrorType mainLoop() { return ErrorType::NotImplemented; }
+    virtual ErrorType mainLoop() { return runNextEvent(); }
 
     protected: 
     /**
@@ -160,6 +166,8 @@ class EventQueue {
     std::vector<std::unique_ptr<EventAbstraction>> events;
     /// @brief The binary semaphore name for the next created semaphore.
     std::string _binarySemaphore;
+    /// @brief The thread id of the owner of the event queue. Used to determine if we can skip event queuing.
+    Id _ownerThreadId;
 };
 
 #endif //__EVENT_QUEUE_HPP__

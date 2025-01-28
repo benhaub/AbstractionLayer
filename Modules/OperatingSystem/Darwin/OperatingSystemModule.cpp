@@ -93,6 +93,18 @@ ErrorType OperatingSystem::threadId(const std::string &name, Id &thread) {
     return ErrorType::NoData;
 }
 
+ErrorType OperatingSystem::currentThreadId(Id &thread) const {
+    pthread_t task = pthread_self();
+    auto it = std::find_if(threads.begin(), threads.end(), [task](const auto &pair) { return pair.second.posixThreadId == task; });
+    if (threads.end() == it) {
+        return ErrorType::NoData;
+    }
+
+    thread = it->second.threadId;
+
+    return ErrorType::Success;
+}
+
 ErrorType OperatingSystem::isDeleted(const std::string &name) {
     if (threads.contains(name)) {
         return ErrorType::Success;

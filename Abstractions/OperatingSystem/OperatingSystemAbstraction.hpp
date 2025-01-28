@@ -131,6 +131,15 @@ class OperatingSystemAbstraction {
     */
     virtual ErrorType threadId(const std::string &name, Id &id) = 0;
     /**
+     * @brief Get the id of the currently running thread.
+     * @param[out] id The id of the currently running thread.
+     * @returns ErrorType::Success if the id was found.
+     * @returns ErrorType::NotImplemented if threadId is not implemented.
+     * @returns ErrorType::NoData if no thread with the name given has been created.
+     * @returns ErrorType::Failure otherwise.
+    */
+    virtual ErrorType currentThreadId(Id &id) const = 0;
+    /**
      * @brief Check if the thread has been deleted by the operating system.
      * @details The operating system keeps a record of the threads it has created. Since the OperatingSystemAbstraction is decoupled from the main application,
      *          it is not able to delete threads directly since it's not possible to tell when it is safe to delete a thread. Instead, it marks the thread as deleted
