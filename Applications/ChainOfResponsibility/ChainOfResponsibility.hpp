@@ -56,7 +56,7 @@ class ChainOfResponsibility : public Global<ChainOfResponsibility> {
      * @param[in] commandObject The command object to add
      * @sa CommandObject
      * @returns ErrorType::Success if the command object could be added.
-     * @returns ErrorType::LimitReach if the maximum amount of command objects allowed in the queue is in the queue.
+     * @returns ErrorType::LimitReached if the maximum amount of command objects allowed in the queue is in the queue.
      * @returns ErrorType::Timeout if access to the queue could not be secured.
      * @post Ownership of commandObject is relinquished to the ChainOfResponsibility if, and only if, ErrorType::Success is returned.
     */
