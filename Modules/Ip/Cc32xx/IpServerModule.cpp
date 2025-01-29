@@ -24,7 +24,7 @@ ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, con
     return ErrorType::NotImplemented;
 }
 
-ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) {
+ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) {
     return ErrorType::NotImplemented;
 }
 

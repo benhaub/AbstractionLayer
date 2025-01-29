@@ -143,9 +143,13 @@ class IpServerAbstraction : public CommunicationProtocol {
      * @brief Receives data.
      * @param[in] buffer The buffer to receive the data into.
      * @param[in] callback The callback to call when the data has been received.
+     * @param[out] socket The socket in which the data was received from.
+     * @returns ErrorType::Success if the data was received.
+     * @returns ErrorType::Failure if the data was not received.
+     * @returns ErrorType::Timeout if the timeout was reached.
      * @post The callback will be called when the data has been received. The buffer is valid if and only if error is equal to ErrorType::Success.
     */
-    virtual ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) = 0;
+    virtual ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) = 0;
 
 #pragma GCC diagnostic pop
 

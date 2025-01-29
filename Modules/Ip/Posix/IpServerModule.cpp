@@ -209,14 +209,14 @@ ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds tim
     bool sent = false;
     ErrorType error = ErrorType::Failure;
 
-    auto tx = [this, &error, &sent](const std::string *frame, const Socket socket, const Milliseconds timeout) -> ErrorType {
-        error = network().txBlocking(*frame, socket, timeout);
+    auto tx = [&]() -> ErrorType {
+        error = network().txBlocking(data, socket, timeout);
 
         sent = true;
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(tx, &data, socket, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(tx));
     error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -234,12 +234,12 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
     socket = -1;
     ErrorType error = ErrorType::Failure;
 
-    auto rx = [this, &error, &received](std::string *buffer, Socket *socket, const Milliseconds timeout) -> ErrorType {
+    auto rx = [&]() -> ErrorType {
         //TODO: What if we only receive part of the data. We will need to keep this socket in play until we receive the whole thing.
         for (size_t i = _previousReceivedSocketIndex; i < _connectedSockets.size(); i++) {
-            error = network().rxBlocking(*buffer, _connectedSockets[i], timeout);
+            error = network().rxBlocking(buffer, _connectedSockets[i], timeout);
             if (ErrorType::Success == error) {
-                *socket = _connectedSockets[i];
+                socket = _connectedSockets[i];
                 _previousReceivedSocketIndex = i;
                 break;
             }
@@ -249,9 +249,7 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
         return error;
     };
 
-    //For some reason, the buffer can't be passed as a reference parameter to the callback. It has to be a pointer otherwise the
-    //pointer to the data inside the string will change.
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx, &buffer, &socket, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx));
     error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -287,26 +285,25 @@ ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, con
     return network().addEvent(event);
 }
 
-ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) {
+ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) {
     bool received = false;
 
-    auto rx = [this, callback, &received](const std::shared_ptr<std::string> buffer, const Milliseconds timeout) -> ErrorType {
+    auto receiveCallback = [&, callback]() -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         if (nullptr == buffer.get()) {
-            return ErrorType::NoData;
+            error = ErrorType::NoData;
         }
 
-        //TODO: Function needs a socket param. Not just in the callback? How do we know who to receive from?
-        //error = network().rxBlocking(*buffer, _socket, timeout);
+        error = receiveBlocking(*buffer, timeout, socket);
 
-        //assert(nullptr != callback);
-        //callback(error, socket, buffer);
+        assert(nullptr != callback);
+        callback(error, socket, buffer);
 
         received = true;
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx, buffer, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(receiveCallback));
     return network().addEvent(event);
 }

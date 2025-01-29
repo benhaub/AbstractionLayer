@@ -167,7 +167,7 @@ namespace HttpServerTypes {
         EarlyHints = 103,                  ///< Early Hints
         Ok = 200,                          ///< OK
         Created = 201,                     ///< Created
-        Accepted = 202,                     ///< Accepted
+        Accepted = 202,                    ///< Accepted
         NonAuthoritativeInformation = 203, ///< Non-Authoritative Information
         NoContent = 204,                   ///< No Content
         ResetContent = 205,                ///< Reset Content
@@ -216,7 +216,6 @@ namespace HttpServerTypes {
     struct StatusLine {
         Version version;       ///< Http protocol version
         StatusCode statusCode; ///< Status code
-        char statusMessage[64];///< Message to go along with the status.
     };
 
     /**
@@ -233,10 +232,10 @@ namespace HttpServerTypes {
      * @brief The representation headers
      */
     struct RepresentationHeaders {
-        Type contentType;         ///< Content-Type:
-        Encoding contentEncoding; ///< Content-Encoding:
-        Bytes contentLength;      ///< Content-Length:
-        Language contentLanguage; ///< Content-Language:
+        Type contentType;                      ///< Content-Type:
+        std::vector<Encoding> contentEncoding; ///< Content-Encoding:
+        Bytes contentLength;                   ///< Content-Length:
+        std::vector<Language> contentLanguage; ///< Content-Language:
     };
 
     /**
@@ -274,7 +273,7 @@ class HttpServerAbstraction : public IpServerAbstraction {
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) override { return ErrorType::NotSupported; }
     ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override { return ErrorType::NotSupported; }
     ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket) override { return ErrorType::NotSupported; }
-    ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) override { return ErrorType::NotSupported; }
+    ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) override { return ErrorType::NotSupported; }
 
     /**
      * @brief Send a response
@@ -309,13 +308,13 @@ class HttpServerAbstraction : public IpServerAbstraction {
      * @brief Receive a request
      * @param[in] buffer The buffer to receive the request into
      * @param[in] timeout The timeout
-     * @param[in] socket The socket that the message was received on
+     * @param[out] socket The socket that the message was received on
      * @param[in] callback The callback to call when the receive is complete
      * @returns ErrorType::Success if the request could be received
      * @returns ErrorType::Timeout if the receive could not be completed within the given timeout
      * @returns ErrorType::LimitReached if the event queue is full
      */
-    virtual ErrorType receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) = 0;
+    virtual ErrorType receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpServerTypes::Request> buffer)> callback) = 0;
 
 #pragma GCC diagnostic pop
 
