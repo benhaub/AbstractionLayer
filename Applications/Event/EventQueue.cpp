@@ -67,5 +67,5 @@ ErrorType EventQueue::runNextEvent() {
     //This needs to be run last, in case the event needs to add more events to the queue or run an event.
     error = event->run();
 
-    return ErrorType::Success;
+    return error;
 }
