@@ -250,6 +250,7 @@ ErrorType HttpServer::toHttpRequest(const std::string &buffer, HttpServerTypes::
     if (ErrorType::Success == findHeaderValue(buffer, "Content-Language:", "zh-Hant")) {request.headers.language.push_back(HttpServerTypes::Language::Chinese_Traditional);}
     if (ErrorType::Success == findHeaderValue(buffer, "Content-Language:", "zu")) {request.headers.language.push_back(HttpServerTypes::Language::isiZulu);}
 
+    //TODO: Message body?
     return ErrorType::Success;
 }
 

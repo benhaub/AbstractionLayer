@@ -38,8 +38,8 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
     ssize_t bytesReceived = 0;
 
     struct timeval timeoutval = {
-        .tv_sec = timeout / 1000,
-        .tv_usec = 0
+        .tv_sec = 0,
+        .tv_usec = timeout * 1000
     };
     fd_set readfds;
 
