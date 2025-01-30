@@ -20,7 +20,7 @@ ErrorType HttpServer::sendBlocking(const HttpServerTypes::Response &response, co
 }
 
 ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const Milliseconds timeout, Socket &socket) {
-    constexpr Bytes maxBufferSize = 512;
+    constexpr Bytes maxBufferSize = 1448;
     std::string buffer(maxBufferSize, 0);
     ErrorType error = ErrorType::Failure;
 
