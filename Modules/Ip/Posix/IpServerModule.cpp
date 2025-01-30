@@ -236,11 +236,10 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
 
     auto rx = [&]() -> ErrorType {
         //TODO: What if we only receive part of the data. We will need to keep this socket in play until we receive the whole thing.
-        for (size_t i = _previousReceivedSocketIndex; i < _connectedSockets.size(); i++) {
+        for (size_t i = 0; i < _connectedSockets.size(); i++) {
             error = network().rxBlocking(buffer, _connectedSockets[i], timeout);
             if (ErrorType::Success == error) {
                 socket = _connectedSockets[i];
-                _previousReceivedSocketIndex = i;
                 break;
             }
         }

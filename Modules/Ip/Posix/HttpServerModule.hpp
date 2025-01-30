@@ -21,13 +21,10 @@ class HttpServer : public HttpServerAbstraction {
     ErrorType sendBlocking(const HttpServerTypes::Response &response, const Milliseconds timeout, const Socket socket) override;
     ErrorType receiveBlocking(HttpServerTypes::Request &request, const Milliseconds timeout, Socket &socket) override;
     ErrorType sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
-    ErrorType receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) override;
+    ErrorType receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpServerTypes::Request> buffer)> callback) override;
 
     private:
     std::unique_ptr<IpServer> _ipServer;
-
-    ErrorType toHttpRequest(const std::string &buffer, HttpServerTypes::Request &request);
-    ErrorType findHeaderValue(const std::string &request, const std::string &headerName, const std::string &value);
 };
 
 #endif // __HTTP_SERVER_MODULE_HPP__
