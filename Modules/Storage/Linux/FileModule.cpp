@@ -141,7 +141,10 @@ ErrorType File::readBlocking(const FileOffset offset, std::string &buffer) {
         assert(buffer->size() > 0);
 
         if (!canReadFromFile()) {
-            return ErrorType::PrerequisitesNotMet;
+            _handle->clear();
+            readDone = true;
+            error = ErrorType::PrerequisitesNotMet;
+            return error;
         }
 
         if (_handle->tellg() != offset) {
@@ -159,6 +162,7 @@ ErrorType File::readBlocking(const FileOffset offset, std::string &buffer) {
         buffer->resize(is.gcount());
 
         if (_handle->gcount() < static_cast<std::streamsize>(buffer->size())) {
+            _handle->clear();
             readDone = true;
             error = ErrorType::EndOfFile;
             return error;

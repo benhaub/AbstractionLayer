@@ -7,7 +7,10 @@
 #ifndef __HTTP_SERVER_SBSTRACTION_HPP__
 #define __HTTP_SERVER_SBSTRACTION_HPP__
 
+//AbstractionLayer
 #include "IpServerAbstraction.hpp"
+//C++
+#include <cstring>
 
 /**
  * @namespace HttpServerTypes
@@ -905,6 +908,14 @@ class HttpServerAbstraction : public IpServerAbstraction {
         return std::string("Content-Length: ").append(std::to_string(length));
     }
 
+    /**
+     * @brief Converts an HttpServerTypes::Response to ascii suitable for sending on the network.
+     * @param response The response to convert.
+     * @param buffer The buffer to hold the ascii conversion in that will be sent on the network to the client.
+     * @post If the response has been cleared then no header will be appended. Suitable for messages that send
+     *       a large body and need multiple segments to send.
+     * @sa clearResponse
+     */
     ErrorType toHttpResponse(const HttpServerTypes::Response &response, std::string &buffer) {
         buffer.resize(0);
 
@@ -951,5 +962,25 @@ class HttpServerAbstraction : public IpServerAbstraction {
         return ErrorType::Success;
     }
 
+    /**
+     * @brief Clears the header of a response
+     * @param response The response to clear.
+     * @return ErrorType::Success always
+     * @post If the response is clear, then the next time you send an http response it will only contain the body.
+     */
+    static ErrorType clearResponseHeader(HttpServerTypes::Response &response) {
+        response.representationHeaders.contentEncoding = std::vector<HttpServerTypes::Encoding>();
+        response.representationHeaders.contentLanguage = std::vector<HttpServerTypes::Language>();
+        response.representationHeaders.contentLength = 0;
+        response.representationHeaders.contentType = HttpServerTypes::Type::Unknown;
+
+        memset(&response.responseHeaders.date, 0, sizeof(response.responseHeaders.date));
+        memset(&response.responseHeaders.server, 0, sizeof(response.responseHeaders.server));
+
+        response.statusLine.statusCode = HttpServerTypes::StatusCode::Unknown;
+        response.statusLine.version = HttpServerTypes::Version::Unknown;
+
+        return ErrorType::Success;
+    }
 };
 #endif // __HTTP_SERVER_SBSTRACTION_HPP__
