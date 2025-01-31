@@ -213,3 +213,7 @@ ErrorType File::synchronize() {
 std::string File::path() const {
     return _filename;
 }
+
+ErrorType File::size(Bytes &size) const {
+    return ErrorType::NotAvailable;
+}

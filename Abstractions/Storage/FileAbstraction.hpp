@@ -155,6 +155,13 @@ class FileAbstraction {
     * @returns The path of the file. Pure virtual because StorageAbstraction is forward declared.
     */
     virtual std::string path() const = 0;
+    /**
+     * @brief Get the size of the file
+     * @pre The file is open
+     * @return ErrorType::Success if the file size was returned
+     * @returns ErrorType::Failure otherwise.
+     */
+    virtual ErrorType size(Bytes &size) const = 0;
 
     /**
     * @brief Get the api to the underlying storage

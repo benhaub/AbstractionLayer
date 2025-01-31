@@ -47,6 +47,8 @@ class File : public FileAbstraction {
     ErrorType writeNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) override;
     ErrorType synchronize() override;
     std::string path() const override;
+    ErrorType size(Bytes &size) const override;
+    
     FileOffset offset() { return _handle->tellg(); }
 
     private:

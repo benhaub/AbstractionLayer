@@ -182,3 +182,7 @@ ErrorType File::synchronize() {
 std::string File::path() const {
     return _storage->rootPrefix() + _filename;
 }
+
+ErrorType File::size(Bytes &size) const {
+    return ErrorType::NotImplemented;
+}

@@ -12,6 +12,7 @@ ErrorType File::open(const std::string &filename, const OpenMode mode) {
     auto openCallback = [this, &openDone, &error](const std::string &filename, const OpenMode mode) -> ErrorType {
         if (nullptr == _handle.get()) {
             _handle = std::make_unique<std::fstream>();
+            assert(nullptr != _handle.get());
         }
         if (isOpen() || !storage().statusConst().isInitialized) {
             //Failure because the file mode can't be set if it's already open.
@@ -134,11 +135,11 @@ ErrorType File::remove() {
 
 ErrorType File::readBlocking(const FileOffset offset, std::string &buffer) {
     bool readDone = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType error = ErrorType::Success;
 
-    auto readCallback = [this, &readDone, &error](FileOffset offset, std::string *buffer) {
+    auto readCallback = [&]() {
         //If the buffer doesn't have a size, you won't be able to read anything.
-        assert(buffer->size() > 0);
+        assert(buffer.size() > 0);
 
         if (!canReadFromFile()) {
             _handle->clear();
@@ -158,24 +159,21 @@ ErrorType File::readBlocking(const FileOffset offset, std::string &buffer) {
             assert(_handle->tellg() == offset);
         }
 
-        std::istream &is = _handle->read(buffer->data(), buffer->size());
-        buffer->resize(is.gcount());
+        std::istream &is = _handle->read(buffer.data(), buffer.size());
 
-        if (_handle->gcount() < static_cast<std::streamsize>(buffer->size())) {
-            _handle->clear();
-            readDone = true;
+        if (_handle->gcount() < static_cast<std::streamsize>(buffer.size())) {
             error = ErrorType::EndOfFile;
-            return error;
         }
+
+        buffer.resize(is.gcount());
 
         //Very important to clear otherwise future calls to fstream functions may fail because the bits are set.
         _handle->clear();
         readDone = true;
-        error = ErrorType::Success;
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(readCallback, offset, &buffer));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(readCallback));
     error = storage().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -203,7 +201,7 @@ ErrorType File::readNonBlocking(const FileOffset offset, std::shared_ptr<std::st
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(read, offset, buffer));
-    return static_cast<Storage *>(&storage())->addEvent(event);    
+    return storage().addEvent(event);    
 }
 
 ErrorType File::writeBlocking(const FileOffset offset, const std::string &data) {
@@ -236,12 +234,9 @@ ErrorType File::writeBlocking(const FileOffset offset, const std::string &data) 
         if (_handle->write(data.c_str(), static_cast<std::streamsize>(data.size())).good()) {
             error = synchronize();
             writeDone = true;
-            return error;
         }
 
         _handle->clear();
-        error = ErrorType::Failure;
-        writeDone = true;
         return error;
     };
 
@@ -274,7 +269,6 @@ ErrorType File::writeNonBlocking(const std::shared_ptr<std::string> data, std::f
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(write, data));
-
     return storage().addEvent(event);
 }
 
@@ -322,4 +316,49 @@ ErrorType File::synchronize() {
 
 std::string File::path() const {
     return _storage->rootPrefix() + _filename;
+}
+
+ErrorType File::size(Bytes &size) const {
+    bool sizeQueryDone = false;
+    ErrorType error = ErrorType::Failure;
+
+    auto sizeQueryCallback = [&]() -> ErrorType {
+        if (!_handle->is_open()) {
+            error = ErrorType::PrerequisitesNotMet;
+            sizeQueryDone = true;
+            return error;
+        }
+
+        if(!_handle->seekg(0, std::ios_base::end).good()) {
+            _handle->clear();
+            sizeQueryDone = true;
+            error = ErrorType::Failure;
+            return error;
+        }
+
+        size = _handle->tellg();
+
+        if (!_handle->seekg(0, std::ios_base::beg).good()) {
+            _handle->clear();
+            sizeQueryDone = true;
+            error = ErrorType::Failure;
+            return error;
+        }
+
+        sizeQueryDone = true;
+        error = ErrorType::Success;
+        return error;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(sizeQueryCallback));
+    error = storage().addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!sizeQueryDone) {
+        OperatingSystem::Instance().delay(1);
+    }
+
+    return error;
 }
