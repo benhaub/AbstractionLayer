@@ -912,9 +912,12 @@ class HttpServerAbstraction : public IpServerAbstraction {
      * @brief Converts an HttpServerTypes::Response to ascii suitable for sending on the network.
      * @param response The response to convert.
      * @param buffer The buffer to hold the ascii conversion in that will be sent on the network to the client.
+     * @returns ErrorType Success if the response header and body were appended
+     * @returns ErrorType::NoData if no response header was added.
+     * @returns ErrorType::Failure otherwise.
      * @post If the response has been cleared then no header will be appended. Suitable for messages that send
      *       a large body and need multiple segments to send.
-     * @sa clearResponse
+     * @sa clearResponseHeader
      */
     ErrorType toHttpResponse(const HttpServerTypes::Response &response, std::string &buffer) {
         buffer.resize(0);
@@ -927,6 +930,12 @@ class HttpServerAbstraction : public IpServerAbstraction {
         if (bufferSize != buffer.size()) {
             buffer.push_back(' ');
         }
+        else {
+            //If the response doesn't even contain the status line the don't include it all since it won't be valid anyway.
+            buffer.append(response.messageBody);
+            return ErrorType::NoData;
+        }
+
         bufferSize = buffer.size();
         buffer.append(toStringStatusCode(response.statusLine.statusCode));
         if (bufferSize != buffer.size()) {
@@ -953,10 +962,9 @@ class HttpServerAbstraction : public IpServerAbstraction {
             buffer.append("\r\n");
         }
 
-        if (buffer.size() > 0) {
-            buffer.append("Server: AutomaticPetFeeder\r\n");
-        }
-
+        buffer.append("Connection: close\r\n");
+        buffer.append("Server: AutomaticPetFeeder\r\n");
+        buffer.append("\r\n");
         buffer.append(response.messageBody);
 
         return ErrorType::Success;
@@ -981,6 +989,54 @@ class HttpServerAbstraction : public IpServerAbstraction {
         response.statusLine.version = HttpServerTypes::Version::Unknown;
 
         return ErrorType::Success;
+    }
+
+    /**
+     * @brief Given a file name, automatically determine it's content-type by examining the extension.
+     * @param filename The file name to examine for the content type.
+     * @param error The error that occurred while trying to determine the content type.
+     * @return The content type of the file. Will be HttpServerTypes::Type::Unknown if an error occurred.
+     * @post The error may be any of ErrorType::Success, ErrorType::InvalidParameter or ErrorType::NotSupported;
+     */
+    static HttpServerTypes::Type determineContentType(const std::string &filename, ErrorType &error) {
+        error = ErrorType::Success;
+
+        if (filename.empty()) {
+            error = ErrorType::InvalidParameter;
+            return HttpServerTypes::Type::Unknown;
+        }
+
+        for (int i = filename.length()-1; i >= 0; i--) {
+            if (filename.at(i) == '.') {
+                if (0 == strncmp(&filename.at(i), ".html", sizeof(".html")-1)) {
+                    return HttpServerTypes::Type::TextHtml;
+                }
+                else if (0 == strncmp(&filename.at(i), ".json", sizeof(".json")-1)) {
+                    return HttpServerTypes::Type::ApplicationJson;
+                }
+                else if (0 == strncmp(&filename.at(i), ".css", sizeof(".css")-1)) {
+                    return HttpServerTypes::Type::TextCss;
+                }
+                else if (0 == strncmp(&filename.at(i), ".js", sizeof(".js")-1)) {
+                    return HttpServerTypes::Type::TextJavascript;
+                }
+                else if (0 == strncmp(&filename.at(i), ".png", sizeof(".png")-1)) {
+                    return HttpServerTypes::Type::ImagePng;
+                }
+                else if (0 == strncmp(&filename.at(i), ".jpg", sizeof(".jpg")-1)) {
+                    return HttpServerTypes::Type::ImageJpeg;
+                }
+                else if (0 == strncmp(&filename.at(i), ".gif", sizeof(".gif")-1)) {
+                    return HttpServerTypes::Type::ImageGif;
+                }
+                else if (0 == strncmp(&filename.at(i), ".svg", sizeof(".svg")-1)) {
+                    return HttpServerTypes::Type::ImageSvgXml;
+                }
+            }
+        }
+
+        error = ErrorType::NotSupported;
+        return HttpServerTypes::Type::Unknown;
     }
 };
 #endif // __HTTP_SERVER_SBSTRACTION_HPP__

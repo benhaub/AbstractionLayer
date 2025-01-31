@@ -1,4 +1,4 @@
-//Modules
+//AbstractionLayer
 #include "WifiModule.hpp"
 //C++
 #include <cassert>
@@ -21,8 +21,17 @@ ErrorType Wifi::networkDown() {
 }
 
 ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) {
-    if (-1 == send(socket, frame.data(), frame.size(), 0)) {
-        return fromPlatformError(errno);
+    Bytes sent = 0;
+    Bytes remaining = frame.size();
+
+    while (remaining > 0) {
+        ssize_t bytesWritten = send(socket, &frame.at(sent), remaining, 0);
+        if (bytesWritten < 0) {
+            return fromPlatformError(errno);
+        }
+
+        sent += bytesWritten;
+        remaining -= bytesWritten;
     }
 
     return ErrorType::Success;
@@ -33,7 +42,7 @@ ErrorType Wifi::txNonBlocking(const std::shared_ptr<std::string> frame, const So
 }
 
 ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
-    ErrorType error = ErrorType::Failure;
+    ErrorType error = ErrorType::Timeout;
     ssize_t bytesReceived = 0;
 
     struct timeval timeoutval = {
@@ -50,6 +59,7 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
     int ret;
     ret = select(socket + 1, &readfds, NULL, NULL, &timeoutval);
     if (ret < 0) {
+        frameBuffer.resize(0);
         return fromPlatformError(errno);
     }
     }
@@ -58,6 +68,11 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
         if (-1 == (bytesReceived = recv(socket, frameBuffer.data(), frameBuffer.size(), 0))) {
             error = fromPlatformError(errno);
         }
+        else if (0 == bytesReceived) {
+            //recv returns 0 if the connection is closed.
+            error = ErrorType::PrerequisitesNotMet;
+            frameBuffer.resize(0);
+        }
         else if ((size_t)bytesReceived > frameBuffer.size()) {
             error = ErrorType::PrerequisitesNotMet;
         }
@@ -65,13 +80,6 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
             frameBuffer.resize(bytesReceived);
             error = ErrorType::Success;
         }
-    }
-    else {
-        error = ErrorType::Timeout;
-    }
-
-    if (0 == frameBuffer.size()) {
-        error = ErrorType::NoData;
     }
 
     return error;

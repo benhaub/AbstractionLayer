@@ -21,8 +21,17 @@ ErrorType Wifi::networkDown() {
 }
 
 ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) {
-    if (-1 == send(socket, frame.data(), frame.size(), 0)) {
-        return toPlatformError(errno);
+    Bytes sent = 0;
+    Bytes remaining = frame.size();
+
+    while (remaining > 0) {
+        ssize_t bytesWritten = send(socket, &frame.at(sent), remaining, 0);
+        if (bytesWritten < 0) {
+            return fromPlatformError(errno);
+        }
+
+        sent += bytesWritten;
+        remaining -= bytesWritten;
     }
 
     return ErrorType::Success;
