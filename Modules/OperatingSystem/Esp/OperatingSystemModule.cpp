@@ -22,7 +22,16 @@ void TimerCallback(TimerHandle_t timer);
 #endif
 
 ErrorType OperatingSystem::delay(const Milliseconds delay) {
-    usleep(delay * 1000);
+    //https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/pthread.html#rtos-integration
+    //See Note. If the delay is less than the tick period then the new thread will never block. At startup this is a
+    //big problem because the main thread will always be lower priority and never be scheduled again as soon as we
+    //create the first thread so if the first thread blocks waiting for other threads it will starve the main thread
+    //and it will not be able to create the other threads.
+
+    //The default tick rate is 100Hz, so trying to delay for a thousandth of a second is 10 times shorter than the
+    //minimum needed to block.
+    const Milliseconds minimumDelayToBlock = delay * (1000 / configTICK_RATE_HZ);
+    usleep(minimumDelayToBlock * 1000);
     return ErrorType::Success;
 }
 
@@ -38,8 +47,6 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
     ErrorType error = ErrorType::Failure;
     static Id nextThreadId = 1;
 
-    //Hopefully these are joinable by default, because it seems like it really messes stuff up to use
-    //pthread config and esp_pthread config at the same time.
     esp_pthread_cfg = esp_pthread_get_default_config();
     esp_pthread_cfg.stack_size = stackSize;
     esp_pthread_cfg.prio = toEspPriority(priority);
