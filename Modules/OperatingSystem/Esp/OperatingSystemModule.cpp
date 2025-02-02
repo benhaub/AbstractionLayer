@@ -42,7 +42,6 @@ ErrorType OperatingSystem::startScheduler() {
 
 ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority priority, const std::string &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
     esp_pthread_cfg_t esp_pthread_cfg;
-    pthread_t thread;
     int res;
     ErrorType error = ErrorType::Failure;
     static Id nextThreadId = 1;
@@ -56,9 +55,25 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
         return error;
     }
 
-    //On ESP, the start function is called before pthread_create returns so we have to add our thread before we create it.
+    //On ESP, the start function is called before pthread_create returns so we have to add in an init function to make sure
+    //that the details of thread are properly saved before the thread code runs. For example, if a thread calls currentThreadId,
+    //the posix ID will not be saved yet because pthread_create has not returned and so this function will fail even though the thread
+    //exists and has an ID.
+    struct InitThreadArgs {
+        void *arguments;
+        void *(*startFunction)(void *);
+        pthread_t *threadId;
+        OperatingSystem *self;
+    };
+    auto initThread = [](void *arguments)  -> void * {
+        assert(nullptr != arguments);
+
+        InitThreadArgs *initThreadArgs = static_cast<InitThreadArgs *>(arguments);
+        *(initThreadArgs->threadId) = pthread_self();
+        return (initThreadArgs->startFunction)(initThreadArgs->arguments);
+    };
+
     Thread newThread = {
-        .posixThreadId = thread,
         .name = name,
         .threadId = nextThreadId++
     };
@@ -72,10 +87,18 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
 
     number = newThread.threadId;
 
-    const bool threadWasCreated = (0 == (res = pthread_create(&thread, NULL, startFunction, arguments)));
+    InitThreadArgs initThreadArgs = {
+        .arguments = arguments,
+        .startFunction = startFunction,
+        .threadId = &threads[name].posixThreadId,
+        .self = this
+    };
+
+    //thread parameter can not be NULL.
+    pthread_t thread;
+    const bool threadWasCreated = (0 == (res = pthread_create(&thread, NULL, initThread, &initThreadArgs)));
     if (threadWasCreated) {
         error = ErrorType::Success;
-        threads[name].posixThreadId = thread;
     }
     else {
         deleteThread(name);
