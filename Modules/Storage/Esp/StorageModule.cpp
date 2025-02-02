@@ -1,70 +1,15 @@
-//Modules
+//AbstractionLayer
 #include "StorageModule.hpp"
+#include "OperatingSystemModule.hpp"
 //ESP
 #include "nvs.h"
 #include "nvs_flash.h"
 
 ErrorType Storage::initStorage() {
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(&Storage::initStorageInternal, this));
-    return addEvent(event);
-} 
-
-ErrorType Storage::deinitStorage() {
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(&Storage::deinitStorageInternal, this));
-    return addEvent(event);
-} 
-
-ErrorType Storage::maxStorageSize(Kilobytes &size, std::string partitionName) {
-    nvs_stats_t stats;
-    esp_err_t err;
-
-    if (partitionName.empty()) {
-        err = nvs_get_stats(NULL, &stats);
-    }
-    else {
-        err = nvs_get_stats(partitionName.c_str(), &stats);
+    if (_status.isInitialized) {
+        return ErrorType::Success;
     }
 
-    //https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/nvs_flash.html#structure-of-a-page
-    //One entry is 32 bytes.
-    size = (stats.total_entries * 32) / 1024;
-    
-    return fromPlatformError(err);
-}
-
-ErrorType Storage::availableStorage(Kilobytes &size, std::string partitionName) {
-    nvs_stats_t stats;
-    esp_err_t err;
-
-    if (partitionName.empty()) {
-        err = nvs_get_stats(NULL, &stats);
-    }
-    else {
-        err = nvs_get_stats(partitionName.c_str(), &stats);
-    }
-
-    //https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/nvs_flash.html#structure-of-a-page
-    //One entry is 32 bytes.
-    size = (stats.free_entries * 32) / 1024;
-
-    return fromPlatformError(err);
-}
-
-ErrorType Storage::erasePartition(const std::string &partitionName) {
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<const std::string &>>(std::bind(&Storage::erasePartitionInternal, this, std::placeholders::_1), partitionName);
-    return addEvent(event);
-}
-
-ErrorType Storage::eraseAllPartitions() {
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(&Storage::eraseAllPartitionsInternal, this));
-    return addEvent(event);
-}
-
-ErrorType Storage::mainLoop() {
-    return runNextEvent();
-}
-
-ErrorType Storage::initStorageInternal() {
     // Initialize NVS
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -82,19 +27,164 @@ ErrorType Storage::initStorageInternal() {
     _status.isInitialized = true;
     return fromPlatformError(err);
 } 
-    
-ErrorType Storage::deinitStorageInternal() {
-        if (_nvsHandle) {
-            _nvsHandle.release();
+
+ErrorType Storage::deinitStorage() {
+    bool deinitializationDone = false;
+    ErrorType callbackError = ErrorType::Failure;
+
+    auto deinitializedCallback = [&]() -> ErrorType {
+        if (!_status.isInitialized) {
+            deinitializationDone = true;
+            callbackError = ErrorType::Success;
         }
 
-        return fromPlatformError(nvs_flash_deinit());
-} 
-    
-ErrorType Storage::erasePartitionInternal(const std::string &partitionName) {
-    return fromPlatformError(nvs_flash_erase_partition(partitionName.c_str()));
+        _nvsHandle.release();
+
+        _status.isInitialized = false;
+        deinitializationDone = true;
+        callbackError = fromPlatformError(nvs_flash_deinit());
+        return callbackError;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(deinitializedCallback));
+    ErrorType error = addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!deinitializationDone) {
+        OperatingSystem::Instance().delay(1);
+    }
+
+    return callbackError;
 }
 
-ErrorType Storage::eraseAllPartitionsInternal() {
-    return fromPlatformError(_nvsHandle->erase_all());
+ErrorType Storage::maxStorageSize(Kilobytes &size, std::string partitionName) {
+    auto maxStorageQueryDone = false;
+    ErrorType callbackError = ErrorType::Failure;
+
+    auto maxStorageQueryCallback = [&]() -> ErrorType {
+        nvs_stats_t stats;
+        esp_err_t err;
+
+        if (partitionName.empty()) {
+            err = nvs_get_stats(NULL, &stats);
+        }
+        else {
+            err = nvs_get_stats(partitionName.c_str(), &stats);
+        }
+
+        //https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/nvs_flash.html#structure-of-a-page
+        //One entry is 32 bytes.
+        size = (stats.total_entries * 32) / 1024;
+
+        callbackError = fromPlatformError(err);
+        maxStorageQueryDone = true;
+        return callbackError;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(maxStorageQueryCallback));
+    ErrorType error = addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!maxStorageQueryDone) {
+        OperatingSystem::Instance().delay(1);
+    }
+
+    return callbackError;
+}
+
+ErrorType Storage::availableStorage(Kilobytes &size, std::string partitionName) {
+    bool availableStorageQueryDone = false;
+    ErrorType callbackError = ErrorType::Failure;
+
+    auto availableStorageQueryCallback = [&]() -> ErrorType {
+        nvs_stats_t stats;
+        esp_err_t err;
+
+        if (partitionName.empty()) {
+            err = nvs_get_stats(NULL, &stats);
+        }
+        else {
+            err = nvs_get_stats(partitionName.c_str(), &stats);
+        }
+
+        //https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/nvs_flash.html#structure-of-a-page
+        //One entry is 32 bytes.
+        size = (stats.free_entries * 32) / 1024;
+
+        callbackError = fromPlatformError(err);
+        availableStorageQueryDone = true;
+        return callbackError;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(availableStorageQueryCallback));
+    ErrorType error = addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }   
+
+    while (!availableStorageQueryDone) {
+        OperatingSystem::Instance().delay(1);
+    }
+
+    return callbackError;
+}
+
+ErrorType Storage::erasePartition(const std::string &partitionName) {
+    bool erasePartitionDone = false;
+    ErrorType callbackError = ErrorType::Failure;
+
+    auto erasePartitionCallback = [&]() -> ErrorType {
+        if (partitionName.empty()) {
+            callbackError = fromPlatformError(nvs_flash_erase_partition(NULL));
+        }
+        else {
+            callbackError = fromPlatformError(nvs_flash_erase_partition(partitionName.c_str()));
+        }
+
+        erasePartitionDone = true;
+        return callbackError;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(erasePartitionCallback));
+    ErrorType error = addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!erasePartitionDone) {
+        OperatingSystem::Instance().delay(1);
+    }
+
+    return callbackError;
+}
+
+ErrorType Storage::eraseAllPartitions() {
+    bool eraseAllPartitionsDone = false;
+    ErrorType callbackError = ErrorType::Failure;
+
+    auto eraseAllPartitionsCallback = [&]() -> ErrorType {
+        callbackError = fromPlatformError(_nvsHandle->erase_all());
+        eraseAllPartitionsDone = true;
+        return callbackError;
+    };
+
+    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(eraseAllPartitionsCallback));
+    ErrorType error = addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!eraseAllPartitionsDone) {
+        OperatingSystem::Instance().delay(1);
+    }
+
+    return callbackError;
+}
+
+ErrorType Storage::mainLoop() {
+    return runNextEvent();
 }

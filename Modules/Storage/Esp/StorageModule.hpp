@@ -4,7 +4,6 @@
 //AbstractionLayer
 #include "Global.hpp"
 #include "StorageAbstraction.hpp"
-#include "OperatingSystemAbstraction.hpp"
 //ESP
 #include "nvs_handle.hpp"
 
@@ -25,15 +24,7 @@ class Storage : public StorageAbstraction, public Global<Storage, std::string> {
     }
     virtual ~Storage() = default;
 
-    /**
-     * @attention Returns ErrorType::NotAvailable since we assume the system that has stdlib also has an operating system
-     * to init the storage for you.
-    */
     ErrorType initStorage() override;
-    /**
-     * @attention Returns ErrorType::NotAvailable since we assume the system that has stdlib also has an operating system
-     * to deinit the storage for you.
-    */
     ErrorType deinitStorage() override;
     ErrorType maxStorageSize(Kilobytes &size, std::string partitionName = std::string()) override;
     ErrorType availableStorage(Kilobytes &size, std::string partitionName = std::string()) override;
@@ -44,12 +35,6 @@ class Storage : public StorageAbstraction, public Global<Storage, std::string> {
 
     private:
     std::unique_ptr<nvs::NVSHandle> _nvsHandle;
-
-    ErrorType initStorageInternal();
-    ErrorType deinitStorageInternal();
-    ErrorType erasePartitionInternal(const std::string &partitionName);
-    ErrorType eraseAllPartitionsInternal();
-
 };
 
 #endif //__CBT_FLASH_HPP__

@@ -8,6 +8,11 @@
 #include <sys/stat.h>
 
 ErrorType Storage::initStorage() {
+
+    if (_status.isInitialized) {
+        return ErrorType::Success;
+    }
+
     ErrorType error;
     _rootPrefix = getEnvironment("HOME", error);
     _rootPrefix.append("/").append(name());
