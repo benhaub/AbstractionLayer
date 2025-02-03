@@ -5,7 +5,6 @@
 //Cc32xx Storage module
 #include "Flash.hpp"
 
-
 ErrorType Storage::initStorage() {
     Spi spi;
     Id thread;
@@ -38,9 +37,9 @@ ErrorType Storage::initStorage() {
 
 ErrorType Storage::deinitStorage() {
     bool deinitializationDone = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
 
-    auto deinitializedCallback = [this, &deinitializationDone, &error]() -> ErrorType {
+    auto deinitializedCallback = [&]() -> ErrorType {
         signed short result = sl_Stop(0xFFFF);
         if (0 == result) {
             _status.isInitialized = false;
@@ -50,130 +49,138 @@ ErrorType Storage::deinitStorage() {
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(deinitializedCallback));
-    error = addEvent(event);
+    ErrorType error = addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!deinitializationDone) {
-        OperatingSystem::Instance().delay(10);
+        OperatingSystem::Instance().delay(1);
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType Storage::maxStorageSize(Kilobytes &size, std::string partitionName) {
     bool maxStorageQueryDone = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
 
-    auto maxStorageQueryCallback = [this, &maxStorageQueryDone, &error](Kilobytes &size, const std::string *partitionName) -> ErrorType {
+    auto maxStorageQueryCallback = [&]() -> ErrorType {
         switch (medium()) {
             case StorageTypes::Medium::Flash:
-                error = Flash::maxSize(size);
+                callbackError = Flash::maxSize(size);
                 break;
             default:
                 break;
         }
 
         maxStorageQueryDone = true;
-        return error;
+        return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(maxStorageQueryCallback, size, &partitionName));
-    error = addEvent(event);
-
-    while (!maxStorageQueryDone) {
-        OperatingSystem::Instance().delay(10);
+    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(maxStorageQueryCallback));
+    ErrorType error = addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
     }
 
-    return error;
+    while (!maxStorageQueryDone) {
+        OperatingSystem::Instance().delay(1);
+    }
+
+    return callbackError;
 }
 
 ErrorType Storage::availableStorage(Kilobytes &size, std::string partitionName) {
     bool availableStorageQueryDone = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
 
-    auto availableStorageQueryCallback = [this, &availableStorageQueryDone, &error](Kilobytes &size, const std::string *partitionName) -> ErrorType {
+    auto availableStorageQueryCallback = [&]() -> ErrorType {
         switch (medium()) {
             case StorageTypes::Medium::Flash:
-                error = Flash::available(size);
+                callbackError = Flash::available(size);
                 break;
             default:
                 break;
         }
 
         availableStorageQueryDone = true;
-        return error;
+        return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(availableStorageQueryCallback, size, &partitionName));
-    error = addEvent(event);
-
-    while (!availableStorageQueryDone) {
-        OperatingSystem::Instance().delay(10);
+    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(availableStorageQueryCallback));
+    ErrorType error = addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
     }
 
-    return error;
+    while (!availableStorageQueryDone) {
+        OperatingSystem::Instance().delay(1);
+    }
+
+    return callbackError;
 }
 
 ErrorType Storage::erasePartition(const std::string &partitionName) {
     bool erasePartitionDone = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
 
-    auto erasePartitionCallback = [this, &erasePartitionDone, &error](const std::string *partitionName) -> ErrorType {
-        ErrorType error = ErrorType::NotSupported;
+    auto erasePartitionCallback = [&]() -> ErrorType {
+        callbackError = ErrorType::NotSupported;
 
         switch (medium()) {
             case StorageTypes::Medium::Flash:
-                error = Flash::erasePartition(*partitionName);
+                callbackError = Flash::erasePartition(partitionName);
                 break;
             default:
                 break;
         }
 
-        return error;
+        erasePartitionDone = true;
+        return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(erasePartitionCallback, &partitionName));
-    error = addEvent(event);
+    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(erasePartitionCallback));
+    ErrorType error = addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!erasePartitionDone) {
-        OperatingSystem::Instance().delay(10);
+        OperatingSystem::Instance().delay(1);
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType Storage::eraseAllPartitions() {
     bool eraseAllPartitionsDone = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
 
-    auto eraseAllPartitionsCallback = [this, &eraseAllPartitionsDone, &error]() -> ErrorType {
+    auto eraseAllPartitionsCallback = [&]() -> ErrorType {
         switch (medium()) {
             case StorageTypes::Medium::Flash:
-                error = Flash::eraseAllPartitions();
+                callbackError = Flash::eraseAllPartitions();
                 break;
             default:
                 break;
         }
 
-        return error;
+        eraseAllPartitionsDone = true;
+        return callbackError;
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(eraseAllPartitionsCallback));
-    error = addEvent(event);
+    ErrorType error = addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!eraseAllPartitionsDone) {
-        OperatingSystem::Instance().delay(10);
+        OperatingSystem::Instance().delay(1);
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType Storage::mainLoop() {
