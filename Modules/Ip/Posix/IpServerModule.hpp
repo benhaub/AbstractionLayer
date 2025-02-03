@@ -18,10 +18,6 @@ class IpServer : public IpServerAbstraction {
     ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) override;
 
     private:
-    /// @brief Index of the last socket we received from so that we can give all the connected sockets a chance at getting
-    //their data received.
-    size_t _previousReceivedSocketIndex = 0;
-
     inline int toPosixFamily(IpServerSettings::Version version) const {
         switch (version) {
             case IpServerSettings::Version::IPv4:

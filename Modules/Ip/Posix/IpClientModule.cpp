@@ -152,23 +152,23 @@ ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds tim
 
 ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds timeout) {
     bool doneReceiving = false;
+    ErrorType callbackError = ErrorType::Failure;
 
-    auto rx = [this, &doneReceiving](std::string *buffer, const Milliseconds timeout) -> ErrorType {
-        ErrorType error = ErrorType::Failure;
-
+    auto rx = [&]() -> ErrorType {
         assert(0 != _socket);
-        error = network().rxBlocking(*buffer, _socket, timeout);
-        if (ErrorType::Success != error) {
+
+        callbackError = network().rxBlocking(buffer, _socket, timeout);
+        if (ErrorType::Success != callbackError) {
             _status.connected = false;
         }
 
         doneReceiving = true;
-        return error;
+        return callbackError;
     };
 
     //For some reason, I couldn't pass buffer as a reference parameter to the callback. It had to be a pointer otherwise the
     //pointer to the data inside the string would change.
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx, &buffer, timeout));
+    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -178,11 +178,13 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
         OperatingSystem::Instance().delay(10);
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    auto tx = [this, callback](const std::shared_ptr<std::string> frame, const Milliseconds timeout) -> ErrorType {
+    assert(0 != _socket);
+
+    auto tx = [&, callback](const std::shared_ptr<std::string> frame, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         assert(nullptr != callback);
@@ -206,7 +208,7 @@ ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, con
 ErrorType IpClient::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
     assert(0 != _socket);
 
-    auto rx = [this, callback](const std::shared_ptr<std::string> buffer, const Milliseconds timeout) -> ErrorType {
+    auto rx = [&, callback](const std::shared_ptr<std::string> buffer, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         if (nullptr == buffer.get()) {

@@ -17,7 +17,7 @@
 ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
     Socket sock = _listenerSocket = -1;
     bool doneListening = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
     _protocol = IpServerSettings::Protocol::Unknown;
     _version = IpServerSettings::Version::Unknown;
     _port = 0;
@@ -38,9 +38,9 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
         assert(snprintf(portString, sizeof(portString), "%u", port) > 0);
 
         if (0 != getaddrinfo(nullptr, portString, &hints, &servinfo)) {
-            error = fromPlatformError(errno);
+            callbackError = fromPlatformError(errno);
             doneListening = true;
-            return error;
+            return callbackError;
         }
 
         for (p = servinfo; p != nullptr; p = p->ai_next) {
@@ -50,9 +50,9 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
             
             int enable = 1;
             if (-1 == setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable))) {
-                error = fromPlatformError(errno);
+                callbackError = fromPlatformError(errno);
                 doneListening = true;
-                return error;
+                return callbackError;
             }
 
             if (-1 == bind(sock, p->ai_addr, p->ai_addrlen)) {
@@ -72,17 +72,17 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
             _protocol = protocol;
             _version = version;
             _port = port;
-            error = ErrorType::Success;
+            callbackError = ErrorType::Success;
         }
         else {
-            error = fromPlatformError(errno);
+            callbackError = fromPlatformError(errno);
         }
 
-        ErrorType::Success == error ? _status.listening = true : _status.listening = false;
+        ErrorType::Success == callbackError ? _status.listening = true : _status.listening = false;
         doneListening = true;
         freeaddrinfo(servinfo);
 
-        return error;
+        return callbackError;
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(listenCb));
@@ -94,22 +94,22 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
         OperatingSystem::Instance().delay(1);
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout) {
     bool acceptConnectionDone = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
     socket = -1;
 
     auto acceptConnectionCallback = [&]() -> ErrorType {
         struct sockaddr_storage clientAddress;
-        socklen_t receiveSocketSize;
+        socklen_t clientAddressSize = sizeof(clientAddress);
 
         if (connectionsAcceptedIsAtMaximum()) {
             acceptConnectionDone = true;
-            error = ErrorType::LimitReached;
-            return error;
+            callbackError = ErrorType::LimitReached;
+            return callbackError;
         }
         else {
             struct timeval timeoutval = {
@@ -126,23 +126,22 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
             ret = select(_listenerSocket + 1, &readfds, NULL, NULL, &timeoutval);
             if (ret < 0) {
                 acceptConnectionDone = true;
-                error = fromPlatformError(errno);
-                return error;
+                callbackError = fromPlatformError(errno);
+                return callbackError;
             }
             }
 
             if (FD_ISSET(_listenerSocket, &readfds)) {
-                if (-1 == (socket = accept(_listenerSocket, (struct sockaddr *)&clientAddress, &receiveSocketSize))) {
+                if (-1 == (socket = accept(_listenerSocket, (struct sockaddr *)&clientAddress, &clientAddressSize))) {
                     acceptConnectionDone = true;
-                    assert(false);
-                    error = fromPlatformError(errno);
-                    return error;
+                    callbackError = fromPlatformError(errno);
+                    return callbackError;
                 }
             }
             else {
                 acceptConnectionDone = true;
-                error = ErrorType::Timeout;
-                return error;
+                callbackError = ErrorType::Timeout;
+                return callbackError;
             }
         }
 
@@ -150,12 +149,12 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
         _status.activeConnections = _connectedSockets.size();
 
         acceptConnectionDone = true;
-        error = ErrorType::Success;
-        return error;
+        callbackError = ErrorType::Success;
+        return callbackError;
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(acceptConnectionCallback));
-    error = network().addEvent(event);
+    ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
@@ -164,36 +163,36 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
         OperatingSystem::Instance().delay(1);
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType IpServer::closeConnection(const Socket socket) {
     bool closeConnectionDone = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
 
     auto closeConnection = [&](const Socket socket) -> ErrorType {
         if (-1 == close(socket)) {
             closeConnectionDone = true;
-            error = fromPlatformError(errno);
-            return error;
+            callbackError = fromPlatformError(errno);
+            return callbackError;
         }
 
         const auto closedSocket = std::find(_connectedSockets.begin(), _connectedSockets.end(), socket);
         if (_connectedSockets.end() != closedSocket) {
             _connectedSockets.erase(closedSocket);
             _status.activeConnections = _connectedSockets.size();
-            error = ErrorType::Success;
+            callbackError = ErrorType::Success;
         }
         else {
-            error = ErrorType::NoData;
+            callbackError = ErrorType::NoData;
         }
 
         closeConnectionDone = true;
-        return error;
+        return callbackError;
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(closeConnection, socket));
-    error = network().addEvent(event);
+    ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
@@ -202,22 +201,22 @@ ErrorType IpServer::closeConnection(const Socket socket) {
         OperatingSystem::Instance().delay(1);
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) {
     bool sent = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
 
     auto tx = [&]() -> ErrorType {
-        error = network().txBlocking(data, socket, timeout);
+        callbackError = network().txBlocking(data, socket, timeout);
 
         sent = true;
-        return error;
+        return callbackError;
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(tx));
-    error = network().addEvent(event);
+    ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
@@ -226,7 +225,7 @@ ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds tim
         OperatingSystem::Instance().delay(1);
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket) {
