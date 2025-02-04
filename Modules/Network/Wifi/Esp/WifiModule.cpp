@@ -32,6 +32,7 @@ constexpr unsigned int wifiApAndStaStartedBit = BIT2;
 ErrorType Wifi::init() {
     esp_err_t err;
     ErrorType error;
+    _status.isUp = false;
 
     if (WifiConfig::Mode::Unknown == mode() || WifiConfig::AuthMode::Unknown == authMode()) {
         return ErrorType::PrerequisitesNotMet;
@@ -109,6 +110,7 @@ ErrorType Wifi::init() {
                                           pdMS_TO_TICKS(timeout));
 
     if (bits & eventBitsToWaitFor) {
+        _status.isUp = true;
         return ErrorType::Success;
     } else {
         return ErrorType::Timeout;
@@ -116,7 +118,7 @@ ErrorType Wifi::init() {
 }
 
 ErrorType Wifi::initAccessPoint() {
-    esp_netif_t *apNetworkInterface = esp_netif_create_default_wifi_ap();
+    esp_netif_create_default_wifi_ap();
 
     wifi_config_t wifiAccessPointConfig;
     memcpy(wifiAccessPointConfig.ap.ssid, accessPointSsid().c_str(), accessPointSsid().length());
@@ -128,11 +130,14 @@ ErrorType Wifi::initAccessPoint() {
     wifiAccessPointConfig.ap.pmf_cfg.required = false;
 
     esp_err_t err = esp_wifi_set_config(WIFI_IF_AP, &wifiAccessPointConfig);
+    if (ESP_OK != err) {
+        return fromPlatformError(err);
+    }
 
-    return fromPlatformError(err);
+    return ErrorType::Success;
 }
 ErrorType Wifi::initStation() {
-    esp_netif_t *staNetworkInterface = esp_netif_create_default_wifi_sta();
+    esp_netif_create_default_wifi_sta();
 
     wifi_config_t wifiStationConfig;
     memcpy(wifiStationConfig.sta.ssid, stationSsid().c_str(), stationSsid().length());
@@ -194,7 +199,6 @@ ErrorType Wifi::txNonBlocking(const std::shared_ptr<std::string> frame, const So
     return ErrorType::NotImplemented;
 }
 
-//TODO: Needs to look like POSIX so that NoData is returned properly
 ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
     ErrorType error = ErrorType::Failure;
     ssize_t bytesReceived = 0;
@@ -213,33 +217,32 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
     int ret;
     ret = select(socket + 1, &readfds, NULL, NULL, &timeoutval);
     if (ret < 0) {
+        frameBuffer.resize(0);
         return fromPlatformError(errno);
     }
     }
 
     if (FD_ISSET(socket, &readfds)) {
         if (-1 == (bytesReceived = recv(socket, frameBuffer.data(), frameBuffer.size(), 0))) {
+            frameBuffer.resize(0);
             error = fromPlatformError(errno);
         }
-        else if ((size_t)bytesReceived > frameBuffer.size()) {
+        else if (0 == bytesReceived) {
+            //recv returns 0 if the connection is closed.
+            frameBuffer.resize(0);
             error = ErrorType::PrerequisitesNotMet;
         }
         else {
             frameBuffer.resize(bytesReceived);
-            return ErrorType::Success;
+            error = ErrorType::Success;
         }
     }
-    else {
-        error = ErrorType::Timeout;
-    }
-
-    frameBuffer.resize(0);
 
     return error;
 }
 
 ErrorType Wifi::rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) {
-    return ErrorType::NotImplemented;
+    return ErrorType::NotAvailable;
 }
 
 ErrorType Wifi::getMacAddress(std::string &macAddress) {
@@ -335,12 +338,12 @@ static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t even
     }
     if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_AP_STACONNECTED) {
         wifi_event_ap_staconnected_t *event = (wifi_event_ap_staconnected_t *) eventData;
-        PLT_LOGI(Wifi::TAG, "Station " "MACSTR" " left, AID=%d",
+        PLT_LOGI(Wifi::TAG, "Station " MACSTR " joined, AID=%d",
                  MAC2STR(event->mac), event->aid);
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_AP_STADISCONNECTED) {
         wifi_event_ap_stadisconnected_t *event = (wifi_event_ap_stadisconnected_t *) eventData;
-        PLT_LOGI(Wifi::TAG, "Station " "MACSTR" " left, AID=%d",
+        PLT_LOGI(Wifi::TAG, "Station " MACSTR " left, AID=%d",
                  MAC2STR(event->mac), event->aid);
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_CONNECTED) {

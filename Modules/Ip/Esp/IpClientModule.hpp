@@ -24,6 +24,7 @@ class IpClient : public IpClientAbstraction {
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout);
     ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout);
 
+    private:
     int toPosixFamily(IpClientSettings::Version version) {
         switch (version) {
             case IpClientSettings::Version::IPv4:

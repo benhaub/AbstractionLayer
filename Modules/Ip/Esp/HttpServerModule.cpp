@@ -2,15 +2,17 @@
 #include "HttpServerModule.hpp"
 
 ErrorType HttpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
-    return ErrorType::NotImplemented;
+    _ipServer->setNetwork(this->network());
+
+    return _ipServer->listenTo(protocol, version, port);
 }
 
 ErrorType HttpServer::acceptConnection(Socket &socket, const Milliseconds timeout) {
-    return ErrorType::NotImplemented;
+    return _ipServer->acceptConnection(socket, timeout);
 }
 
 ErrorType HttpServer::closeConnection(const Socket socket) {
-    return ErrorType::NotImplemented;
+    return _ipServer->closeConnection(socket);
 }
 
 ErrorType HttpServer::sendBlocking(const HttpServerTypes::Response &response, const Milliseconds timeout, const Socket socket) {
@@ -18,13 +20,46 @@ ErrorType HttpServer::sendBlocking(const HttpServerTypes::Response &response, co
 }
 
 ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const Milliseconds timeout, Socket &socket) {
-    return ErrorType::NotImplemented;
+    constexpr Bytes maxBufferSize = 1448;
+    std::string buffer(maxBufferSize, 0);
+    ErrorType error = ErrorType::Failure;
+
+    error = _ipServer->receiveBlocking(buffer, timeout, socket);
+
+    if (ErrorType::Success == error && buffer.size() > 0) {
+        toHttpRequest(buffer, request);
+    }
+
+    return error;
 }
 
 ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    return ErrorType::NotImplemented;
+    //TODO: I should more carefully define this and also check that the header is less than this.
+    constexpr Bytes maxHeaderSize = 512;
+    std::shared_ptr<std::string> frame = std::make_shared<std::string>(maxHeaderSize + data->messageBody.size(), 0);
+
+    toHttpResponse(*data, *frame);
+
+    //I believe if the callback is not taken by value it can go out of scope and cause a crash.
+    auto sendCallback = [callback](const ErrorType error, const Bytes bytesWritten) -> void {
+        callback(error, bytesWritten);
+    };
+
+    return _ipServer->sendNonBlocking(frame, timeout, socket, sendCallback);
 }
 
 ErrorType HttpServer::receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpServerTypes::Request> buffer)> callback) {
-    return ErrorType::NotImplemented;
+    constexpr Bytes maxBufferSize = 1448;
+    std::shared_ptr<std::string> receivedBuffer = std::make_shared<std::string>(maxBufferSize, 0);
+
+    auto receiveCallback = [&, callback](ErrorType error, const Socket socket, std::shared_ptr<std::string> frameBuffer) -> ErrorType {
+        std::shared_ptr<HttpServerTypes::Request> request = std::make_shared<HttpServerTypes::Request>();
+        toHttpRequest(*frameBuffer, *request);
+        callback(error, socket, request);
+
+        return error;
+    };
+
+    //What if we don't receive the whole message?
+    return _ipServer->receiveNonBlocking(receivedBuffer, timeout, socket, receiveCallback);
 }

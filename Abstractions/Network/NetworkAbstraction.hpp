@@ -67,6 +67,7 @@ class NetworkAbstraction : public EventQueue {
     * @post May block for up to a maximum of 10 seconds to bring the interface up.
     * @post Network can be used to connect after this function returns ErrorType::Success.
     * @post Will init with a default setting if network parameters are not set prior to this call.
+    * @post NetworkTypes::Status::isUp will be set to true after this function returns ErrorType::Success
     */
     virtual ErrorType init() = 0;
     /**
@@ -87,6 +88,7 @@ class NetworkAbstraction : public EventQueue {
      * @param timeout The timeout in milliseconds to wait for the transmission to complete
      * @returns ErrorType::Success if the transmission was successful
      * @returns ErrorType::Failure if the transmission failed
+     * @post NetworkTypes::Status::isUp will be set to false after this function returns ErrorType::Success
     */
     virtual ErrorType txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) = 0;
     /**

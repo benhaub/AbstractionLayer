@@ -1,7 +1,10 @@
 #ifndef __IP_SERVER_MODULE_HPP__
 #define __IP_SERVER_MODULE_HPP__
 
+//AbstractionLayer
 #include "IpServerAbstraction.hpp"
+//ESP
+#include "lwip/sockets.h"
 
 class IpServer : public IpServerAbstraction {
 
@@ -16,6 +19,34 @@ class IpServer : public IpServerAbstraction {
     ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
     ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket) override;
     ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) override;
+
+    private:
+    int toPosixFamily(IpServerSettings::Version version) {
+        switch (version) {
+            case IpServerSettings::Version::IPv4:
+                return AF_INET;
+            case IpServerSettings::Version::IPv6:
+                return AF_INET6;
+            default:
+                return AF_UNSPEC;
+        }
+    }
+
+    int toPosixSocktype(IpServerSettings::Protocol protocol) {
+        switch (protocol) {
+            case IpServerSettings::Protocol::Tcp:
+                return SOCK_STREAM;
+            case IpServerSettings::Protocol::Udp:
+                return SOCK_DGRAM;
+            default:
+                return SOCK_RAW;
+        }
+    }
+
+    inline bool connectionsAcceptedIsAtMaximum() const {
+        constexpr Count MaxConnections = 10;
+        return _connectedSockets.size() >= MaxConnections;
+    }
 };
 
 #endif // __IP_SERVER_MODULE_HPP__
