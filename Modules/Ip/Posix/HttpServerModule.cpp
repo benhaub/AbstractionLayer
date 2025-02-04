@@ -26,7 +26,7 @@ ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const M
 
     error = _ipServer->receiveBlocking(buffer, timeout, socket);
 
-    if (buffer.size() > 0) {
+    if (ErrorType::Success == error &&buffer.size() > 0) {
         toHttpRequest(buffer, request);
     }
 

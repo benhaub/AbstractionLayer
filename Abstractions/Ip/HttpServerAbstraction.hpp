@@ -342,6 +342,10 @@ class HttpServerAbstraction : public IpServerAbstraction {
     ErrorType toHttpRequest(const std::string &buffer, HttpServerTypes::Request &request) {
         size_t uriStartIndex, uriEndIndex = 0;
 
+        if (buffer.size() <= 0) {
+            return ErrorType::NoData;
+        }
+
         if (std::string::npos != (uriStartIndex = buffer.find("GET"))) {
             request.requestLine.method = HttpServerTypes::Method::Get;
             uriStartIndex += sizeof("GET");
@@ -566,7 +570,6 @@ class HttpServerAbstraction : public IpServerAbstraction {
         if (ErrorType::Success == findHeaderValue(buffer, "Content-Language:", "zh-Hant")) {request.headers.language.push_back(HttpServerTypes::Language::Chinese_Traditional);}
         if (ErrorType::Success == findHeaderValue(buffer, "Content-Language:", "zu")) {request.headers.language.push_back(HttpServerTypes::Language::isiZulu);}
 
-        //TODO: Message body?
         return ErrorType::Success;
     }
 

@@ -66,14 +66,12 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
 
     if (FD_ISSET(socket, &readfds)) {
         if (-1 == (bytesReceived = recv(socket, frameBuffer.data(), frameBuffer.size(), 0))) {
+            frameBuffer.resize(0);
             error = fromPlatformError(errno);
         }
         else if (0 == bytesReceived) {
             //recv returns 0 if the connection is closed.
-            error = ErrorType::PrerequisitesNotMet;
             frameBuffer.resize(0);
-        }
-        else if ((size_t)bytesReceived > frameBuffer.size()) {
             error = ErrorType::PrerequisitesNotMet;
         }
         else {
