@@ -115,10 +115,14 @@ class WifiAbstraction : public NetworkAbstraction {
 
     /// @brief  Get the mode as a constant reference
     const WifiConfig::Mode &mode() const { return _mode; }
-    /// @brief Get the SSID as a constant reference
-    const std::string &ssid() const { return _ssid; }
-    /// @brief Get the password as a constant reference
-    const std::string &password() const { return _password; }
+    /// @brief Get the SSID for the access point as a constant reference
+    const std::string &accessPointSsid() const { return _accessPointSsid; }
+    /// @brief Get the password for the access point as a constant reference
+    const std::string &accessPointPassword() const { return _accessPointPassword; }
+    /// @brief Get the SSID for the station as a constant reference
+    const std::string &stationSsid() const { return _stationSsid; }
+    /// @brief Get the password for the station as a constant reference
+    const std::string &stationPassword() const { return _stationPassword; }
     /// @brief Get the channel as a constant reference
     const uint8_t &channel() const { return _channel; }
     /// @brief Get the max connections as a constant reference
@@ -131,10 +135,14 @@ class WifiAbstraction : public NetworkAbstraction {
     protected:
     /// @brief The current wifi mode
     WifiConfig::Mode _mode = WifiConfig::Mode::Unknown;
-    /// @brief The current ssid
-    std::string _ssid = std::string(32, '\0');
-    /// @brief The current password
-    std::string _password;
+    /// @brief The current access point ssid
+    std::string _accessPointSsid;
+    /// @brief The current access point password
+    std::string _accessPointPassword;
+    /// @brief The current station ssid
+    std::string _stationSsid;
+    /// @brief The current station password
+    std::string _stationPassword;
     /// @brief The current ip address
     std::string _ipAddress;
     /// @brief The current channel
