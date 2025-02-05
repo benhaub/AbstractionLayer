@@ -323,7 +323,7 @@ class HttpServerAbstraction : public IpServerAbstraction {
 
 #pragma GCC diagnostic pop
 
-    ErrorType findHeaderValue(const std::string &request, const std::string &headerName, const std::string &value) {
+    ErrorType findHeaderValue(const std::string &request, const char headerName[], const char value[]) {
         const size_t theIndexThatTheHeaderStartsAt = request.find(headerName);
         const size_t theIndexThatTheHeaderEndsAt = request.find("\r\n");
 
