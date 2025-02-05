@@ -200,7 +200,7 @@ ErrorType Wifi::txNonBlocking(const std::shared_ptr<std::string> frame, const So
 }
 
 ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
-    ErrorType error = ErrorType::Failure;
+    ErrorType error = ErrorType::Timeout;
     ssize_t bytesReceived = 0;
 
     struct timeval timeoutval = {
