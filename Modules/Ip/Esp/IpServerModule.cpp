@@ -252,15 +252,13 @@ ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, con
 
         if (nullptr == frame.get()) {
             error = ErrorType::NoData;
-            callback(error, 0);
-            return error;
         }
-
-        error = network().txBlocking(*frame, socket, timeout);
+        else {
+            error = network().txBlocking(*frame, socket, timeout);
+        }
 
         assert(nullptr != callback);
         callback(error, frame->size());
-
         return error;
     };
 

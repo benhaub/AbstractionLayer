@@ -121,10 +121,12 @@ ErrorType Wifi::initAccessPoint() {
     esp_netif_create_default_wifi_ap();
 
     wifi_config_t wifiAccessPointConfig;
-    memcpy(wifiAccessPointConfig.ap.ssid, accessPointSsid().c_str(), accessPointSsid().length());
+    memcpy(wifiAccessPointConfig.ap.ssid, accessPointSsid().data(), accessPointSsid().length());
     wifiAccessPointConfig.ap.ssid_len = accessPointSsid().length();
     wifiAccessPointConfig.ap.channel = 1;
-    memcpy(wifiAccessPointConfig.ap.password, accessPointPassword().c_str(), accessPointPassword().length());
+    memcpy(wifiAccessPointConfig.ap.password, accessPointPassword().data(), accessPointPassword().length());
+    //Wifi driver only knows how to verify the password if it's properly terminated.
+    wifiAccessPointConfig.ap.password[accessPointPassword().length()] = '\0';
     wifiAccessPointConfig.ap.max_connection = 10;
     wifiAccessPointConfig.ap.authmode = toEspAuthMode(authMode());
     wifiAccessPointConfig.ap.pmf_cfg.required = false;
@@ -140,8 +142,8 @@ ErrorType Wifi::initStation() {
     esp_netif_create_default_wifi_sta();
 
     wifi_config_t wifiStationConfig;
-    memcpy(wifiStationConfig.sta.ssid, stationSsid().c_str(), stationSsid().length());
-    memcpy(wifiStationConfig.sta.password, stationPassword().c_str(), stationPassword().length());
+    memcpy(wifiStationConfig.sta.ssid, stationSsid().data(), stationSsid().length());
+    memcpy(wifiStationConfig.sta.password, stationPassword().data(), stationPassword().length());
     wifiStationConfig.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
     wifiStationConfig.sta.failure_retry_cnt = 5;
     //Minimum security that we will accept.
@@ -196,7 +198,7 @@ ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const 
 }
 
 ErrorType Wifi::txNonBlocking(const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callbackr) {
-    return ErrorType::NotImplemented;
+    return ErrorType::NotAvailable;
 }
 
 ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
