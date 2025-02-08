@@ -1,13 +1,13 @@
 target_sources(${PROJECT_NAME}${EXECUTABLE_SUFFIX}
 PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
   StorageModule.hpp
-  FileModule.hpp
+  FileSystemModule.hpp
 )
 
 add_library(EspStorage
 STATIC
   StorageModule.cpp
-  FileModule.cpp
+  FileSystemModule.cpp
 )
 
 target_include_directories(Storage INTERFACE ${CMAKE_CURRENT_LIST_DIR})

@@ -223,8 +223,8 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
         //TODO: What if we only receive part of the data. We will need to keep this socket in play until we receive the whole thing.
         for (size_t i = 0; i < _connectedSockets.size(); i++) {
             callbackError = network().rxBlocking(buffer, _connectedSockets[i], timeout);
+            socket = _connectedSockets[i];
             if (ErrorType::Success == callbackError) {
-                socket = _connectedSockets[i];
                 break;
             }
         }

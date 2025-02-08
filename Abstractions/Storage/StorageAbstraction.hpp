@@ -17,10 +17,10 @@
 namespace StorageTypes {
 
     /**
-     * @struct StorageStatus
+     * @struct Status
      * @brief The status of the storage.
     */
-    struct StorageStatus {
+    struct Status {
         bool isInitialized; ///< Is the storage initialized and ready to use.
     };
 
@@ -46,12 +46,11 @@ class StorageAbstraction : public EventQueue {
     public:
     /**
      * @brief Constructor
-     * @param[in] name The name of the storage
      * @param[in] medium The storage medium to use
      * @note For various storage mediums, the recommendation is to create classes for each medium within your modules and use switch cases
      *       in the StorageModule to dispatch the correct implementation
     */
-    StorageAbstraction(std::string name, StorageTypes::Medium medium) : EventQueue(), _name(name), _medium(medium) {}
+    StorageAbstraction(StorageTypes::Medium medium) : EventQueue(), _medium(medium) {}
     /// @brief Destructor
     virtual ~StorageAbstraction() = default;
 
@@ -60,68 +59,29 @@ class StorageAbstraction : public EventQueue {
      * @returns ErrorType::Success if the storage was initialized
      * @returns ErrorType::Failure otherwise.
     */
-    virtual ErrorType initStorage() = 0;
+    virtual ErrorType init() = 0;
     /**
      * @brief Deinitializes the storage
      * @returns ErrorType::Success if the storage was deinitialized
      * @returns ErrorType::Failure otherwise.
     */
-    virtual ErrorType deinitStorage() = 0;
-    /**
-     * @brief Get the size of the storage
-     * @pre initStorage must be called first
-     * @param[out] size The size of the storage
-     * @param[in] partitionName The name of the partition to get the max storage size from. Default partition name used if not provided.
-     * @returns ErrorType::Success if the size was retrieved
-     * @returns ErrorType::Failure otherwise
-     */
-    virtual ErrorType maxStorageSize(Kilobytes &size, std::string partitionName = std::string()) = 0;
-    /**
-     * @brief Get the size of the storage
-     * @pre initStorage must be called first
-     * @param[out] size The size of the storage
-     * @param[in] partitionName The name of the partition to get the max storage size from. Default partition name used if not provided.
-     * @returns ErrorType::Success if the size was retrieved
-     * @returns ErrorType::Failure otherwise
-     */
-    virtual ErrorType availableStorage(Kilobytes &size, std::string partitionName = std::string()) = 0;
-    /**
-     * @brief erase the specified partition
-     * @param[in] partitionName The name of the partition to erase
-     * @returns ErrorType::Success if the partition was erased
-     * @returns ErrorType::Failure otherwise
-    */
-    virtual ErrorType erasePartition(const std::string &partitionName) = 0;
-    /**
-     * @brief erase all partitions
-     * @returns ErrorType::Success if all partitions were erased
-     * @returns ErrorType::Failure otherwise
-    */
-    virtual ErrorType eraseAllPartitions() = 0;
+    virtual ErrorType deinit() = 0;
 
     /// @brief Get the status of the storage as a constant reference
-    const StorageTypes::StorageStatus &statusConst() const { return _status; }
-    /// @brief Get the name of the storage as a constant reference
-    const std::string &name() const { return _name; }
-    /// @brief Get the root prefix
-    const std::string &rootPrefix() const { return _rootPrefix; }
+    const StorageTypes::Status &statusConst() const { return _status; }
     /// @brief Get the storage medium
     StorageTypes::Medium medium() const { return _medium; }
 
+    private:
     /// @brief Tag for logging
     static constexpr char TAG[] = "Storage";
 
-    private:
-    /// @brief The name of the storage.
-    std::string _name;
     /// @brief The storage medium.
     StorageTypes::Medium _medium;
 
     protected:
     /// @brief The status of the storage.
-    StorageTypes::StorageStatus _status = { .isInitialized = false };
-    /// @brief A path that is prepened to all file names for storage
-    std::string _rootPrefix;
+    StorageTypes::Status _status = { .isInitialized = false };
 };
 
 #endif //__STORAGE_ABSTRACTION_HPP__
