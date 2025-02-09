@@ -17,7 +17,7 @@ As an example, suppose we want to test the Hello World application:
 LoggingAbstraction *logger = new MacOSLogger();
 
 //Main application code.
-logger->log("LogTag", "Hello World", LogTpye::Info);
+logger->log("LogTag", "Hello World", LogType::Info);
 ```
 
 After testing on MacOS, the application works. So we bring it over to the embedded target:
@@ -27,7 +27,7 @@ After testing on MacOS, the application works. So we bring it over to the embedd
 LoggingAbstraction *logger = new EmbeddedLogger();
 
 //Main application code.
-logger->log("LogTag", "Hello World", LogTpye::Info);
+logger->log("LogTag", "Hello World", LogType::Info);
 ```
 
 The main application code hasn't changed so we know the logic is correct. It will print as long as the ported code works. If it doesn't print we can eliminate the main application code as a potential source of the bug since it's already been tested and has not changed.
