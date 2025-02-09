@@ -10,7 +10,7 @@ An abstraction layer allows you to build your main application code separate fro
 This allows you to swap out components without having to edit or retest your main application. Consequentially, this allows you to develop and test applications on systems such
 as MacOS or Linux which have faster processing times and a more feature rich debugging environment, and then take that tested code and run it on an embedded target with your ported abstraction layer.
 
-As an example, suppose I want to test the Hello World application:
+As an example, suppose we want to test the Hello World application:
 
 ```
 //Ported code.
@@ -20,7 +20,7 @@ LoggingAbstraction *logger = new MacOSLogger();
 logger->log("LogTag", "Hello World", LogTpye::Info);
 ```
 
-After testing on MacOS, my application works. So I bring it over to my embedded target:
+After testing on MacOS, the application works. So we bring it over to the embedded target:
 
 ```
 //Ported code
@@ -30,7 +30,7 @@ LoggingAbstraction *logger = new EmbeddedLogger();
 logger->log("LogTag", "Hello World", LogTpye::Info);
 ```
 
-The main application code hasn't changed so I know the logic is correct. It will print as long as the ported code works. If it doesn't print I can eliminate the main application code as a potential source of the bug since it's already been tested and has not changed.
+The main application code hasn't changed so we know the logic is correct. It will print as long as the ported code works. If it doesn't print we can eliminate the main application code as a potential source of the bug since it's already been tested and has not changed.
 
 ### 2. Reduce dependancies on chip vendors
 An abstraction layer allows easy(ier) changes away from drivers and build tools offered by your chip vendor. If you mix in vendor specific tools and drivers directly alongside your application, the application will develop a strong dependancy on the vendor as it's size and complexity increases. Some of these dependancies are:
@@ -50,3 +50,20 @@ Alternatively, if you depend on an abstraction:
 - the function name almost never changes.
   
 We say almost because it can be challenging to develop an abstraction layer that can support every driver on the market, but _almost never change_ is better than _certainly will change_.
+
+### 3. Find bugs
+- Desktop platforms offer a more feature rich and faster debugging environment. Sanitizors and leak checkers are not available for embedded platforms so gaining access to these can greatly increase the robustness of your application.
+- Sometimes, what works on one platform, will break on another. This can be very beneficial because you can have hidden race conditions that are just waiting for the timing to be correct. A race condition that just works on one platform
+  may immediately break on the next.
+- Using different compilers may show different warnings which can help find bugs that were previously not reported.
+
+## Factors that will complicate cross-platform design
+
+Complicate does not mean prohibit. It is still possible to manage these complications but there may not be an elegant solution.
+
+### 1. ROM code
+If you build an application around some ROM code features (like a built in http server that handles requests for you) then your app may lack the required calls to work on other platforms that don't have this ROM code. This means that you will have to include calls in your application code that will run on some platforms, but not others and can complicate your code.
+### 2. Memory usage
+Some drivers might demand more memory (like stack) than other platform drivers so you will find that as you switch to other platforms your stack sizes need to increase.
+### 3. Vendor tools
+Using some vendor tools (like flashers or partition managers) might not have a portable way of operating. You may need to setup various file/directory structures for tools on one platform to use while another tool uses a different set. Some of these tools might also introduce some hardcoded names that may need to be included in your application code (like the name of a partition on storage) which could be recognized by one platform but not the other.
