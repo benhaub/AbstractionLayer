@@ -7,96 +7,41 @@
 #include <sys/statvfs.h>
 #include <sys/stat.h>
 
-ErrorType Storage::initStorage() {
-
+ErrorType Storage::init() {
     if (_status.isInitialized) {
         return ErrorType::Success;
     }
 
+    std::string mediumString;
+    switch (medium()) {
+        case StorageTypes::Medium::Flash:
+            mediumString = "abstractionLayerFlashStorage";
+            break;
+        case StorageTypes::Medium::Eeprom:
+            mediumString = "abstractionLayerEepromStorage";
+            break;
+        case StorageTypes::Medium::Sd:
+            mediumString = "abstractionLayerSdStorage";
+            break;
+        case StorageTypes::Medium::Otp:
+            mediumString = "abstractionLayerOtpStorage";
+            break;
+        default:
+            return ErrorType::InvalidParameter;
+    }
+
     ErrorType error;
     _rootPrefix = getEnvironment("HOME", error);
-    _rootPrefix.append("/").append(name());
+    _rootPrefix.append("/").append(mediumString);
     mkdir(_rootPrefix.c_str(), S_IRWXU); 
 
     _status.isInitialized = true;
     return error;
 } 
 
-ErrorType Storage::deinitStorage() {
+ErrorType Storage::deinit() {
     return ErrorType::NotAvailable;
 } 
-
-ErrorType Storage::maxStorageSize(Bytes &size, std::string partitionName) {
-    bool maxStorageQueryDone = false;
-    ErrorType error = ErrorType::Failure;
-
-    auto maxStorageQueryCallback = [this, &maxStorageQueryDone, &error](Bytes &size, const std::string *partitionName) -> ErrorType {
-        struct statvfs fiData;
-
-        if (0 == statvfs(rootPrefix().c_str(), &fiData)) {
-            size = fiData.f_blocks * fiData.f_frsize;
-        }
-        else {
-            error = fromPlatformError(errno);
-            size = 0;
-        }
-
-        maxStorageQueryDone = true;
-        return error;
-    };
-
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(maxStorageQueryCallback, size, &partitionName));
-    error = addEvent(event);
-    if (ErrorType::Success != error) {
-        return error;
-    }
-
-    while (!maxStorageQueryDone) {
-        OperatingSystem::Instance().delay(10);
-    }
-
-    return error;
-}
-
-ErrorType Storage::availableStorage(Bytes &size, std::string partitionName) {
-    bool availableStorageQueryDone = false;
-    ErrorType error = ErrorType::Failure;
-
-    auto availableStorageQueryCallback = [this, &availableStorageQueryDone, &error](Bytes &size, const std::string *partitionName) -> ErrorType {
-        struct statvfs fiData;
-        ErrorType error = ErrorType::Success;
-
-        if (0 == statvfs(getEnvironment("HOME", error).c_str(), &fiData)) {
-            size = fiData.f_bavail * fiData.f_frsize;
-        }
-        else {
-            error = fromPlatformError(errno);
-            size = 0;
-        }
-
-        return error;
-    };
-
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(availableStorageQueryCallback, size, &partitionName));
-    error = addEvent(event);
-    if (ErrorType::Success != error) {
-        return error;
-    }
-
-    while (!availableStorageQueryDone) {
-        OperatingSystem::Instance().delay(10);
-    }
-
-    return error;
-}
-
-ErrorType Storage::erasePartition(const std::string &partitionName) {
-    return ErrorType::NotImplemented;
-}
-
-ErrorType Storage::eraseAllPartitions() {
-    return ErrorType::NotImplemented;
-}
 
 ErrorType Storage::mainLoop() {
     return runNextEvent();

@@ -99,6 +99,7 @@ namespace KeyValue {
         ErrorType error = synchronize(_handle);
         if (ErrorType::Success == error) {
             file.isOpen = false;
+            file.openMode = FileSystemTypes::OpenMode::Unknown;
         }
 
         return error;

@@ -26,7 +26,6 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
     pthread_attr_t attr;
     sched_param param;
     int res;
-    pthread_t thread;
     static Id nextThreadId = 1;
     ErrorType error = ErrorType::Failure;
 
@@ -41,9 +40,25 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
     pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 
-    //On Linux, the start function is called before pthread_create returns so we have to add our thread before we create it.
+    //On Linux, the start function is called before pthread_create returns so we have to add in an init function to make sure
+    //that the details of thread are properly saved before the thread code runs. For example, if a thread calls currentThreadId,
+    //the posix ID will not be saved yet because pthread_create has not returned and so this function will fail even though the thread
+    //exists and has an ID.
+    struct InitThreadArgs {
+        void *arguments = nullptr;
+        void *(*startFunction)(void *);
+        pthread_t *threadId = nullptr;
+    };
+    auto initThread = [](void *arguments) -> void * {
+
+        InitThreadArgs *initThreadArgs = static_cast<InitThreadArgs *>(arguments);
+        *(initThreadArgs->threadId) = pthread_self();
+        (initThreadArgs->startFunction)(initThreadArgs->arguments);
+        delete initThreadArgs;
+        return nullptr;
+    };
+
     Thread newThread = {
-        .posixThreadId = thread,
         .name = name,
         .threadId = nextThreadId++
     };
@@ -56,17 +71,26 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
     }
 
     number = newThread.threadId;
+    threads[name].posixThreadId = 0; //TEMP FOR DEBUG.
 
-    const bool threadWasCreated = (0 == (res = pthread_create(&thread, &attr, startFunction, arguments)));
-    pthread_attr_destroy(&attr);
+    InitThreadArgs *initThreadArgs = new InitThreadArgs{
+        .arguments = arguments,
+        .startFunction = startFunction,
+        .threadId = &threads[name].posixThreadId,
+    };
+
+    pthread_t thread;
+    const bool threadWasCreated = (0 == (res = pthread_create(&thread, &attr, initThread, initThreadArgs)));
     if (threadWasCreated) {
-        threads[name].posixThreadId = thread;
         error = ErrorType::Success;
     }
     else {
         deleteThread(name);
         error = fromPlatformError(res);
     }
+
+    _status.threadCount = threads.size();
+    pthread_attr_destroy(&attr);
 
     return error;
 }

@@ -5,9 +5,6 @@
 #include "Global.hpp"
 #include "StorageAbstraction.hpp"
 
-/**
- * @class Storage
-*/
 class Storage : public StorageAbstraction, public Global<Storage, std::string> {
 
     public:

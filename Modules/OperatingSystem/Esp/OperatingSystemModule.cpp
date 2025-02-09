@@ -63,10 +63,8 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
         void *arguments;
         void *(*startFunction)(void *);
         pthread_t *threadId;
-        OperatingSystem *self;
     };
-    auto initThread = [](void *arguments)  -> void * {
-        assert(nullptr != arguments);
+    auto initThread = [](void *arguments) -> void * {
 
         InitThreadArgs *initThreadArgs = static_cast<InitThreadArgs *>(arguments);
         *(initThreadArgs->threadId) = pthread_self();
@@ -91,7 +89,6 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
         .arguments = arguments,
         .startFunction = startFunction,
         .threadId = &threads[name].posixThreadId,
-        .self = this
     };
 
     //thread parameter can not be NULL.

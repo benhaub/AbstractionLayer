@@ -71,6 +71,8 @@ class StorageAbstraction : public EventQueue {
     const StorageTypes::Status &statusConst() const { return _status; }
     /// @brief Get the storage medium
     StorageTypes::Medium medium() const { return _medium; }
+    /// @brief The prefix of storage where filesystems will be mounted as a constant reference.
+    const std::string &rootPrefixConst() const { return _rootPrefix; }
 
     private:
     /// @brief Tag for logging
@@ -82,6 +84,7 @@ class StorageAbstraction : public EventQueue {
     protected:
     /// @brief The status of the storage.
     StorageTypes::Status _status = { .isInitialized = false };
+    std::string _rootPrefix;
 };
 
 #endif //__STORAGE_ABSTRACTION_HPP__

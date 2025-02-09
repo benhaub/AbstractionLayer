@@ -5,23 +5,16 @@
 #include "Global.hpp"
 #include "StorageAbstraction.hpp"
 
-/**
- * @class Storage
-*/
 class Storage : public StorageAbstraction, public Global<Storage, std::string> {
 
     public:
-    Storage(std::string name, StorageTypes::Medium medium) : StorageAbstraction(name, medium), Global<Storage, std::string>() {
+    Storage(StorageTypes::Medium medium) : StorageAbstraction(medium), Global<Storage, std::string>() {
         _status.isInitialized = false;
     }
     virtual ~Storage() = default;
 
-    ErrorType initStorage() override;
-    ErrorType deinitStorage() override;
-    ErrorType maxStorageSize(Kilobytes &size, std::string partitionName = std::string()) override;
-    ErrorType availableStorage(Kilobytes &size, std::string partitionName = std::string()) override;
-    ErrorType erasePartition(const std::string &partitionName) override;
-    ErrorType eraseAllPartitions() override;
+    ErrorType init() override;
+    ErrorType deinit() override;
 
     ErrorType mainLoop() override;
 

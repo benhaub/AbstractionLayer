@@ -62,9 +62,6 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
     }
 }
 
-//I want to use pthreads since I like the portability of them, however, ESP does not implement pthread_kill.
-//The work around is to set the thread in the deatched state and then have the main loops of each thread regularly check their status
-//to see if they have been terminated by the operating system, which will set isTerminated when the thread is detached.
 ErrorType OperatingSystem::deleteThread(const std::string &name) {
     ErrorType error = ErrorType::NoData;
 

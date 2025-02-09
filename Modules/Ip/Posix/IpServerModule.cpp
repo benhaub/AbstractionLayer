@@ -237,8 +237,8 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
         //TODO: What if we only receive part of the data. We will need to keep this socket in play until we receive the whole thing.
         for (size_t i = 0; i < _connectedSockets.size(); i++) {
             callbackError = network().rxBlocking(buffer, _connectedSockets[i], timeout);
+            socket = _connectedSockets[i];
             if (ErrorType::Success == callbackError) {
-                socket = _connectedSockets[i];
                 break;
             }
         }
@@ -261,24 +261,18 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
 }
 
 ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    bool sent = false;
-
-    auto tx = [this, callback, &sent](const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout) -> ErrorType {
+    auto tx = [&, callback](const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         if (nullptr == frame.get()) {
-            sent = true;
             error = ErrorType::NoData;
-            callback(error, 0);
-            return error;
         }
-
-        error = network().txBlocking(*frame, socket, timeout);
+        else {
+            error = network().txBlocking(*frame, socket, timeout);
+        }
 
         assert(nullptr != callback);
         callback(error, frame->size());
-
-        sent = true;
         return error;
     };
 
@@ -287,13 +281,10 @@ ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, con
 }
 
 ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) {
-    bool received = false;
-
     auto receiveCallback = [&, callback]() -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         if (nullptr == buffer.get()) {
-            received = true;
             error = ErrorType::NoData;
             callback(error, socket, buffer);
             return error;
@@ -304,7 +295,6 @@ ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, cons
         assert(nullptr != callback);
         callback(error, socket, buffer);
 
-        received = true;
         return error;
     };
 

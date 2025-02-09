@@ -111,6 +111,7 @@ namespace Spiffs {
 
         if (0 == fclose(spiffsFile)) {
             file.isOpen = false;
+            file.openMode = FileSystemTypes::OpenMode::Unknown;
             return ErrorType::Success;
         }
         else {
