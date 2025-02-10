@@ -17,10 +17,19 @@
 //C++
 #include <cassert>
 
+///@brief The tag used for logging
 static constexpr char IpFactoryTag[] = "IpFactoryTag";
 
+/**
+ * @namespace IpFactoryTypes
+ * @brief Types and constants used by the IpFactory
+ */
 namespace IpFactory {
 
+    /**
+     * @enum Protocol
+     * @brief The protocol used by the IP client at the application layer
+    */
     enum class Protocol : uint8_t {
         Unknown = 0, ///< Unknown protocol
         TcpOrUdp,    ///< Raw TCP or UDP with no application or presentation layer support.
@@ -64,7 +73,7 @@ namespace IpFactory {
      * @param error
      * @sa ErrorType
      * @attention While the IpServerAbstraction is useful for implementing this factory, it does not follow the L in SOLID for all derivations.
-     *            For the HttpServer the send and receive functions use a different parameter type than the IpServerAbstraction
+     *            The send and receive functions in the Http server use a different parameter type than the IpServerAbstraction
      *            so attempting to use an IpServerAbstraction as an HttpServer will not be possible. It's reccomended to wrap calls to the HttpServer
      *            in a function that dynamic_cast<>()'s the IpServerAbstraction to an HttpServer.
      * @sa https://en.wikipedia.org/wiki/SOLID
