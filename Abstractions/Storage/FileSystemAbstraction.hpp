@@ -53,7 +53,7 @@ namespace FileSystemTypes {
         Ntfs,        ///< Windows NT File System
         Apfs,        ///< Apple File System
         Ext4,        ///< Ext4 File System (Linux)
-        Eeprom,     ///< EEPROM
+        Eeprom,      ///< EEPROM
         Otp          ///< One Time Programmable
     };
 

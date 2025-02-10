@@ -1,14 +1,14 @@
-#ifndef __FLASH_HPP__
-#define __FLASH_HPP__
+#ifndef __SPIFFS_HPP__
+#define __SPIFFS_HPP__
 
 //TI driverlib
 #include "ti/drivers/net/wifi/fs.h"
 //C++
 #include <cassert>
 
-namespace Flash {
+namespace Spiffs {
 
-    static ErrorType maxSize(Bytes &size) {
+    ErrorType maxSize(Bytes &size) {
         SlFsControlGetStorageInfoResponse_t storageInfo;
         _i32 slRetVal;
 
@@ -24,7 +24,7 @@ namespace Flash {
         return ErrorType::Success;
     }
 
-    static ErrorType available(Bytes &size) {
+    ErrorType available(Bytes &size) {
         SlFsControlGetStorageInfoResponse_t storageInfo;
         _i32 slRetVal;
 
@@ -40,13 +40,9 @@ namespace Flash {
         return ErrorType::Success;
     }
 
-    static ErrorType erasePartition(const std::string &partitionName) {
-        return ErrorType::NotImplemented;
-    }
-
-    static ErrorType eraseAllPartitions() {
+    ErrorType erasePartition(const std::string &partitionName) {
         return ErrorType::NotImplemented;
     }
 }
 
-#endif //__FLASH_HPP__
+#endif //__SPIFFS_HPP__
