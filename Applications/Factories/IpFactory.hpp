@@ -1,0 +1,106 @@
+/***************************************************************************//**
+* @author   Ben Haubrich
+* @file     NetworkFactory.hpp
+* @details  IP abstraction factory for creating various types of Internet Protocol interfaces
+* @ingroup  AutomaticPetFeeder
+* @sa https://en.wikipedia.org/wiki/Factory_(object-oriented_programming)
+*******************************************************************************/
+#ifndef __IP_FACTORY_HPP__
+#define __IP_FACTORY_HPP__
+
+//AbstractionLayer
+#include "IpClientModule.hpp"
+#include "IpServerModule.hpp"
+#include "HttpServerModule.hpp"
+#include "Log.hpp"
+#include "NetworkFactory.hpp"
+//C++
+#include <cassert>
+
+static constexpr char IpFactoryTag[] = "IpFactoryTag";
+
+namespace IpFactory {
+
+    enum class Protocol : uint8_t {
+        Unknown = 0, ///< Unknown protocol
+        TcpOrUdp,    ///< Raw TCP or UDP with no application or presentation layer support.
+        Http,        ///< Hyper Text Transfer Protocol (TCP only)
+        Websocket,   ///< Websockets
+        Ftp,         ///< File Transfer Protocol (TCP only)
+        Mqtt,        ///< Message Queuing Telemetry Transport (TCP only)
+        Modbus       ///< Modbus
+    };
+
+    /**
+     * @brief This factory function creates an IpClientAbstraction that is compatible with the network interface selected
+     * @param technology Sometimes the internals of a client will be very different depending on the technology used. For example, Cellular
+     *        clients must communicate with the device using a serial interface like SPI, I2C, UART, USB, etc.
+     * @sa NetworkTypes::Technology
+     * @param error
+     * @sa ErrorType
+     */
+    std::unique_ptr<IpClientAbstraction> ClientFactory(NetworkTypes::Technology technology, IpFactory::Protocol protocol, ErrorType &error) {
+        switch (technology) {
+            case NetworkTypes::Technology::Wifi: {
+                auto client = std::make_unique<IpClient>();
+                return client;
+            }
+            case NetworkTypes::Technology::Zigbee:
+            case NetworkTypes::Technology::Ethernet:
+            case NetworkTypes::Technology::Cellular:
+            case NetworkTypes::Technology::Unknown:
+            default: {
+                error = ErrorType::NotSupported;
+                break;
+            }
+        }
+
+        return std::unique_ptr<IpClientAbstraction>(nullptr);
+    }
+    /**
+     * @brief This factory function creates an IpServerAbstraction that is compatible with the network interface selected
+     * @param technology The network technology that this server will communicate on.
+     * @sa NetworkTypes::Technology
+     * @param error
+     * @sa ErrorType
+     * @attention While the IpServerAbstraction is useful for implementing this factory, it does not follow the L in SOLID for all derivations.
+     *            For the HttpServer the send and receive functions use a different parameter type than the IpServerAbstraction
+     *            so attempting to use an IpServerAbstraction as an HttpServer will not be possible. It's reccomended to wrap calls to the HttpServer
+     *            in a function that dynamic_cast<>()'s the IpServerAbstraction to an HttpServer.
+     * @sa https://en.wikipedia.org/wiki/SOLID
+     */
+    std::unique_ptr<IpServerAbstraction> ServerFactory(NetworkTypes::Technology technology, IpFactory::Protocol protocol, ErrorType &error) {
+        std::unique_ptr<IpServerAbstraction> server;
+
+        switch (technology) {
+            case NetworkTypes::Technology::Wifi:
+                switch (protocol) {
+                    case IpFactory::Protocol::TcpOrUdp:
+                        server = std::make_unique<IpServer>();
+                        return server;
+                    case IpFactory::Protocol::Http:
+                        server = std::make_unique<HttpServer>();
+                        return server;
+                    case IpFactory::Protocol::Websocket:
+                    case IpFactory::Protocol::Ftp:
+                    case IpFactory::Protocol::Mqtt:
+                    case IpFactory::Protocol::Modbus:
+                    case IpFactory::Protocol::Unknown:
+                    default:
+                        error = ErrorType::NotSupported;
+                        break;
+                }
+            case NetworkTypes::Technology::Zigbee:
+            case NetworkTypes::Technology::Ethernet:
+            case NetworkTypes::Technology::Cellular:
+            case NetworkTypes::Technology::Unknown:
+            default:
+                error = ErrorType::NotSupported;
+                break;
+        }
+
+        return server;
+    }
+}
+
+#endif // __CELLULAR_IP_FACTORY_HPP__

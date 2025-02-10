@@ -37,6 +37,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Logging)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/ChainOfResponsibility)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Event)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/SignalsAndSlots)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Factories)
 
 target_compile_definitions(${PROJECT_NAME}${EXECUTABLE_SUFFIX}
 PRIVATE
