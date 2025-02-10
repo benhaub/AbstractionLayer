@@ -167,8 +167,8 @@ class FileSystemAbstraction {
      * @pre The number of bytes to read is equal to the size of the buffer (use std::string::resize()).
      * @pre The file must be open with a mode that supports reads.
      * @returns ErrorType::Success if the data was read.
-     * @returns ErrorType::PrequsistesNotMet if the mode does not allow a write.
-     * @returns ErrorType::PrequsistesNotMet if the file has not be opened or has been closed.
+     * @returns ErrorType::PrerequisitesNotMet if the mode does not allow a read.
+     * @returns ErrorType::PrerequisitesNotMet if the file has not be opened or has been closed.
     */
     virtual ErrorType readBlocking(FileSystemTypes::File &file, std::string &buffer) = 0; 
     /**
@@ -182,8 +182,8 @@ class FileSystemAbstraction {
      * @pre The number of bytes to read is equal to the size of the buffer (use std::string::resize()).
      * @pre The file must be open with a mode that supports reads.
      * @returns ErrorType::Success if the data was read.
-     * @returns ErrorType::PrequsistesNotMet if the mode does not allow a write.
-     * @returns ErrorType::PrequsistesNotMet if the file has not be opened or has been closed.
+     * @returns ErrorType::PrerequisitesNotMet if the mode does not allow a read.
+     * @returns ErrorType::PrerequisitesNotMet if the file has not be opened or has been closed.
     */
     virtual ErrorType readNonBlocking(FileSystemTypes::File &file, std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) = 0;
     /**
@@ -194,8 +194,8 @@ class FileSystemAbstraction {
      * @pre The file must be open with a mode that supports writes
      * @pre The number of bytes to write is equal to the size of the data (use std::string::resize()).
      * @returns ErrorType::Success if the data was written and synchronized.
-     * @returns ErrorType::PrequsistesNotMet if the mode does not allow a write.
-     * @returns ErrorType::PrequsistesNotMet if the file has not be opened or has been closed.
+     * @returns ErrorType::PrerequisitesNotMet if the mode does not allow a write.
+     * @returns ErrorType::PrerequisitesNotMet if the file has not be opened or has been closed.
      * @returns ErrorType::Failure if the data could not be written for any other reason.
      * @post The number of bytes read is represented by the size of data (use std::string::size())
     */
@@ -207,8 +207,8 @@ class FileSystemAbstraction {
      * @param[in] data The data to write.
      * @param[in] callback The callback to invoke when the write is complete. nullptr by default
      * @returns ErrorType::Success if the data was written and synchronized.
-     * @returns ErrorType::PrequsistesNotMet if the mode does not allow a write.
-     * @returns ErrorType::PrequsistesNotMet if the file has not be opened or has been closed.
+     * @returns ErrorType::PrerequisitesNotMet if the mode does not allow a write.
+     * @returns ErrorType::PrerequisitesNotMet if the file has not be opened or has been closed.
      * @returns ErrorType::Failure if the data could not be written for any other reason.
     */
     virtual ErrorType writeNonBlocking(FileSystemTypes::File &file, const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
