@@ -38,10 +38,10 @@ namespace NetworkFactoryTypes {
         WifiConfig::AuthMode authMode;
         WifiConfig::Mode mode;
     } wifiParams = {
-        .ssid = "defaultSsid",
-        .password = "defaultPassword",
-        .authMode = WifiConfig::AuthMode::WpaWpa2,
-        .mode = WifiConfig::Mode::AccessPoint
+        "defaultSsid",
+        "defaultPassword",
+        WifiConfig::AuthMode::WpaWpa2,
+        WifiConfig::Mode::AccessPoint
     };
 }
 

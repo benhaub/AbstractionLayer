@@ -166,12 +166,12 @@ ErrorType Wifi::radioOff() {
 
 ErrorType Wifi::setSsid(WifiConfig::Mode mode, std::string ssid) {
     if (mode != WifiConfig::Mode::AccessPoint) {
-        return ErrorType::InvalidParameter;
+        return ErrorType::NotSupported;
     }
 
     signed short result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_SSID, ssid.size(), reinterpret_cast<const unsigned char *>(ssid.c_str()));
     if (0 == result) {
-        _ssid = ssid;
+        _accessPointSsid.assign(ssid);
     }
 
     return fromPlatformError(result);
@@ -182,10 +182,10 @@ ErrorType Wifi::setPassword(WifiConfig::Mode mode, std::string password) {
     assert(WifiConfig::AuthMode::Unknown != _authMode);
 
     if (WifiConfig::Mode::AccessPoint != mode) {
-        return ErrorType::InvalidParameter;
+        return ErrorType::NotSupported;
     }
 
-    if (WifiConfig::AuthMode::Wpa == _authMode ||WifiConfig::AuthMode::WpaWpa2 == _authMode) {
+    if (WifiConfig::AuthMode::Wpa == _authMode || WifiConfig::AuthMode::WpaWpa2 == _authMode) {
         if (password.size() < 8 || password.size() > 63) {
             return ErrorType::InvalidParameter;
         }
@@ -194,7 +194,7 @@ ErrorType Wifi::setPassword(WifiConfig::Mode mode, std::string password) {
     signed short result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_PASSWORD, password.size(), reinterpret_cast<const unsigned char *>(password.c_str()));
 
     if (0 == result) {
-        _password = password;
+        _accessPointPassword = password;
     }
 
     return fromPlatformError(result);
