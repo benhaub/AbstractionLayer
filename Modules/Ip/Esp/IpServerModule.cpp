@@ -3,7 +3,7 @@
 #include "OperatingSystemModule.hpp"
 #include "NetworkAbstraction.hpp"
 
-ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
+ErrorType IpServer::listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) {
     bool listeningDone = false;
     ErrorType callbackError = ErrorType::Failure;
 
@@ -11,7 +11,7 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
         struct sockaddr_storage destinationAddress;
         int ipProtocol;
 
-        if (IpServerSettings::Version::IPv4 == version) {
+        if (IpServerTypes::Version::IPv4 == version) {
             struct sockaddr_in *ipv4DestinationAddress = reinterpret_cast<struct sockaddr_in *>(&destinationAddress);
             ipv4DestinationAddress->sin_addr.s_addr = htonl(INADDR_ANY);
             ipv4DestinationAddress->sin_family = AF_INET;
@@ -25,7 +25,7 @@ ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const Ip
                 return callbackError;
             }
         }
-        else if (IpServerSettings::Version::IPv6 == version) {
+        else if (IpServerTypes::Version::IPv6 == version) {
             struct sockaddr_in6 *ipv6DestinationAddress = reinterpret_cast<struct sockaddr_in6 *>(&destinationAddress);
             bzero(&ipv6DestinationAddress->sin6_addr, sizeof(ipv6DestinationAddress->sin6_addr));
             ipv6DestinationAddress->sin6_family = AF_INET6;

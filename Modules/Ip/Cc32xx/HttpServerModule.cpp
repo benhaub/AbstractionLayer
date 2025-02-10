@@ -3,7 +3,7 @@
 #include "NetworkAbstraction.hpp"
 #include "Log.hpp"
 
-ErrorType HttpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
+ErrorType HttpServer::listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) {
     //The ROM includes an HTTP server that is already listening
     return ErrorType::NotAvailable;
 }

@@ -14,7 +14,7 @@ class HttpServer : public HttpServerAbstraction {
     }
     virtual ~HttpServer() = default;
 
-    ErrorType listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) override;
+    ErrorType listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) override;
     ErrorType acceptConnection(Socket &socket, const Milliseconds timeout) override;
     ErrorType closeConnection(const Socket socket) override;
 

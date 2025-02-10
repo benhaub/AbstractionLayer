@@ -33,7 +33,7 @@ static void *startNetworkThread(void *arg) {
 static void *startServerThread(void *arg) {
     ErrorType error;
 
-    error = wifiNetworkServer.server->listenTo(IpServerSettings::Protocol::Tcp, IpServerSettings::Version::IPv4, ServerPort);
+    error = wifiNetworkServer.server->listenTo(IpServerTypes::Protocol::Tcp, IpServerTypes::Version::IPv4, ServerPort);
     if (ErrorType::Success != error) {
         PLT_LOGE(TAG, "Failed to listen on port %d", ServerPort);
         assert(false);

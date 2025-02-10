@@ -17,19 +17,19 @@
 #include <functional>
 
 /**
- * @struct ServerStatus
- * @brief Server status
-*/
-struct ServerStatus {
-    bool listening;          ///< True when the server is listening for connections.
-    Count activeConnections; ///< The number of simultaneous active connections.
-};
-
-/**
- * @namespace IpServerSettings
- * @brief Settings and confifguration for the Internet Protocol server.
+ * @namespace IpServerTypes
+ * @brief Types related to the Internet Protocol server.
  */
-namespace IpServerSettings {
+namespace IpServerTypes {
+
+    /**
+     * @struct ServerStatus
+     * @brief Server status
+    */
+    struct ServerStatus {
+        bool listening;          ///< True when the server is listening for connections.
+        Count activeConnections; ///< The number of simultaneous active connections.
+    };
 
     /**
      * @enum Version
@@ -73,12 +73,12 @@ class IpServerAbstraction : public CommunicationProtocol {
     /**
      * @brief Listen for connections on a port
      * @param[in] protocol The protocol to use for the connection
-     * @sa IpServerSettings::Protocol
+     * @sa IpServerTypes::Protocol
      * @param[in] version The version to use for the connection
      * @param[in] port The port to listen to
-     * @sa IpServerSettings::Version
+     * @sa IpServerTypes::Version
     */
-    virtual ErrorType listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) = 0;
+    virtual ErrorType listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) = 0;
     /**
      * @brief Accept a connection from a client connecting to the socket given
      * @param[out] socket The socket that the connection was accepted on
@@ -154,13 +154,13 @@ class IpServerAbstraction : public CommunicationProtocol {
 #pragma GCC diagnostic pop
 
     ///@brief Get a mutable reference to the protocol
-    IpServerSettings::Protocol &protocol() { return _protocol; }
+    IpServerTypes::Protocol &protocol() { return _protocol; }
     ///@brief Get a constant reference to the protocol
-    const IpServerSettings::Protocol &protocolConst() const { return _protocol; }
+    const IpServerTypes::Protocol &protocolConst() const { return _protocol; }
     ///@brief Get a mutable reference to the version
-    IpServerSettings::Version &version() { return _version; }
+    IpServerTypes::Version &version() { return _version; }
     ///@brief Get a constant reference to the version
-    const IpServerSettings::Version &versionConst() const { return _version; }
+    const IpServerTypes::Version &versionConst() const { return _version; }
     ///@brief Get a mutable reference to the port
     Port &port() { return _port; }
     ///@brief Get a constant reference to the port
@@ -170,9 +170,9 @@ class IpServerAbstraction : public CommunicationProtocol {
     ///@brief Get the network abstraction as a constant reference
     const NetworkAbstraction &networkConst() const { assert(nullptr != _network); return *_network; }
     ///@brief Get a mutable reference to the status of the server
-    ServerStatus &status() { return _status; }
+    IpServerTypes::ServerStatus &status() { return _status; }
     ///@brief Get a constant reference to the status of the server
-    const ServerStatus &statusConst() const { return _status; }
+    const IpServerTypes::ServerStatus &statusConst() const { return _status; }
     ///@brief Set the network abstraction
     ///@param[in] network The network abstraction to set
     ErrorType setNetwork(NetworkAbstraction &network) { _network = &network; return ErrorType::Success; }
@@ -181,13 +181,13 @@ class IpServerAbstraction : public CommunicationProtocol {
     /// @brief The socket on which we listen for new connections
     Socket _listenerSocket = -1;
     /// @brief The protocol
-    IpServerSettings::Protocol _protocol = IpServerSettings::Protocol::Unknown;
+    IpServerTypes::Protocol _protocol = IpServerTypes::Protocol::Unknown;
     /// @brief The IP version
-    IpServerSettings::Version _version = IpServerSettings::Version::Unknown;
+    IpServerTypes::Version _version = IpServerTypes::Version::Unknown;
     /// @brief The port
     Port _port = 0;
     /// @brief The status of the server
-    ServerStatus _status;
+    IpServerTypes::ServerStatus _status;
     /// @brief list of all the sockets we have accepted connection for
     std::vector<Socket> _connectedSockets;
 

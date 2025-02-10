@@ -1,7 +1,7 @@
 //AbstractionLayer
 #include "HttpServerModule.hpp"
 
-ErrorType HttpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
+ErrorType HttpServer::listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) {
     return ErrorType::NotImplemented;
 }
 

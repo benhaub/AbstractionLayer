@@ -14,12 +14,12 @@
 #include <cassert>
 #include <cstring>
 
-ErrorType IpServer::listenTo(const IpServerSettings::Protocol protocol, const IpServerSettings::Version version, const Port port) {
+ErrorType IpServer::listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) {
     Socket sock = _listenerSocket = -1;
     bool doneListening = false;
     ErrorType callbackError = ErrorType::Failure;
-    _protocol = IpServerSettings::Protocol::Unknown;
-    _version = IpServerSettings::Version::Unknown;
+    _protocol = IpServerTypes::Protocol::Unknown;
+    _version = IpServerTypes::Version::Unknown;
     _port = 0;
 
     close(_listenerSocket);
