@@ -928,9 +928,9 @@ class HttpServerAbstraction : public IpServerAbstraction {
         //Keep checking the buffer size to make sure that it changes with each append. If it doesn't,
         //it means the toString* function returned an empty string because this response does not contain
         //that header.
-        Bytes bufferSize = buffer.size();
+        Bytes currentBufferSize = buffer.size();
         buffer.append(toStringVersion(response.statusLine.version));
-        if (bufferSize != buffer.size()) {
+        if (currentBufferSize != buffer.size()) {
             buffer.push_back(' ');
         }
         else {
@@ -939,29 +939,29 @@ class HttpServerAbstraction : public IpServerAbstraction {
             return ErrorType::NoData;
         }
 
-        bufferSize = buffer.size();
+        currentBufferSize = buffer.size();
         buffer.append(toStringStatusCode(response.statusLine.statusCode));
-        if (bufferSize != buffer.size()) {
+        if (currentBufferSize != buffer.size()) {
             buffer.append("\r\n");
         }
-        bufferSize = buffer.size();
+        currentBufferSize = buffer.size();
         buffer.append(toStringEncoding(response.representationHeaders.contentEncoding));
-        if (bufferSize != buffer.size()) {
+        if (currentBufferSize != buffer.size()) {
             buffer.append("\r\n");
         }
-        bufferSize = buffer.size();
+        currentBufferSize = buffer.size();
         buffer.append(toStringContentType(response.representationHeaders.contentType));
-        if (bufferSize != buffer.size()) {
+        if (currentBufferSize != buffer.size()) {
             buffer.append("\r\n");
         }
-        bufferSize = buffer.size();
+        currentBufferSize = buffer.size();
         buffer.append(toStringContentLength(response.representationHeaders.contentLength));
-        if (bufferSize != buffer.size()) {
+        if (currentBufferSize != buffer.size()) {
             buffer.append("\r\n");
         }
-        bufferSize = buffer.size();
+        currentBufferSize = buffer.size();
         buffer.append(toStringContentLanguage(response.representationHeaders.contentLanguage));
-        if (bufferSize != buffer.size()) {
+        if (currentBufferSize != buffer.size()) {
             buffer.append("\r\n");
         }
 

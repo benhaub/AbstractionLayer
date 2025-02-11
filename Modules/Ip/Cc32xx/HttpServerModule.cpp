@@ -44,7 +44,7 @@ ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const M
 }
 
 ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    auto tx = [this, callback](const std::shared_ptr<HttpServerTypes::Response> response, const Socket socket, const Milliseconds timeout) -> ErrorType {
+    auto tx = [&, callback](const std::shared_ptr<HttpServerTypes::Response> response, const Socket socket, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
         assert(nullptr != callback);
 

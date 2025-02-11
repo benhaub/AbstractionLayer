@@ -32,7 +32,6 @@ class FileSystem : public FileSystemAbstraction {
     ErrorType size(FileSystemTypes::File &file) override;
 
     private:
-    //TODO: Shits gotta be a map
     std::map<std::string, std::unique_ptr<std::fstream>> openFiles;
 
     std::ios_base::openmode toStdOpenMode(FileSystemTypes::OpenMode mode, ErrorType &error) {

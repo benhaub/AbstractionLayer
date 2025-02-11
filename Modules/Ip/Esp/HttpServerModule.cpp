@@ -34,11 +34,16 @@ ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const M
 }
 
 ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    //TODO: I should more carefully define this and also check that the header is less than this.
-    constexpr Bytes maxHeaderSize = 512;
-    std::shared_ptr<std::string> frame = std::make_shared<std::string>(maxHeaderSize + data->messageBody.size(), 0);
+    //Big enough that hopefully the string doesn't have to reallocate.
+    constexpr Bytes headerSize = 512;
+    std::shared_ptr<std::string> frame = std::make_shared<std::string>(headerSize + data->messageBody.size(), 0);
 
+    Bytes initialCapacity = frame->capacity();
     toHttpResponse(*data, *frame);
+
+    if (initialCapacity > frame->capacity()) {
+        PLT_LOGW(TAG, "frame size had to be increased from %u to %u", initialCapacity, frame->capacity());
+    }
 
     //I believe if the callback is not taken by value it can go out of scope and cause a crash.
     auto sendCallback = [callback](const ErrorType error, const Bytes bytesWritten) -> void {
