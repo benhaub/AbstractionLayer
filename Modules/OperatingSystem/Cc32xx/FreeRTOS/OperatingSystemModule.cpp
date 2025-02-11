@@ -31,7 +31,6 @@ ErrorType OperatingSystem::startScheduler() {
 }
 
 ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority priority, const std::string &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
-    pthread_t thread;
     pthread_attr_t attrs;
     struct sched_param priParam;
     int retc;
@@ -50,9 +49,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
         return fromPlatformError(retc);
     }
 
-    //On cc32xx, the start function is called before pthread_create returns so we have to add our thread before we create it.
     Thread newThread = {
-        .cc32xxThreadId = thread,
         .name = name,
         .threadId = nextThreadId++
     };
@@ -66,6 +63,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
 
     number = newThread.threadId;
 
+    pthread_t thread;
     const bool threadWasCreated = (0 == (retc = pthread_create(&thread, &attrs, startFunction, arguments)));
     if (threadWasCreated) {
         error = ErrorType::Success;
