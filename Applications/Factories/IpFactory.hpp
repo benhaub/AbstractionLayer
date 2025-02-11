@@ -1,8 +1,8 @@
 /***************************************************************************//**
 * @author   Ben Haubrich
-* @file     NetworkFactory.hpp
+* @file     IpFactory.hpp
 * @details  IP abstraction factory for creating various types of Internet Protocol interfaces
-* @ingroup  AutomaticPetFeeder
+* @ingroup Applications
 * @sa https://en.wikipedia.org/wiki/Factory_(object-oriented_programming)
 *******************************************************************************/
 #ifndef __IP_FACTORY_HPP__

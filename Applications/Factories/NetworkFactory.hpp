@@ -2,7 +2,7 @@
 * @author   Ben Haubrich
 * @file     NetworkFactory.hpp
 * @details  Network abstraction factory for creating various types of network interfaces
-* @ingroup  AutomaticPetFeeder
+* @ingroup Applications
 * @sa https://en.wikipedia.org/wiki/Factory_(object-oriented_programming)
 * @sa https://medium.com/pranayaggarwal25/unnamed-namespaces-static-f1498741c527
 * @sa https://cs.smu.ca/~porter/csc/common_341_342/notes/storage_linkage.html
@@ -93,7 +93,6 @@ namespace {
 /**
  * @namespace NetworkFactory
  * @brief Functions and types that aid the creation of network interfaces.
- * TODO: These factories can probably go in the abstraction layer.
  */
 namespace NetworkFactory {
 
