@@ -262,6 +262,25 @@ class FileSystemAbstraction {
         return (FileSystemTypes::OpenMode::ReadWriteTruncate == mode ||
                 FileSystemTypes::OpenMode::WriteOnlyTruncate == mode);
     }
+    /**
+     * @brief Check if a file can be read from
+     * @param mode the open mode of the file
+     * @return True if the file can be read from, false otherwise
+     */
+    constexpr inline bool canReadFromFile(FileSystemTypes::OpenMode mode) {
+        return mode == FileSystemTypes::OpenMode::ReadOnly ||
+               mode == FileSystemTypes::OpenMode::ReadWriteNew ||
+               mode == FileSystemTypes::OpenMode::ReadWriteAppend ||
+               mode == FileSystemTypes::OpenMode::ReadWriteTruncate;
+    }
+    /**
+     * @brief Check if a file can be written to
+     * @param mode the open mode of the file
+     * @return True if the file can be written to, false otherwise
+     */
+    constexpr inline bool canWriteToFile(FileSystemTypes::OpenMode mode) {
+        return mode != FileSystemTypes::OpenMode::ReadOnly;
+    }
 
     protected:
     /// @brief The name of the file system.

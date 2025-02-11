@@ -33,8 +33,7 @@ class FileSystem : public FileSystemAbstraction {
 
     private:
     //TODO: Shits gotta be a map
-    std::unique_ptr<std::fstream> _handle;
-    Bytes currentFileSize = 0;
+    std::map<std::string, std::unique_ptr<std::fstream>> openFiles;
 
     std::ios_base::openmode toStdOpenMode(FileSystemTypes::OpenMode mode, ErrorType &error) {
         error = ErrorType::Success;
@@ -60,31 +59,10 @@ class FileSystem : public FileSystemAbstraction {
         return std::ios_base::in;
     }
 
-    inline constexpr bool canReadFromFile(FileSystemTypes::OpenMode mode) {
-        if (mode == FileSystemTypes::OpenMode::WriteOnlyAppend || mode == FileSystemTypes::OpenMode::WriteOnlyTruncate) {
-            return false;
-        }
-
-        if (nullptr == _handle.get()) {
-            return false;
-        }
-
-        if (!_handle->is_open()) {
-            return false;
-        }
-
-        return true;
-    }
-    inline constexpr bool canWriteToFile(FileSystemTypes::OpenMode mode) {
-        if (mode == FileSystemTypes::OpenMode::ReadOnly) {
-            return false;
-        }
-
-        return true;
-    }
-    inline bool isOpen() {
-        if (nullptr != _handle.get() && _handle->is_open()) {
-            return true;
+    inline bool isOpen(const FileSystemTypes::File &file) {
+        if (openFiles.contains(file.path) &&
+            nullptr != openFiles[file.path].get() && openFiles[file.path]->is_open()) {
+                return true;
         }
 
         return false;

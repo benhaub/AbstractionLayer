@@ -93,52 +93,45 @@ ErrorType FileSystem::erasePartition() {
 
 ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
     bool openDone = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::PrerequisitesNotMet;
     assert(path.size() > 0);
 
     auto openCallback = [&]() -> ErrorType {
-        if (nullptr == _handle.get()) {
-            _handle = std::make_unique<std::fstream>();
-            assert(nullptr != _handle.get());
+        if (_storage.statusConst().isInitialized) {
+            if (!isOpen(file)) {
+                std::ios_base::openmode openMode = toStdOpenMode(mode, callbackError);
+                if (ErrorType::Success == callbackError) {
+                    const std::string absolutePath = mountPrefixConst() + path;
+                    openFiles[file.path] = std::make_unique<std::fstream>();
+                    assert(nullptr != openFiles[file.path].get());
+                    openFiles[file.path]->open(absolutePath, openMode);
+                    if (openFiles[file.path]->good()) {
+                        if (ErrorType::Success == (callbackError = size(file))) {
+                            file.path.assign(path);
+                            file.isOpen = true;
+                            file.openMode = mode;
+                            file.filePointer = static_cast<FileOffset>(file.size);
+                            openFiles[file.path]->imbue(std::locale::classic());
+                            callbackError = ErrorType::Success;
+                        }
+                    }
+                    else {
+                        openFiles.erase(file.path);
+                        callbackError = ErrorType::Failure;
+                    }
+                }
+            }
+            else {
+                callbackError = ErrorType::Success;
+            }
         }
-        if (isOpen() || !_storage.statusConst().isInitialized) {
-            //Failure because the file mode can't be set if it's already open.
-            openDone = true;
-            error = ErrorType::PrerequisitesNotMet;
-            return error;
-        }
-
-        std::ios_base::openmode openMode = toStdOpenMode(mode, error);
-        if (ErrorType::Success != error) {
-            return error;
-        }
-        //I gotta have a motherfuckin map of these bitches so that you can open more than one file at once.
-        const std::string absolutePath = mountPrefixConst() + path;
-        _handle->open(absolutePath, openMode);
-
-        if (!isOpen()) {
-            openDone = true;
-            error = ErrorType::Failure;
-            return error;
-        }
-
-        file.path.assign(path);
-        file.isOpen = true;
-        file.openMode = mode;
-        if (ErrorType::Success != (error = size(file))) {
-            close(file);
-        }
-
-        file.filePointer = static_cast<FileOffset>(file.size);
-        _handle->imbue(std::locale::classic());
 
         openDone = true;
-        error = ErrorType::Success;
-        return error;
+        return callbackError;
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(openCallback));
-    error = _storage.addEvent(event);
+    ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
@@ -147,29 +140,24 @@ ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenM
         OperatingSystem::Instance().delay(1);
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType FileSystem::close(FileSystemTypes::File &file) {
     bool closeDone = false;
-    ErrorType callbackError = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Success;
 
     auto closeCallback = [&]() -> ErrorType {
-        if (!isOpen()) {
-            callbackError = ErrorType::Success;
-            closeDone = true;
-            return callbackError;
+        if (isOpen(file)) {
+            if (ErrorType::Success == (callbackError = synchronize(file))) {
+                openFiles[file.path]->close();
+                file.openMode = FileSystemTypes::OpenMode::Unknown;
+                file.isOpen = false;
+                openFiles.erase(file.path);
+            }
         }
 
-        if (ErrorType::Success != synchronize(file)) {
-            callbackError = ErrorType::Failure;
-            closeDone = true;
-            return callbackError;
-        }
-
-        _handle->close();
-        file.openMode = FileSystemTypes::OpenMode::Unknown;
-        file.isOpen = false;
+        assert(false == isOpen(file));
 
         closeDone = true;
         callbackError = ErrorType::Success;
@@ -196,10 +184,8 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
     auto removeCallback = [&]() -> ErrorType {
         if (ErrorType::Success == (callbackError = close(file))) {
             if (0 == std::remove(file.path.c_str())) {
-                //TODO: Get a map goin
-                _handle.reset();
+                callbackError = ErrorType::Success;
             }
-
         }
 
         removeDone = true;
@@ -216,20 +202,20 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
         OperatingSystem::Instance().delay(1);
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buffer) {
     bool readDone = false;
-    ErrorType callbackError = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::PrerequisitesNotMet;
 
     auto readCallback = [&]() -> ErrorType {
         //If the buffer doesn't have a size, you won't be able to read anything.
         assert(buffer.size() > 0);
 
-        if (canReadFromFile(file.openMode)) {
-            if (_handle->seekg(file.filePointer, std::ios_base::beg).good()) {
-                std::istream &is = _handle->read(buffer.data(), buffer.size());
+        if (canReadFromFile(file.openMode) && isOpen(file)) {
+            if (openFiles[file.path]->seekg(file.filePointer, std::ios_base::beg).good()) {
+                std::istream &is = openFiles[file.path]->read(buffer.data(), buffer.size());
 
                 if (is.rdstate() & std::ios_base::eofbit) {
                     callbackError = ErrorType::EndOfFile;
@@ -240,15 +226,13 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
 
                 buffer.resize(is.gcount());
                 file.filePointer += static_cast<FileOffset>(buffer.size());
-
+            }
+            else {
+                //Very important to clear otherwise future calls to fstream functions may fail because the bits are set.
+                openFiles[file.path]->clear();
             }
         }
-        else {
-            callbackError = ErrorType::PrerequisitesNotMet;
-        }
 
-        //Very important to clear otherwise future calls to fstream functions may fail because the bits are set.
-        _handle->clear();
         readDone = true;
         return callbackError;
     };
@@ -283,21 +267,21 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::stri
     ErrorType callbackError = ErrorType::PrerequisitesNotMet;
 
     auto writeCallback = [&](const std::string &data) -> ErrorType {
-        if (isOpen()) {
+        if (isOpen(file)) {
             if (canWriteToFile(file.openMode)) {
-                if (_handle->seekp(file.filePointer, std::ios_base::beg).good()) {
-                    if (_handle->write(data.c_str(), static_cast<std::streamsize>(data.size())).good()) {
+                if (openFiles[file.path]->seekp(file.filePointer, std::ios_base::beg).good()) {
+                    if (openFiles[file.path]->write(data.c_str(), static_cast<std::streamsize>(data.size())).good()) {
                         callbackError = synchronize(file);
                         file.size += data.size();
                     }
                 }
                 else {
                     callbackError = ErrorType::Failure;
+                    openFiles[file.path]->clear();
                 }
             }
         }
 
-        _handle->clear();
         writeDone = true;
         return callbackError;
     };
@@ -328,21 +312,24 @@ ErrorType FileSystem::writeNonBlocking(FileSystemTypes::File &file, const std::s
 
 ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
     bool synchronizeDone = false;
-    ErrorType callbackError = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::PrerequisitesNotMet;
 
     auto synchronizeCallback = [&]() -> ErrorType {
-        if (nullptr != _handle.get()) {
-            if (_handle->is_open()) {
-                if (_handle->flush().good()) {
-                    callbackError = ErrorType::Success;
-                }
+        if (isOpen(file)) {
+            if (openFiles[file.path]->flush().good()) {
+                callbackError = ErrorType::Success;
+            }
+            else if (!canWriteToFile(file.openMode)) {
+                //If the file wasn't opened for writing then there is nothing to sync anyway.
+                openFiles[file.path]->clear();
+                callbackError = ErrorType::Success;
             }
             else {
-                callbackError = ErrorType::PrerequisitesNotMet;
+                openFiles[file.path]->clear();
+                callbackError = ErrorType::Failure;
             }
         }
 
-        _handle->clear();
         synchronizeDone = true;
         return callbackError;
     };
@@ -362,22 +349,20 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
 
 ErrorType FileSystem::size(FileSystemTypes::File &file) {
     bool sizeQueryDone = false;
-    ErrorType callbackError = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::PrerequisitesNotMet;
 
     auto sizeQueryCallback = [&]() -> ErrorType {
-        if (_handle->is_open()) {
-            if(_handle->seekg(0, std::ios_base::end).good()) {
-                file.size = _handle->tellg();
-                if (_handle->seekg(0, std::ios_base::beg).good()) {
+        if (isOpen(file)) {
+            if(openFiles[file.path]->seekg(0, std::ios_base::end).good()) {
+                file.size = openFiles[file.path]->tellg();
+                if (openFiles[file.path]->seekg(0, std::ios_base::beg).good()) {
                     callbackError = ErrorType::Success;
                 }
             }
-        }
-        else {
-            callbackError = ErrorType::PrerequisitesNotMet;
+
+            openFiles[file.path]->clear();
         }
 
-        _handle->clear();
         sizeQueryDone = true;
         return callbackError;
     };
