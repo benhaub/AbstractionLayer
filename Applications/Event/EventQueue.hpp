@@ -58,9 +58,10 @@ class EventQueue {
      * @post The event is added to a FIFO queue and will be executed when it reaches the first position in the queue and this thread
      *       is running.
      * @post Ownership of the event is transferred to the queue if, and only if, ErrorType::Success is returned.
-     * @returns ErrorType::Success
+     * @returns ErrorType::Success if the event was added
      * @returns ErrorType::LimitReached if the maximum number of events has been reached.
      * @returns ErrorType::Timeout if the semaphore could not be obtained in time
+     * @returns the result of the event callback if the event is being added to from the same thread in which the event queue is run.
     */
     ErrorType addEvent(std::unique_ptr<EventAbstraction> &event);
 
