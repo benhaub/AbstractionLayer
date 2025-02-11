@@ -337,7 +337,6 @@ ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const Seconds timeZo
     return ErrorType::NotAvailable;
 }
 
-//TODO: This is definitely calculated wrong.
 ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     ErrorType error = ErrorType::Failure;
     std::string idleTime(4, 0);
@@ -389,6 +388,7 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
 
     elapsedTime = strtoul(elapsedTimeSeconds.c_str(), nullptr, 10);
 
+    //TODO: This is more like cpu time rather than idle time.
     if (0 != elapsedTime) {
         idlePercent = 100.0f - (((float)cpuTime / (float)elapsedTime) * 100.0f);
     }
