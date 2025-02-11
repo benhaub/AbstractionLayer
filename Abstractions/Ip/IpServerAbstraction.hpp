@@ -132,7 +132,7 @@ class IpServerAbstraction : public CommunicationProtocol {
      * @brief Receives data.
      * @param[in] buffer The data to receive.
      * @param[in] timeout The timeout in milliseconds.
-     * @param[out] socket The socket in which the data was received from.
+     * @param[out] socket If negative, will contain the socket in which the data was received from. Otherwise it will be the socket in which data is explicitely received from.
      * @returns ErrorType::Success if the data was received.
      * @returns ErrorType::Failure if the data was not received.
      * @returns ErrorType::Timeout if the timeout was reached.
@@ -143,7 +143,7 @@ class IpServerAbstraction : public CommunicationProtocol {
      * @brief Receives data.
      * @param[in] buffer The buffer to receive the data into.
      * @param[in] callback The callback to call when the data has been received.
-     * @param[out] socket The socket in which the data was received from.
+     * @param[out] socket If negative, will contain the socket in which the data was received from. Otherwise it will be the socket in which data is explicitely received from.
      * @returns ErrorType::Success if the data was received.
      * @returns ErrorType::Failure if the data was not received.
      * @returns ErrorType::Timeout if the timeout was reached.

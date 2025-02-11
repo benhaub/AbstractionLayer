@@ -293,7 +293,7 @@ class HttpServerAbstraction : public IpServerAbstraction {
      * @brief Receive a request
      * @param[in] request The request to receive
      * @param[in] timeout The timeout
-     * @param[in] socket The socket that the message was received on
+     * @param[out] socket If negative, will contain the socket in which the data was received from. Otherwise it will be the socket in which data is explicitely received from.
      * @returns ErrorType::Success if the request could be received
      * @returns ErrorType::Timeout if the receive could not be completed within the given timeout
      */
@@ -313,7 +313,7 @@ class HttpServerAbstraction : public IpServerAbstraction {
      * @brief Receive a request
      * @param[in] buffer The buffer to receive the request into
      * @param[in] timeout The timeout
-     * @param[out] socket The socket that the message was received on
+     * @param[out] socket If negative, will contain the socket in which the data was received from. Otherwise it will be the socket in which data is explicitely received from.
      * @param[in] callback The callback to call when the receive is complete
      * @returns ErrorType::Success if the request could be received
      * @returns ErrorType::Timeout if the receive could not be completed within the given timeout

@@ -216,17 +216,20 @@ ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds tim
 
 ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket) {
     bool received = false;
-    socket = -1;
     ErrorType callbackError = ErrorType::NoData;
 
     auto rx = [&]() -> ErrorType {
-        //TODO: What if we only receive part of the data. We will need to keep this socket in play until we receive the whole thing.
-        for (size_t i = 0; i < _connectedSockets.size(); i++) {
-            callbackError = network().rxBlocking(buffer, _connectedSockets[i], timeout);
-            socket = _connectedSockets[i];
-            if (ErrorType::Success == callbackError) {
-                break;
+        if (-1 == socket) {
+            for (size_t i = 0; i < _connectedSockets.size(); i++) {
+                callbackError = network().rxBlocking(buffer, _connectedSockets[i], timeout);
+                socket = _connectedSockets[i];
+                if (ErrorType::Success == callbackError) {
+                    break;
+                }
             }
+        }
+        else {
+            callbackError = network().rxBlocking(buffer, socket, timeout);
         }
 
         received = true;
