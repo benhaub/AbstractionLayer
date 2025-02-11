@@ -28,7 +28,15 @@ ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const M
     error = _ipServer->receiveBlocking(buffer, timeout, socket);
 
     if (ErrorType::Success == error && buffer.size() > 0) {
-        toHttpRequest(buffer, request);
+        if (ErrorType::Success == toHttpRequest(buffer, request)) {
+            while (request.messageBody.size() < request.headers.contentLength) {
+                buffer.resize(std::min(maxBufferSize, request.headers.contentLength - static_cast<Bytes>(request.messageBody.size())), 0);
+                error = _ipServer->receiveBlocking(buffer, timeout, socket);
+                if (ErrorType::Success == error && buffer.size() > 0) {
+                    request.messageBody.append(buffer);
+                }
+            }
+        }
     }
 
     return error;

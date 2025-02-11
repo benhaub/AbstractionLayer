@@ -325,9 +325,9 @@ class HttpServerAbstraction : public IpServerAbstraction {
 
     ErrorType findHeaderValue(const std::string &request, const char headerName[], const char value[]) {
         const size_t theIndexThatTheHeaderStartsAt = request.find(headerName);
-        const size_t theIndexThatTheHeaderEndsAt = request.find("\r\n");
+        const size_t theIndexThatTheHeaderEndsAt = request.find("\r\n", theIndexThatTheHeaderStartsAt);
 
-        assert(theIndexThatTheHeaderStartsAt >= theIndexThatTheHeaderEndsAt);
+        assert(theIndexThatTheHeaderStartsAt <= theIndexThatTheHeaderEndsAt);
 
         if (std::string::npos != theIndexThatTheHeaderStartsAt && std::string::npos != theIndexThatTheHeaderEndsAt) {
             std::string contentTypeHeader = request.substr(theIndexThatTheHeaderStartsAt, theIndexThatTheHeaderEndsAt);
@@ -570,7 +570,28 @@ class HttpServerAbstraction : public IpServerAbstraction {
         if (ErrorType::Success == findHeaderValue(buffer, "Content-Language:", "zh-Hant")) {request.headers.language.push_back(HttpServerTypes::Language::Chinese_Traditional);}
         if (ErrorType::Success == findHeaderValue(buffer, "Content-Language:", "zu")) {request.headers.language.push_back(HttpServerTypes::Language::isiZulu);}
 
-        return ErrorType::Success;
+        size_t contentLengthBegin = buffer.find("Content-Length:");
+        size_t contentLengthEnd = buffer.find("\r\n", contentLengthBegin);
+        if (std::string::npos != contentLengthBegin) {
+            contentLengthBegin += sizeof("Content-Length:");
+            request.headers.contentLength = std::stoi(buffer.substr(contentLengthBegin, contentLengthEnd - contentLengthBegin));
+        }
+        else {
+            request.headers.contentLength = 0;
+        }
+
+        const Bytes currentCapacity = request.messageBody.capacity();
+        const bool messageBodySizeNeedsToIncrease = currentCapacity < request.headers.contentLength;
+        request.messageBody.reserve(request.headers.contentLength);
+        const bool messageBodySizeWasNotIncreased = currentCapacity < request.messageBody.capacity();
+        if (messageBodySizeNeedsToIncrease && messageBodySizeWasNotIncreased) {
+            request.messageBody.resize(0);
+            return ErrorType::NoMemory;
+        }
+        else {
+            request.messageBody = buffer.substr(buffer.size() - request.headers.contentLength, request.headers.contentLength);
+            return ErrorType::Success;
+        }
     }
 
     const std::string toStringVersion(HttpServerTypes::Version version) {
