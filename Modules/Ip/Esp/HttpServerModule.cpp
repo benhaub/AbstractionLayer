@@ -1,5 +1,6 @@
 //AbstractionLayer
 #include "HttpServerModule.hpp"
+#include "Log.hpp"
 
 ErrorType HttpServer::listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) {
     _ipServer->setNetwork(this->network());
