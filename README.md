@@ -57,6 +57,10 @@ We say almost because it can be challenging to develop an abstraction layer that
   may immediately break on the next.
 - Using different compilers may show different warnings which can help find bugs that were previously not reported.
 
+### 4. Defer implementation details
+An abstraction layer increases your ability to [defer implementation details](https://youtu.be/2dKZ-dWaCiU?t=3612)
+- You could develop the code for the processor you have immediately available, get a sense of it's memory requirements, performance, and required features and port the code later to a more suitable processor. Remember from point 1 that once your application is working, porting the code will not effect it's correctness. If something goes wrong you know it's not at the application level.
+
 ## Factors that will complicate cross-platform design
 
 Complicate does not mean prohibit. It is still possible to manage these complications but there may not be an elegant solution.
@@ -66,4 +70,4 @@ If you build an application around some ROM code features (like a built in http 
 ### 2. Memory usage
 Some drivers might demand more memory (like stack) than other platform drivers so you will find that as you switch to other platforms your stack sizes need to increase.
 ### 3. Vendor tools
-Using some vendor tools (like flashers or partition managers) might not have a portable way of operating. You may need to setup various file/directory structures for tools on one platform to use while another tool uses a different set. Some of these tools might also introduce some hardcoded names that may need to be included in your application code (like the name of a partition on storage) which could be recognized by one platform but not the other.
+Using some vendor tools (like flashers or partition managers) might not have a portable way of operating. You may need to setup various file/directory structures for tools on one platform to use while another tool uses a different set. Some of these tools might also introduce some hardcoded names that may need to be included in your application code (like the name of a partition on storage) which could be recognized by one platform but not the other. It is in the vendors interest to creat dependencies on their tools so that you are more likely to continue to buy ICs from them so take care when choosing what vendor tools you will use and consider their portability ahead of time.
