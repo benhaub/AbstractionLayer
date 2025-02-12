@@ -34,7 +34,6 @@ ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const M
 
     error = toHttpRequest(netAppRequest, request);
 
-    //TODO: Mempool?
     delete netAppRequest.requestData.pMetadata;
     delete netAppRequest.requestData.pPayload;
 
@@ -254,7 +253,6 @@ void SimpleLinkNetAppRequestEventHandler(SlNetAppRequest_t *pNetAppRequest, SlNe
         .Handle = pNetAppRequest->Handle,
         .requestData = {
             .MetadataLen = pNetAppRequest->requestData.MetadataLen,
-            //TODO: mempool for OperatingSystem?
             .pMetadata = new unsigned char[pNetAppRequest->requestData.MetadataLen],
             .PayloadLen = pNetAppRequest->requestData.PayloadLen,
             .pPayload = new unsigned char[pNetAppRequest->requestData.PayloadLen],
