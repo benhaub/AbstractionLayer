@@ -25,6 +25,8 @@
  */
 template<Bytes _poolSize, Bytes _blockSize>
 class MemoryPool {
+
+    public:
     /// @brief Default constructor
     constexpr MemoryPool() {
         static_assert(_poolSize % _blockSize == 0, "Pool size should be a multiple of the block size");
@@ -37,8 +39,8 @@ class MemoryPool {
 
     /**
      * @brief Allocate memory from the pool.
-     * @param numBlocks The number of blocks to allocate.
-     * @param poolBlock The pointer to the block of memory allocated from the pool.
+     * @param[in] numBlocks The number of blocks to allocate.
+     * @param[out] poolBlock The pointer to the block of memory allocated from the pool.
      * @return ErrorType::Success if the memory was allocated
      * @returns ErrorType::NoMemory if the memory was not allocated.
      * @sa setData for a safe way to set the newly allocated block
@@ -55,6 +57,12 @@ class MemoryPool {
         return ErrorType::NoMemory;
     }
 
+    /**
+     * @brief Deallocate memory from the pool.
+     * @param[in] poolBlock The pointer to the block of memory to deallocate.
+     * @return ErrorType::Success if the memory was deallocated
+     * @returns ErrorType::InvalidParameter if the memory was not deallocated.
+     */
     ErrorType deallocate(uint8_t *&poolBlock) {
         for (int i = 0; i < sizeof(_blockAllocationMap); i++) {
             if (&_pool[i * _blockSize] == poolBlock) {
@@ -66,6 +74,14 @@ class MemoryPool {
         return ErrorType::InvalidParameter;
     }
 
+    /**
+     * @brief Set the data in a memory block.
+     * @param[in] poolBlock The pointer to the block of memory to set the data in.
+     * @param[in] data The data to set in the memory block.
+     * @param[in] dataSize The size of the data to set in the memory block.
+     * @return ErrorType::Success if the data was set
+     * @returns ErrorType::InvalidParameter if the data is too large to fit in the block.
+     */
     ErrorType setData(uint8_t *&poolBlock, const uint8_t *data, Bytes dataSize) {
         if (dataSize > _blockSize) {
             return ErrorType::InvalidParameter;
@@ -75,6 +91,11 @@ class MemoryPool {
         return ErrorType::Success;
     }
 
+    /**
+     * @brief Get the available memory in the pool.
+     * @param[out] size The size of the available memory in the pool.
+     * @return ErrorType::Success always
+     */
     ErrorType available(Bytes &size) const {
         size = 0;
         for (int i = 0; i < sizeof(_blockAllocationMap); i++) {
@@ -82,15 +103,25 @@ class MemoryPool {
                 size += _blockSize;
             }
         }
+
         return ErrorType::Success;
     }
 
-private:
+    private:
+    /// @brief The pool of memory
     std::array<uint8_t, _poolSize> _pool;
+    /// @brief A map of which blocks are available.
     uint8_t _blockAllocationMap[_poolSize / _blockSize] = {0};
 
+    /**
+     * @brief Check if a block is available.
+     * @param[in] i The index of the block to check.
+     * @return true if the block is available.
+     * @return false if the block is not available.
+     */
     ErrorType blockIsAvailable(int i) const {
-        return _blockAllocationMap[i] == 0;
+        constexpr int blockMarkedAvailable = 0;
+        return _blockAllocationMap[i] == blockMarkedAvailable;
     };
 };
 
