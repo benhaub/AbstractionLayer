@@ -36,8 +36,8 @@ class Wifi : public WifiAbstraction {
 
     ErrorType radioOn() override;
     ErrorType radioOff() override;
-    ErrorType setSsid(WifiConfig::Mode mode, std::string ssid) override;
-    ErrorType setPassword(WifiConfig::Mode mode, std::string password) override;
+    ErrorType setSsid(WifiConfig::Mode mode, const std::string &ssid) override;
+    ErrorType setPassword(WifiConfig::Mode mode, const std::string &password) override;
     ErrorType setMode(WifiConfig::Mode mode) override { _mode = mode; return ErrorType::Success; }
     ErrorType setAuthMode(WifiConfig::AuthMode authMode) override { _authMode = authMode; return ErrorType::Success; }
 
@@ -73,8 +73,8 @@ class Wifi : public WifiAbstraction {
     ErrorType initAccessPoint();
     ErrorType initStation();
 
-    ErrorType setStationSsid(std::string ssid);
-    ErrorType setAccessPointSsid(std::string ssid);
+    ErrorType setStationSsid(const std::string &ssid);
+    ErrorType setAccessPointSsid(const std::string &ssid);
 };
 
 #endif // __WIFI_MODULE_HPP__

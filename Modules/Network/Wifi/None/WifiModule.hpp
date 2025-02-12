@@ -28,8 +28,8 @@ class Wifi : public WifiAbstraction {
 
     ErrorType radioOn() override;
     ErrorType radioOff() override;
-    ErrorType setSsid(WifiConfig::Mode mode, std::string ssid) override;
-    ErrorType setPassword(WifiConfig::Mode mode, std::string password) override;
+    ErrorType setSsid(WifiConfig::Mode mode, const std::string &ssid) override;
+    ErrorType setPassword(WifiConfig::Mode mode, const std::string &password) override;
     ErrorType setMode(WifiConfig::Mode mode) override;
     ErrorType setAuthMode(WifiConfig::AuthMode authMode) override;
 };

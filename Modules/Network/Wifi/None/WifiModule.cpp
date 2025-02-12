@@ -48,11 +48,11 @@ ErrorType radioOff() {
     return ErrorType::NotImplemented;
 }
 
-ErrorType setSsid(WifiConfig::Mode mode, std::string ssid) {
+ErrorType setSsid(WifiConfig::Mode mode, const std::string &ssid) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType setPassword(WifiConfig::Mode mode, std::string password) {
+ErrorType setPassword(WifiConfig::Mode mode, const std::string &password) {
     return ErrorType::NotImplemented;
 }
 

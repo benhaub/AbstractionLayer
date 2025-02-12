@@ -164,7 +164,7 @@ ErrorType Wifi::radioOff() {
     return fromPlatformError(result);
 }
 
-ErrorType Wifi::setSsid(WifiConfig::Mode mode, std::string ssid) {
+ErrorType Wifi::setSsid(WifiConfig::Mode mode, const std::string &ssid) {
     if (mode != WifiConfig::Mode::AccessPoint) {
         return ErrorType::NotSupported;
     }
@@ -177,7 +177,7 @@ ErrorType Wifi::setSsid(WifiConfig::Mode mode, std::string ssid) {
     return fromPlatformError(result);
 }
 
-ErrorType Wifi::setPassword(WifiConfig::Mode mode, std::string password) {
+ErrorType Wifi::setPassword(WifiConfig::Mode mode, const std::string &password) {
     //Passwords have length requirements based on the authorization mode
     assert(WifiConfig::AuthMode::Unknown != _authMode);
 
@@ -186,9 +186,13 @@ ErrorType Wifi::setPassword(WifiConfig::Mode mode, std::string password) {
     }
 
     if (WifiConfig::AuthMode::Wpa == _authMode || WifiConfig::AuthMode::WpaWpa2 == _authMode) {
-        if (password.size() < 8 || password.size() > 63) {
+        if (password.size() < 8) {
             return ErrorType::InvalidParameter;
         }
+    }
+
+    if (password.size() > 64) {
+        return ErrorType::InvalidParameter;
     }
 
     signed short result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_PASSWORD, password.size(), reinterpret_cast<const unsigned char *>(password.c_str()));

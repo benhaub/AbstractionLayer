@@ -278,7 +278,7 @@ ErrorType Wifi::mainLoop() {
     return runNextEvent();
 }
 
-ErrorType Wifi::setSsid(WifiConfig::Mode mode, std::string ssid) {
+ErrorType Wifi::setSsid(WifiConfig::Mode mode, const std::string &ssid) {
     if (WifiConfig::Mode::Station == mode) {
         setStationSsid(ssid);
     }
@@ -292,19 +292,19 @@ ErrorType Wifi::setSsid(WifiConfig::Mode mode, std::string ssid) {
     return ErrorType::Success; 
 }
 
-ErrorType Wifi::setStationSsid(std::string ssid) {
+ErrorType Wifi::setStationSsid(const std::string &ssid) {
     _stationSsid = ssid;
 
     return ErrorType::Success;
 }
 
-ErrorType Wifi::setAccessPointSsid(std::string ssid) {
+ErrorType Wifi::setAccessPointSsid(const std::string &ssid) {
     _accessPointSsid = ssid;
 
     return ErrorType::Success;
 }
 
-ErrorType Wifi::setPassword(WifiConfig::Mode mode, std::string password) {
+ErrorType Wifi::setPassword(WifiConfig::Mode mode, const std::string &password) {
     ErrorType error = ErrorType::Success;
 
     if (WifiConfig::Mode::Station == mode) {

@@ -37,8 +37,8 @@ class Wifi : public WifiAbstraction {
 
     ErrorType radioOn() override { return ErrorType::NotAvailable; }
     ErrorType radioOff() override { return ErrorType::NotAvailable; }
-    ErrorType setSsid(WifiConfig::Mode mode, std::string ssid) override { return ErrorType::NotAvailable; }
-    ErrorType setPassword(WifiConfig::Mode mode, std::string password) override { return ErrorType::NotAvailable; }
+    ErrorType setSsid(WifiConfig::Mode mode, const std::string &ssid) override { return ErrorType::NotAvailable; }
+    ErrorType setPassword(WifiConfig::Mode mode, const std::string &password) override { return ErrorType::NotAvailable; }
     ErrorType setMode(WifiConfig::Mode mode) override { return ErrorType::NotAvailable; }
     ErrorType setAuthMode(WifiConfig::AuthMode authMode) override { return ErrorType::NotAvailable; }
 
