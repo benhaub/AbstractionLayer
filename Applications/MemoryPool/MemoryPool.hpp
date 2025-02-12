@@ -16,7 +16,11 @@
 
 /**
  * @class MemoryPool
- * @brief Statically allocate memory and then dynamically allocate memory from it.
+ * @brief Statically allocate memory and then allocate memory from it at runtime as if it were dynamically allocated.
+ * @details If we get carried away with features and trying to manage fragementation, we'll just end up implementing a heap allocator.
+ *          The mempool is meant to be simple and naive so that it saves time in comparision to a heap allocator. If you are using a mempool,
+ *          you know ahead of time what the max size of the allocations will be and the max number of items that will could be allocated at once.
+ *          If you do not know this then a mempool is not a good idea.
  * @pre _poolSize must be a multiple of _blockSize otherwise you're just wasting memory!
  * @tparam _poolSize The size of the pool.
  * @tparam _blockSize The size of each block in the pool.
@@ -39,17 +43,15 @@ class MemoryPool {
 
     /**
      * @brief Allocate memory from the pool.
-     * @param[in] numBlocks The number of blocks to allocate.
      * @param[out] poolBlock The pointer to the block of memory allocated from the pool.
      * @return ErrorType::Success if the memory was allocated
      * @returns ErrorType::NoMemory if the memory was not allocated.
      * @sa setData for a safe way to set the newly allocated block
      */ 
-    ErrorType allocate(Count numBlocks, uint8_t *&poolBlock) {
+    ErrorType allocate(uint8_t *&poolBlock) {
         for (int i = 0; i < sizeof(_blockAllocationMap); i++) {
             if (blockIsAvailable(i)) {
-                _blockAllocationMap[i] = 1;
-                poolBlock = &_pool[i * _blockSize];
+                poolBlock = &_pool[i];
                 return ErrorType::Success;
             }
         }
@@ -65,7 +67,7 @@ class MemoryPool {
      */
     ErrorType deallocate(uint8_t *&poolBlock) {
         for (int i = 0; i < sizeof(_blockAllocationMap); i++) {
-            if (&_pool[i * _blockSize] == poolBlock) {
+            if (&_pool[i] == poolBlock) {
                 _blockAllocationMap[i] = 0;
                 return ErrorType::Success;
             }
