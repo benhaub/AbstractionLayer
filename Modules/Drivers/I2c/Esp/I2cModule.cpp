@@ -1,7 +1,7 @@
 //AbstractionLayer
 #include "I2cModule.hpp"
-//AbstractionLayer Applications
 #include "Log.hpp"
+#include "OperatingSystemModule.hpp"
 
 #define I2C_ESP_MODULE_DEBUG 1
 
@@ -95,8 +95,9 @@ ErrorType I2c::txBlocking(const std::string &data, uint8_t deviceAddress, uint8_
 #endif
 
     if (I2cConfig::Mode::Controller == _mode) {
-        //TODO: Need millisecondsToTicks
-        error = fromPlatformError(i2c_master_write_to_device(i2cPort, deviceAddress, reinterpret_cast<const uint8_t *>(writeData.data()), writeData.size(), timeout));
+        Ticks timeToWait;
+        OperatingSystem::Instance().millisecondsToTicks(timeout, timeToWait);
+        error = fromPlatformError(i2c_master_write_to_device(i2cPort, deviceAddress, reinterpret_cast<const uint8_t *>(writeData.data()), writeData.size(), timeToWait));
     }
     else if (I2cConfig::Mode::Target == _mode) {
         error = ErrorType::NotImplemented;
@@ -107,7 +108,7 @@ ErrorType I2c::txBlocking(const std::string &data, uint8_t deviceAddress, uint8_
 
     return error;
 }
-//TODO
+
 ErrorType I2c::txNonBlocking(const std::shared_ptr<std::string> data, uint8_t deviceAddress, uint8_t registerAddress, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     return ErrorType::NotImplemented;
 }
