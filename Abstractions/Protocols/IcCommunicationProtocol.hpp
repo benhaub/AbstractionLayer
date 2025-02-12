@@ -28,7 +28,6 @@ namespace IcCommunicationProtocolTypes {
 /**
  * @class IcCommunicationProtocol
  * @brief Interface for integrated circuit communication
- * TODO: Why did I suddenly switch from abtraction suffixes to protocol? Do I need two different abstractions?
 */
 class IcCommunicationProtocol : public EventQueue {
 
