@@ -91,6 +91,7 @@ class WifiAbstraction : public NetworkAbstraction {
      * @brief Set the ssid for the selected mode.
      * @param[in] mode The wifi mode to set the SSID for
      * @param[in] ssid The ssid to set
+     * @post No changes take effect until either initialization is complete or wifi is reinitialized
      */
     virtual ErrorType setSsid(WifiConfig::Mode mode, std::string ssid) = 0;
     /**
@@ -98,18 +99,21 @@ class WifiAbstraction : public NetworkAbstraction {
      * @pre Since passwords have length requirements based on the authorization mode, you must call setAuthMode first.
      * @param[in] mode The wifi mode to set the password for
      * @param[in] password The password to set
+     * @post No changes take effect until either initialization is complete or wifi is reinitialized
     */
     virtual ErrorType setPassword(WifiConfig::Mode mode, std::string password) = 0;
     /**
      * @brief set the wifi mode.
      * @param[in] mode The mode to set.
      * @sa WifiConfig::Mode
+     * @post No changes take effect until either initialization is complete or wifi is reinitialized
     */
     virtual ErrorType setMode(WifiConfig::Mode mode) = 0;
     /**
      * @brief set the wifi authentication mode.
      * @param[in] authMode The authentication mode to set.
      * @sa WifiConfig::AuthMode
+     * @post No changes take effect until either initialization is complete or wifi is reinitialized
      */
     virtual ErrorType setAuthMode(WifiConfig::AuthMode authMode) = 0;
 

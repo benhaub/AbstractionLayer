@@ -293,21 +293,18 @@ ErrorType Wifi::setSsid(WifiConfig::Mode mode, std::string ssid) {
 }
 
 ErrorType Wifi::setStationSsid(std::string ssid) {
-    //TODO: Support setting after wifi init has been done.
     _stationSsid = ssid;
 
     return ErrorType::Success;
 }
 
 ErrorType Wifi::setAccessPointSsid(std::string ssid) {
-    //TODO: Support setting after wifi init has been done.
     _accessPointSsid = ssid;
 
     return ErrorType::Success;
 }
 
 ErrorType Wifi::setPassword(WifiConfig::Mode mode, std::string password) {
-    //TODO: Support setting after wifi init has been done.
     ErrorType error = ErrorType::Success;
 
     if (WifiConfig::Mode::Station == mode) {
