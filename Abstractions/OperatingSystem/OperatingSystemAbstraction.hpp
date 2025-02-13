@@ -48,7 +48,6 @@ namespace OperatingSystemConfig {
         Watchdog,    //!< Reset (software or hardware) due to interrupt watchdog
         DeepSleep,   //!< Reset after exiting deep sleep mode
         BrownOut,    //!< Brownout reset (software or hardware)
-        Sdio         //!< Reset over SDIO
     };
 
     /**
