@@ -18,7 +18,7 @@ class IpCellularClient : public IpClientAbstraction {
     IpCellularClient() : IpClientAbstraction() {}
     ~IpCellularClient() = default;
 
-    ErrorType connectTo(const std::string &hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &socket, const Milliseconds timeout) override;
+    ErrorType connectTo(const std::string &hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &socket, const Milliseconds timeout) override;
     ErrorType disconnect() override;
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) override;
     ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) override;

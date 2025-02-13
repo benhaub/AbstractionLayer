@@ -1,6 +1,6 @@
 #include "IpCellularClientModule.hpp"
 
-ErrorType IpClient::connectTo(const std::string hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &socket, const Milliseconds timeout) {
+ErrorType IpClient::connectTo(const std::string hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &socket, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 ErrorType IpClient::disconnect() {

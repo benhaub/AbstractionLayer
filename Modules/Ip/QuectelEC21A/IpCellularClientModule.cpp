@@ -16,22 +16,22 @@
  * @param version The IP client version
  * @return The Quectel context type
  */
-static ContextType ToQuectelContextType(const IpClientSettings::Version version) {
+static ContextType ToQuectelContextType(const IpClientTypes::Version version) {
     switch (version) {
-        case IpClientSettings::Version::IPv4:
+        case IpClientTypes::Version::IPv4:
             return ContextType::Ipv4;
-        case IpClientSettings::Version::IPv6:
+        case IpClientTypes::Version::IPv6:
             return ContextType::Ipv6;
         default:
             return ContextType::Unknown;
     }
 }
 
-static std::string ToQuectelProtocol(const IpClientSettings::Protocol protocol) {
+static std::string ToQuectelProtocol(const IpClientTypes::Protocol protocol) {
     switch (protocol) {
-        case IpClientSettings::Protocol::Tcp:
+        case IpClientTypes::Protocol::Tcp:
             return "TCP";
-        case IpClientSettings::Protocol::Udp:
+        case IpClientTypes::Protocol::Udp:
             return "UDP";
         default:
             return "";
@@ -51,7 +51,7 @@ static int8_t ToQuectelAccessMode(const CellularConfig::AccessMode accessMode) {
     }
 }
 
-ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &socket, const Milliseconds timeout) {
+ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &socket, const Milliseconds timeout) {
     bool doneConnecting = false;
     ErrorType error = ErrorType::Failure;
 
@@ -64,7 +64,7 @@ ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port po
 
         disconnect();
 
-        if (version != IpClientSettings::Version::IPv4) {
+        if (version != IpClientTypes::Version::IPv4) {
             PLT_LOGE(TAG, "only IPv4 is supported");
             error = ErrorType::NotSupported;
             doneConnecting = true;

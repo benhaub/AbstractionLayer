@@ -49,7 +49,7 @@ static void *startClientThread(void *arg) {
     ErrorType error;
     constexpr Milliseconds timeout = 1000;
 
-    error = wifiNetworkClient.client->connectTo("localhost", ServerPort, IpClientSettings::Protocol::Tcp, IpClientSettings::Version::IPv4, socket, timeout);
+    error = wifiNetworkClient.client->connectTo("localhost", ServerPort, IpClientTypes::Protocol::Tcp, IpClientTypes::Version::IPv4, socket, timeout);
     if (ErrorType::Success != error) {
         PLT_LOGE(TAG, "Failed to connect to server");
         assert(false);

@@ -18,18 +18,10 @@
 #include <cassert>
 
 /**
- * @struct ClientStatus
- * @brief The status of the client
+ * @namespace IpClientTypes
+ * @brief Types for the IP client
 */
-struct ClientStatus {
-    bool connected; ///< True when the client is connected to the host.
-};
-
-/**
- * @namespace IpClientSettings
- * @brief Settings for the IP client
-*/
-namespace IpClientSettings {
+namespace IpClientTypes {
 
     /**
      * @enum Version
@@ -50,6 +42,15 @@ namespace IpClientSettings {
         Tcp,         ///< Transmission Control Protocol
         Udp          ///< User Datagram Protocol
     };
+
+    /**
+     * @struct ClientStatus
+     * @brief The status of the client
+    */
+    struct ClientStatus {
+        bool connected; ///< True when the client is connected to the host.
+    };
+
 }
 
 class NetworkAbstraction;
@@ -77,7 +78,7 @@ class IpClientAbstraction : public CommunicationProtocol {
      * @param[in] protocol The protocol to use
      * @sa IpSettings::Protocol
      * @param[in] version The version to use
-     * @sa IpClientSettings::Version
+     * @sa IpClientTypes::Version
      * @param[out] socket The socket that was created
      * @param[in] timeout The amount of time to wait to connect to the host
      * @post The caller is blocked until the connection is made or the timeout is reached. The connection can still be made after the timeout is reached.
@@ -86,7 +87,7 @@ class IpClientAbstraction : public CommunicationProtocol {
      * @returns Fnd::ErrorType::NotImplemented if not implemented
      * @returns Fnd::ErrorType::NotSupported if the network interface doesn't support the operation
     */
-    virtual ErrorType connectTo(const std::string &hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &socket, const Milliseconds timeout) = 0;
+    virtual ErrorType connectTo(const std::string &hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &socket, const Milliseconds timeout) = 0;
     /**
      * @brief Disconnect this client
      * @returns Fnd::ErrorType::Success on success
@@ -100,13 +101,13 @@ class IpClientAbstraction : public CommunicationProtocol {
     /// @brief Get the socket as a mutable reference
     Socket &sock() { return _socket; }
     /// @brief Get the protocol as a constant reference
-    const IpClientSettings::Protocol &protocolConst() const { return _protocol; }
+    const IpClientTypes::Protocol &protocolConst() const { return _protocol; }
     /// @brief Get the protocol as a mutable reference
-    IpClientSettings::Protocol &protocol() { return _protocol; }
+    IpClientTypes::Protocol &protocol() { return _protocol; }
     /// @brief Get the version as a constant reference
-    const IpClientSettings::Version &versionConst() const { return _version; }
+    const IpClientTypes::Version &versionConst() const { return _version; }
     /// @brief Get the version as a mutable reference
-    IpClientSettings::Version &version() { return _version; }
+    IpClientTypes::Version &version() { return _version; }
     /// @brief Get the hostname as a constant reference
     const std::string &hostnameConst() const { return _hostname; }
     /// @brief Get the hostname as a mutable reference
@@ -120,9 +121,9 @@ class IpClientAbstraction : public CommunicationProtocol {
     /// @brief Get the network abstraction that this client communicates on as a constant reference
     const NetworkAbstraction &networkConst() const { assert(nullptr != _network); return *_network; }
     /// @brief Get the status of the client as a const reference
-    const ClientStatus &statusConst() const { return _status; }
+    const IpClientTypes::ClientStatus &statusConst() const { return _status; }
     /// @brief Get the status of the client as a mutable reference
-    ClientStatus &status() { return _status; }
+    IpClientTypes::ClientStatus &status() { return _status; }
 
     /// @brief Set the network abstraction that this client communicates on.
     /// @param[in] network The network abstraction to use.
@@ -132,15 +133,15 @@ class IpClientAbstraction : public CommunicationProtocol {
     /// @brief The socket
     Socket _socket = -1;
     /// @brief The protocol
-    IpClientSettings::Protocol _protocol = IpClientSettings::Protocol::Unknown;
+    IpClientTypes::Protocol _protocol = IpClientTypes::Protocol::Unknown;
     /// @brief The IP version
-    IpClientSettings::Version _version = IpClientSettings::Version::Unknown;
+    IpClientTypes::Version _version = IpClientTypes::Version::Unknown;
     /// @brief The hostname
     std::string _hostname = "";
     /// @brief The port
     Port _port = 0;
     /// @brief The status of the client
-    ClientStatus _status;
+    IpClientTypes::ClientStatus _status;
 
     private:
     /// @brief The network interface that this client communicates on.

@@ -21,7 +21,7 @@
  * call fcntl and set O_NONBLOCK on the socket it would fail to connect every time so there
  * was quite a symphony of bugs there.
 */
-ErrorType IpClient::connectTo(const std::string &hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &sock, const Milliseconds timeout) {
+ErrorType IpClient::connectTo(const std::string &hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) {
     sock = -1;
     bool doneConnecting = false;
     ErrorType error = ErrorType::Failure;
@@ -29,7 +29,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
     auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
         disconnect();
 
-        if (version != IpClientSettings::Version::IPv4) {
+        if (version != IpClientTypes::Version::IPv4) {
             PLT_LOGE(TAG, "only IPv4 is supported");
             error =  ErrorType::NotSupported;
             doneConnecting = true;

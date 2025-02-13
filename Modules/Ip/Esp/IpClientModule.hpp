@@ -17,7 +17,7 @@ class IpClient : public IpClientAbstraction {
     IpClient() : IpClientAbstraction() {};
     ~IpClient() = default;
 
-    ErrorType connectTo(const std::string &hostname, const Port port, const IpClientSettings::Protocol protocol, const IpClientSettings::Version version, Socket &sock, const Milliseconds timeout) override;
+    ErrorType connectTo(const std::string &hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) override;
     ErrorType disconnect() override;
     ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
     ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
@@ -25,22 +25,22 @@ class IpClient : public IpClientAbstraction {
     ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout);
 
     private:
-    int toPosixFamily(IpClientSettings::Version version) {
+    int toPosixFamily(IpClientTypes::Version version) {
         switch (version) {
-            case IpClientSettings::Version::IPv4:
+            case IpClientTypes::Version::IPv4:
                 return AF_INET;
-            case IpClientSettings::Version::IPv6:
+            case IpClientTypes::Version::IPv6:
                 return AF_INET6;
             default:
                 return AF_UNSPEC;
         }
     }
 
-    int toPosixSocktype(IpClientSettings::Protocol protocol) {
+    int toPosixSocktype(IpClientTypes::Protocol protocol) {
         switch (protocol) {
-            case IpClientSettings::Protocol::Tcp:
+            case IpClientTypes::Protocol::Tcp:
                 return SOCK_STREAM;
-            case IpClientSettings::Protocol::Udp:
+            case IpClientTypes::Protocol::Udp:
                 return SOCK_DGRAM;
             default:
                 return SOCK_RAW;
