@@ -57,6 +57,8 @@ namespace OperatingSystemConfig {
      */
     struct Status {
         Count threadCount; ///< The number of threads currently running.
+        Percent idle;      ///< The percent of time the system spent in idle mode. Definition varies depending on the underlying operating sytem.
+        Seconds upTime;    ///< The amount of time since the system was last reset.
     };
 }
 
