@@ -25,11 +25,6 @@ ErrorType StatusLogger::toggleLoggingFor(NetworkAbstraction *network, bool toggl
     return error;
 }
 
-ErrorType StatusLogger::toggleLoggingFor(HttpServerAbstraction *httpServer, bool toggleOn) {
-    toggleOn ? _httpServer = httpServer : _httpServer = nullptr;
-    return ErrorType::Success;
-}
-
 ErrorType StatusLogger::toggleLoggingFor(IpClientAbstraction *ipClient, bool toggleOn) {
     toggleOn ? _ipClient = ipClient : _ipClient = nullptr;
     return ErrorType::Success;
@@ -59,30 +54,33 @@ void StatusLogger::printLog(void) {
 #ifdef configTIMER_TASK_STACK_DEPTH
     static_assert(configTIMER_TASK_STACK_DEPTH >= 256, "StatusLogger: Timer stack too small");
 #endif
-    if (nullptr != _httpServer) {
-        PLT_LOGI(TAG, "<HttpServerStatus> <Listening:%s, Active Connections:%u>",
-        (_httpServer->statusConst().listening ? "true" : "false"), _httpServer->statusConst().activeConnections);
-    }
     if (nullptr != _ipClient) {
-        PLT_LOGI(TAG, "<IpClientStatus> <Connected:%s>", (_ipClient->statusConst().connected ? "true" : "false"));
+        const IpClientTypes::ClientStatus &status = _ipClient->statusConst();
+        PLT_LOGI(TAG, "<IpClientStatus> <Connected:%s>", (status.connected ? "true" : "false"));
     }
     if (nullptr != _ipServer) {
+        const IpServerTypes::ServerStatus &status = _ipServer->statusConst();
         PLT_LOGI(TAG, "<IpServerStatus> <Listening:%s, Active Connections:%u>",
-        (_ipServer->statusConst().listening ? "true" : "false"), _ipServer->statusConst().activeConnections);
+        (status.listening ? "true" : "false"), status.activeConnections);
     }
     if (nullptr != _wifi) {
-        PLT_LOGI(TAG, "<WifiStatus> <Connected:%s, Signal Strength (dBm):%d>", (_wifi->statusConst().isUp ? "true" : "false"), _wifi->statusConst().signalStrength);
+        const NetworkTypes::Status &status = _wifi->statusConst();
+        PLT_LOGI(TAG, "<WifiStatus> <Connected:%s, Signal Strength (dBm):%d>", (status.isUp ? "true" : "false"), status.signalStrength);
     }
     if (nullptr != _cellular) {
-        PLT_LOGI(TAG, "<CellularStatus> <Connected:%s, Signal Strength (dBm):%d>", (_cellular->statusConst().isUp ? "true" : "false"), _cellular->statusConst().signalStrength);
+        const NetworkTypes::Status &status = _cellular->statusConst();
+        PLT_LOGI(TAG, "<CellularStatus> <Connected:%s, Signal Strength (dBm):%d>", (status.isUp ? "true" : "false"), status.signalStrength);
     }
     if (nullptr != _operatingSystem) {
-        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time:%d, Free Heap (%%):%.1f>", _operatingSystem->statusConst().threadCount, _operatingSystem->statusConst().idle, _operatingSystem->statusConst().upTime, _operatingSystem->statusConst().freeHeap);
+        const OperatingSystemConfig::Status &status = _operatingSystem->statusConst();
+        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time:%d, Free Heap (%%):%.1f>", status.threadCount, status.idle, status.upTime, status.freeHeap);
     }
     if (nullptr != _filesystem) {
-        PLT_LOGI(TAG, "<FileSystemStatus> <Mounted:%s, Open Files:%u, Free (%%):%.1f>", (_filesystem->statusConst().mounted ? "true" : "false"), _filesystem->statusConst().openedFiles, _filesystem->statusConst().freeSpace);
+        const FileSystemTypes::Status &status = _filesystem->statusConst();
+        PLT_LOGI(TAG, "<FileSystemStatus> <Mounted:%s, Open Files:%u, Free (%%):%.1f>", (status.mounted ? "true" : "false"), status.openedFiles, status.freeSpace);
     }
     if (nullptr != _storage) {
-        PLT_LOGI(TAG, "<StorageStatus> <Initialized:%s>", (_storage->statusConst().isInitialized ? "true" : "false"));
+        const StorageTypes::Status &status = _storage->statusConst();
+        PLT_LOGI(TAG, "<StorageStatus> <Initialized:%s>", (status.isInitialized ? "true" : "false"));
     }
 }

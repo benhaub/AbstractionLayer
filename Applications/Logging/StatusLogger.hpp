@@ -45,7 +45,6 @@ class StatusLogger {
     /// @brief Get the logging interval as a constant reference
     const Seconds &loggingInterval() const { return _interval; }
 
-    ErrorType toggleLoggingFor(HttpServerAbstraction *httpServer, bool toggleOn);
     ErrorType toggleLoggingFor(IpClientAbstraction *ipClient, bool toggleOn);
     ErrorType toggleLoggingFor(IpServerAbstraction *ipServer, bool toggleOn);
     ErrorType toggleLoggingFor(NetworkAbstraction *network, bool toggleOn);
@@ -57,7 +56,6 @@ class StatusLogger {
     Seconds _interval = 60;
     Id _logTimer;
 
-    HttpServerAbstraction *_httpServer = nullptr;
     IpClientAbstraction *_ipClient = nullptr;
     IpServerAbstraction *_ipServer = nullptr;
     CellularAbstraction *_cellular = nullptr;
