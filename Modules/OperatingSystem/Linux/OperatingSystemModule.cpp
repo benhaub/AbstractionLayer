@@ -515,10 +515,10 @@ ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::string &memoryReg
     ErrorType error = ErrorType::Failure;
 
     //Will return the size of RAM in bytes.
-    std::string commandFinal("free -b | egrep Mem | tr -s \" \" | cut -d \" \" -f2");
+    const char commandFinal[] = "free -b | egrep Mem | tr -s \" \" | cut -d \" \" -f2";
     std::string ramSize(4, 0);
     
-    FILE* pipe = popen(commandFinal.c_str(), "r");
+    FILE* pipe = popen(commandFinal, "r");
     if (nullptr != pipe) {
         size_t bytesRead = fread(ramSize.data(), sizeof(uint8_t), ramSize.capacity(), pipe);
         if (feof(pipe) || bytesRead == ramSize.capacity()) {
@@ -571,7 +571,7 @@ void OperatingSystem::callTimerCallback(timer_t *const posixTimerId) {
     if (timers.contains(*posixTimerId)) {
         timers[*posixTimerId].callback();
 
-        const bool timerIsOneShot = timers[*posixTimerId].autoReload;
+        const bool timerIsOneShot = !timers[*posixTimerId].autoReload;
         if (timerIsOneShot) {
             deleteTimer(timers[*posixTimerId].id);
         }

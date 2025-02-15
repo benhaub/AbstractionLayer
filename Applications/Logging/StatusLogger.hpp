@@ -24,15 +24,17 @@ class StatusLogger {
 
     public:
     StatusLogger(Seconds interval) {
-        if (ErrorType::Success == OperatingSystem::Instance().createTimer(logTimer, interval*1000, true, std::bind(&StatusLogger::printLog, this))) {
-            if (ErrorType::Success != OperatingSystem::Instance().startTimer(logTimer, 0)) {
+        if (ErrorType::Success == OperatingSystem::Instance().createTimer(_logTimer, interval*1000, true, std::bind(&StatusLogger::printLog, this))) {
+            if (ErrorType::Success != OperatingSystem::Instance().startTimer(_logTimer, 0)) {
                 PLT_LOGW(TAG, "Failed to start timer for status logging");
             }
+
+            _interval = interval;
         }
     }
     ~StatusLogger() {
-        OperatingSystem::Instance().stopTimer(logTimer, 0);
-        OperatingSystem::Instance().deleteTimer(logTimer);
+        OperatingSystem::Instance().stopTimer(_logTimer, 0);
+        OperatingSystem::Instance().deleteTimer(_logTimer);
     }
 
     /// @brief Tag for logging
@@ -53,7 +55,7 @@ class StatusLogger {
 
     private:
     Seconds _interval = 60;
-    Id logTimer;
+    Id _logTimer;
 
     HttpServerAbstraction *_httpServer = nullptr;
     IpClientAbstraction *_ipClient = nullptr;
