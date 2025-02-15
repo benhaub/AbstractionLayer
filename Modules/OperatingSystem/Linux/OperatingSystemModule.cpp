@@ -1,7 +1,7 @@
 //Modules
 #include "OperatingSystemModule.hpp"
+#include "MemoryPool.hpp"
 //C++
-#include <ctime>
 #include <cstdio>
 //C
 #include <string.h>
@@ -12,6 +12,23 @@
 #include <fcntl.h>
 #include <sys/statvfs.h>
 #include <sys/stat.h>
+#include <signal.h> //For timers
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void TimerCallback(union sigval val);
+
+#ifdef __cplusplus
+}
+#endif
+
+//Declared global to keep the memory pool header out of the hpp file otherwise it creates some unwanted dependancies
+//(the Event library would need to link with memory pool).
+namespace {
+    MemoryPool<timer_t, sizeof(timer_t)*8> timerIdPool;
+}
 
 ErrorType OperatingSystem::delay(const Milliseconds delay) {
     usleep(delay*1000);
@@ -71,7 +88,6 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
     }
 
     number = newThread.threadId;
-    threads[name].posixThreadId = 0; //TEMP FOR DEBUG.
 
     InitThreadArgs *initThreadArgs = new InitThreadArgs{
         .arguments = arguments,
@@ -240,19 +256,115 @@ ErrorType OperatingSystem::decrementSemaphore(const std::string &name) {
 }
 
 ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, const bool autoReload, std::function<void(void)> callback) {
-    return ErrorType::NotImplemented;
+    struct sigevent signalEvent;
+    timer_t *posixTimerId = nullptr;
+    if (ErrorType::NoMemory == timerIdPool.allocate(posixTimerId)) {
+        posixTimerId = new timer_t;
+    }
+    assert(nullptr != posixTimerId);
+    Timer newTimer = {
+        .callback = callback,
+        .id = nextTimerId++,
+        .posixTimerId = posixTimerId,
+        .autoReload = autoReload,
+        .period = period
+    };
+
+    signalEvent.sigev_notify = SIGEV_THREAD;
+    signalEvent.sigev_notify_function = TimerCallback;
+    //The value of this does not seem to be saved probably because it's local to this frame. Could I used my own ID instead?
+    signalEvent.sigev_value.sival_ptr = posixTimerId;
+    //Will fail silently (timer doesn't seem to run at all) if this is not set.
+    signalEvent.sigev_notify_attributes = nullptr;
+
+    if (0 == timer_create(CLOCK_REALTIME, &signalEvent, posixTimerId)) {
+        timers[*posixTimerId] = newTimer;
+        timer = newTimer.id;
+        return ErrorType::Success;
+    }
+
+    return fromPlatformError(errno);
 }
 
 ErrorType OperatingSystem::deleteTimer(const Id timer) {
-    return ErrorType::NotImplemented;
+   auto itr = timers.begin();
+
+    while (itr != timers.end()) {
+        if (timer == itr->second.id) {
+            const timer_t posixTimerId = itr->first;
+            timer_delete(posixTimerId);
+            if (ErrorType::InvalidParameter == timerIdPool.deallocate(itr->second.posixTimerId)) {
+                delete itr->second.posixTimerId;
+            }
+            timers.erase(itr);
+            return ErrorType::Success;
+        }
+    }
+
+    return ErrorType::NoData;
 }
 
 ErrorType OperatingSystem::startTimer(const Id timer, const Milliseconds timeout) {
-    return ErrorType::NotImplemented;
+    struct itimerspec timerSpec;
+    timerSpec.it_value.tv_sec = 0;
+    ErrorType error = ErrorType::NoData;
+
+    for (const auto &nextTimer : timers) {
+        if (nextTimer.second.id == timer) {
+            const Timer &timer = nextTimer.second;
+            if (timer.autoReload) {
+                //Arm the timer by setting any subfield of it_value to a non-zero value
+                timerSpec.it_value.tv_sec = 1;
+                timerSpec.it_value.tv_nsec = 0;
+                //Timer is autoreload, so the period goes into the interval field.
+                timerSpec.it_interval.tv_sec = timer.period / 1000;
+                timerSpec.it_interval.tv_nsec = 0;
+            }
+            else {
+                timerSpec.it_value.tv_sec = timer.period / 1000;
+                timerSpec.it_value.tv_nsec = 0;
+                //Both subfeilds are zero, so when the timer expires just once according to it_value.
+                timerSpec.it_interval.tv_sec = 0;
+                timerSpec.it_interval.tv_nsec = 0;
+            }
+        }
+
+        //Must not be greater than this according to the docs. Meaning you can't put more than a second into the nsec member.
+        assert(timerSpec.it_value.tv_nsec <= 999999999);
+
+        //You probably didn't mean to set these to zero. On Linux the posix timer granularity is a second at minimum so if you set timeout
+        //to less than a second the timers will expire right away or never be armed.
+        assert(timerSpec.it_value.tv_sec > 0 || timerSpec.it_value.tv_nsec > 0);
+
+        //The flag is zero so the timer times relatively instead expiring when the system clock reaches the value specified by it_value.
+        //Last argument is nullptr since we don't want the output parameter of old_time which is the itimerspec that new time replaced.
+        if (0 == timer_settime(nextTimer.first, 0, &timerSpec, nullptr)) {
+            return ErrorType::Success;
+        }
+        else {
+            perror("timer_settime");
+            error = fromPlatformError(errno);
+        }
+    }
+
+    return error;
 }
 
 ErrorType OperatingSystem::stopTimer(const Id timer, const Milliseconds timeout) {
-    return ErrorType::NotImplemented;
+    auto itr = timers.begin();
+    while(itr != timers.end()) {
+        if (itr->second.id == timer) {
+            struct itimerspec timerSpec;
+            timerSpec.it_value.tv_sec = timerSpec.it_value.tv_nsec = 0;
+            constexpr int timerIsAbsolute = 0;
+            constexpr itimerspec *doNotReturnPreviousTime = nullptr;
+            if (0 == timer_settime(itr->first, timerIsAbsolute, &timerSpec, doNotReturnPreviousTime)) {
+                return ErrorType::Success;
+            }
+        }
+    }
+
+    return ErrorType::Failure;
 }
 
 ErrorType OperatingSystem::createQueue(const std::string &name, const Bytes size, const Count length) {
@@ -430,10 +542,10 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &mem
     ErrorType error = ErrorType::Failure;
 
     //Will return the size of available RAM in bytes.
-    std::string commandFinal("free -b | egrep Mem | tr -s \" \" | cut -d \" \" -f4");
+    const char commandFinal[] = "free -b | egrep Mem | tr -s \" \" | cut -d \" \" -f4";
     std::string ramSize(4, 0);
     
-    FILE* pipe = popen(commandFinal.c_str(), "r");
+    FILE* pipe = popen(commandFinal, "r");
     if (nullptr != pipe) {
         size_t bytesRead = fread(ramSize.data(), sizeof(uint8_t), ramSize.capacity(), pipe);
         if (feof(pipe) || bytesRead == ramSize.capacity()) {
@@ -452,3 +564,30 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &mem
 
     return error;
 }
+
+void OperatingSystem::callTimerCallback(timer_t *const posixTimerId) {
+    assert(nullptr != posixTimerId);
+
+    if (timers.contains(*posixTimerId)) {
+        timers[*posixTimerId].callback();
+
+        const bool timerIsOneShot = timers[*posixTimerId].autoReload;
+        if (timerIsOneShot) {
+            deleteTimer(timers[*posixTimerId].id);
+        }
+    }
+
+    return;
+}
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void TimerCallback(union sigval val) {
+    OperatingSystem::Instance().callTimerCallback((timer_t *)val.sival_ptr);
+}
+
+#ifdef __cplusplus
+}
+#endif

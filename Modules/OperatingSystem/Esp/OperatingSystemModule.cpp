@@ -396,10 +396,11 @@ ErrorType OperatingSystem::availableHeapSize(Kilobytes &size, const std::string 
     return ErrorType::Success;
 }
 
-void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
+void OperatingSystem::callTimerCallback(timer_t timer) {
     timers[timer].callback();
 
-    if (timers[timer].autoReload) {
+    const bool timerIsOneShot = timers[timer].autoReload;
+    if (timerIsOneShot) {
         deleteTimer(timers[timer].id);
     }
 

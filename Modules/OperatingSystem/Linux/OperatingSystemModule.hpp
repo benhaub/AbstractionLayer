@@ -3,13 +3,13 @@
 
 //AbstractionLayer
 #include "OperatingSystemAbstraction.hpp"
-//Common
 #include "Global.hpp"
 //Posix
 #include <sched.h>
 #include <semaphore.h>
 //C++
 #include <cassert>
+#include <ctime>
 #include <map>
 
 class OperatingSystem : public OperatingSystemAbstraction, public Global<OperatingSystem> {
@@ -75,13 +75,25 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
         }
     }
 
-    private:
+    void callTimerCallback(timer_t *const posixTimerId);
 
+    private:
     struct Thread {
         pthread_t posixThreadId;
         std::string name;
         Id threadId;
     };
+
+    struct Timer {
+        std::function<void(void)> callback;
+        Id id;
+        timer_t *posixTimerId;
+        bool autoReload;
+        Milliseconds period;
+    };
+
+    std::map<timer_t, Timer> timers;
+    Id nextTimerId = 0;
 
     std::map<std::string, Thread> threads;
     std::map<std::string, sem_t *> semaphores;
