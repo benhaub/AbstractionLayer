@@ -74,10 +74,10 @@ void StatusLogger::printLog(void) {
         PLT_LOGI(TAG, "<CellularStatus> <Connected:%s, Signal Strength (dBm):%d>", (_cellular->statusConst().isUp ? "true" : "false"), _cellular->statusConst().signalStrength);
     }
     if (nullptr != _operatingSystem) {
-        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%f.1, Up Time:%d>", _operatingSystem->statusConst().threadCount, _operatingSystem->statusConst().idle, _operatingSystem->statusConst().upTime);
+        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time:%d, Free Heap (%%):%.1f>", _operatingSystem->statusConst().threadCount, _operatingSystem->statusConst().idle, _operatingSystem->statusConst().upTime, _operatingSystem->statusConst().freeHeap);
     }
     if (nullptr != _filesystem) {
-        PLT_LOGI(TAG, "<FileSystemStatus> <Mounted:%s, Open Files:%u, Free (%%):%f.1>", (_filesystem->statusConst().mounted ? "true" : "false"), _filesystem->statusConst().openedFiles, (_filesystem->statusConst().freeSize / _filesystem->statusConst().maxSize));
+        PLT_LOGI(TAG, "<FileSystemStatus> <Mounted:%s, Open Files:%u, Free (%%):%.1f>", (_filesystem->statusConst().mounted ? "true" : "false"), _filesystem->statusConst().openedFiles, _filesystem->statusConst().freeSpace);
     }
     if (nullptr != _storage) {
         PLT_LOGI(TAG, "<StorageStatus> <Initialized:%s>", (_storage->statusConst().isInitialized ? "true" : "false"));

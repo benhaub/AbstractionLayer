@@ -53,11 +53,13 @@ namespace OperatingSystemConfig {
     /**
      * @struct Status
      * @brief The status of the operating system
+     * TODO: When we ask for the status we should update it in all modules that have a status.
      */
     struct Status {
         Count threadCount; ///< The number of threads currently running.
         Percent idle;      ///< The percent of time the system spent in idle mode. Definition varies depending on the underlying operating sytem.
         Seconds upTime;    ///< The amount of time since the system was last reset.
+        Percent freeHeap;  ///< Free memory on the system.
     };
 }
 
@@ -365,7 +367,26 @@ class OperatingSystemAbstraction {
      * @brief Get the status of the operatings system as a const reference.
      * @returns The status of the operating system.
     */
-    const OperatingSystemConfig::Status &statusConst() const { return _status; }
+    const OperatingSystemConfig::Status &statusConst() {
+        idlePercentage(_status.idle);
+        Ticks now;
+        getSystemTick(now);
+        Milliseconds timeNow;
+        ticksToMilliseconds(now, timeNow);
+        _status.upTime = timeNow / 1000;
+        Bytes maxHeap;
+        maxHeapSize(maxHeap, "");
+        Bytes availableHeap;
+        availableHeapSize(availableHeap, "");
+        if (maxHeap == 0) {
+            _status.freeHeap = 0;
+        }
+        else {
+            _status.freeHeap = (availableHeap / maxHeap) * 100;
+        }
+
+        return _status;
+    }
 
     protected:
     /// @brief The status of the operating system

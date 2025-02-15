@@ -139,7 +139,10 @@ class NetworkAbstraction : public EventQueue {
     virtual ErrorType getSignalStrength(DecibelMilliWatts &signalStrength) = 0;
 
     /// @brief The current status of the network interface as a const reference.
-    const NetworkTypes::Status &statusConst() { return _status; }
+    const NetworkTypes::Status &statusConst() {
+        getSignalStrength(_status.signalStrength);
+        return _status;
+    }
 
     protected:
     /// @brief The current status of the network interface

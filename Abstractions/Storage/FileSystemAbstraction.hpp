@@ -29,8 +29,7 @@ namespace FileSystemTypes {
     */
     struct Status {
         bool mounted;       ///< True if the file system is mounted, false otherwise.
-        Bytes maxSize;      ///< The maximum size of the file system.
-        Bytes freeSize;     ///< The free size of the file system.
+        Percent freeSpace;  ///< The free space on the file system.
         Count openedFiles;  ///< The number of files opened on the file system.
     };
 
@@ -231,7 +230,20 @@ class FileSystemAbstraction {
     /// @brief Get the name of the file system as a constant reference
     const std::string &nameConst() const { return _name; }
     /// @brief Get the status of the file system as a constant reference
-    const FileSystemTypes::Status &statusConst() const { return _status; }
+    const FileSystemTypes::Status &statusConst() {
+        Bytes available;
+        availablePartition(available);
+        Bytes maxSize;
+        maxPartitionSize(maxSize);
+        if (maxSize != 0) {
+            _status.freeSpace = 0;
+        }
+        else {
+            _status.freeSpace = (available / maxSize) * 100;
+        }
+
+        return _status;
+    }
 
     /**
      * @brief Check if a file must exist

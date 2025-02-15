@@ -122,8 +122,6 @@ class IpClientAbstraction : public CommunicationProtocol {
     const NetworkAbstraction &networkConst() const { assert(nullptr != _network); return *_network; }
     /// @brief Get the status of the client as a const reference
     const IpClientTypes::ClientStatus &statusConst() const { return _status; }
-    /// @brief Get the status of the client as a mutable reference
-    IpClientTypes::ClientStatus &status() { return _status; }
 
     /// @brief Set the network abstraction that this client communicates on.
     /// @param[in] network The network abstraction to use.

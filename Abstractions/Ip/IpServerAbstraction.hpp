@@ -169,13 +169,14 @@ class IpServerAbstraction : public CommunicationProtocol {
     NetworkAbstraction &network() { assert(nullptr != _network); return *_network; }
     ///@brief Get the network abstraction as a constant reference
     const NetworkAbstraction &networkConst() const { assert(nullptr != _network); return *_network; }
-    ///@brief Get a mutable reference to the status of the server
-    IpServerTypes::ServerStatus &status() { return _status; }
-    ///@brief Get a constant reference to the status of the server
-    const IpServerTypes::ServerStatus &statusConst() const { return _status; }
     ///@brief Set the network abstraction
     ///@param[in] network The network abstraction to set
     ErrorType setNetwork(NetworkAbstraction &network) { _network = &network; return ErrorType::Success; }
+    ///@brief Get a constant reference to the status of the server
+    const IpServerTypes::ServerStatus &statusConst() {
+        _status.activeConnections = _connectedSockets.size();
+        return _status;
+    }
 
     protected:
     /// @brief The socket on which we listen for new connections
