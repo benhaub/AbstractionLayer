@@ -9,6 +9,22 @@
 #include "FileSystemAbstraction.hpp"
 #include "StorageAbstraction.hpp"
 
+ErrorType StatusLogger::toggleLoggingFor(NetworkAbstraction *network, bool toggleOn) {
+    ErrorType error = ErrorType::Success;
+
+    if (dynamic_cast<WifiAbstraction *>(network)) {
+        toggleOn ? _wifi = dynamic_cast<WifiAbstraction *>(network) : _wifi = nullptr;
+    }
+    else if (dynamic_cast< CellularAbstraction *>(network)) {
+        toggleOn ? _cellular = dynamic_cast< CellularAbstraction *>(network) : _cellular = nullptr;
+    }
+    else {
+        error = ErrorType::InvalidParameter;
+    }
+
+    return error;
+}
+
 ErrorType StatusLogger::toggleLoggingFor(HttpServerAbstraction *httpServer, bool toggleOn) {
     toggleOn ? _httpServer = httpServer : _httpServer = nullptr;
     return ErrorType::Success;
@@ -21,16 +37,6 @@ ErrorType StatusLogger::toggleLoggingFor(IpClientAbstraction *ipClient, bool tog
 
 ErrorType StatusLogger::toggleLoggingFor(IpServerAbstraction *ipServer, bool toggleOn) {
     toggleOn ? _ipServer = ipServer : _ipServer = nullptr;
-    return ErrorType::Success;
-}
-
-ErrorType StatusLogger::toggleLoggingFor(CellularAbstraction *cellular, bool toggleOn) {
-    toggleOn ? _cellular = cellular : _cellular = nullptr;
-    return ErrorType::Success;
-}
-
-ErrorType StatusLogger::toggleLoggingFor(WifiAbstraction *wifi, bool toggleOn) {
-    toggleOn ? _wifi = wifi : _wifi = nullptr;
     return ErrorType::Success;
 }
 
@@ -62,7 +68,7 @@ void StatusLogger::printLog(void) {
         (_ipServer->statusConst().listening ? "true" : "false"), _ipServer->statusConst().activeConnections);
     }
     if (nullptr != _wifi) {
-        PLT_LOGI(TAG, "<WifiStatus> <isConnected:%s, Signal Strength (dBm):%d>", (_wifi->statusConst().isUp ? "true" : "false"), _wifi->statusConst().signalStrength);
+        PLT_LOGI(TAG, "<WifiStatus> <Connected:%s, Signal Strength (dBm):%d>", (_wifi->statusConst().isUp ? "true" : "false"), _wifi->statusConst().signalStrength);
     }
     if (nullptr != _cellular) {
         PLT_LOGI(TAG, "<CellularStatus> <Connected:%s, Signal Strength (dBm):%d>", (_cellular->statusConst().isUp ? "true" : "false"), _cellular->statusConst().signalStrength);

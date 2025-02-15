@@ -24,7 +24,11 @@ class StatusLogger {
 
     public:
     StatusLogger(Seconds interval) {
-        OperatingSystem::Instance().createTimer(logTimer, interval*1000, true, std::bind(&StatusLogger::printLog, this));
+        if (ErrorType::Success == OperatingSystem::Instance().createTimer(logTimer, interval*1000, true, std::bind(&StatusLogger::printLog, this))) {
+            if (ErrorType::Success != OperatingSystem::Instance().startTimer(logTimer, 0)) {
+                PLT_LOGW(TAG, "Failed to start timer for status logging");
+            }
+        }
     }
     ~StatusLogger() {
         OperatingSystem::Instance().stopTimer(logTimer, 0);
@@ -42,9 +46,7 @@ class StatusLogger {
     ErrorType toggleLoggingFor(HttpServerAbstraction *httpServer, bool toggleOn);
     ErrorType toggleLoggingFor(IpClientAbstraction *ipClient, bool toggleOn);
     ErrorType toggleLoggingFor(IpServerAbstraction *ipServer, bool toggleOn);
-    ErrorType toggleLoggingFor(CellularAbstraction *cellular, bool toggleOn);
     ErrorType toggleLoggingFor(NetworkAbstraction *network, bool toggleOn);
-    ErrorType toggleLoggingFor(WifiAbstraction *wifi, bool toggleOn);
     ErrorType toggleLoggingFor(OperatingSystemAbstraction *operatingSystem, bool toggleOn);
     ErrorType toggleLoggingFor(FileSystemAbstraction *filesystem, bool toggleOn);
     ErrorType toggleLoggingFor(StorageAbstraction *storage, bool toggleOn);
