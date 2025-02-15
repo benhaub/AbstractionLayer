@@ -56,6 +56,9 @@ ErrorType StatusLogger::toggleLoggingFor(StorageAbstraction *storage, bool toggl
 }
 
 void StatusLogger::printLog(void) {
+#ifdef configTIMER_TASK_STACK_DEPTH
+    static_assert(configTIMER_TASK_STACK_DEPTH >= 256, "StatusLogger: Timer stack too small");
+#endif
     if (nullptr != _httpServer) {
         PLT_LOGI(TAG, "<HttpServerStatus> <Listening:%s, Active Connections:%u>",
         (_httpServer->statusConst().listening ? "true" : "false"), _httpServer->statusConst().activeConnections);

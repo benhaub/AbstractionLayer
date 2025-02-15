@@ -13,6 +13,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "timers.h"
 
 class OperatingSystem : public OperatingSystemAbstraction, public Global<OperatingSystem> {
 
@@ -53,7 +54,7 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
     ErrorType maxHeapSize(Bytes &size, const std::string &memoryRegionName) override;
     ErrorType availableHeapSize(Bytes &size, const std::string &memoryRegionName) override;
 
-    void callTimerCallback(timer_t timer);
+    void callTimerCallback(TimerHandle_t timer);
 
     size_t toCc32xxPriority(OperatingSystemConfig::Priority priority) {
         assert(configMAX_PRIORITIES >= 5);
@@ -85,7 +86,6 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
         std::function<void(void)> callback;
         Id id;
         bool autoReload;
-        Milliseconds period;
     };
 
     Id nextTimerId = 0;
@@ -93,7 +93,7 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
     std::map<std::string, Thread> threads;
     std::map<std::string, sem_t> semaphores;
     std::map<std::string, QueueHandle_t> queues;
-    std::map<timer_t, Timer> timers;
+    std::map<TimerHandle_t, Timer> timers;
 };
 
 #endif // __OPERATING_SYSTEM_HPP__

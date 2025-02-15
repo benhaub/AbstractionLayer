@@ -327,7 +327,7 @@ ErrorType OperatingSystem::getSoftwareVersion(std::string &softwareVersion) {
 
 ErrorType OperatingSystem::getResetReason(OperatingSystemConfig::ResetReason &resetReason) {
     ErrorType error;
-    resetReason = toCbtResetReason(esp_reset_reason(), error);
+    resetReason = toPlatformResetReason(esp_reset_reason(), error);
     return error;
 }
 
@@ -396,17 +396,18 @@ ErrorType OperatingSystem::availableHeapSize(Kilobytes &size, const std::string 
     return ErrorType::Success;
 }
 
-void OperatingSystem::callTimerCallback(timer_t timer) {
-    timers[timer].callback();
+void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
+    if (timers.contains(timer)) {
+        timers[timer].callback();
 
-    const bool timerIsOneShot = timers[timer].autoReload;
-    if (timerIsOneShot) {
-        deleteTimer(timers[timer].id);
+        const bool timerIsOneShot = !timers[timer].autoReload;
+        if (timerIsOneShot) {
+            deleteTimer(timers[timer].id);
+        }
     }
 
     return;
 }
-
 
 #ifdef __cplusplus
 extern "C" {

@@ -95,7 +95,7 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
         }
     }
 
-    OperatingSystemConfig::ResetReason toCbtResetReason(uint8_t resetReason, ErrorType &error) {
+    OperatingSystemConfig::ResetReason toPlatformResetReason(uint8_t resetReason, ErrorType &error) {
         error = ErrorType::Success;
 
         switch (resetReason) {
@@ -118,7 +118,6 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
             case ESP_RST_BROWNOUT:
                 return OperatingSystemConfig::ResetReason::BrownOut;
             case ESP_RST_SDIO:
-                return OperatingSystemConfig::ResetReason::Sdio;
             default:
                 error = ErrorType::Failure;
                 return OperatingSystemConfig::ResetReason::Unknown;

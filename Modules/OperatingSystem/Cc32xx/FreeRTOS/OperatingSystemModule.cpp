@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-void TimerCallback(union sigval val);
+void TimerCallback(TimerHandle_t timer);
 
 #ifdef __cplusplus
 }
@@ -209,61 +209,30 @@ ErrorType OperatingSystem::decrementSemaphore(const std::string &name) {
 }
 
 ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, const bool autoReload, std::function<void(void)> callback) {
-    timer_t timerId;
+    TimerHandle_t timerHandle = nullptr;
     Timer newTimer = {
         .callback = callback,
         .id = nextTimerId++,
-        .autoReload = autoReload,
-        .period = period
+        .autoReload = autoReload
     };
-    struct sigevent sev;
-    struct itimerspec its;
 
-    sev.sigev_notify = SIGEV_SIGNAL;
-    sev.sigev_value.sival_ptr = reinterpret_cast<void *>(timerId);
-    sev.sigev_notify_function = TimerCallback;
-    sev.sigev_notify_attributes = nullptr;
-
-    const bool timerCreated = 0 == timer_create(CLOCK_MONOTONIC, &sev, &timerId);
-
-    if (timerCreated) {
-        timers[timerId] = newTimer;
+    if (nullptr != (timerHandle = xTimerCreate(nullptr, pdMS_TO_TICKS(period), autoReload, nullptr, TimerCallback))) {
+        timers[timerHandle] = newTimer;
         timer = newTimer.id;
         return ErrorType::Success;
     }
-
-    //Make sure the timer does not start.
-    constexpr uint8_t stopTimer = 0;
-    its.it_value.tv_nsec = its.it_value.tv_sec = stopTimer;
-
-    //Start the timer
-    if (autoReload) {
-        //If the interval specifies a non-zero value (either field) then is will fire a time continuously on the period.
-        its.it_interval.tv_sec = its.it_interval.tv_nsec = period * 1E6;
-    }
     else {
-        constexpr uint8_t doNotAutoReload = 0;
-        //For a single shot timer, the interval value is zero (both values are zero)
-        its.it_interval.tv_sec = its.it_interval.tv_nsec = doNotAutoReload;
-    }
-
-    constexpr int flags = 0;
-    int res = timer_settime(timerId, flags, &its, nullptr);
-
-    if (0 != res) {
         deleteTimer(timer);
-        return fromPlatformError(res);
+        return ErrorType::Failure;
     }
-
-    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::deleteTimer(const Id timer) {
-    auto itr = timers.begin();
+   auto itr = timers.begin();
 
     while (itr != timers.end()) {
         if (timer == itr->second.id) {
-            timer_delete(itr->first);
+            xTimerDelete(itr->first, 0);
             timers.erase(itr);
             return ErrorType::Success;
         }
@@ -274,40 +243,28 @@ ErrorType OperatingSystem::deleteTimer(const Id timer) {
 
 ErrorType OperatingSystem::startTimer(const Id timer, const Milliseconds timeout) {
     auto itr = timers.begin();
-    struct itimerspec *timerspec = nullptr;
-
-    while (itr != timers.end()) {
-        if (timer == itr->second.id) {
-            timer_gettime(itr->first, timerspec);
-            //For auto reload timers, the it_value needs to be non-zero (either field) for the timer to start
-            //timing according to the interval field. For single shot timers, the it_value field should be the value
-            //that the timer will count down from.
-            assert(nullptr != timerspec);
-            timerspec->it_value.tv_nsec = itr->second.period * 1E6;
-            return ErrorType::Success;
+    while(itr != timers.end()) {
+        if (itr->second.id == timer) {
+            if (pdTRUE == xTimerStart(itr->first, pdMS_TO_TICKS(timeout))) {
+                return ErrorType::Success;
+            }
         }
     }
 
-    return ErrorType::NoData;
+    return ErrorType::Failure;
 }
 
 ErrorType OperatingSystem::stopTimer(const Id timer, const Milliseconds timeout) {
     auto itr = timers.begin();
-    struct itimerspec *timerspec = nullptr;
-
-    while (itr != timers.end()) {
-        if (timer == itr->second.id) {
-            timer_gettime(itr->first, timerspec);
-            //For auto reload timers, the it_value needs to be non-zero (either field) for the timer to start
-            //timing according to the interval field. For single shot timers, the it_value field should be the value
-            //that the timer will count down from.
-            assert(nullptr != timerspec);
-            timerspec->it_value.tv_nsec = timerspec->it_value.tv_sec = 0;
-            return ErrorType::Success;
+    while(itr != timers.end()) {
+        if (itr->second.id == timer) {
+            if (pdTRUE == xTimerStop(itr->first, pdMS_TO_TICKS(timeout))) {
+                return ErrorType::Success;
+            }
         }
     }
 
-    return ErrorType::NoData;
+    return ErrorType::Failure;
 }
 
 ErrorType OperatingSystem::createQueue(const std::string &name, const Bytes size, const Count length) {
@@ -446,8 +403,6 @@ ErrorType OperatingSystem::reset() {
     return ErrorType::NotAvailable;
 }
 
-//On system that use Posix, you shouldn't attempt to set the time of day, and the time that can be obtained
-//using the posix API will already be the correct time that you need as soon as you start your application.
 ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) {
     return ErrorType::NotAvailable;
 }
@@ -464,24 +419,25 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &mem
     return ErrorType::NotImplemented;
 }
 
-void OperatingSystem::callTimerCallback(timer_t timer) {
-    timers[timer].callback();
+void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
+    if (timers.contains(timer)) {
+        timers[timer].callback();
 
-    if (timers[timer].autoReload) {
-        deleteTimer(timers[timer].id);
+        const bool timerIsOneShot = !timers[timer].autoReload;
+        if (timerIsOneShot) {
+            deleteTimer(timers[timer].id);
+        }
     }
 
     return;
 }
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void TimerCallback(union sigval val) {
-    //Only the value of the pointer matters. Not what it pointer to.
-    //You do not need to worry about keeping the timer_t memory in scope.
-    timer_t timer = reinterpret_cast<timer_t>(val.sival_ptr);
+void TimerCallback(TimerHandle_t timer) {
     OperatingSystem::Instance().callTimerCallback(timer);
 }
 
