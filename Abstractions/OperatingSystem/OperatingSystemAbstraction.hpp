@@ -51,15 +51,24 @@ namespace OperatingSystemConfig {
     };
 
     /**
+     * @struct MemoryRegionInfo
+     * @brief The free memory in each memory region.
+     */
+    struct MemoryRegionInfo {
+        const std::string name;   ///< The name of the memory region
+        Percent free;             ///< The free memory in the region
+    };
+
+    /**
      * @struct Status
      * @brief The status of the operating system
      * TODO: When we ask for the status we should update it in all modules that have a status.
      */
     struct Status {
-        Count threadCount; ///< The number of threads currently running.
-        Percent idle;      ///< The percent of time the system spent in idle mode. Definition varies depending on the underlying operating sytem.
-        Seconds upTime;    ///< The amount of time since the system was last reset.
-        Percent freeHeap;  ///< Free memory on the system.
+        Count threadCount;                           ///< The number of threads currently running.
+        Percent idle;                                ///< The percent of time the system spent in idle mode. Definition varies depending on the underlying operating sytem.
+        Seconds upTime;                              ///< The amount of time since the system was last reset.
+        std::vector<MemoryRegionInfo> memoryRegion;  ///< Free memory on the system.
     };
 }
 
@@ -362,7 +371,15 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Failure otherwise
      */
     virtual ErrorType availableHeapSize(Bytes &size, const std::string &memoryRegionName) = 0;
-
+    /**
+     * @brief Get the names of all the memory regions
+     * @param[out] memoryRegions The names of all the memory regions
+     * @returns ErrorType::Success if the memory regions were obtained
+     * @returns ErrorType::NotImplemented if getting the memory regions is not implemented
+     * @returns ErrorType::Failure otherwise
+     * @post If there are no memory regions, memoryRegions will be empty and the return type is ErrorType::Success.
+     */
+    virtual ErrorType memoryRegions(std::vector<OperatingSystemConfig::MemoryRegionInfo> &memoryRegions) = 0;
     /**
      * @brief Get the status of the operatings system as a const reference.
      * @returns The status of the operating system.
@@ -374,15 +391,13 @@ class OperatingSystemAbstraction {
         Milliseconds timeNow;
         ticksToMilliseconds(now, timeNow);
         _status.upTime = timeNow / 1000;
-        Bytes maxHeap;
-        maxHeapSize(maxHeap, "");
-        Bytes availableHeap;
-        availableHeapSize(availableHeap, "");
-        if (maxHeap == 0) {
-            _status.freeHeap = 0;
-        }
-        else {
-            _status.freeHeap = (availableHeap / maxHeap) * 100;
+        memoryRegions(_status.memoryRegion);
+        for (auto &memoryRegion : _status.memoryRegion) {
+            Bytes maxHeap;
+            maxHeapSize(maxHeap, memoryRegion.name);
+            Bytes availableHeap;
+            availableHeapSize(availableHeap, memoryRegion.name);
+            memoryRegion.free = (availableHeap / maxHeap) * 100;
         }
 
         return _status;

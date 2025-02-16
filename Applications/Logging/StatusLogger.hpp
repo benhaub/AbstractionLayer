@@ -56,14 +56,14 @@ class StatusLogger {
     Seconds _interval = 60;
     Id _logTimer;
 
-    IpClientAbstraction *_ipClient = nullptr;
-    IpServerAbstraction *_ipServer = nullptr;
-    CellularAbstraction *_cellular = nullptr;
-    NetworkAbstraction *_network = nullptr;
-    WifiAbstraction *_wifi = nullptr;
+    std::vector<IpClientAbstraction *> _ipClients;
+    std::vector<IpServerAbstraction *> _ipServers;
+    std::vector<CellularAbstraction *> _cellularNetworks;
+    std::vector<WifiAbstraction *> _wifiNetworks;
+    //I hope for your sake that you are not working with two operating systems at the same time
     OperatingSystemAbstraction *_operatingSystem = nullptr;
-    FileSystemAbstraction *_filesystem = nullptr;
-    StorageAbstraction *_storage = nullptr;
+    std::vector<FileSystemAbstraction *> _filesystems;
+    std::vector<StorageAbstraction *> _storageMediums;
 
     void printLog(void);
 };

@@ -9,7 +9,7 @@ ErrorType FileSystem::mount() {
     const bool fileSystemHasNotBeenMounted = !_status.mounted;
     if (fileSystemHasNotBeenMounted) {
         _mountPrefix.assign(_storage.rootPrefixConst());
-        _mountPrefix.append("/").append(_name);
+        _mountPrefix.append("/").append(_status.partitionName);
         mkdir(_mountPrefix.c_str(), S_IRWXU); 
         _status.mounted = true;
     }

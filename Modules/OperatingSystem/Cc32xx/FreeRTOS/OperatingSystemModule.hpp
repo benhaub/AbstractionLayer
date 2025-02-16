@@ -53,11 +53,15 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
     ErrorType idlePercentage(Percent &idlePercent) override;
     ErrorType maxHeapSize(Bytes &size, const std::string &memoryRegionName) override;
     ErrorType availableHeapSize(Bytes &size, const std::string &memoryRegionName) override;
+    ErrorType memoryRegions(std::vector<OperatingSystemConfig::MemoryRegionInfo> &memoryRegions) override {
+        memoryRegions.clear();
+        return ErrorType::Success;
+    }
 
     void callTimerCallback(TimerHandle_t timer);
 
     size_t toCc32xxPriority(OperatingSystemConfig::Priority priority) {
-        assert(configMAX_PRIORITIES >= 5);
+        static_assert(configMAX_PRIORITIES >= 5);
 
         switch (priority) {
             case OperatingSystemConfig::Priority::Highest:

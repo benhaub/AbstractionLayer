@@ -55,6 +55,11 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
     ErrorType idlePercentage(Percent &idlePercent) override;
     ErrorType maxHeapSize(Bytes &size, const std::string &memoryRegionName) override;
     ErrorType availableHeapSize(Bytes &size, const std::string &memoryRegionName) override;
+    ErrorType memoryRegions(std::vector<OperatingSystemConfig::MemoryRegionInfo> &memoryRegions) override {
+        memoryRegions.emplace_back("DRAM", 0);
+        memoryRegions.emplace_back("SPIRAM", 0);
+        return ErrorType::Success;
+    }
 
     void callTimerCallback(TimerHandle_t timer);
 
