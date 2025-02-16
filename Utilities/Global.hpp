@@ -62,6 +62,10 @@ template <class T, typename... Args> class Global {
         return *(self().get());
     }
 
+    static bool isInitialized() {
+        return nullptr != self().get();
+    }
+
     Global(Global const&) = delete;
     void operator=(Global const&) = delete;
 
