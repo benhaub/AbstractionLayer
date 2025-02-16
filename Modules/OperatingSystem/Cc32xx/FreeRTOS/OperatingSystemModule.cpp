@@ -469,7 +469,9 @@ void vApplicationIdleHook() {
         averageTimeBetweenIdleHookCalls = (averageTimeBetweenIdleHookCalls * (numberOfTimesIdleHookHasBeenCalled - 1) + timeBetweenIdleHookCalls) / numberOfTimesIdleHookHasBeenCalled;
         const Ticks timeNotSpentInIdle = averageTimeBetweenIdleHookCalls * numberOfTimesIdleHookHasBeenCalled;
         Percent idle = ((1.0f - (float)timeNotSpentInIdle / timeNow) * 100.0f);
-        OperatingSystem::Instance().idlePercentage(idle);
+        if (OperatingSystem::isInitialized()) {
+            OperatingSystem::Instance().idlePercentage(idle);
+        }
     }
 
     numberOfTimesIdleHookHasBeenCalled++;
