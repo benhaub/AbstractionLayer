@@ -402,10 +402,14 @@ class OperatingSystemAbstraction {
             else {
                 for (auto &memoryRegion : _status.memoryRegion) {
                     Bytes maxHeap;
-                    maxHeapSize(maxHeap, memoryRegion.name);
-                    Bytes availableHeap;
-                    availableHeapSize(availableHeap, memoryRegion.name);
-                    memoryRegion.free = (availableHeap / maxHeap) * 100;
+                    if (ErrorType::Success == maxHeapSize(maxHeap, memoryRegion.name)) {
+                        Bytes availableHeap;
+                        if (ErrorType::Success == availableHeapSize(availableHeap, memoryRegion.name)) {
+                            if (0 != maxHeap) {
+                                memoryRegion.free = ((float)availableHeap / maxHeap) * 100.0f;
+                            }
+                        }
+                    }
                 }
             }
         }

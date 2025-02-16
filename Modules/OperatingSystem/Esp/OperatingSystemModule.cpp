@@ -348,10 +348,13 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
 }
 
 ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::string &memoryRegionName) {
-    if (0 == memoryRegionName.compare(0, sizeof("DRAM")-1, "DRAM")) {
+    if (memoryRegionName.empty()) {
+        return ErrorType::InvalidParameter;
+    }
+    else if (0 == memoryRegionName.compare("DRAM")) {
         size = heap_caps_get_total_size(MALLOC_CAP_8BIT);
     }
-    else if (0 == memoryRegionName.compare(0, sizeof("SPIRAM")-1, "SPIRAM")) {
+    else if (0 == memoryRegionName.compare("SPIRAM")) {
         size = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
     }
 
@@ -359,10 +362,13 @@ ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::string &memoryReg
 }
 
 ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &memoryRegionName) {
-    if (0 == memoryRegionName.compare(0, sizeof("DRAM")-1, "DRAM")) {
+    if (memoryRegionName.empty()) {
+        return ErrorType::InvalidParameter;
+    }
+    else if (0 == memoryRegionName.compare("DRAM")) {
         size = heap_caps_get_free_size(MALLOC_CAP_8BIT);
     }
-    else if (0 == memoryRegionName.compare(0, sizeof("SPIRAM")-1, "SPIRAM")) {
+    else if (0 == memoryRegionName.compare("SPIRAM")) {
         size = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
     }
 

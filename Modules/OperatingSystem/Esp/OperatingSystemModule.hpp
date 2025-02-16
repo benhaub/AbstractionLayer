@@ -57,7 +57,9 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
     ErrorType availableHeapSize(Bytes &size, const std::string &memoryRegionName) override;
     ErrorType memoryRegions(std::vector<OperatingSystemConfig::MemoryRegionInfo> &memoryRegions) override {
         memoryRegions.emplace_back("DRAM", 0);
+#ifdef CONFIG_SPIRAM
         memoryRegions.emplace_back("SPIRAM", 0);
+#endif
         return ErrorType::Success;
     }
 
