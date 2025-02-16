@@ -386,18 +386,28 @@ class OperatingSystemAbstraction {
     */
     const OperatingSystemConfig::Status &statusConst() {
         idlePercentage(_status.idle);
-        Ticks now;
-        getSystemTick(now);
-        Milliseconds timeNow;
-        ticksToMilliseconds(now, timeNow);
-        _status.upTime = timeNow / 1000;
-        memoryRegions(_status.memoryRegion);
-        for (auto &memoryRegion : _status.memoryRegion) {
-            Bytes maxHeap;
-            maxHeapSize(maxHeap, memoryRegion.name);
-            Bytes availableHeap;
-            availableHeapSize(availableHeap, memoryRegion.name);
-            memoryRegion.free = (availableHeap / maxHeap) * 100;
+        if (ErrorType::Success == memoryRegions(_status.memoryRegion)) {
+            if (_status.memoryRegion.empty()) {
+                Bytes maxHeap;
+                maxHeapSize(maxHeap, std::string());
+                Bytes availableHeap;
+                availableHeapSize(availableHeap, std::string());
+                Percent free = 0;
+                if (0 != maxHeap) {
+                    free = ((float)availableHeap / maxHeap) * 100.0f;
+                }
+                OperatingSystemConfig::MemoryRegionInfo memoryRegion = {"Heap", free};
+                _status.memoryRegion.push_back(memoryRegion);
+            }
+            else {
+                for (auto &memoryRegion : _status.memoryRegion) {
+                    Bytes maxHeap;
+                    maxHeapSize(maxHeap, memoryRegion.name);
+                    Bytes availableHeap;
+                    availableHeapSize(availableHeap, memoryRegion.name);
+                    memoryRegion.free = (availableHeap / maxHeap) * 100;
+                }
+            }
         }
 
         return _status;
