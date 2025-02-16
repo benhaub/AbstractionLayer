@@ -82,7 +82,7 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
     Id nextTimerId = 0;
 
     size_t toEspPriority(OperatingSystemConfig::Priority priority) {
-        assert(configMAX_PRIORITIES >= 20);
+        static_assert(configMAX_PRIORITIES >= 20);
 
         switch (priority) {
             case OperatingSystemConfig::Priority::Highest:

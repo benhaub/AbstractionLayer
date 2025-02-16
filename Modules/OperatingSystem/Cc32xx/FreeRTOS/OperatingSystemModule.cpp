@@ -1,4 +1,4 @@
-//Modules
+//AbstractionLayer
 #include "OperatingSystemModule.hpp"
 //C++
 #include <ctime>
@@ -408,15 +408,18 @@ ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const Seconds timeZo
 }
 
 ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
-    return ErrorType::NotImplemented;
+    _status.idle = idlePercent;
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::string &memoryRegionName) {
-    return ErrorType::NotImplemented;
+    size = configTOTAL_HEAP_SIZE;
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &memoryRegionName) {
-    return ErrorType::NotImplemented;
+    size = xPortGetFreeHeapSize();
+    return ErrorType::Success;
 }
 
 void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
@@ -439,6 +442,39 @@ extern "C" {
 
 void TimerCallback(TimerHandle_t timer) {
     OperatingSystem::Instance().callTimerCallback(timer);
+}
+
+void vApplicationIdleHook() {
+    static Count numberOfTimesIdleHookHasBeenCalled = 1;
+    static Ticks timeOfLastIdleHookCall = static_cast<Ticks>(xTaskGetTickCount());
+    static Ticks averageTimeBetweenIdleHookCalls = static_cast<Ticks>(xTaskGetTickCount());
+
+    const Ticks timeNow = static_cast<Ticks>(xTaskGetTickCount());
+    Ticks timeBetweenIdleHookCalls;
+
+    //Handle overflow
+    if (timeOfLastIdleHookCall > timeNow) {
+        timeBetweenIdleHookCalls = (UINT32_MAX - timeNow) + (timeOfLastIdleHookCall + 1);
+    }
+    else {
+        timeBetweenIdleHookCalls = timeNow - timeOfLastIdleHookCall;
+    }
+
+    //Running average. The idle percent is not given until we've had 3 sample points.
+    if (2 == numberOfTimesIdleHookHasBeenCalled) {
+        //The larger the time between calls, the more time we spent not in idle mode.
+        averageTimeBetweenIdleHookCalls = (averageTimeBetweenIdleHookCalls + timeBetweenIdleHookCalls) / 2;
+    }
+    else {
+        averageTimeBetweenIdleHookCalls = (averageTimeBetweenIdleHookCalls * (numberOfTimesIdleHookHasBeenCalled - 1) + timeBetweenIdleHookCalls) / numberOfTimesIdleHookHasBeenCalled;
+        const Ticks timeNotSpentInIdle = averageTimeBetweenIdleHookCalls * numberOfTimesIdleHookHasBeenCalled;
+        Percent idle = ((1.0f - (float)timeNotSpentInIdle / timeNow) * 100.0f);
+        OperatingSystem::Instance().idlePercentage(idle);
+    }
+
+    numberOfTimesIdleHookHasBeenCalled++;
+
+    timeOfLastIdleHookCall = timeNow;
 }
 
 #ifdef __cplusplus

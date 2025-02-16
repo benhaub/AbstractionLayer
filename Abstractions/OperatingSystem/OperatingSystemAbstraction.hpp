@@ -405,7 +405,12 @@ class OperatingSystemAbstraction {
 
     protected:
     /// @brief The status of the operating system
-    OperatingSystemConfig::Status _status;
+    OperatingSystemConfig::Status _status = {
+        .threadCount = 0,
+        .idle = -1,
+        .upTime = 0,
+        .memoryRegion = {}
+    };
 
 };
 
