@@ -229,7 +229,6 @@ ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, con
         deleteTimer(timer);
         return ErrorType::Failure;
     }
-
 }
 
 ErrorType OperatingSystem::deleteTimer(const Id timer) {
@@ -368,29 +367,23 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::maxHeapSize(Kilobytes &size, const std::string &memoryRegionName) {
-    if (memoryRegionName.empty()) {
-        size = heap_caps_get_total_size(MALLOC_CAP_DEFAULT) / 1024;
+ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::string &memoryRegionName) {
+    if (0 == memoryRegionName.compare(0, sizeof("DRAM")-1, "DRAM")) {
+        size = heap_caps_get_total_size(MALLOC_CAP_8BIT);
     }
-    else if (memoryRegionName == "DRAM") {
-        size = heap_caps_get_total_size(MALLOC_CAP_8BIT) / 1024;
-    }
-    else if (memoryRegionName == "SPIRAM") {
-        size = heap_caps_get_total_size(MALLOC_CAP_SPIRAM) / 1024;
+    else if (0 == memoryRegionName.compare(0, sizeof("SPIRAM")-1, "SPIRAM")) {
+        size = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
     }
 
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::availableHeapSize(Kilobytes &size, const std::string &memoryRegionName) {
-    if (memoryRegionName.empty()) {
-        size = heap_caps_get_free_size(MALLOC_CAP_DEFAULT) / 1024;
+ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &memoryRegionName) {
+    if (0 == memoryRegionName.compare(0, sizeof("DRAM")-1, "DRAM")) {
+        size = heap_caps_get_free_size(MALLOC_CAP_8BIT);
     }
-    else if (memoryRegionName == "DRAM") {
-        size = heap_caps_get_free_size(MALLOC_CAP_8BIT) / 1024;
-    }
-    else if (memoryRegionName == "SPIRAM") {
-        size = heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024;
+    else if (0 == memoryRegionName.compare(0, sizeof("SPIRAM")-1, "SPIRAM")) {
+        size = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
     }
 
     return ErrorType::Success;
