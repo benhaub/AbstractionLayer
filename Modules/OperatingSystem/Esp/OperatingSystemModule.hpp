@@ -67,7 +67,7 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
 
     private:
     struct Thread {
-        pthread_t posixThreadId;
+        TaskHandle_t espThreadId;
         std::string name;
         Id threadId;
     };

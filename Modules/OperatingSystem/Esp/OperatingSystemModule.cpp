@@ -41,19 +41,8 @@ ErrorType OperatingSystem::startScheduler() {
 }
 
 ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority priority, const std::string &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
-    esp_pthread_cfg_t esp_pthread_cfg;
-    int res;
     ErrorType error = ErrorType::Failure;
     static Id nextThreadId = 1;
-
-    esp_pthread_cfg = esp_pthread_get_default_config();
-    esp_pthread_cfg.stack_size = stackSize;
-    esp_pthread_cfg.prio = toEspPriority(priority);
-    esp_pthread_cfg.thread_name = name.c_str();
-
-    if (ErrorType::Success != (error = fromPlatformError(esp_pthread_set_cfg(&esp_pthread_cfg)))) {
-        return error;
-    }
 
     //On ESP, the start function is called before pthread_create returns so we have to add in an init function to make sure
     //that the details of thread are properly saved before the thread code runs. For example, if a thread calls currentThreadId,
@@ -62,13 +51,13 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
     struct InitThreadArgs {
         void *arguments;
         void *(*startFunction)(void *);
-        pthread_t *threadId;
+        TaskHandle_t *threadId;
     };
-    auto initThread = [](void *arguments) -> void * {
+    auto initThread = [](void *arguments) -> void {
 
         InitThreadArgs *initThreadArgs = static_cast<InitThreadArgs *>(arguments);
-        *(initThreadArgs->threadId) = pthread_self();
-        return (initThreadArgs->startFunction)(initThreadArgs->arguments);
+        *(initThreadArgs->threadId) = xTaskGetCurrentTaskHandle();
+        (initThreadArgs->startFunction)(initThreadArgs->arguments);
     };
 
     Thread newThread = {
@@ -88,18 +77,17 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
     InitThreadArgs initThreadArgs = {
         .arguments = arguments,
         .startFunction = startFunction,
-        .threadId = &threads[name].posixThreadId,
+        .threadId = &threads[name].espThreadId,
     };
 
-    //thread parameter can not be NULL.
-    pthread_t thread;
-    const bool threadWasCreated = (0 == (res = pthread_create(&thread, NULL, initThread, &initThreadArgs)));
+    TaskHandle_t thread;
+    const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.c_str(), stackSize/4, &initThreadArgs, toEspPriority(priority), &thread));
     if (threadWasCreated) {
         error = ErrorType::Success;
     }
     else {
         deleteThread(name);
-        error = fromPlatformError(res);
+        return ErrorType::Failure;
     }
 
     _status.threadCount = threads.size();
@@ -120,12 +108,11 @@ ErrorType OperatingSystem::deleteThread(const std::string &name) {
 }
 
 ErrorType OperatingSystem::joinThread(const std::string &name) {
-    Id thread;
-    if (ErrorType::NoData == threadId(name, thread)) {
-        return ErrorType::NoData;
+    while (ErrorType::NoData != isDeleted(name)) {
+        delay(10);
     }
 
-    return fromPlatformError(pthread_join(threads[name].posixThreadId, nullptr));
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::threadId(const std::string &name, Id &thread) {
@@ -138,8 +125,8 @@ ErrorType OperatingSystem::threadId(const std::string &name, Id &thread) {
 }
 
 ErrorType OperatingSystem::currentThreadId(Id &thread) const {
-    pthread_t task = pthread_self();
-    auto it = std::find_if(threads.begin(), threads.end(), [task](const auto &pair) { return pair.second.posixThreadId == task; });
+    TaskHandle_t threadId = xTaskGetCurrentTaskHandle();
+    auto it = std::find_if(threads.begin(), threads.end(), [threadId](const auto &pair) { return pair.second.espThreadId == threadId; });
     if (threads.end() == it) {
         return ErrorType::NoData;
     }
