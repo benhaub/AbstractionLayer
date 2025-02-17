@@ -516,7 +516,7 @@ ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::string &memoryReg
 
     //Will return the size of RAM in bytes.
     const char commandFinal[] = "free -b | egrep Mem | tr -s \" \" | cut -d \" \" -f2";
-    std::string ramSize(4, 0);
+    std::string ramSize(16, 0);
     
     FILE* pipe = popen(commandFinal, "r");
     if (nullptr != pipe) {
@@ -543,8 +543,8 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &mem
     ErrorType error = ErrorType::Failure;
 
     //Will return the size of available RAM in bytes.
-    const char commandFinal[] = "free -b | egrep Mem | tr -s \" \" | cut -d \" \" -f4";
-    std::string ramSize(4, 0);
+    const char commandFinal[] = "free -b | egrep Mem | tr -s \" \" | cut -d \" \" -f7";
+    std::string ramSize(16, 0);
     
     FILE* pipe = popen(commandFinal, "r");
     if (nullptr != pipe) {
