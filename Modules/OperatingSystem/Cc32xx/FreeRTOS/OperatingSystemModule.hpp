@@ -59,6 +59,7 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
         memoryRegions.clear();
         return ErrorType::Success;
     }
+    ErrorType uptime(Seconds &uptime) override;
 
     void callTimerCallback(TimerHandle_t timer);
 

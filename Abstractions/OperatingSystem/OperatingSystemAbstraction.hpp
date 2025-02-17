@@ -381,11 +381,18 @@ class OperatingSystemAbstraction {
      */
     virtual ErrorType memoryRegions(std::vector<OperatingSystemConfig::MemoryRegionInfo> &memoryRegions) = 0;
     /**
+     * @brief The amount of time the system has been running for since the last reset.
+     * @returns ErrorType::Success if the uptime was obtained.
+     * @returns ErrorType::Failure otherwise.
+     */
+    virtual ErrorType uptime(Seconds &uptime) = 0;
+    /**
      * @brief Get the status of the operatings system as a const reference.
      * @returns The status of the operating system.
     */
     const OperatingSystemConfig::Status &statusConst() {
         idlePercentage(_status.idle);
+        uptime(_status.upTime);
         if (_status.memoryRegion.empty()) {
             Bytes maxHeap;
             maxHeapSize(maxHeap, std::string());

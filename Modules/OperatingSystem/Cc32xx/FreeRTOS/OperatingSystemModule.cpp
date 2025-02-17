@@ -373,9 +373,8 @@ ErrorType OperatingSystem::getSystemTime(UnixTime &currentSystemUnixTime) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::getSystemTick(Ticks &currentSystemTicks) {
-    struct tms timeSample;
-    currentSystemTicks = static_cast<Ticks>(times(&timeSample));
+ErrorType OperatingSystem::getSystemTick(Ticks &currentSystemTick) {
+    currentSystemTick = static_cast<Ticks>(xTaskGetTickCount());
     return ErrorType::Success;
 }
 
@@ -422,6 +421,14 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &mem
     return ErrorType::Success;
 }
 
+ErrorType OperatingSystem::uptime(Seconds &uptime) {
+    Ticks systemTicks;
+    getSystemTick(systemTicks);
+    ticksToMilliseconds(systemTicks, uptime);
+    uptime = uptime / 1000;
+    return ErrorType::Success;
+}
+
 void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
     if (timers.contains(timer)) {
         timers[timer].callback();
@@ -434,7 +441,6 @@ void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
 
     return;
 }
-
 
 #ifdef __cplusplus
 extern "C" {

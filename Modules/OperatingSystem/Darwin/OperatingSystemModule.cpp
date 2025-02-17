@@ -415,3 +415,7 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &mem
 
     return error;
 }
+
+ErrorType OperatingSystem::uptime(Seconds &uptime) {
+    return ErrorType::NotImplemented;
+}

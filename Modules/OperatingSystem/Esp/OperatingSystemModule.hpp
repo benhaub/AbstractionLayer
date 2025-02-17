@@ -64,6 +64,7 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
 #endif
         return ErrorType::Success;
     }
+    ErrorType uptime(Seconds &uptime) override;
 
     void callTimerCallback(TimerHandle_t timer);
 

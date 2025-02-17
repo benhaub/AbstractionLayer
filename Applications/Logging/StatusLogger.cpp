@@ -127,7 +127,7 @@ void StatusLogger::printLog(void) {
     }
     if (nullptr != _operatingSystem) {
         const OperatingSystemConfig::Status &status = _operatingSystem->statusConst();
-        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time:%d>", status.threadCount, status.idle, status.upTime);
+        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time (s):%d>", status.threadCount, status.idle, status.upTime);
         for (const auto &memoryRegion : status.memoryRegion) {
             PLT_LOGI(TAG, "<Memory Region:%s> <Free (%%):%.1f>", memoryRegion.name.c_str(), memoryRegion.free);
         }

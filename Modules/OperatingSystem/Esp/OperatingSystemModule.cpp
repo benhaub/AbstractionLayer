@@ -362,6 +362,14 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &mem
     return ErrorType::Success;
 }
 
+ErrorType OperatingSystem::uptime(Seconds &uptime) {
+    Ticks systemTicks;
+    getSystemTick(systemTicks);
+    ticksToMilliseconds(systemTicks, uptime);
+    uptime = uptime / 1000;
+    return ErrorType::Success;
+}
+
 void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
     if (timers.contains(timer)) {
         timers[timer].callback();

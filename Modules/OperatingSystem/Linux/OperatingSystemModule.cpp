@@ -533,6 +533,7 @@ ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::string &memoryReg
             error = ErrorType::Failure;
         }
     }
+
     size = std::strtoul(ramSize.c_str(), nullptr, 10);
 
     return error;
@@ -560,7 +561,38 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &mem
             error = ErrorType::Failure;
         }
     }
+
     size = std::strtoul(ramSize.c_str(), nullptr, 10);
+
+    return error;
+}
+
+ErrorType OperatingSystem::uptime(Seconds &uptime) {
+    ErrorType error = ErrorType::Failure;
+
+    std::string programName(program_invocation_short_name, strlen(program_invocation_short_name));
+    std::string commandFinal = "ps -p $(pgrep -if ";
+    commandFinal.append(programName);
+    commandFinal.append("| head -1) -o etimes | tail -1 | tr -d \" \"");
+    std::string elapsedTime(16, 0);
+    
+    FILE* pipe = popen(commandFinal.c_str(), "r");
+    if (nullptr != pipe) {
+        size_t bytesRead = fread(elapsedTime.data(), sizeof(uint8_t), elapsedTime.capacity(), pipe);
+        if (feof(pipe) || bytesRead == elapsedTime.capacity()) {
+            error = ErrorType::Success;
+            elapsedTime.resize(bytesRead);
+            while (elapsedTime.back() == '\n') {
+                elapsedTime.pop_back();
+            }
+        }
+        else if (ferror(pipe)) {
+            pclose(pipe);
+            error = ErrorType::Failure;
+        }
+    }
+
+    uptime = std::strtoul(elapsedTime.c_str(), nullptr, 10);
 
     return error;
 }
