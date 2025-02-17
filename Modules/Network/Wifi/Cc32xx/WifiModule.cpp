@@ -78,13 +78,12 @@ ErrorType Wifi::init() {
 
 ErrorType Wifi::networkUp() {
     assert(WifiConfig::Mode::Unknown != _mode);
-    Seconds timeout = 1200;
+    Seconds timeout = 30;
 
     if (_mode == WifiConfig::Mode::AccessPointAndStation) {
         return ErrorType::NotSupported;
     }
 
-    constexpr uint32_t flags = 0;
     ErrorType error;
     uint8_t role = toCc32xxRole(_mode, error);
     if (ErrorType::Success != error) {
@@ -93,6 +92,7 @@ ErrorType Wifi::networkUp() {
 
     constexpr char *smartConfigKey = nullptr;
     signed short result;
+    constexpr uint32_t flags = 0;
     result = sl_WlanProvisioning(SL_WLAN_PROVISIONING_CMD_START_MODE_AP, role, timeout, smartConfigKey, flags);
     if (0 == result) {
         _status.isUp = true;
