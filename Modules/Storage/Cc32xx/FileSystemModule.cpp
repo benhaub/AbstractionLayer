@@ -2,14 +2,14 @@
 #include "FileSystemModule.hpp"
 #include "StorageAbstraction.hpp"
 #include "OperatingSystemModule.hpp"
-//Cc32xx Storage module
-#include "Spiffs.hpp"
 
 ErrorType FileSystem::mount() {
+    _status.mounted = true;
     return ErrorType::NotAvailable;
 }
 
 ErrorType FileSystem::unmount() {
+    _status.mounted = false;
     return ErrorType::NotAvailable;
 }
 

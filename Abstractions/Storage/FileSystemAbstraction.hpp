@@ -237,11 +237,11 @@ class FileSystemAbstraction {
         availablePartition(available);
         Bytes maxSize;
         maxPartitionSize(maxSize);
-        if (maxSize != 0) {
+        if (maxSize == 0) {
             _status.freeSpace = 0;
         }
         else {
-            _status.freeSpace = (available / maxSize) * 100;
+            _status.freeSpace = ((float)available / maxSize) * 100.0f;
         }
 
         return _status;

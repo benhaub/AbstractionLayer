@@ -9,7 +9,10 @@
 class FileSystem : public FileSystemAbstraction {
 
     public:
-    FileSystem(std::string name, FileSystemTypes::Implementation implementation, StorageAbstraction &storage) : FileSystemAbstraction(name, implementation, storage) {}
+    FileSystem(std::string name, FileSystemTypes::Implementation implementation, StorageAbstraction &storage) : FileSystemAbstraction(name, implementation, storage) {
+        //Since mounting is not supported on simplelink.
+        _status.mounted = true;
+    }
     ~FileSystem() = default;
 
     ErrorType mount() override;
