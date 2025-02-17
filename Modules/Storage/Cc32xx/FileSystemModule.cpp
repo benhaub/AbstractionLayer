@@ -99,6 +99,7 @@ ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenM
             file.isOpen = true;
             file.openMode = mode;
             file.filePointer = 0;
+            _status.openedFiles++;
         }
 
         openDone = true;
@@ -129,6 +130,7 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
             _deviceFileHandle = -1;
             file.isOpen = false;
             file.openMode = FileSystemTypes::OpenMode::Unknown;
+            _status.openedFiles--;
         }
 
         closeDone = true;
