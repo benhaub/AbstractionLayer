@@ -386,28 +386,26 @@ class OperatingSystemAbstraction {
     */
     const OperatingSystemConfig::Status &statusConst() {
         idlePercentage(_status.idle);
-        if (ErrorType::Success == memoryRegions(_status.memoryRegion)) {
-            if (_status.memoryRegion.empty()) {
-                Bytes maxHeap;
-                maxHeapSize(maxHeap, std::string());
-                Bytes availableHeap;
-                availableHeapSize(availableHeap, std::string());
-                Percent free = 0;
-                if (0 != maxHeap) {
-                    free = ((float)availableHeap / maxHeap) * 100.0f;
-                }
-                OperatingSystemConfig::MemoryRegionInfo memoryRegion = {"Heap", free};
-                _status.memoryRegion.push_back(memoryRegion);
+        if (_status.memoryRegion.empty()) {
+            Bytes maxHeap;
+            maxHeapSize(maxHeap, std::string());
+            Bytes availableHeap;
+            availableHeapSize(availableHeap, std::string());
+            Percent free = 0;
+            if (0 != maxHeap) {
+                free = ((float)availableHeap / maxHeap) * 100.0f;
             }
-            else {
-                for (auto &memoryRegion : _status.memoryRegion) {
-                    Bytes maxHeap;
-                    if (ErrorType::Success == maxHeapSize(maxHeap, memoryRegion.name)) {
-                        Bytes availableHeap;
-                        if (ErrorType::Success == availableHeapSize(availableHeap, memoryRegion.name)) {
-                            if (0 != maxHeap) {
-                                memoryRegion.free = ((float)availableHeap / maxHeap) * 100.0f;
-                            }
+            OperatingSystemConfig::MemoryRegionInfo memoryRegion = {"Heap", free};
+            _status.memoryRegion.push_back(memoryRegion);
+        }
+        else {
+            for (auto &memoryRegion : _status.memoryRegion) {
+                Bytes maxHeap;
+                if (ErrorType::Success == maxHeapSize(maxHeap, memoryRegion.name)) {
+                    Bytes availableHeap;
+                    if (ErrorType::Success == availableHeapSize(availableHeap, memoryRegion.name)) {
+                        if (0 != maxHeap) {
+                            memoryRegion.free = ((float)availableHeap / maxHeap) * 100.0f;
                         }
                     }
                 }
