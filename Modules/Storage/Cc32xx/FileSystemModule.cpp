@@ -18,13 +18,15 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto maxStorageQueryCallback = [&]() -> ErrorType {
-        switch (_implementation) {
-            case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::maxSize(size);
-                break;
-            default:
-                break;
+        SlFsControlGetStorageInfoResponse_t storageInfo;
+        _i32 slRetVal;
+
+        slRetVal = sl_FsCtl((SlFsCtl_e)SL_FS_CTL_GET_STORAGE_INFO, 0, NULL, NULL, 0, reinterpret_cast<_u8 *>(&storageInfo), sizeof(storageInfo), NULL);
+        if (0 != slRetVal) {
+            callbackError = fromPlatformError(slRetVal);
         }
+
+        size = storageInfo.DeviceUsage.DeviceBlocksCapacity * storageInfo.DeviceUsage.DeviceBlockSize;
 
         maxStorageQueryDone = true;
         return callbackError;
@@ -48,13 +50,15 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto availableStorageQueryCallback = [&]() -> ErrorType {
-        switch (_implementation) {
-            case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::available(size);
-                break;
-            default:
-                break;
+        SlFsControlGetStorageInfoResponse_t storageInfo;
+        _i32 slRetVal;
+
+        slRetVal = sl_FsCtl((SlFsCtl_e)SL_FS_CTL_GET_STORAGE_INFO, 0, NULL, NULL, 0, reinterpret_cast<_u8 *>(&storageInfo), sizeof(storageInfo), NULL);
+        if (0 != slRetVal) {
+            callbackError = fromPlatformError(slRetVal);
         }
+
+        size = storageInfo.DeviceUsage.NumOfAvailableBlocksForUserFiles * storageInfo.DeviceUsage.DeviceBlockSize;
 
         availableStorageQueryDone = true;
         return callbackError;
@@ -74,35 +78,7 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
 }
 
 ErrorType FileSystem::erasePartition(){
-    bool erasePartitionDone = false;
-    ErrorType callbackError = ErrorType::Failure;
-
-    auto erasePartitionCallback = [&]() -> ErrorType {
-        callbackError = ErrorType::NotSupported;
-
-        switch (_implementation) {
-            case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::erasePartition(nameConst());
-                break;
-            default:
-                break;
-        }
-
-        erasePartitionDone = true;
-        return callbackError;
-    };
-
-    std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(erasePartitionCallback));
-    ErrorType error = _storage.addEvent(event);
-    if (ErrorType::Success != error) {
-        return error;
-    }
-
-    while (!erasePartitionDone) {
-        OperatingSystem::Instance().delay(1);
-    }
-
-    return callbackError;
+    return ErrorType::NotSupported;
 }
 
 ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
