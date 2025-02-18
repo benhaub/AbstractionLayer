@@ -5,6 +5,7 @@
 
 ErrorType HttpServer::listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) {
     //The ROM includes an HTTP server that is already listening
+    _status.listening = true;
     return ErrorType::NotAvailable;
 }
 
