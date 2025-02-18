@@ -21,6 +21,9 @@ ErrorType FileSystem::mount() {
         }
 
         mountDone = true;
+        if (ErrorType::Success == callbackError) {
+            _status.mounted = true;
+        }
         return callbackError;
     };
 
@@ -54,6 +57,9 @@ ErrorType FileSystem::unmount() {
         }
 
         unmountDone = true;
+        if (ErrorType::Success == callbackError) {
+            _status.mounted = false;
+        }
         return callbackError;
     };
 
@@ -111,8 +117,10 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
         switch(_implementation) {
             case FileSystemTypes::Implementation::KeyValue:
                 callbackError = KeyValue::availablePartition(*this, size);
+                break;
             case FileSystemTypes::Implementation::Spiffs:
                 callbackError = Spiffs::availablePartition(*this, size);
+                break;
             default:
                 callbackError = ErrorType::NotSupported;
         }

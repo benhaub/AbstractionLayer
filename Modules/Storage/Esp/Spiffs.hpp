@@ -13,7 +13,7 @@
  * @brief SPIFFS storage.
  */
 namespace Spiffs {
-    static std::string toPosixOpenMode(const FileSystemTypes::OpenMode mode, ErrorType &error) {
+    std::string toPosixOpenMode(const FileSystemTypes::OpenMode mode, ErrorType &error) {
         error = ErrorType::Success;
 
         switch (mode) {
@@ -36,21 +36,22 @@ namespace Spiffs {
                 return "";
         }
     }
-    static ErrorType maxPartitionSize(FileSystem &fs, Bytes &size) {
+
+    ErrorType maxPartitionSize(FileSystem &fs, Bytes &size) {
         size_t maxSize;
         ErrorType error = fromPlatformError(esp_spiffs_info(fs.nameConst().c_str(), &maxSize, NULL));
         size = maxSize;
         return error;
     }
 
-    static ErrorType availablePartition(FileSystem &fs, Bytes &size) {
+    ErrorType availablePartition(FileSystem &fs, Bytes &size) {
         size_t availableSize;
         ErrorType error = fromPlatformError(esp_spiffs_info(fs.nameConst().c_str(), NULL, &availableSize));
         size = availableSize;
         return error;
     }
 
-    static ErrorType mount(FileSystem &fs) {
+    ErrorType mount(FileSystem &fs) {
         ErrorType error;
         const esp_vfs_spiffs_conf_t conf = {
             //Base path has to be not null and not "/" or the undocumented ESP_ERR_INVALID_ARG is returned.
@@ -88,15 +89,15 @@ namespace Spiffs {
         return ErrorType::Success;
     }
 
-    static ErrorType unmount(FileSystem &fs) {
+    ErrorType unmount(FileSystem &fs) {
         return fromPlatformError(esp_vfs_spiffs_unregister(fs.nameConst().c_str()));
     }
 
-    static ErrorType erasePartition(FileSystem &fs) {
+    ErrorType erasePartition(FileSystem &fs) {
         return fromPlatformError(esp_spiffs_format(fs.nameConst().c_str()));
     }
 
-    static ErrorType size(FileSystemTypes::File &file) {
+    ErrorType size(FileSystemTypes::File &file) {
         struct stat fileStat;
         if (0 != stat(file.path.c_str(), &fileStat)) {
             return fromPlatformError(errno);
@@ -106,7 +107,7 @@ namespace Spiffs {
         return ErrorType::Success;
     }
 
-    static ErrorType close(FileSystemTypes::File &file, FILE *spiffsFile) {
+    ErrorType close(FileSystemTypes::File &file, FILE *spiffsFile) {
         assert(nullptr != spiffsFile);
 
         if (0 == fclose(spiffsFile)) {
@@ -145,7 +146,7 @@ namespace Spiffs {
         }
     }
 
-    static ErrorType remove(FileSystemTypes::File &file, FILE *spiffsFile) {
+    ErrorType remove(FileSystemTypes::File &file, FILE *spiffsFile) {
         assert(nullptr != spiffsFile);
 
         if (file.isOpen) {
@@ -162,7 +163,7 @@ namespace Spiffs {
         return ErrorType::Success;
     }
 
-    static ErrorType readBlocking(FILE *spiffsFile, FileSystemTypes::File &file, std::string &buffer) {
+    ErrorType readBlocking(FILE *spiffsFile, FileSystemTypes::File &file, std::string &buffer) {
         ErrorType error = ErrorType::Success;
         Bytes read = 0;
 
@@ -185,7 +186,7 @@ namespace Spiffs {
         return error;
     }
 
-    static ErrorType writeBlocking(FILE *spiffsFile, FileSystemTypes::File &file, const std::string &data) {
+    ErrorType writeBlocking(FILE *spiffsFile, FileSystemTypes::File &file, const std::string &data) {
         if (0 != fseek(spiffsFile, file.filePointer, SEEK_SET)) {
             return fromPlatformError(errno);
         }
@@ -204,7 +205,7 @@ namespace Spiffs {
         }
     }
 
-    static ErrorType synchronize(FILE *spiffsFile) {
+    ErrorType synchronize(FILE *spiffsFile) {
         if (0 != fflush(spiffsFile)) {
             return fromPlatformError(errno);
         }

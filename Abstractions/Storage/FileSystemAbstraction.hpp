@@ -302,7 +302,12 @@ class FileSystemAbstraction {
     /// @brief The implementation of the file system
     FileSystemTypes::Implementation _implementation;
     /// @brief The status of the file system.
-    FileSystemTypes::Status _status;
+    FileSystemTypes::Status _status = {
+        .partitionName = "",
+        .mounted = false,
+        .freeSpace = -1,
+        .openedFiles = 0
+    };
     /// @brief The storage this abstraction is bound to
     StorageAbstraction &_storage;
 };

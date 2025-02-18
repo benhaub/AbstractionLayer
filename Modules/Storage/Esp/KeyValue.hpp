@@ -11,7 +11,7 @@
  * @brief Key Value NVS storage.
  */
 namespace KeyValue {
-    static ErrorType mount(FileSystem &fs, const char nameSpace[], std::unique_ptr<nvs::NVSHandle> &_handle) {
+    ErrorType mount(FileSystem &fs, const char nameSpace[], std::unique_ptr<nvs::NVSHandle> &_handle) {
         esp_err_t err = nvs_flash_init_partition(fs.nameConst().c_str());
         if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
             return fromPlatformError(err);
@@ -25,13 +25,13 @@ namespace KeyValue {
         return fromPlatformError(err);
     }
 
-    static ErrorType unmount(FileSystem &fs, std::unique_ptr<nvs::NVSHandle> &_handle) {
+    ErrorType unmount(FileSystem &fs, std::unique_ptr<nvs::NVSHandle> &_handle) {
         esp_err_t err = nvs_flash_deinit_partition(fs.nameConst().c_str());
         _handle.release();
         return fromPlatformError(err);
     }
 
-    static ErrorType maxPartitionSize(FileSystem &fs, Bytes &size) {
+    ErrorType maxPartitionSize(FileSystem &fs, Bytes &size) {
         nvs_stats_t stats;
         esp_err_t err;
 
@@ -44,7 +44,7 @@ namespace KeyValue {
         return fromPlatformError(err);
     }
 
-    static ErrorType availablePartition(FileSystem &fs, Bytes &size) {
+    ErrorType availablePartition(FileSystem &fs, Bytes &size) {
         nvs_stats_t stats;
         esp_err_t err;
 
@@ -57,11 +57,11 @@ namespace KeyValue {
         return fromPlatformError(err);
     }
 
-    static ErrorType erasePartition(FileSystem &fs) {
+    ErrorType erasePartition(FileSystem &fs) {
         return fromPlatformError(nvs_flash_erase_partition(fs.nameConst().c_str()));
     }
 
-    static ErrorType open(FileSystem &fs, const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file ) {
+    ErrorType open(FileSystem &fs, const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file ) {
         assert(path.length() > 0);
         ErrorType error = ErrorType::Success;
         file.isOpen = false;
@@ -91,11 +91,11 @@ namespace KeyValue {
         return ErrorType::Success;
     }
 
-    static ErrorType synchronize(std::unique_ptr<nvs::NVSHandle> &_handle) {
+    ErrorType synchronize(std::unique_ptr<nvs::NVSHandle> &_handle) {
         return fromPlatformError(_handle->commit());
     }
 
-    static ErrorType close(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file) {
+    ErrorType close(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file) {
         ErrorType error = synchronize(_handle);
         if (ErrorType::Success == error) {
             file.isOpen = false;
@@ -105,7 +105,7 @@ namespace KeyValue {
         return error;
     }
 
-    static ErrorType remove(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file) {
+    ErrorType remove(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file) {
         ErrorType error = ErrorType::Failure;
 
         if (file.isOpen) {
@@ -119,7 +119,7 @@ namespace KeyValue {
         return error;
     }
 
-    static ErrorType readBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, std::string &buffer) {
+    ErrorType readBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, std::string &buffer) {
         //If the buffer doesn't have a size, you won't be able to read anything.
         assert(buffer.size() > 0);
 
@@ -135,7 +135,7 @@ namespace KeyValue {
         return fromPlatformError(err);
     }
 
-    static ErrorType writeBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, const std::string &data) {
+    ErrorType writeBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, const std::string &data) {
         if (nullptr == _handle.get()) {
             return ErrorType::InvalidParameter;
         }
@@ -143,7 +143,7 @@ namespace KeyValue {
         return fromPlatformError(_handle->set_blob(file.path.c_str(), data.c_str(), data.size()));
     }
 
-    static ErrorType size(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file) {
+    ErrorType size(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file) {
         size_t size;
         ErrorType error = fromPlatformError(_handle->get_item_size(nvs::ItemType::ANY, file.path.c_str(), size));
         file.size = size;
