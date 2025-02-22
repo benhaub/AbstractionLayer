@@ -119,11 +119,11 @@ void StatusLogger::printLog(void) {
     }
     for (const auto &wifi : _wifiNetworks) {
         const NetworkTypes::Status &status = wifi->statusConst();
-        PLT_LOGI(TAG, "<WifiStatus> <Connected:%s, Signal Strength (dBm):%d>", (status.isUp ? "true" : "false"), status.signalStrength);
+        PLT_LOGI(TAG, "<WifiStatus> <Connected:%s, Signal Strength (dBm):%d>", status.isUp ? "true" : "false", status.signalStrength);
     }
     for (const auto &cellular : _cellularNetworks) {
         const NetworkTypes::Status &status = cellular->statusConst();
-        PLT_LOGI(TAG, "<CellularStatus> <Connected:%s, Signal Strength (dBm):%d>", (status.isUp ? "true" : "false"), status.signalStrength);
+        PLT_LOGI(TAG, "<CellularStatus> <Connected:%s, Signal Strength (dBm):%d>", status.isUp ? "true" : "false", status.signalStrength);
     }
     if (nullptr != _operatingSystem) {
         const OperatingSystemConfig::Status &status = _operatingSystem->statusConst();
@@ -134,10 +134,10 @@ void StatusLogger::printLog(void) {
     }
     for (const auto &filesystem : _filesystems) {
         const FileSystemTypes::Status &status = filesystem->statusConst();
-        PLT_LOGI(TAG, "<FileSystem:%s> <Mounted:%s, Open Files:%u, Free (%%):%.1f>", status.partitionName.c_str(), (status.mounted ? "true" : "false"), status.openedFiles, status.freeSpace);
+        PLT_LOGI(TAG, "<FileSystem:%s> <Mounted:%s, Open Files:%u, Free (%%):%.1f>", status.partitionName.c_str(), status.mounted ? "true" : "false", status.openedFiles, status.freeSpace);
     }
     for (const auto &storage : _storageMediums) {
         const StorageTypes::Status &status = storage->statusConst();
-        PLT_LOGI(TAG, "<StorageStatus> <Initialized:%s>", (status.isInitialized ? "true" : "false"));
+        PLT_LOGI(TAG, "<StorageStatus> <Initialized:%s>", status.isInitialized ? "true" : "false");
     }
 }

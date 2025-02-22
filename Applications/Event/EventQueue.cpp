@@ -25,7 +25,7 @@ ErrorType EventQueue::addEvent(std::unique_ptr<EventAbstraction> &event) {
         return ErrorType::LimitReached;
     }
 
-    Id currentThreadId;
+    Id currentThreadId = 0;
     OperatingSystem::Instance().currentThreadId(currentThreadId);
     assert(ErrorType::Success == error);
 

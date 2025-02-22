@@ -258,6 +258,7 @@ ErrorType OperatingSystem::decrementSemaphore(const std::string &name) {
 ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, const bool autoReload, std::function<void(void)> callback) {
     struct sigevent signalEvent;
     timer_t *posixTimerId = nullptr;
+    //The value of posixTimerId is local to this frame. Need a mempool to make sure it sticks around.
     if (ErrorType::NoMemory == timerIdPool.allocate(posixTimerId)) {
         posixTimerId = new timer_t;
     }
@@ -272,7 +273,6 @@ ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, con
 
     signalEvent.sigev_notify = SIGEV_THREAD;
     signalEvent.sigev_notify_function = TimerCallback;
-    //The value of this does not seem to be saved probably because it's local to this frame. Could I used my own ID instead?
     signalEvent.sigev_value.sival_ptr = posixTimerId;
     //Will fail silently (timer doesn't seem to run at all) if this is not set.
     signalEvent.sigev_notify_attributes = nullptr;
