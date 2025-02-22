@@ -1,5 +1,6 @@
 //Modules
 #include "OperatingSystemModule.hpp"
+#include "Math.hpp"
 //Posix
 #include <pthread.h>
 #include <unistd.h>
@@ -404,28 +405,16 @@ void vApplicationIdleHook() {
     static Ticks averageTimeBetweenIdleHookCalls = static_cast<Ticks>(xTaskGetTickCount());
 
     const Ticks timeNow = static_cast<Ticks>(xTaskGetTickCount());
-    Ticks timeBetweenIdleHookCalls;
 
     //Handle overflow
-    if (timeOfLastIdleHookCall > timeNow) {
-        timeBetweenIdleHookCalls = (UINT32_MAX - timeNow) + (timeOfLastIdleHookCall + 1);
-    }
-    else {
-        timeBetweenIdleHookCalls = timeNow - timeOfLastIdleHookCall;
-    }
+    const Ticks timeBetweenIdleHookCalls = differenceBetween(timeNow, timeOfLastIdleHookCall);
 
-    //Running average. The idle percent is not given until we've had 3 sample points.
-    if (2 == numberOfTimesIdleHookHasBeenCalled) {
-        //The larger the time between calls, the more time we spent not in idle mode.
-        averageTimeBetweenIdleHookCalls = (averageTimeBetweenIdleHookCalls + timeBetweenIdleHookCalls) / 2;
-    }
-    else {
-        averageTimeBetweenIdleHookCalls = (averageTimeBetweenIdleHookCalls * (numberOfTimesIdleHookHasBeenCalled - 1) + timeBetweenIdleHookCalls) / numberOfTimesIdleHookHasBeenCalled;
-        const Ticks timeNotSpentInIdle = averageTimeBetweenIdleHookCalls * numberOfTimesIdleHookHasBeenCalled;
-        Percent idle = ((1.0f - (float)timeNotSpentInIdle / timeNow) * 100.0f);
-        if (OperatingSystem::isInitialized()) {
-            OperatingSystem::Instance().idlePercentage(idle);
-        }
+    //The larger the time betwen calls, the more time we spent not in idle.
+    averageTimeBetweenIdleHookCalls = runningAverage(averageTimeBetweenIdleHookCalls, timeBetweenIdleHookCalls, numberOfTimesIdleHookHasBeenCalled);
+    const Ticks timeNotSpentInIdle = averageTimeBetweenIdleHookCalls * numberOfTimesIdleHookHasBeenCalled;
+    Percent idle = ((1.0f - (float)timeNotSpentInIdle / timeNow) * 100.0f);
+    if (OperatingSystem::isInitialized()) {
+        OperatingSystem::Instance().idlePercentage(idle);
     }
 
     numberOfTimesIdleHookHasBeenCalled++;
