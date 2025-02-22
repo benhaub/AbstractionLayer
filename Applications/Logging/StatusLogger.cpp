@@ -104,40 +104,48 @@ ErrorType StatusLogger::toggleLoggingFor(StorageAbstraction *storage, bool toggl
     }
 }
 
+// These logs are written with syntax compatible with 
 void StatusLogger::printLog(void) {
 #ifdef configTIMER_TASK_STACK_DEPTH
     static_assert(configTIMER_TASK_STACK_DEPTH >= 256, "StatusLogger: Timer stack too small");
 #endif
     for (const auto &client : _ipClients) {
         const IpClientTypes::ClientStatus &status = client->statusConst();
-        PLT_LOGI(TAG, "<IpClientStatus> <Connected:%s>", (status.connected ? "true" : "false"));
+        PLT_LOGI(TAG, "<IpClientStatus> <Connected:%s> <Pie, Line>",
+        status.connected ? "true" : "false");
     }
     for (const auto &server : _ipServers) {
         const IpServerTypes::ServerStatus &status = server->statusConst();
-        PLT_LOGI(TAG, "<IpServerStatus> <Listening:%s, Active Connections:%u>",
-        (status.listening ? "true" : "false"), status.activeConnections);
+        PLT_LOGI(TAG, "<IpServerStatus> <Listening:%s, Active Connections:%u> <Pie, Line>",
+        status.listening ? "true" : "false", status.activeConnections);
     }
     for (const auto &wifi : _wifiNetworks) {
         const NetworkTypes::Status &status = wifi->statusConst();
-        PLT_LOGI(TAG, "<WifiStatus> <Connected:%s, Signal Strength (dBm):%d>", status.isUp ? "true" : "false", status.signalStrength);
+        PLT_LOGI(TAG, "<WifiStatus> <Connected:%s, Signal Strength (dBm):%d> <Pie, Line>",
+        status.isUp ? "true" : "false", status.signalStrength);
     }
     for (const auto &cellular : _cellularNetworks) {
         const NetworkTypes::Status &status = cellular->statusConst();
-        PLT_LOGI(TAG, "<CellularStatus> <Connected:%s, Signal Strength (dBm):%d>", status.isUp ? "true" : "false", status.signalStrength);
+        PLT_LOGI(TAG, "<CellularStatus> <Connected:%s, Signal Strength (dBm):%d> <Pie, Line>",
+        status.isUp ? "true" : "false", status.signalStrength);
     }
     if (nullptr != _operatingSystem) {
         const OperatingSystemConfig::Status &status = _operatingSystem->statusConst();
-        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time (s):%d>", status.threadCount, status.idle, status.upTime);
+        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time (s):%d> <Line, Line, Omit>",
+        status.threadCount, status.idle, status.upTime);
         for (const auto &memoryRegion : status.memoryRegion) {
-            PLT_LOGI(TAG, "<Memory Region:%s> <Free (%%):%.1f>", memoryRegion.name.c_str(), memoryRegion.free);
+            PLT_LOGI(TAG, "<Memory Region:%s> <Free (%%):%.1f> <Line>",
+            memoryRegion.name.c_str(), memoryRegion.free);
         }
     }
     for (const auto &filesystem : _filesystems) {
         const FileSystemTypes::Status &status = filesystem->statusConst();
-        PLT_LOGI(TAG, "<FileSystem:%s> <Mounted:%s, Open Files:%u, Free (%%):%.1f>", status.partitionName.c_str(), status.mounted ? "true" : "false", status.openedFiles, status.freeSpace);
+        PLT_LOGI(TAG, "<FileSystem:%s> <Mounted:%s, Open Files:%u, Free (%%):%.1f> <Pie, Stairs, Line>",
+        status.partitionName.c_str(), status.mounted ? "true" : "false", status.openedFiles, status.freeSpace);
     }
     for (const auto &storage : _storageMediums) {
         const StorageTypes::Status &status = storage->statusConst();
-        PLT_LOGI(TAG, "<StorageStatus> <Initialized:%s>", status.isInitialized ? "true" : "false");
+        PLT_LOGI(TAG, "<StorageStatus> <Initialized:%s> <Pie>",
+        status.isInitialized ? "true" : "false");
     }
 }
