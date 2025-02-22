@@ -3,6 +3,7 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
   Global.hpp
   Types.hpp
   Error.hpp
+  Math.hpp
 )
 
 add_library(Utilities INTERFACE)
