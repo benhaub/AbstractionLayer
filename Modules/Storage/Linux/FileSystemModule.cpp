@@ -183,7 +183,8 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
 
     auto removeCallback = [&]() -> ErrorType {
         if (ErrorType::Success == (callbackError = close(file))) {
-            if (0 == std::remove(file.path.c_str())) {
+            const std::string absolutePath = mountPrefixConst() + file.path;
+            if (0 == std::remove(absolutePath.c_str())) {
                 callbackError = ErrorType::Success;
             }
         }

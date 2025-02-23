@@ -139,8 +139,6 @@ class FileSystemAbstraction {
      * @param[in] mode The OpenMode.
      * @param[out] file The opened file that was opened. Valid only if the return value is ErrorType::Success.
      * @returns ErrorType::Success if the file was opened.
-     * @returns ErrorType::PrerequisitesNotMet if the file was already open since the OpenMode can not be changed.
-     * @returns ErrorType::PrerequisitesNotMet if the storage has not been initialized
      * @returns ErrorType::Failure if could not be opened for any other reason
     */
     virtual ErrorType open(const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) = 0;
