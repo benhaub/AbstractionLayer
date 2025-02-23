@@ -424,15 +424,20 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &mem
 
 ErrorType OperatingSystem::uptime(Seconds &uptime) {
     Ticks systemTicks;
+    Milliseconds uptimeNow;
 
     getSystemTick(systemTicks);
-    ticksToMilliseconds(systemTicks, uptime);
-    uptime /= 1000;
+    ticksToMilliseconds(systemTicks, uptimeNow);
 
     //When the tick count rolls over, just start adding the seconds on.
-    if (uptime < _status.upTime) {
-        uptime = _status.upTime += uptime;
+    if ((uptimeNow / 1000) < _status.upTime) {
+        _status.upTime += (uptimeNow / 1000);
     }
+    else {
+        _status.upTime = (uptimeNow / 1000);
+    }
+
+    uptime = _status.upTime;
 
     return ErrorType::Success;
 }
