@@ -364,21 +364,22 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &mem
 }
 
 ErrorType OperatingSystem::uptime(Seconds &uptime) {
-    Ticks systemTicks;
+    static Seconds sinceLastRollover = 0;
+
+    Ticks systemNow;
+    getSystemTick(systemNow);
     Milliseconds uptimeNow;
+    ticksToMilliseconds(systemNow, uptimeNow);
 
-    getSystemTick(systemTicks);
-    ticksToMilliseconds(systemTicks, uptimeNow);
-
-    //When the tick count rolls over, just start adding the seconds on.
-    if ((uptimeNow / 1000) < _status.upTime) {
+    const bool tickCountHasRolledOver = (uptimeNow / 1000) < sinceLastRollover;
+    if (tickCountHasRolledOver) {
+        sinceLastRollover = 0;
         _status.upTime += (uptimeNow / 1000);
     }
     else {
-        _status.upTime = (uptimeNow / 1000);
+        _status.upTime += (uptimeNow / 1000) - sinceLastRollover;
+        sinceLastRollover = uptimeNow / 1000;
     }
-
-    uptime = _status.upTime;
 
     return ErrorType::Success;
 }
