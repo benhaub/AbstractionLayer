@@ -7,12 +7,12 @@ add_library(LinuxCryptography
 STATIC
   CryptographyModule.cpp
 )
+
 target_include_directories(Cryptography INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
 target_include_directories(LinuxCryptography PRIVATE ${CMAKE_CURRENT_LIST_DIR}/libsodium-stable/src/libsodium/include)
 
-target_link_libraries(LinuxCryptography PUBLIC Utilities)
-target_link_libraries(LinuxCryptography PUBLIC abstractionLayer)
+target_link_libraries(LinuxCryptography PRIVATE abstractionLayer)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC LinuxCryptography)
 
 set(libsodium "libsodium-1.0.20-stable")
@@ -47,8 +47,7 @@ add_custom_target(libsodium-stable DEPENDS ${CMAKE_CURRENT_LIST_DIR}/libsodium-s
 add_dependencies(libsodium-stable libsodium-stable_download)
 add_dependencies(LinuxCryptography libsodium-stable)
 
-target_link_libraries(LinuxCryptography PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsodium-stable/src/libsodium/.libs/libsodium.a)
-
-target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(LinuxCryptography PRIVATE ${CMAKE_CURRENT_LIST_DIR}/libsodium-stable/src/libsodium/.libs/libsodium.a)
 
 target_compile_options(LinuxCryptography PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
+target_compile_definitions(LinuxCryptography PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)
