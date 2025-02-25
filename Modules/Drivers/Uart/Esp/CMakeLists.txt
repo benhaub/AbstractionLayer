@@ -11,11 +11,9 @@ STATIC
 target_include_directories(Uart INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(Uart INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
 
-target_link_libraries(EspUart PUBLIC Uart)
-target_link_libraries(EspUart PUBLIC abstractionLayer)
-
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC EspUart)
-
-target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(EspUart PRIVATE abstractionLayer)
+target_link_libraries(EspUart PRIVATE Gpio)
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE EspUart)
 
 target_compile_options(EspUart PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
+target_compile_definitions(EspUart PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)

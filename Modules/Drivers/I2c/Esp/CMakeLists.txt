@@ -11,11 +11,9 @@ STATIC
 target_include_directories(I2c INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(I2c INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
 
-target_link_libraries(EspI2c PUBLIC abstractionLayer)
-target_link_libraries(EspI2c PUBLIC Gpio)
-target_link_libraries(EspI2c PUBLIC Logging)
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC EspI2c)
-
-target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(EspI2c PRIVATE abstractionLayer)
+target_link_libraries(EspI2c PRIVATE Gpio)
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE EspI2c)
 
 target_compile_options(EspI2c PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
+target_compile_definitions(EspI2c PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)

@@ -9,12 +9,11 @@ STATIC
 )
 
 target_include_directories(Logging INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(Logging INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
 
-target_link_libraries(EspLogger PUBLIC abstractionLayer)
-target_link_libraries(EspLogger PUBLIC Logging)
-target_link_libraries(EspLogger PUBLIC Event)
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC EspLogger)
-
-target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(EspLogger PRIVATE abstractionLayer)
+target_link_libraries(EspLogger PRIVATE Logging)
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE EspLogger)
 
 target_compile_options(EspLogger PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
+target_compile_definitions(EspLogger PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)
