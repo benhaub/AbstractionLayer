@@ -10,12 +10,10 @@ STATIC
 
 target_include_directories(Logging INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
-target_link_libraries(Cc32xxLogger PUBLIC abstractionLayer)
-target_link_libraries(Cc32xxLogger PUBLIC Logging)
-target_link_libraries(Cc32xxLogger PUBLIC Utilities)
-target_link_libraries(Cc32xxLogger PUBLIC Event)
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC Cc32xxLogger)
+target_link_libraries(Cc32xxLogger PRIVATE abstractionLayer)
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE Cc32xxLogger)
 
-target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(Cc32xxLogger PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
 
 target_compile_options(Cc32xxLogger PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
+target_compile_definitions(Cc32xxLogger PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)

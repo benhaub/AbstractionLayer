@@ -5,7 +5,7 @@
 #include "LoggingAbstraction.hpp"
 #include "Global.hpp"
 //TI drivers
-#include <ti/display/Display.h>
+#include "ti/display/Display.h"
 
 class Logger : public LoggingAbstraction, public Global<Logger> {
     public:

@@ -5,7 +5,5 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
 
 add_library(OperatingSystem INTERFACE)
 
-target_link_libraries(OperatingSystem INTERFACE Utilities)
-
 target_include_directories(OperatingSystem INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(abstractionLayer INTERFACE ${CMAKE_CURRENT_LIST_DIR})
