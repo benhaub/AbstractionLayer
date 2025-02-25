@@ -404,7 +404,11 @@ ErrorType OperatingSystem::reset() {
 }
 
 ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) {
-    return ErrorType::NotAvailable;
+    struct timespec timeSpec;
+    timeSpec.tv_sec = utc + timeZoneDifferenceUtc;
+    timeSpec.tv_nsec = 0;
+
+    return fromPlatformError(clock_settime(CLOCK_REALTIME, &timeSpec));
 }
 
 ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
