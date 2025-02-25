@@ -62,7 +62,7 @@ template <class T, typename... Args> class Global {
         return *(self().get());
     }
 
-    static bool isInitialized() {
+    static bool IsInitialized() {
         return nullptr != self().get();
     }
 
