@@ -87,23 +87,29 @@ ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenM
 
     auto openCallback = [&]() -> ErrorType {
         _u32 token = 0;
+        _i32 retval = 0;
         //Comes from the Host driver documentation. Not sure how to query for this or if there is a constant somewhere.
         constexpr Bytes maxFileSize = 62.5f * 1024;
 
         Bytes maxSize = SL_FS_CREATE_MAX_SIZE(path.size());
         assert(maxSize <= maxFileSize);
 
-        _deviceFileHandle = sl_FsOpen(reinterpret_cast<const _u8 *>(path.c_str()), toCc32xxAccessMode(mode, callbackError) | maxSize, &token);
-        if (_deviceFileHandle == SL_FS_OK) {
+        retval = sl_FsOpen(reinterpret_cast<const _u8 *>(path.c_str()), toCc32xxAccessMode(mode, callbackError) | maxSize, &token);
+        if (retval >= 0) {
             file.path.assign(path);
             file.isOpen = true;
             file.openMode = mode;
             file.filePointer = 0;
             _status.openedFiles++;
+            //TODO: This needs to be put in a list or map of open files.
+            _deviceFileHandle = retval;
+            callbackError = ErrorType::Success;
+        }
+        else {
+            callbackError = fromPlatformError(retval);
         }
 
         openDone = true;
-        callbackError = fromPlatformError(_deviceFileHandle);
         return callbackError;
     };
 
@@ -191,12 +197,17 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
 
     auto readCallback = [&]() -> ErrorType {
         _i32 retval = sl_FsRead(_deviceFileHandle, file.filePointer, reinterpret_cast<_u8 *>(buffer.data()), buffer.size());
-        if (SL_FS_OK == retval) {
-            file.filePointer += static_cast<FileOffset>(buffer.size());
+        if (retval > 0) {
+            file.filePointer += static_cast<FileOffset>(retval);
+            buffer.resize(retval);
+            callbackError = ErrorType::Success;
+        }
+        else {
+            callbackError = fromPlatformError(retval);
+            buffer.resize(0);
         }
 
         readDone = true;
-        callbackError = fromPlatformError(retval);
         return callbackError;
     };
 
@@ -226,7 +237,7 @@ ErrorType FileSystem::readNonBlocking(FileSystemTypes::File &file, std::shared_p
 }
 
 ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::string &data) {
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
     bool writeDone = false;
 
     //SimpleLink write function does not accept a constant string.
@@ -234,19 +245,20 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::stri
 
     auto writeCallback = [&]() -> ErrorType {
         _i32 retval = sl_FsWrite(_deviceFileHandle, file.filePointer, reinterpret_cast<_u8 *>(dataToWrite.data()), dataToWrite.size());
-        if (SL_FS_OK != retval) {
+        if (retval >= 0) {
             writeDone = true;
-            error = fromPlatformError(retval);
-            return error;
+            callbackError = ErrorType::Success;
+        }
+        else {
+            callbackError = fromPlatformError(retval);
         }
 
         writeDone = true;
-        error = ErrorType::Success;
-        return error;
+        return callbackError;
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(writeCallback));
-    error = _storage.addEvent(event);
+    ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }

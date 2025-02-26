@@ -19,20 +19,21 @@ ErrorType fromPlatformError(int32_t err) {
     else if (err == Power_EFAIL || err == PWM_STATUS_ERROR) {
         return ErrorType::Failure;
     }
-    else if (err == Power_EINVALIDINPUT || err == Power_EINVALIDPOINTER || err == PWM_STATUS_UNDEFINEDCMD || err == PWM_STATUS_INVALID_DUTY) {
+    else if (err == Power_EINVALIDINPUT || err == Power_EINVALIDPOINTER || err == PWM_STATUS_UNDEFINEDCMD || err == PWM_STATUS_INVALID_DUTY ||
+             err == SL_ERROR_FS_INVALID_HANDLE) {
         return ErrorType::InvalidParameter;
     }
-    else if (err == Power_ECHANGE_NOT_ALLOWED || err == Power_EBUSY || SL_RET_CODE_PROVISIONING_IN_PROGRESS) {
+    else if (err == Power_ECHANGE_NOT_ALLOWED || err == Power_EBUSY || err == SL_RET_CODE_PROVISIONING_IN_PROGRESS || err == SL_RET_CODE_DEV_NOT_STARTED) {
         return ErrorType::PrerequisitesNotMet;
     }
-    else if (SL_ERROR_ROLE_STA_ERR || SL_ERROR_ROLE_AP_ERR || SL_ERROR_ROLE_P2P_ERR || SL_ERROR_CALIB_FAIL || SL_ERROR_FS_CORRUPTED_ERR || SL_ERROR_FS_ALERT_ERR ||
-             SL_ERROR_RESTORE_IMAGE_COMPLETE || SL_ERROR_ROLE_TAG_ERR || SL_ERROR_FIPS_ERR || SL_ERROR_GENERAL_ERR) {
+    else if (err == SL_ERROR_ROLE_STA_ERR || err == SL_ERROR_ROLE_AP_ERR || err == SL_ERROR_ROLE_P2P_ERR || err == SL_ERROR_CALIB_FAIL || err == SL_ERROR_FS_CORRUPTED_ERR || err == SL_ERROR_FS_ALERT_ERR ||
+             err == SL_ERROR_RESTORE_IMAGE_COMPLETE || err == SL_ERROR_ROLE_TAG_ERR || err == SL_ERROR_FIPS_ERR || err == SL_ERROR_GENERAL_ERR) {
                 return ErrorType::Failure;
     }
-    else if (SL_RET_CODE_DEV_ALREADY_STARTED) {
+    else if (err == SL_RET_CODE_DEV_ALREADY_STARTED || err == SL_ERROR_FS_FILE_IS_ALREADY_OPENED) {
         return ErrorType::Success;
     }
-    else if (err == ENOSPC || SL_ERROR_BSD_ENOMEM) {
+    else if (err == ENOSPC || err == SL_ERROR_BSD_ENOMEM) {
         return ErrorType::NoMemory;
     }
     else if (err == EINVAL) {
