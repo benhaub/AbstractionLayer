@@ -39,6 +39,21 @@ struct DateTime {
     uint8_t day;    ///< day. 0-31
     uint8_t weekday;///< week 0-7 (Sun-Sat)
     uint8_t month;  ///< month. 0-12
+    uint16_t year;   ///< year.
+};
+///@struct Time
+///@brief Time
+struct Time {
+    uint8_t second; ///< Seconds. 0-59
+    uint8_t minute; ///< minutes. 0-59
+    uint8_t hour;   ///< hour. 0-23
+};
+///@struct Date
+///@brief Date
+struct Date {
+    uint8_t day;    ///< day. 0-31
+    uint8_t weekday;///< week 0-7 (Sun-Sat)
+    uint8_t month;  ///< month. 0-12
     uint8_t year;   ///< year. 0-99.
 };
 
@@ -124,13 +139,20 @@ using Port = uint16_t;
 using Socket = int32_t;
 using Ipv4Address = uint32_t;
 
-//Adapted from Freescale Semiconductor fsl_snvs_hp.c
+/**
+ * @brief Converts a DateTime structure to a Unix time.
+ * @param dt The DateTime structure to convert.
+ * @return The Unix time equivalent of the DateTime.
+ * @note Remember the datetime data should represent the time and date since January 1st, 1970. If you provide a datetime
+ *       with the year 2025 you are asking for the date which is 2025 years since 1970.
+ * @sa Adapted from Freescale Semiconductor fsl_snvs_hp.c
+ */
 static constexpr UnixTime ToUnixTime(DateTime dt) {
-    constexpr uint16_t currentMillenium = 2000;
     constexpr uint16_t daysInAYear = 365;
     constexpr uint32_t secondsInADay = 86400;
     constexpr uint16_t secondsInAnHour = 3600;
     constexpr uint16_t secondsInAMinute = 60;
+
     //Number of days from the beginning of the non leap-year
     auto daysFromJanuaryToNow = [](uint8_t month) {
         if (month <= 12 && month >= 1) {
@@ -169,15 +191,17 @@ static constexpr UnixTime ToUnixTime(DateTime dt) {
     };
 
     //Since the epoch from the given year
-    uint16_t daysSince = (((20 + (uint32_t)dt.year) - 1970) * daysInAYear);
+    uint16_t daysSince = dt.year * daysInAYear;
     //Since the epoch of the given year with leap days included.
-    daysSince += ((currentMillenium + (uint32_t)dt.year / 4) - (1970 / 4));
+    daysSince += ((1970 + dt.year) / 4) - (1970 / 4);
     //We are at January of this year, now go to our month.
     daysSince += daysFromJanuaryToNow(dt.month);
     //Now go to the day for the month.
-    daysSince += ((uint32_t )dt.day - 1);
+    if (dt.day > 0) {
+        daysSince += ((uint32_t )dt.day - 1);
+    }
     //If this year is a leap year and it's less than or equal February
-    if (0 == (dt.year & 3) && dt.year <= 2) {
+    if (0 != dt.year && 0 == (dt.year & 3) && dt.year <= 2) {
         daysSince--;
     }
 
@@ -186,6 +210,11 @@ static constexpr UnixTime ToUnixTime(DateTime dt) {
     return secondsSince;
 }
 
+/**
+ * @brief Convert a Unix time to a date time
+ * @param seconds The unix time
+ * @returns the DateTime which is the time and date passed since January 1st, 1970.
+ */
 static constexpr DateTime ToDateTime(UnixTime seconds) {
     constexpr uint16_t daysInAYear = 365;
     constexpr uint32_t secondsInADay = 86400;
@@ -193,7 +222,7 @@ static constexpr DateTime ToDateTime(UnixTime seconds) {
     constexpr uint16_t secondsInAMinute = 60;
 
     auto daysPerMonth = [](uint16_t currentYear, uint8_t month) {
-        if (month <= 12 && month >= 1) {
+        if (month > 12 || month < 1) {
             return 0;
         }
 
@@ -234,34 +263,34 @@ static constexpr DateTime ToDateTime(UnixTime seconds) {
     };
 
     uint32_t secondsLeftToAddToDatetime = seconds;
-    uint16_t daysSince = seconds / secondsInADay + 1;
+    uint16_t daysSince = seconds / secondsInADay;
     secondsLeftToAddToDatetime %= secondsInADay;
 
     DateTime dateSince {};
     dateSince.hour = (uint8_t)(secondsLeftToAddToDatetime / secondsInAnHour);
     secondsLeftToAddToDatetime %= secondsInAnHour;
-    dateSince.minute = (uint8_t)(secondsLeftToAddToDatetime / 60);
-    dateSince.second = (uint8_t)(secondsLeftToAddToDatetime / secondsInAMinute);
-    uint16_t yearsSinceStartingFrom1970 = 1970;
-    uint16_t numberOfLeapYearsSince1970 = 0;
+    dateSince.minute = (uint8_t)(secondsLeftToAddToDatetime / secondsInAMinute);
+    dateSince.second = (uint8_t)(secondsLeftToAddToDatetime % secondsInAMinute);
+    uint16_t yearsSinceStartingFrom1970 = 0;
 
-    while (daysSince > daysInAYear + numberOfLeapYearsSince1970) {
-       daysSince -= daysInAYear;
-       yearsSinceStartingFrom1970++;
+    while (daysSince > daysInAYear) {
+        if ((dateSince.year & 3U) == 0U) {
+            daysSince--;
+        }
 
-       if (0 == (yearsSinceStartingFrom1970 & 3)) {
-          numberOfLeapYearsSince1970++; 
-       }
+        daysSince -= daysInAYear;
+        yearsSinceStartingFrom1970++;
     }
 
     dateSince.year = yearsSinceStartingFrom1970;
 
-    for (int m = 0; m <= 12; m++) {
-        if (daysSince <= daysPerMonth(dateSince.year, m)) {
+    for (int m = 0; m <= 12 && daysSince > 0; m++) {
+        uint8_t daysInMonth = daysPerMonth(dateSince.year, m);
+        if (0 != daysInMonth && daysSince <= daysInMonth) {
             dateSince.month = m;
         }
         else {
-            daysSince -= daysPerMonth(dateSince.year, m);
+            daysSince -= daysInMonth;
         }
     }
 
