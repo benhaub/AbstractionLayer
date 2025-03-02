@@ -47,12 +47,22 @@ class GptmPwmAbstraction : public GptmAbstraction {
     const Percent &dutyCycleConst() const { return _dutyCycle; }
     /// @brief Get the period as a const reference
     const Milliseconds &periodConst() const { return _period; }
+    /// @brief Get the output pin as a const reference
+    const PinNumber &outputPinConst() const { return _outputPin; }
+    /**
+     * @brief Get the output pin as a mutable reference
+     * @note The output pin is set like this because some systems may include pin muxing tools that will set the pins for you
+     *       in the driver config so setting the pin here may not always be required.
+     */
+    PinNumber &outputPin() { return _outputPin; }
 
     protected:
     /// @brief The duty for the PWM
     Percent _dutyCycle = 0;
     /// @brief The time to apply the duty cyle to.
     Milliseconds _period = 0;
+    /// @brief The output pin
+    PinNumber _outputPin = 0;
 };
 
 #endif //__GPTM_PWM_ABSTRACTION_HPP__

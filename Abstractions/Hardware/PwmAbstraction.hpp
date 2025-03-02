@@ -87,6 +87,14 @@ class PwmAbstraction {
      * @returns ErrorType::Failure if the period was not set.
      */
     virtual ErrorType setPeriod(Milliseconds period) = 0;
+    /// @brief Get the output pin as a const reference
+    const PinNumber &outputPinConst() const { return _outputPin; }
+    /**
+     * @brief Get the output pin as a mutable reference
+     * @note The output pin is set like this because some systems may include pin muxing tools that will set the pins for you
+     *       in the driver config so setting the pin here may not always be required.
+     */
+    PinNumber &outputPin() { return _outputPin; }
 
     Percent &dutyCycle() { return _dutyCycle; }
     const Percent &dutyCycleConst() const { return _dutyCycle; }
@@ -102,6 +110,8 @@ class PwmAbstraction {
     Milliseconds _period = 0;
     /// @brief The peripheral number for this PWM
     PeripheralNumber _peripheral = PeripheralNumber::Unknown;
+    /// @brief The output pin
+    PinNumber _outputPin = 0;
 };
 
 #endif //__PWM_ABSTRACTION_HPP__
