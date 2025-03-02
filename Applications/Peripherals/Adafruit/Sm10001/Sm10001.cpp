@@ -1,51 +1,85 @@
 #include "Sm10001.hpp"
+//AbstractionLayer
+#include "OperatingSystemModule.hpp"
 
 ErrorType Sm10001::init() {
-    PeripheralNumber peripheral = PeripheralNumber::Unknown;
-    constexpr uint8_t numberOfInputs = 2;
-    constexpr Milliseconds pwmPeriod = Milliseconds(200);
-    constexpr Percent pwmDutyCycle = Percent(25);
-
-    for (int i = 0; i < numberOfInputs; i++) {
-        _pwmIsImplementedByGptm = _gptPwms[i].init() != ErrorType::NotImplemented;
-        _pwmIsStandaloneDriver = _pwms[i].init() != ErrorType::NotImplemented;
-
-        switch (i) {
-            case 0: peripheral = PeripheralNumber::Zero;
-                break;
-            case 1: peripheral = PeripheralNumber::One;
-                break;
-        }
-
-        if (_pwmIsStandaloneDriver) {
-            _pwms[i].peripheralNumber() = peripheral;
-            _pwms[i].setPeriod(pwmPeriod);
-            _pwms[i].setDutyCycle(pwmDutyCycle);
-            ErrorType error = _pwms[i].init();
-            if (ErrorType::Success != error) {
-                const bool isCriticalError = !(ErrorType::NotAvailable == error || ErrorType::NotImplemented == error);
-                if (isCriticalError) {
-                    return error;
-                }
-            }
-            else {
-                _pwms[i].stop();
-            }
-        }
-        else if (_pwmIsImplementedByGptm) {
-            _gptPwms[i].peripheralNumber() = peripheral;
-            _gptPwms[i].setPeriod(pwmPeriod);
-            _gptPwms[i].setDutyCycle(pwmDutyCycle);
-            ErrorType error = _gptPwms[i].init();
-            if (ErrorType::Success != error) {
-                const bool isCriticalError = !(ErrorType::NotAvailable == error || ErrorType::NotImplemented == error);
-                if (isCriticalError) {
-                    return error;
-                }
-            }
-            else {
-                _gptPwms[i].stop();
-            }
-        }
+    if (Sm10001Drivers::InputSignalType::Gpio == _inputSignalType) {
+        return ErrorType::NotSupported;
     }
+    else if (Sm10001Drivers::InputSignalType::PwmStandalone == _inputSignalType) {
+        std::vector<Pwm> pwms;
+        pwms.reserve(_MotorInputPins);
+        pwms.emplace_back(Pwm());
+        pwms.at(0).peripheralNumber() = PeripheralNumber::Zero;
+        pwms.emplace_back(Pwm());
+        pwms.at(1).peripheralNumber() = PeripheralNumber::One;
+
+        for (auto &pwm: pwms) {
+            pwm.setPeriod(_PwmPeriod);
+            pwm.setDutyCycle(_PwmDutyCycle);
+            ErrorType error;
+            pwm.outputPin() = mapPeripheralToPinNumber(pwm.peripheralNumber(), error);
+            assert(ErrorType::Success == error);
+            error = pwm.init();
+            if (ErrorType::Success != error) {
+                const bool isCriticalError = !(ErrorType::NotAvailable == error || ErrorType::NotImplemented == error);
+                if (isCriticalError) {
+                    return error;
+                }
+            }
+            else {
+                pwm.stop();
+            }
+        }
+
+        _hBridge->setPwms(pwms);
+    }
+    else if (Sm10001Drivers::InputSignalType::PwmTimer == _inputSignalType) {
+        std::vector<GptmPwmModule> gptPwms;
+        gptPwms.reserve(_MotorInputPins);
+        gptPwms.emplace_back(GptmPwmModule());
+        gptPwms.at(0).peripheralNumber() = PeripheralNumber::Zero;
+        gptPwms.emplace_back(GptmPwmModule());
+        gptPwms.at(1).peripheralNumber() = PeripheralNumber::One;
+
+        for (auto &gptPwm : gptPwms) {
+            gptPwm.setPeriod(_PwmPeriod);
+            gptPwm.setDutyCycle(_PwmDutyCycle);
+            ErrorType error;
+            gptPwm.outputPin() = mapPeripheralToPinNumber(gptPwm.peripheralNumber(), error);
+            assert(ErrorType::Success == error);
+            error = gptPwm.init();
+            if (ErrorType::Success != error) {
+                const bool isCriticalError = !(ErrorType::NotAvailable == error || ErrorType::NotImplemented == error);
+                if (isCriticalError) {
+                    return error;
+                }
+            }
+            else {
+                gptPwm.stop();
+            }
+        }
+
+        _hBridge->setPwms(gptPwms);
+    }
+
+    return ErrorType::Success;
+}
+
+ErrorType Sm10001::slideForward() {
+    ErrorType error = _hBridge->driveForward();
+    OperatingSystem::Instance().delay(Milliseconds(_PwmPeriod / 2));
+    if (ErrorType::Success == error) {
+        _hBridge->coast();
+    }
+    return error;
+}
+
+ErrorType Sm10001::slideBackward() {
+    ErrorType error = _hBridge->driveBackward();
+    OperatingSystem::Instance().delay(Milliseconds(_PwmPeriod / 2));
+    if (ErrorType::Success == error) {
+        _hBridge->coast();
+    }
+    return error;
 }
