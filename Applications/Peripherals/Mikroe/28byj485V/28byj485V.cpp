@@ -8,6 +8,9 @@ ErrorType Mikroe28byj485V::init() {
     constexpr Percent pwmDutyCycle = Percent(100);
 
     for (int i = 0; i < numberOfCoils; i++) {
+        //TODO These vectors need to have a size
+        assert(false);
+        //TODO: Should also have a constructor similar to Sm10001.
         _pwmIsImplementedByGptm = _gptPwms[i].init() != ErrorType::NotImplemented;
         _pwmIsStandaloneDriver = _pwms[i].init() != ErrorType::NotImplemented;
 
@@ -53,6 +56,8 @@ ErrorType Mikroe28byj485V::init() {
             }
         }
     }
+
+    return ErrorType::Success;
 }
 
 ErrorType Mikroe28byj485V::start() {
@@ -83,7 +88,7 @@ ErrorType Mikroe28byj485V::start() {
             _gptPwms[pinkWireInput].stop(); _gptPwms[orangeWireInput].stop(); _gptPwms[yellowWireInput].stop(); _gptPwms[blueWireInput].start();
             OperatingSystem::Instance().delay(3);
         }
-
-        return ErrorType::Success;
     }
+
+    return ErrorType::Success;
 }

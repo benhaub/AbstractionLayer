@@ -1,3 +1,10 @@
+/**************************************************************************//**
+* @author Ben Haubrich                                        
+* @file   28byj485V.hpp
+* @details \b Synopsis: \n Driver for stepper motor driver by Mikroe
+* @see https://www.mikroe.com/step-motor-5v
+* @ingroup Applications
+*******************************************************************************/
 #ifndef __28BYJ48_5V_HPP__
 #define __28BYJ48_5V_HPP__
 
