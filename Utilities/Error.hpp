@@ -22,7 +22,7 @@
 enum class ErrorType : uint8_t {
     Success             = 0,    ///< Nothing to worry about. Move on!
     Failure             = 1,    ///< General failure. Try to be more specific if you can.
-    NotImplemented      = 2,    ///< For software that returns because there is no code for it, but there could be code if you just wrote it.
+    NotImplemented      = 2,    ///< For software that returns because the implementation does not exist for the given platform.
     NoMemory            = 3,    ///< Not enough memory to complete the operation
     Timeout             = 4,    ///< Operation timed out
     NotSupported        = 5,    ///< The operation is implemented, but doesn't support the provided data types. You couldn't implement the code even if you wanted to.
