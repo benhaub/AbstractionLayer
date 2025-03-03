@@ -311,19 +311,6 @@ class Sm10001 {
     PinNumber _motorInputA;
     /// @brief The pin number of the motor input B.
     PinNumber _motorInputB;
-
-    constexpr PinNumber mapPeripheralToPinNumber(PeripheralNumber peripheral, ErrorType &error) {
-        error = ErrorType::Success;
-        switch (peripheral) {
-            case PeripheralNumber::Zero:
-                return _motorInputA;
-            case PeripheralNumber::One:
-                return _motorInputB;
-            default:
-                error = ErrorType::InvalidParameter;
-                return 0;
-        }
-    }
 };
 
 #endif //__SM10001_HPP__
