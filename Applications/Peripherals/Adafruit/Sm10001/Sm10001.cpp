@@ -1,6 +1,7 @@
 #include "Sm10001.hpp"
 //AbstractionLayer
 #include "OperatingSystemModule.hpp"
+#include "Math.hpp"
 
 ErrorType Sm10001::init() {
     if (Sm10001Drivers::InputSignalType::Gpio == _inputSignalType) {
