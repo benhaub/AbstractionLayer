@@ -15,6 +15,8 @@ ErrorType Adc::init() {
             .bitwidth = ADC_BITWIDTH_DEFAULT
         };
         ErrorType error = ErrorType::Failure;
+        //The pins whose alternate functions support the ADC and have analog functionality are exposed in a per-design basis.
+        //Consult your PCB schematics to determine which pins to connect to.
         err = adc_oneshot_config_channel(adcHandle, toEspChannel(channelConst(), error), &config);
         if (ESP_OK == err && ErrorType::Success == error) {
             const adc_cali_curve_fitting_config_t calibrationConfig = {
