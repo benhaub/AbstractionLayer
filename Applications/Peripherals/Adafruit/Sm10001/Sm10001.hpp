@@ -12,6 +12,7 @@
 #include "GptmPwmModule.hpp"
 #include "PwmModule.hpp"
 #include "GpioModule.hpp"
+#include "AdcModule.hpp"
 //C++
 #include <vector>
 #include <memory>
@@ -95,6 +96,7 @@ namespace Sm10001Drivers {
         bool _hBridgeIsDrivenByGpio = false;
     };
 
+    //https://www.ti.com/lit/ds/symlink/drv8872-q1.pdf?ts=1740601343172&ref_url=https%253A%252F%252Fwww.mouser.it%252F
     struct Drv8872 : public HBridge {
         public:
         Drv8872() = default;
@@ -230,13 +232,19 @@ class Sm10001 {
     /**
      * @brief Constructor
      * @param hBridge The HBridge to use
+     * @param adc The ADC to use
      * @param motorInputA The pin number of the motor input A.
      * @param motorInputB The pin number of the motor input B.
-     * @post Ownership of the HBridge is transferred to the Sm10001.
+     * @post Ownership of the HBridge is transferred to the SM10001.
+     * @post Ownership of the ADC is taken by this SM10001
      */
-    Sm10001(Sm10001Drivers::InputSignalType inputSignalType, std::unique_ptr<Sm10001Drivers::HBridge> &hBridge, PinNumber motorInputA, PinNumber motorInputB) {
+    Sm10001(Sm10001Drivers::InputSignalType inputSignalType,
+            std::unique_ptr<Sm10001Drivers::HBridge> &hBridge,
+            std::unique_ptr<Adc> &adc,
+            PinNumber motorInputA, PinNumber motorInputB) {
         _inputSignalType = inputSignalType;
         _hBridge = std::move(hBridge);
+        _adc = std::move(adc);
         _motorInputA = motorInputA;
         _motorInputB = motorInputB;
 
@@ -280,10 +288,22 @@ class Sm10001 {
      * @returns ErrorType::Failure otherwise
      */
     ErrorType slideBackward();
+    /**
+     * @brief Get the voltage drop reading from the potentiometer
+     * @param volts The voltage drop reading will be stored here
+     * @returns ErrorType::Success if the reading was successful
+     * @returns ErrorType::Failure otherwise
+     * @post volts is invalid only if ErrorType::Failure is returned.
+     */
+    ErrorType getVoltageDrop(Volts &volts);
 
     private:
+    /// @brief The input signal type
     Sm10001Drivers::InputSignalType _inputSignalType;
+    /// @brief The H-Bridge that drives the motor
     std::unique_ptr<Sm10001Drivers::HBridge> _hBridge;
+    /// @brief The ADC that reads the potentiometer voltage drop.
+    std::unique_ptr<Adc> _adc;
     /// @brief The pin number of the motor input A.
     PinNumber _motorInputA;
     /// @brief The pin number of the motor input B.

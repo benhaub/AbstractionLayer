@@ -11,6 +11,9 @@ ErrorType Sm10001::init() {
         std::vector<Pwm> pwms;
         pwms.reserve(_MotorInputPins);
         pwms.emplace_back(Pwm());
+        //TODO: The motor should not be deciding what peripherals it uses. That is application specific. If I really
+        //want to streamline the init process for PWMs I should make a facade for it by creating an initDefault function or create a
+        //factory for PWMs with GPTM and standalone driver as the paramter.
         pwms.at(0).peripheralNumber() = PeripheralNumber::Zero;
         pwms.emplace_back(Pwm());
         pwms.at(1).peripheralNumber() = PeripheralNumber::One;
@@ -23,7 +26,7 @@ ErrorType Sm10001::init() {
             assert(ErrorType::Success == error);
             error = pwm.init();
             if (ErrorType::Success != error) {
-                const bool isCriticalError = !(ErrorType::NotAvailable == error || ErrorType::NotImplemented == error);
+                const bool isCriticalError = !(ErrorType::NotAvailable == error);
                 if (isCriticalError) {
                     return error;
                 }
@@ -51,7 +54,7 @@ ErrorType Sm10001::init() {
             assert(ErrorType::Success == error);
             error = gptPwm.init();
             if (ErrorType::Success != error) {
-                const bool isCriticalError = !(ErrorType::NotAvailable == error || ErrorType::NotImplemented == error);
+                const bool isCriticalError = !(ErrorType::NotAvailable == error);
                 if (isCriticalError) {
                     return error;
                 }
@@ -82,5 +85,16 @@ ErrorType Sm10001::slideBackward() {
     if (ErrorType::Success == error) {
         _hBridge->coast();
     }
+    return error;
+}
+
+ErrorType Sm10001::getVoltageDrop(Volts &voltageDrop) {
+    Count rawAdcValue = 0;
+
+    ErrorType error = _adc->convert(rawAdcValue);
+    if (ErrorType::Success == error) {
+        error = _adc->rawToVolts(rawAdcValue, voltageDrop);
+    }
+
     return error;
 }
