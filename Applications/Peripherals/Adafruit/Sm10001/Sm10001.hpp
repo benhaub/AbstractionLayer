@@ -18,18 +18,6 @@
 #include <memory>
 
 namespace Sm10001Drivers {
-
-    /**
-     * @enum InputSignalType
-     * @brief The input signal that is used to drive the inputs of the H-Bridge.
-     */
-    enum class InputSignalType {
-        Unknown = 0,   ///< Unknown input signal type
-        PwmTimer,      ///< Pwm timer input signal
-        PwmStandalone, ///< Pwm standalone input signal
-        Gpio           ///< Gpio input signal
-    };
-
     /**
      * @struct HBridge
      * @brief The H-Bridge that drives the motor.
@@ -66,20 +54,54 @@ namespace Sm10001Drivers {
          */
         virtual ErrorType brake() = 0;
 
-        void setPwms(std::vector<GptmPwmModule> gptPwms) {
-            _pwmIsImplementedByGptm = gptPwms.size() == 2;
+        /**
+         * @brief Set the PWMs.
+         * @param gptPwms The PWMs implemented by the general purpose timer.
+         * @returns ErrorType::Success if the PWMs were set
+         * @returns ErrorType::Failure otherwise
+         */
+        void setPwms(std::vector<GptmPwmModule> &gptPwms) {
+            assert(gptPwms.size() == 2);
+            _pwmIsImplementedByGptm = true;
             _gptPwms.swap(gptPwms);
         }
 
-        void setPwms(std::vector<Pwm> pwms) {
-            _pwmIsStandaloneDriver = pwms.size() == 2;
+        /**
+         * @brief Set the PWMs.
+         * @param pwms The PWMs implemented by a standalone driver.
+         * @returns ErrorType::Success if the PWMs were set
+         * @returns ErrorType::Failure otherwise
+         */
+        void setPwms(std::vector<Pwm> &pwms) {
+            assert(pwms.size() == 2);
+            _pwmIsStandaloneDriver = true;
             _pwms.swap(pwms);
         }
 
-        void setGpios(std::vector<Gpio> gpios) {
-            _hBridgeIsDrivenByGpio = gpios.size() == 2;
+        /**
+         * @brief Set the GPIOs.
+         * @param gpios The GPIOs used to drive the H-Bridge.
+         * @returns ErrorType::Success if the GPIOs were set
+         * @returns ErrorType::Failure otherwise
+         */
+        void setGpios(std::vector<Gpio> &gpios) {
+            assert(gpios.size() == 2);
+            _hBridgeIsDrivenByGpio = true;
             _gpios.swap(gpios);
         }
+
+        /// @brief Get a constant reference to the pwms.
+        const std::vector<GptmPwmModule> &gptPwmsConst() const { return _gptPwms; }
+        /// @brief Get a mutable reference to the pwms
+        std::vector<GptmPwmModule> &gptPwms() { return _gptPwms; }
+        /// @brief Get a constant reference to the pwms.
+        const std::vector<Pwm> &standalonePwmsConst() const { return _pwms; }
+        /// @brief Get a mutable reference to the pwms
+        std::vector<Pwm> &standalonePwms() { return _pwms; }
+        /// @brief Get a constant reference to the gpios.
+        const std::vector<Gpio> &gpiosConst() const { return _gpios; }
+        /// @brief Get a mutable reference to the gpios
+        std::vector<Gpio> &gpios() { return _gpios; }
 
         protected:
         /// @brief The PWMs implemented by the general purpose timer.
@@ -238,30 +260,13 @@ class Sm10001 {
      * @post Ownership of the HBridge is transferred to the SM10001.
      * @post Ownership of the ADC is taken by this SM10001
      */
-    Sm10001(Sm10001Drivers::InputSignalType inputSignalType,
-            std::unique_ptr<Sm10001Drivers::HBridge> &hBridge,
+    Sm10001(std::unique_ptr<Sm10001Drivers::HBridge> &hBridge,
             std::unique_ptr<Adc> &adc,
             PinNumber motorInputA, PinNumber motorInputB) {
-        _inputSignalType = inputSignalType;
         _hBridge = std::move(hBridge);
         _adc = std::move(adc);
         _motorInputA = motorInputA;
         _motorInputB = motorInputB;
-
-        //For some reason this library will not be able to link unless these constructors are called from the hpp file.
-        switch (_inputSignalType) {
-            case Sm10001Drivers::InputSignalType::PwmTimer:
-                GptmPwmModule();
-                break;
-            case Sm10001Drivers::InputSignalType::PwmStandalone:
-                Pwm();
-                break;
-            case Sm10001Drivers::InputSignalType::Gpio:
-                Gpio();
-                break;
-            default:
-                assert(false);
-        }
     }
     /// @brief Destructor
     ~Sm10001() = default;
@@ -298,8 +303,6 @@ class Sm10001 {
     ErrorType getVoltageDrop(Volts &volts);
 
     private:
-    /// @brief The input signal type
-    Sm10001Drivers::InputSignalType _inputSignalType;
     /// @brief The H-Bridge that drives the motor
     std::unique_ptr<Sm10001Drivers::HBridge> _hBridge;
     /// @brief The ADC that reads the potentiometer voltage drop.
