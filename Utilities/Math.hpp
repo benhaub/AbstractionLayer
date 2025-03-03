@@ -12,6 +12,7 @@
 #include "Error.hpp"
 //C++
 #include <limits>
+#include <cmath>
 
 /**
  * @brief Calculate a running average.

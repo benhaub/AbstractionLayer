@@ -114,9 +114,10 @@ using PartitionNumber = uint16_t;
 using PinNumber = int32_t;
 /**
  * @enum PeripheralNumber
- * @brief   Hardware peripheral number. Refers to the number or index given to the hardware peripheral being used.
+ * @brief Hardware peripheral number. Refers to the number or index given to the hardware peripheral being used.
+ * @details This is an enum because PeripheralNumber do not change at runtime and should be set statically.
 */
-enum class PeripheralNumber : uint32_t {
+enum class PeripheralNumber : uint8_t {
     Zero = 0, ///< Peripheral number 0.
     One,      ///< Peripheral number 1.
     Two,      ///< Peripheral number 2.
@@ -138,6 +139,8 @@ using Port = uint16_t;
 ///@typedef Socket
 ///Network socket number
 using Socket = int32_t;
+///@typedef Ipv4Address
+///IP version 4 address
 using Ipv4Address = uint32_t;
 
 /**
