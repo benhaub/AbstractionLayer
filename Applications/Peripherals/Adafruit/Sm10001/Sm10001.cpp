@@ -70,18 +70,23 @@ ErrorType Sm10001::init() {
 
 ErrorType Sm10001::slideForward() {
     ErrorType error = _hBridge->driveForward();
-    OperatingSystem::Instance().delay(Milliseconds(_PwmPeriod / 2));
+
+    OperatingSystem::Instance().delay(Milliseconds(750));
+
     if (ErrorType::Success == error) {
-        error = _hBridge->coast();
+        error = _hBridge->brake();
     }
+
     return error;
 }
 
 ErrorType Sm10001::slideBackward() {
     ErrorType error = _hBridge->driveBackward();
-    OperatingSystem::Instance().delay(Milliseconds(_PwmPeriod / 2));
+
+    OperatingSystem::Instance().delay(Milliseconds(750));
+
     if (ErrorType::Success == error) {
-        error = _hBridge->coast();
+        error = _hBridge->brake();
     }
     return error;
 }

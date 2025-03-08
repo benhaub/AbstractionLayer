@@ -20,6 +20,6 @@ ErrorType GptmPwmModule::setDutyCycle(const Percent on) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType GptmPwmModule::setPeriod(const Milliseconds period) {
+ErrorType GptmPwmModule::setPeriod(const Microseconds period) {
     return ErrorType::NotImplemented;
 }

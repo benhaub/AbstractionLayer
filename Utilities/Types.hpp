@@ -13,6 +13,9 @@
 #include <cassert>
 
 //-------------------------------Time
+///@typedef Microseconds
+///Microseconds (μs)
+using Microseconds = uint64_t;
 ///@typedef Milliseconds
 ///Milliseconds (ms)
 using Milliseconds = uint32_t;

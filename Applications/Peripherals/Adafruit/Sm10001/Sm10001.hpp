@@ -17,6 +17,10 @@
 #include <vector>
 #include <memory>
 
+/**
+ * @namespace Sm10001Drivers
+ * @brief IC Drivers for the motorized slide potentiometer by adafruit
+ */
 namespace Sm10001Drivers {
     /**
      * @struct HBridge
@@ -118,14 +122,18 @@ namespace Sm10001Drivers {
         bool _hBridgeIsDrivenByGpio = false;
     };
 
-    //https://www.ti.com/lit/ds/symlink/drv8872-q1.pdf?ts=1740601343172&ref_url=https%253A%252F%252Fwww.mouser.it%252F
+    /**
+     * @struct Drv8872
+     * @brief The HBdridge by Texas Instruments
+     * @sa https://www.ti.com/lit/ds/symlink/drv8872-q1.pdf?ts=1740601343172&ref_url=https%253A%252F%252Fwww.mouser.it%252F
+     */
     struct Drv8872 : public HBridge {
         public:
+        /// @brief  Constructor
         Drv8872() = default;
+        /// @brief Destructor
         ~Drv8872() = default;
 
-        //For some reason these PWMs are going up and down in sync. Also If I remove power from the H-Bridge I can still
-        //See the signals coming out the other side. That doesn't seem right.
         ErrorType driveForward() override {
             ErrorType error = ErrorType::Failure;
             assert(_pwmIsImplementedByGptm || _pwmIsStandaloneDriver);
@@ -267,13 +275,19 @@ class Sm10001 {
         _adc = std::move(adc);
         _motorInputA = motorInputA;
         _motorInputB = motorInputB;
+
+        //Note that this only begins to calculate once the period falls below 1000.
+        static_assert(1000 / _PwmPeriod <= 250, "Frequency is beyond max reccommended in data sheet.");
     }
     /// @brief Destructor
     ~Sm10001() = default;
 
+    /// @brief Number of input pins on the motor.
     static constexpr Count _MotorInputPins = 2;
-    static constexpr Milliseconds _PwmPeriod = 20;
-    static constexpr Percent _PwmDutyCycle = 25;
+    /// @brief Period of the PWMs for the motor.
+    static constexpr Microseconds _PwmPeriod = 1000;
+    /// @brief Duty cycle of the PWMs for the motor.
+    static constexpr Percent _PwmDutyCycle = 100;
 
     /**
      * @brief init the PWMs for the motor

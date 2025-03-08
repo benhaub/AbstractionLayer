@@ -41,12 +41,12 @@ class GptmPwmAbstraction : public GptmAbstraction {
      * @returns ErrorType::Success if the period was set.
      * @returns ErrorType::Failure if the period was not set.
      */
-    virtual ErrorType setPeriod(const Milliseconds period) = 0;
+    virtual ErrorType setPeriod(const Microseconds period) = 0;
 
     /// @brief Get the duty cycle as a const reference
     const Percent &dutyCycleConst() const { return _dutyCycle; }
     /// @brief Get the period as a const reference
-    const Milliseconds &periodConst() const { return _period; }
+    const Microseconds &periodConst() const { return _period; }
     /// @brief Get the output pin as a const reference
     const PinNumber &outputPinConst() const { return _outputPin; }
     /**
@@ -60,7 +60,7 @@ class GptmPwmAbstraction : public GptmAbstraction {
     /// @brief The duty for the PWM
     Percent _dutyCycle = 0;
     /// @brief The time to apply the duty cyle to.
-    Milliseconds _period = 0;
+    Microseconds _period = 0;
     /// @brief The output pin
     PinNumber _outputPin = 0;
 };

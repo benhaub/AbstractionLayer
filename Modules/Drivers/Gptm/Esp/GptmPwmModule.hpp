@@ -17,14 +17,14 @@ class GptmPwmModule : public GptmPwmAbstraction {
     ErrorType start() override;
     ErrorType stop() override;
     ErrorType setDutyCycle(const Percent on) override;
-    ErrorType setPeriod(const Milliseconds period) override;
+    ErrorType setPeriod(const Microseconds period) override;
 
     private:
     mcpwm_timer_handle_t _timer = nullptr;
     mcpwm_cmpr_handle_t _comparator = nullptr;
 
-    uint32_t millisecondsToEspTimerTicks(const Milliseconds period) {
-        return (period * 1000);
+    uint32_t microsecondsToEspTimerTicks(const Microseconds period) {
+        return (period);
     }
 };
 

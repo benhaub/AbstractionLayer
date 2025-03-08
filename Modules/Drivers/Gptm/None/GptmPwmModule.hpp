@@ -15,7 +15,7 @@ class GptmPwmModule : public GptmPwmAbstraction {
     ErrorType stop() override;
 
     ErrorType setDutyCycle(const Percent on) override;
-    ErrorType setPeriod(const Milliseconds period) override;
+    ErrorType setPeriod(const Microseconds period) override;
 };
 
 #endif //__GPTM_PWM_MODULE_HPP__

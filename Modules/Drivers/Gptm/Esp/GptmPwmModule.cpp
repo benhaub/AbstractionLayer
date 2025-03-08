@@ -12,7 +12,7 @@ ErrorType GptmPwmModule::init() {
         .clk_src = MCPWM_TIMER_CLK_SRC_DEFAULT,
         .resolution_hz = 1000000,
         .count_mode = MCPWM_TIMER_COUNT_MODE_UP,
-        .period_ticks = millisecondsToEspTimerTicks(_period) 
+        .period_ticks = microsecondsToEspTimerTicks(_period) 
     };
 
     esp_err_t err;
@@ -57,13 +57,16 @@ ErrorType GptmPwmModule::deinit() {
 
 ErrorType GptmPwmModule::start() {
     esp_err_t err;
+    //See GptmPwmModule::stop().
+    setDutyCycle(_dutyCycle);
     err = mcpwm_timer_start_stop(_timer, MCPWM_TIMER_START_NO_STOP);
     return fromPlatformError(err);
 }
 
 ErrorType GptmPwmModule::stop() {
     esp_err_t err;
-    err = mcpwm_timer_start_stop(_timer, MCPWM_TIMER_STOP_FULL);
+    //The start_stop function does not support stopping immediately so the best way to do this is to zero out the duty cycle.
+    err = mcpwm_comparator_set_compare_value(_comparator, microsecondsToEspTimerTicks(0));
     return fromPlatformError(err);
 }
 
@@ -78,14 +81,14 @@ ErrorType GptmPwmModule::setDutyCycle(const Percent on) {
         //The compare events are set to go low when the compare value is reached, and then high again when the counter reaches max.
         //So if we had a 20ms period and a 10% duty cycle, we'd have the signal going low at 2ms and then high again at 20ms and then
         //restarting back to zero.
-        const Milliseconds dutyValue = (on / 100) * _period;
-        err = mcpwm_comparator_set_compare_value(_comparator, millisecondsToEspTimerTicks(dutyValue));
+        const Microseconds dutyValue = (on / 100) * _period;
+        err = mcpwm_comparator_set_compare_value(_comparator, microsecondsToEspTimerTicks(dutyValue));
     }
 
     return fromPlatformError(err);
 }
 
-ErrorType GptmPwmModule::setPeriod(const Milliseconds period) {
+ErrorType GptmPwmModule::setPeriod(const Microseconds period) {
     _period = period;
     esp_err_t err = ESP_FAIL;
 
@@ -93,7 +96,7 @@ ErrorType GptmPwmModule::setPeriod(const Milliseconds period) {
         err = ESP_OK;
     }
     else {
-        err = mcpwm_timer_set_period(_timer, millisecondsToEspTimerTicks(period));
+        err = mcpwm_timer_set_period(_timer, microsecondsToEspTimerTicks(period));
     }
 
     return fromPlatformError(err);

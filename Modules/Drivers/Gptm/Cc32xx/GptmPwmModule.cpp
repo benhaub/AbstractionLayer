@@ -10,7 +10,7 @@ ErrorType GptmPwmModule::init() {
     PWM_Params_init(&pwmParams);
     pwmParams.idleLevel = PWM_IDLE_LOW;
     pwmParams.periodUnits = PWM_PERIOD_US;
-    pwmParams.periodValue = _period * 1E3;
+    pwmParams.periodValue = _period;
     pwmParams.dutyUnits   = PWM_DUTY_US;
     pwmParams.dutyValue   = (_dutyCycle / 100) * pwmParams.periodValue;
 
@@ -51,12 +51,12 @@ ErrorType GptmPwmModule::setDutyCycle(const Percent on) {
         return ErrorType::Success;
     }
     else {
-        const Milliseconds dutyValue = (on / 100) * _period;
+        const Microseconds dutyValue = (on / 100) * _period;
         return fromPlatformError(PWM_setDuty(_pwmHandle, dutyValue));
     }
 }
 
-ErrorType GptmPwmModule::setPeriod(const Milliseconds period) {
+ErrorType GptmPwmModule::setPeriod(const Microseconds period) {
     assert(period > 0);
 
     _period = period;
@@ -65,6 +65,6 @@ ErrorType GptmPwmModule::setPeriod(const Milliseconds period) {
         return ErrorType::Success;
     }
     else {
-        return fromPlatformError(PWM_setPeriod(_pwmHandle, period * 1E3));
+        return fromPlatformError(PWM_setPeriod(_pwmHandle, period));
     }
 }
