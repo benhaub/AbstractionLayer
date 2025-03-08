@@ -55,7 +55,7 @@ ErrorType Storage::deinit() {
     }
 
     while (!deinitializationDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
