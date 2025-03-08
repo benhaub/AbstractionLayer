@@ -15,6 +15,11 @@ ErrorType OperatingSystem::delay(const Milliseconds delay) {
     return ErrorType::Success;
 }
 
+
+ErrorType OperatingSystem::delay(Microseconds delay) {
+    return ErrorType::NotImplemented;
+}
+
 ErrorType OperatingSystem::startScheduler() {
     return ErrorType::NotAvailable;
 }

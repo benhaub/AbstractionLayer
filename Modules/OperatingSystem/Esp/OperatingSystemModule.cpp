@@ -36,6 +36,22 @@ ErrorType OperatingSystem::delay(const Milliseconds delay) {
     return ErrorType::Success;
 }
 
+ErrorType OperatingSystem::delay(Microseconds delay) {
+    if (configTICK_RATE_HZ <= 1000) {
+        return ErrorType::NotSupported;
+    }
+
+    const TickType_t now = xTaskGetTickCount();
+    const TickType_t oneMillisecond = pdMS_TO_TICKS(1);
+    const TickType_t oneMicrosecond = oneMillisecond / 1000;
+
+    Microseconds remainingDelay = delay;
+    while ((differenceBetween(now, xTaskGetTickCount()) / oneMicrosecond) < remainingDelay);
+
+    return ErrorType::Success;
+}
+
+
 //ESP will handle starting FreeRTOS for you by the time you get to app_main
 ErrorType OperatingSystem::startScheduler() {
     return ErrorType::NotAvailable;
@@ -110,7 +126,7 @@ ErrorType OperatingSystem::deleteThread(const std::string &name) {
 
 ErrorType OperatingSystem::joinThread(const std::string &name) {
     while (ErrorType::NoData != isDeleted(name)) {
-        delay(10);
+        delay(Milliseconds(1));
     }
 
     return ErrorType::Success;

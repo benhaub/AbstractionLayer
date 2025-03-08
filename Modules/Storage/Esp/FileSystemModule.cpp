@@ -34,7 +34,7 @@ ErrorType FileSystem::mount() {
     }
 
     while (!mountDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -70,7 +70,7 @@ ErrorType FileSystem::unmount() {
     }
 
     while (!unmountDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -103,7 +103,7 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
     }
 
     while (!maxStorageQueryDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -136,7 +136,7 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
     }   
 
     while (!availableStorageQueryDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -169,7 +169,7 @@ ErrorType FileSystem::erasePartition() {
     }
 
     while (!erasePartitionDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -212,7 +212,7 @@ ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenM
     }
 
     while (!openDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -246,7 +246,7 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
     }
 
     while (!closeDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -280,7 +280,7 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
     }
 
     while (!removeDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -318,7 +318,7 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
     }
 
     while (!readDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -363,7 +363,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::stri
     }
 
     while (!writeDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -407,7 +407,7 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
     }
 
     while (!syncDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -440,7 +440,7 @@ ErrorType FileSystem::size(FileSystemTypes::File &file) {
     }
 
     while (!sizeQueryDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;

@@ -98,6 +98,12 @@ class OperatingSystemAbstraction {
     */
     virtual ErrorType delay(const Milliseconds delay) = 0;
     /**
+     * @brief delays a thread by placing it in the blocking state.
+     * @param[in] delay The amount of time to block for.
+     * @returns ErrorType::Success if the thread is successfully blocked.
+    */
+    virtual ErrorType delay(const Microseconds delay) = 0;
+    /**
      * @brief Start the scheduler
      * @post Typically never returns. Depends on the implementation.
      * @returns ErrorType::Success if the scheduler was started.

@@ -77,7 +77,7 @@ ErrorType IpServer::listenTo(const IpServerTypes::Protocol protocol, const IpSer
     }
 
     while (!listeningDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -146,7 +146,7 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
     }
 
     while (!acceptConnectionDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -184,7 +184,7 @@ ErrorType IpServer::closeConnection(const Socket socket) {
     }
 
     while (!closeConnectionDone) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -208,7 +208,7 @@ ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds tim
     }
 
     while (!sent) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -243,7 +243,7 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
     }
 
     while (!received) {
-        OperatingSystem::Instance().delay(1);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;

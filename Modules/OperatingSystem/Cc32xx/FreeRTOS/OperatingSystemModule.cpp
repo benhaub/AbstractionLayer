@@ -24,6 +24,10 @@ ErrorType OperatingSystem::delay(Milliseconds delay) {
     return ErrorType::Success;
 }
 
+ErrorType OperatingSystem::delay(Microseconds delay) {
+    return ErrorType::NotImplemented;
+}
+
 ErrorType OperatingSystem::startScheduler() {
     vTaskStartScheduler();
 

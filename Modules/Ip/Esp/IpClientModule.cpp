@@ -123,7 +123,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
     }
 
     while (!doneConnecting) {
-        OperatingSystem::Instance().delay(10);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     if (statusConst().connected) {
@@ -167,7 +167,7 @@ ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds tim
     }
 
     while (!doneSending) {
-        OperatingSystem::Instance().delay(10);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return error;
@@ -198,7 +198,7 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
     }
 
     while (!doneReceiving) {
-        OperatingSystem::Instance().delay(10);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return error;

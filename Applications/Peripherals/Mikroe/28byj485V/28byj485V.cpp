@@ -70,23 +70,23 @@ ErrorType Mikroe28byj485V::start() {
     for (int i = 0; i < 512; i++) {
         if (_pwmIsStandaloneDriver) {
             _pwms[pinkWireInput].start(); _pwms[orangeWireInput].stop(); _pwms[yellowWireInput].stop(); _pwms[blueWireInput].stop();
-            OperatingSystem::Instance().delay(3);
+            OperatingSystem::Instance().delay(Milliseconds(3));
             _pwms[pinkWireInput].stop(); _pwms[orangeWireInput].start(); _pwms[yellowWireInput].stop(); _pwms[blueWireInput].stop();
-            OperatingSystem::Instance().delay(3);
+            OperatingSystem::Instance().delay(Milliseconds(3));
             _pwms[pinkWireInput].stop(); _pwms[orangeWireInput].stop(); _pwms[yellowWireInput].start(); _pwms[blueWireInput].stop();
-            OperatingSystem::Instance().delay(3);
+            OperatingSystem::Instance().delay(Milliseconds(3));
             _pwms[pinkWireInput].stop(); _pwms[orangeWireInput].stop(); _pwms[yellowWireInput].stop(); _pwms[blueWireInput].start();
-            OperatingSystem::Instance().delay(3);
+            OperatingSystem::Instance().delay(Milliseconds(3));
         }
         else {
             _gptPwms[pinkWireInput].start(); _gptPwms[orangeWireInput].stop(); _gptPwms[yellowWireInput].stop(); _gptPwms[blueWireInput].stop();
-            OperatingSystem::Instance().delay(3);
+            OperatingSystem::Instance().delay(Milliseconds(3));
             _gptPwms[pinkWireInput].stop(); _gptPwms[orangeWireInput].start(); _gptPwms[yellowWireInput].stop(); _gptPwms[blueWireInput].stop();
-            OperatingSystem::Instance().delay(3);
+            OperatingSystem::Instance().delay(Milliseconds(3));
             _gptPwms[pinkWireInput].stop(); _gptPwms[orangeWireInput].stop(); _gptPwms[yellowWireInput].start(); _gptPwms[blueWireInput].stop();
-            OperatingSystem::Instance().delay(3);
+            OperatingSystem::Instance().delay(Milliseconds(3));
             _gptPwms[pinkWireInput].stop(); _gptPwms[orangeWireInput].stop(); _gptPwms[yellowWireInput].stop(); _gptPwms[blueWireInput].start();
-            OperatingSystem::Instance().delay(3);
+            OperatingSystem::Instance().delay(Milliseconds(3));
         }
     }
 
