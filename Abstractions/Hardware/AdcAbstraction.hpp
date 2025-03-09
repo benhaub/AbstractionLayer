@@ -10,6 +10,10 @@
 #include "Types.hpp"
 #include "Error.hpp"
 
+/**
+ * @namespace AdcTypes
+ * @brief Namespace for ADC types
+ */
 namespace AdcTypes {
 
     /**
@@ -17,6 +21,7 @@ namespace AdcTypes {
      * @brief The channel of the ADC
      * @details The channel of an ADC will be tied to a physical pin and you will have to appeal to the documentation
      *          to determine which pins are measured by which channels.
+     * @note Because we have ventured into the realm of analog, we now refer to inputs as channels.
      */
     enum class Channel : uint8_t {
         Zero = 0,   ///< Channel 0
@@ -36,16 +41,49 @@ namespace AdcTypes {
     };
 }
 
+/**
+ * @class AdcAbstraction
+ * @brief Abstraction for ADC
+ */
 class AdcAbstraction {
     public:
+    /// @brief Constructor
     AdcAbstraction() = default;
+    /// @brief Destructor
     ~AdcAbstraction() = default;
 
+    /// @brief Tag for logging
     static constexpr char TAG[] = "AdcAbstraction";
 
+    /**
+     * @brief Initialize the ADC
+     * @returns ErrorType::Success if the initialization succeeded.
+     * @returns ErrorType::PrerequisitesNotMet if the ADC was not configured properly before init was called
+     * @sa channel()
+     * @sa peripheralNumber()
+     * @returns ErrorType::Failure otherwise.
+     */
     virtual ErrorType init() = 0;
+    /**
+     * @brief De-initialize the ADC
+     * @returns ErrorType::Success if the de-initialization succeeded.
+     * @returns ErrorType::Failure otherwise.
+     */
     virtual ErrorType deinit() = 0;
+    /**
+     * @brief Convert an analog signal into a discretized value.
+     * @param rawValue The discretized value
+     * @returns ErrorType::Success if the conversion succeeded.
+     * @returns ErrorType::Failure otherwise.
+     */
     virtual ErrorType convert(Count &rawValue) = 0;
+    /**
+     * @brief Convert a discretized value into a voltage.
+     * @param rawValue The discretized value
+     * @param volts The voltage
+     * @returns ErrorType::Success if the conversion succeeded.
+     * @returns ErrorType::Failure otherwise.
+     */
     virtual ErrorType rawToVolts(const Count rawValue, Volts &volts) = 0;
 
     /// @brief Get the channel as a const reference
