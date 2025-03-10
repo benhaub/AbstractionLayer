@@ -3,6 +3,7 @@ An abstraction layer for building cross-platform, [component-based](https://en.w
 
 ## How to include Abstraction Layer in your project
 https://github.com/benhaub/AbstractionLayerExample
+https://github.com/benhaub/sm10001slidePotentiometer
 
 ## Why use an abstraction layer
 ### 1. Reduce the amount of testing required for code changes
