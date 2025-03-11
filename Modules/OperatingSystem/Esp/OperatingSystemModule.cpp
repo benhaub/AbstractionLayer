@@ -46,7 +46,10 @@ ErrorType OperatingSystem::delay(Microseconds delay) {
     const TickType_t oneMicrosecond = oneMillisecond / 1000;
 
     Microseconds remainingDelay = delay;
-    while ((differenceBetween(now, xTaskGetTickCount()) / oneMicrosecond) < remainingDelay);
+
+    if (oneMicrosecond > 0) {
+        while ((differenceBetween(now, xTaskGetTickCount()) / oneMicrosecond) < remainingDelay);
+    }
 
     return ErrorType::Success;
 }

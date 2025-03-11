@@ -78,10 +78,13 @@ class Adc : public AdcAbstraction {
             default:
                 error = ErrorType::InvalidParameter;
         }
-
+#ifdef CONFIG_TI_DRIVERS_ADC_COUNT
         if (cc32xxAdcPeripheralNumber >= CONFIG_TI_DRIVERS_ADC_COUNT) {
             error = ErrorType::InvalidParameter;
         }
+#else
+        error = ErrorType::NotAvailable;
+#endif
 
         return cc32xxAdcPeripheralNumber;
     }

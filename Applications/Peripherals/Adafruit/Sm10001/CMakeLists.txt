@@ -12,6 +12,7 @@ target_include_directories(abstractionLayer INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(Sm10001 PRIVATE abstractionLayer)
 target_link_libraries(Sm10001 PRIVATE Gptm)
+target_link_libraries(Sm10001 PRIVATE Gpio)
 target_link_libraries(Sm10001 PRIVATE Pwm)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE Sm10001)
 
