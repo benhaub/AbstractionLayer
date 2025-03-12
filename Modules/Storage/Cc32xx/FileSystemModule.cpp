@@ -84,6 +84,7 @@ ErrorType FileSystem::erasePartition(){
 ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
     bool openDone = false;
+    assert(path.size() > 0);
 
     auto openCallback = [&]() -> ErrorType {
         _u32 token = 0;

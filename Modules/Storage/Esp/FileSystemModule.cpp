@@ -178,7 +178,7 @@ ErrorType FileSystem::erasePartition() {
 ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
     bool openDone = false;
     ErrorType callbackError = ErrorType::Failure;
-
+    assert(path.size() > 0);
 
     auto openCallback = [&]() -> ErrorType {
         switch (_implementation) {
