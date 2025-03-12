@@ -1,27 +1,26 @@
 ################################################################################
-#Date: March 11th, 2025                                                        #
-#File: init.py                                                                 #
+#Date: March 12th, 2025                                                        #
+#File: deinit.py                                                                 #
 #Authour: Ben Haubrich                                                         #
-#Synopsis: Initialize the PWM on Raspbian 12                                   #
+#Synopsis: Deinitialize the PWM on Raspbian 12                                   #
 ################################################################################
 import argparse
 import subprocess
 from pathlib import Path
 
+def numberOfActiveOverlays():
+    output = subprocess.check_output(['dtoverlay', '-l']).decode('utf-8').strip()
+    return len(output.split('\n'))
+
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(prog="InitPwm",
-                                     description="Initialize the PWM",
-                                     epilog="Created by Ben Haubrich March 11th, 2025")
+    parser = argparse.ArgumentParser(prog="DeinitPwm",
+                                     description="Deinitialize the PWM",
+                                     epilog="Created by Ben Haubrich March 12th, 2025")
 
     #By not providing a default value these are made required.
     parser.add_argument('peripheral', type=int, choices=[0, 1],
                             help="PWM peripheral number."
-                       )
-    parser.add_argument('period', type=int,
-                            help="PWM period in nanoseconds."
-                       )
-    parser.add_argument('duty', type=float,
-                            help="PWM duty cycle in percentage."
                        )
 
     args = parser.parse_args()
@@ -33,7 +32,8 @@ if __name__ == '__main__':
     #https://www.kernel.org/doc/html/v5.10/driver-api/pwm.html#using-pwms-with-the-sysfs-interface
     if (0 == args.peripheral):
         cmakeCommand = ['dtoverlay',
-                        'pwm']
+                        '-r',
+                        '0']
         subprocess.run(cmakeCommand)
 
         pwmOverlayExport = Path('/sys/class/pwm/pwmchip0/export')
