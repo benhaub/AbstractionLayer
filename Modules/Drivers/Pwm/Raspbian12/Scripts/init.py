@@ -29,48 +29,32 @@ if __name__ == '__main__':
     #Uncomment for help with debugging.
     #print("{}".format(args))
 
+    pwmOverlay = 'pwm' if 0 == args.peripheral else 'pwm' + str(args.peripheral)
+    print(pwmOverlay)
+
     #https://raspberrypi.stackexchange.com/questions/143643/how-can-i-use-dtoverlay-pwm/143644#143644
     #https://www.kernel.org/doc/html/v5.10/driver-api/pwm.html#using-pwms-with-the-sysfs-interface
-    if (0 == args.peripheral):
-        cmakeCommand = ['dtoverlay',
-                        'pwm']
-        subprocess.run(cmakeCommand)
+    cmakeCommand = ['dtoverlay',
+                    pwmOverlay]
+    subprocess.run(cmakeCommand)
 
-        pwmOverlayExport = Path('/sys/class/pwm/pwmchip0/export')
-        pwmOverlayPeriod = Path('/sys/class/pwm/pwmchip0/pwm0/period')
-        pwmOverlayDuty = Path('/sys/class/pwm/pwmchip0/pwm0/duty_cycle')
-        pwmOverlayEnable = Path('/sys/class/pwm/pwmchip0/pwm0/enable')
+    pwmOverlayExport = Path('/sys/class/pwm/pwmchip0/export')
+    pwmOverlayPeriod = Path('/sys/class/pwm/pwmchip0/' + 'pwm' + str(args.peripheral) + '/period')
+    pwmOverlayDuty = Path('/sys/class/pwm/pwmchip0/' + 'pwm' + str(args.peripheral) + '/duty_cycle')
+    pwmOverlayEnable = Path('/sys/class/pwm/pwmchip0/' + 'pwm' + str(args.peripheral) + '/enable')
 
-        #None of the below files will be present until we export.
-        with pwmOverlayExport.open('w') as export:
-            export.write('0')
+    #None of the below files will be present until we export.
+    with pwmOverlayExport.open('w') as export:
+        export.write(str(args.peripheral))
 
-        with pwmOverlayPeriod.open('w') as setPeriod:
-            setPeriod.write(str(args.period))
+    with pwmOverlayPeriod.open('w') as setPeriod:
+        setPeriod.write(str(args.period))
 
-        with pwmOverlayDuty.open('w') as setDuty:
-            setDuty.write(str(args.duty))
+    with pwmOverlayDuty.open('w') as setDuty:
+        dutyCycle = ((args.duty) / 100) * args.period
+        setDuty.write(str(int(dutyCycle)))
 
-        with pwmOverlayEnable.open('w') as setEnable:
-            setEnable.write('1')
+    with pwmOverlayEnable.open('w') as enable:
+        enable.write('1')
 
-    elif (1 == args.peripheral):
-        cmakeCommand = ['dtoverlay',
-                        'pwm1']
-        subprocess.run(cmakeCommand)
-
-        pwmOverlayPeriod = Path('/sys/class/pwm/pwm1/period')
-        pwmOverlayDuty = Path('/sys/class/pwm/pwm1/duty_cycle')
-        pwmOverlayEnable = Path('/sys/class/pwm/pwm1/enable')
-
-        with pwmOverlayPeriod.open('w') as setPeriod:
-            setPeriod.write(str(args.period))
-
-        with pwmOverlayDuty.open('w') as setDuty:
-            setDuty.write(str(args.duty))
-
-        with pwmOverlayEnable.open('w') as setEnable:
-            setEnable.write('1')
-    else:
-        print("Invalid peripheral number.")
-        exit(1)
+    exit(0)

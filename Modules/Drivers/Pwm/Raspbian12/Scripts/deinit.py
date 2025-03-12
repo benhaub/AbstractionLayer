@@ -1,8 +1,8 @@
 ################################################################################
 #Date: March 12th, 2025                                                        #
-#File: deinit.py                                                                 #
+#File: deinit.py                                                               #
 #Authour: Ben Haubrich                                                         #
-#Synopsis: Deinitialize the PWM on Raspbian 12                                   #
+#Synopsis: Deinitialize the PWM on Raspbian 12                                 #
 ################################################################################
 import argparse
 import subprocess
@@ -10,7 +10,8 @@ from pathlib import Path
 
 def numberOfActiveOverlays():
     output = subprocess.check_output(['dtoverlay', '-l']).decode('utf-8').strip()
-    return len(output.split('\n'))
+    #Minus 1 because the first line is informational and does not document an active overlay.
+    return len(output.split('\n')) - 1
 
 
 if __name__ == '__main__':
@@ -28,38 +29,25 @@ if __name__ == '__main__':
     #Uncomment for help with debugging.
     #print("{}".format(args))
 
+    pwmOverlay = 'pwm' if 0 == args.peripheral else 'pwm' + str(args.peripheral)
+
     #https://raspberrypi.stackexchange.com/questions/143643/how-can-i-use-dtoverlay-pwm/143644#143644
     #https://www.kernel.org/doc/html/v5.10/driver-api/pwm.html#using-pwms-with-the-sysfs-interface
-    if (0 == args.peripheral):
-        cmakeCommand = ['dtoverlay',
-                        '-r',
-                        '0']
-        subprocess.run(cmakeCommand)
+    pwmOverlayUnexport = Path('/sys/class/pwm/pwmchip0/unexport')
+    pwmOverlayEnable = Path('/sys/class/pwm/pwmchip0/' + 'pwm' + str(args.peripheral) + '/enable')
 
-        pwmOverlayUnexport = Path('/sys/class/pwm/pwmchip0/unexport')
-        pwmOverlayEnable = Path('/sys/class/pwm/pwmchip0/pwm0/enable')
-
+    try:
         with pwmOverlayEnable.open('w') as enable:
             enable.write('0')
 
         with pwmOverlayUnexport.open('w') as unexport:
-            unexport.write('0')
+            unexport.write(str(args.peripheral))
+    except FileNotFoundError:
+        pass
 
-    elif (1 == args.peripheral):
-        cmakeCommand = ['dtoverlay',
-                        '-r',
-                        '1']
-        subprocess.run(cmakeCommand)
+    cmakeCommand = ['dtoverlay',
+                    '-r',
+                    pwmOverlay]
+    subprocess.run(cmakeCommand)
 
-        pwmOverlayUnexport = Path('/sys/class/pwm/pwmchip0/unexport')
-        pwmOverlayEnable = Path('/sys/class/pwm/pwmchip0/pwm0/enable')
-
-        with pwmOverlayEnable.open('w') as enable:
-            enable.write('0')
-
-        with pwmOverlayUnexport.open('w') as unexport:
-            unexport.write('0')
-
-    else:
-        print("Invalid peripheral number.")
-        exit(1)
+    exit(0)
