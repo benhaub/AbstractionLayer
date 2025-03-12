@@ -36,41 +36,30 @@ if __name__ == '__main__':
                         '0']
         subprocess.run(cmakeCommand)
 
-        pwmOverlayExport = Path('/sys/class/pwm/pwmchip0/export')
-        pwmOverlayPeriod = Path('/sys/class/pwm/pwmchip0/pwm0/period')
-        pwmOverlayDuty = Path('/sys/class/pwm/pwmchip0/pwm0/duty_cycle')
+        pwmOverlayUnexport = Path('/sys/class/pwm/pwmchip0/unexport')
         pwmOverlayEnable = Path('/sys/class/pwm/pwmchip0/pwm0/enable')
 
-        #None of the below files will be present until we export.
-        with pwmOverlayExport.open('w') as export:
-            export.write('0')
+        with pwmOverlayEnable.open('w') as enable:
+            enable.write('0')
 
-        with pwmOverlayPeriod.open('w') as setPeriod:
-            setPeriod.write(str(args.period))
-
-        with pwmOverlayDuty.open('w') as setDuty:
-            setDuty.write(str(args.duty))
-
-        with pwmOverlayEnable.open('w') as setEnable:
-            setEnable.write('1')
+        with pwmOverlayUnexport.open('w') as unexport:
+            unexport.write('0')
 
     elif (1 == args.peripheral):
         cmakeCommand = ['dtoverlay',
-                        'pwm1']
+                        '-r',
+                        '1']
         subprocess.run(cmakeCommand)
 
-        pwmOverlayPeriod = Path('/sys/class/pwm/pwm1/period')
-        pwmOverlayDuty = Path('/sys/class/pwm/pwm1/duty_cycle')
-        pwmOverlayEnable = Path('/sys/class/pwm/pwm1/enable')
+        pwmOverlayUnexport = Path('/sys/class/pwm/pwmchip0/unexport')
+        pwmOverlayEnable = Path('/sys/class/pwm/pwmchip0/pwm0/enable')
 
-        with pwmOverlayPeriod.open('w') as setPeriod:
-            setPeriod.write(str(args.period))
+        with pwmOverlayEnable.open('w') as enable:
+            enable.write('0')
 
-        with pwmOverlayDuty.open('w') as setDuty:
-            setDuty.write(str(args.duty))
+        with pwmOverlayUnexport.open('w') as unexport:
+            unexport.write('0')
 
-        with pwmOverlayEnable.open('w') as setEnable:
-            setEnable.write('1')
     else:
         print("Invalid peripheral number.")
         exit(1)
