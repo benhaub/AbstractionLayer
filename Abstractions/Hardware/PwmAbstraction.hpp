@@ -29,27 +29,6 @@ class PwmAbstraction {
      */
     virtual ErrorType init() = 0;
     /**
-     * @brief Set parameters related to the hardware
-     * @returns ErrorType::Success if the config was set
-     * @returns ErrorType::InvalidParameter if the parameters are invalid
-     * @returns ErrorType::Failure otherwise.
-     */
-    virtual ErrorType setHardwareConfig(PeripheralNumber peripheral) = 0;
-    /**
-     * @brief Set parameters related to the driver
-     * @returns ErrorType::Success if the config was set
-     * @returns ErrorType::InvalidParameter if the parameters are invalid
-     * @returns ErrorType::Failure otherwise.
-     */
-    virtual ErrorType setDriverConfig(Percent duty, Milliseconds period) = 0;
-    /**
-     * @brief Set parameters related to the firmware's interaction with the driver
-     * @returns ErrorType::Success if the config was set
-     * @returns ErrorType::InvalidParameter if the parameters are invalid
-     * @returns ErrorType::Failure otherwise.
-     */
-    virtual ErrorType setFirmwareConfig() = 0;
-    /**
      * @brief Deinitialize the PWM driver
      * @returns ErrorType::Success if the driver was deinitialized
      * @returns ErrorType::Failure if the driver was not deinitialized
@@ -87,6 +66,7 @@ class PwmAbstraction {
      * @returns ErrorType::Failure if the period was not set.
      */
     virtual ErrorType setPeriod(Milliseconds period) = 0;
+
     /// @brief Get the output pin as a const reference
     const PinNumber &outputPinConst() const { return _outputPin; }
     /**
@@ -95,12 +75,17 @@ class PwmAbstraction {
      *       in the driver config so setting the pin here may not always be required.
      */
     PinNumber &outputPin() { return _outputPin; }
-
+    /// @brief Get the duty cycle as a mutable reference
     Percent &dutyCycle() { return _dutyCycle; }
+    /// @brief Get the duty cycle as a const reference
     const Percent &dutyCycleConst() const { return _dutyCycle; }
+    /// @brief Get the period as a mutable reference
     Milliseconds &period() { return _period; }
+    /// @brief Get the period as a const reference
     const Milliseconds &periodConst() const { return _period; }
+    /// @brief Get the peripheral number as a mutable reference
     PeripheralNumber &peripheralNumber() { return _peripheral; }
+    /// @brief Get the peripheral number as a const reference
     const PeripheralNumber &peripheralNumberConst() const { return _peripheral; }
 
     protected:

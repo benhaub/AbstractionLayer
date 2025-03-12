@@ -19,21 +19,6 @@ ErrorType Pwm::init() {
     return executeOperatingSystemShellCommand(initCommand.c_str());
 }
 
-ErrorType Pwm::setHardwareConfig(PeripheralNumber peripheral) {
-    _peripheral = peripheral;
-    return ErrorType::Success;
-}
-
-ErrorType Pwm::setDriverConfig(Percent duty, Milliseconds period) {
-    _dutyCycle = duty;
-    _period = period;
-    return ErrorType::Success;
-}
-
-ErrorType Pwm::setFirmwareConfig() {
-    return ErrorType::NotAvailable;
-}
-
 ErrorType Pwm::deinit() {
     return ErrorType::NotImplemented;
 }
@@ -47,11 +32,13 @@ ErrorType Pwm::stop() {
 }
 
 ErrorType Pwm::setDutyCycle(Percent on) {
-    return ErrorType::NotImplemented;
+    _dutyCycle = on;
+    return ErrorType::Success;
 }
 
 ErrorType Pwm::setPeriod(Milliseconds frequency) {
-    return ErrorType::NotImplemented;
+    _period = frequency;
+    return ErrorType::Success;
 }
 
 ErrorType Pwm::executeOperatingSystemShellCommand(const char *command) {

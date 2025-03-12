@@ -10,9 +10,6 @@ class Pwm : public PwmAbstraction {
     ~Pwm() = default;
 
     ErrorType init() override;
-    ErrorType setHardwareConfig(PeripheralNumber peripheral) override;
-    ErrorType setDriverConfig(Percent duty, Milliseconds period) override;
-    ErrorType setFirmwareConfig() override;
     ErrorType deinit() override;
     ErrorType start() override;
     ErrorType stop() override;
