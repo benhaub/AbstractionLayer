@@ -18,4 +18,4 @@ def allChannelsUnexported():
     cmakeCommand = ['ls',
                     '/sys/class/pwm/pwmchip0/pwm[0-9]']
     p = subprocess.run(cmakeCommand, shell=True)
-    return p.returncode == 0
+    return p.returncode != 0
