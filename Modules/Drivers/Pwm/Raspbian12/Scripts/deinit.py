@@ -13,6 +13,12 @@ def numberOfActiveOverlays():
     #Minus 1 because the first line is informational and does not document an active overlay.
     return len(output.split('\n')) - 1
 
+def allChannelsUnexported():
+    cmakeCommand = ['ls',
+                    '/sys/class/pwm/pwmchip0/pwm[0-9]']
+    p = subprocess.run(cmakeCommand)
+    return p.returncode == 0
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="DeinitPwm",
@@ -51,7 +57,7 @@ if __name__ == '__main__':
         pass
 
     #Only remove the overlay if no other PWMs are active.
-    if (numberOfActiveOverlays() == 1):
+    if (True == numberOfActiveOverlays()):
         cmakeCommand = ['dtoverlay',
                         '-r',
                         pwmPeripheral]
