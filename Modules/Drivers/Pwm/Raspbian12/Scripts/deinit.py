@@ -48,7 +48,7 @@ if __name__ == '__main__':
         pass
 
     #Only remove the overlay if no other PWMs are active.
-    if (True == allChannelsUnexported()):
+    if (allChannelsUnexported()):
         print("All channels unexported. Removing overlay")
         cmakeCommand = ['dtoverlay',
                         '-r',
