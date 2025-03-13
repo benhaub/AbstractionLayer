@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('channel', type=int, choices=[0, 1],
                             help="PWM channel number."
                        )
-    parser.add_argument('outputPin', type=int,
+    parser.add_argument('outputPin', type=int, choices=[12, 18],
                             help="PWM output pin number."
                        )
     parser.add_argument('period', type=int,
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     #None of the below files will be present until we export.
     with pwmOverlayExport.open('w') as export:
-        export.write(str(args.outputPin))
+        export.write(str(args.channel))
 
     with pwmOverlayPeriod.open('w') as setPeriod:
         setPeriod.write(str(args.period))
