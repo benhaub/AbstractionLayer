@@ -16,6 +16,6 @@ def numberOfActiveOverlays():
 def allChannelsUnexported():
     #Set Shell=True so that the shell can interpret the pattern matching expression.
     cmakeCommand = ['ls',
-                    '/sys/class/pwm/pwmchip0/pwm[0-9]', Shell=True]
-    p = subprocess.run(cmakeCommand)
+                    '/sys/class/pwm/pwmchip0/pwm[0-9]']
+    p = subprocess.run(cmakeCommand, shell=True)
     return p.returncode == 0
