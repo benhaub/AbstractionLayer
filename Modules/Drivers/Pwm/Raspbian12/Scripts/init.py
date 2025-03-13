@@ -4,9 +4,12 @@
 #Authour: Ben Haubrich                                                         #
 #Synopsis: Initialize the PWM on Raspbian 12                                   #
 ################################################################################
+#pip imports
 import argparse
 import subprocess
 from pathlib import Path
+#Local imports
+from common import allChannelsUnexported
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="InitPwm",

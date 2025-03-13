@@ -4,21 +4,12 @@
 #Authour: Ben Haubrich                                                         #
 #Synopsis: Deinitialize the PWM on Raspbian 12                                 #
 ################################################################################
+#pip imports
 import argparse
 import subprocess
 from pathlib import Path
-
-def numberOfActiveOverlays():
-    output = subprocess.check_output(['dtoverlay', '-l']).decode('utf-8').strip()
-    #Minus 1 because the first line is informational and does not document an active overlay.
-    return len(output.split('\n')) - 1
-
-def allChannelsUnexported():
-    cmakeCommand = ['ls',
-                    '/sys/class/pwm/pwmchip0/pwm[0-9]']
-    p = subprocess.run(cmakeCommand)
-    return p.returncode == 0
-
+#Local imports
+from common import allChannelsUnexported
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="DeinitPwm",
@@ -57,7 +48,7 @@ if __name__ == '__main__':
         pass
 
     #Only remove the overlay if no other PWMs are active.
-    if (True == numberOfActiveOverlays()):
+    if (True == allChannelsUnexported()):
         cmakeCommand = ['dtoverlay',
                         '-r',
                         pwmPeripheral]
