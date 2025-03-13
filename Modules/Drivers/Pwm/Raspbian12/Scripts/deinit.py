@@ -50,9 +50,11 @@ if __name__ == '__main__':
     except FileNotFoundError:
         pass
 
-    cmakeCommand = ['dtoverlay',
-                    '-r',
-                    pwmPeripheral]
-    subprocess.run(cmakeCommand)
+    #Only remove the overlay if no other PWMs are active.
+    if (numberOfActiveOverlays() == 1):
+        cmakeCommand = ['dtoverlay',
+                        '-r',
+                        pwmPeripheral]
+        subprocess.run(cmakeCommand)
 
     exit(0)
