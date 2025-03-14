@@ -2,14 +2,12 @@
 //Raspbian
 #include <pigpio.h>
 
+GptmPwmModule::GptmPwmModule() : GptmPwmAbstraction() {
+    gpioInitialise();
+}
+
 ErrorType GptmPwmModule::init() {
-    ErrorType error = ErrorType::Failure;
-
-    if (gpioInitialise() >= 0) {
-        error = ErrorType::Success;
-    }
-
-    return error;
+    return ErrorType::Success;
 }
 
 ErrorType GptmPwmModule::deinit() {
