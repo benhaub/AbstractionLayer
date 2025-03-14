@@ -13,10 +13,8 @@ ErrorType GptmPwmModule::init() {
 }
 
 ErrorType GptmPwmModule::deinit() {
-    if (gpioTerminate() >= 0) {
-        return ErrorType::Success;
-    }
-    return ErrorType::Failure;
+    gpioTerminate();
+    return ErrorType::Success;
 }
 
 ErrorType GptmPwmModule::start() { 
