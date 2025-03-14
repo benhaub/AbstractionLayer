@@ -3,6 +3,10 @@
 #include "OperatingSystemModule.hpp"
 #include "Math.hpp"
 
+/**
+ * @namespace Sm10001Types
+ * @brief Types for the Sm10001 Slide Potentiometer
+ */
 namespace Sm10001Types {
     /**
      * @enum InputSignalType
