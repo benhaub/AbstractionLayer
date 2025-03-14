@@ -3,28 +3,33 @@
 //C++
 #include <cstdio>
 #include <string>
+//Raspbian
+#include <pigpio.h>
 
 ErrorType Pwm::init() {
     ErrorType error = ErrorType::Failure;
-    std::string initCommand = "python3 " PATH_TO_SCRIPTS " /init.py ";
-    initCommand.append(std::to_string(toRaspbian12PeripheralNumber(_peripheral, error)));
 
-    if (ErrorType::Success == error) {
-        initCommand.push_back(' ');
-        initCommand.append(std::to_string(_period));
-        initCommand.push_back(' ');
-        initCommand.append(std::to_string(_dutyCycle));
+    if (gpioInitialise() >= 0) {
+        error = ErrorType::Success;
     }
 
-    return executeOperatingSystemShellCommand(initCommand.c_str());
+    return error;
 }
 
 ErrorType Pwm::deinit() {
-    return ErrorType::NotImplemented;
+    if (gpioTerminate() >= 0) {
+        return ErrorType::Success;
+    }
+    return ErrorType::Failure;
 }
 
 ErrorType Pwm::start() {
-    return ErrorType::NotImplemented;
+    uint8_t dutyCycle = (_dutyCycle / 100) * _period;
+    if (0 == gpioPWM(_pinNumber, dutyCycle)) {
+        return ErrorType::Success;
+    }
+
+    return ErrorType::Failure;
 }
 
 ErrorType Pwm::stop() {
