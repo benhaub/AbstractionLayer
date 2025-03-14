@@ -57,8 +57,6 @@ ErrorType GptmPwmModule::setDutyCycle(const Percent on) {
 }
 
 ErrorType GptmPwmModule::setPeriod(const Microseconds period) {
-    assert(period > 0);
-
     _period = period;
 
     if (nullptr == _pwmHandle) {
