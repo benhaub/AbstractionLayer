@@ -3,33 +3,17 @@
 //C++
 #include <cstdio>
 #include <string>
-//Raspbian
-#include <pigpio.h>
 
 ErrorType Pwm::init() {
-    ErrorType error = ErrorType::Failure;
-
-    if (gpioInitialise() >= 0) {
-        error = ErrorType::Success;
-    }
-
-    return error;
+    return ErrorType::NotImplemented;
 }
 
 ErrorType Pwm::deinit() {
-    if (gpioTerminate() >= 0) {
-        return ErrorType::Success;
-    }
-    return ErrorType::Failure;
+    return ErrorType::NotImplemented;
 }
 
 ErrorType Pwm::start() {
-    uint8_t dutyCycle = (_dutyCycle / 100) * _period;
-    if (0 == gpioPWM(_pinNumber, dutyCycle)) {
-        return ErrorType::Success;
-    }
-
-    return ErrorType::Failure;
+    return ErrorType::NotImplemented;
 }
 
 ErrorType Pwm::stop() {
@@ -37,13 +21,11 @@ ErrorType Pwm::stop() {
 }
 
 ErrorType Pwm::setDutyCycle(Percent on) {
-    _dutyCycle = on;
-    return ErrorType::Success;
+    return ErrorType::NotImplemented;
 }
 
 ErrorType Pwm::setPeriod(Milliseconds frequency) {
-    _period = frequency;
-    return ErrorType::Success;
+    return ErrorType::NotImplemented;
 }
 
 ErrorType Pwm::executeOperatingSystemShellCommand(const char *command) {
