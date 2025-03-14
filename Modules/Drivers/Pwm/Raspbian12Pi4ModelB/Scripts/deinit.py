@@ -44,7 +44,7 @@ if __name__ == '__main__':
         print("All channels unexported. Removing overlay")
         cmakeCommand = ['dtoverlay',
                         '-r',
-                        'pwm-2chan']
+                        'pwm']
         subprocess.run(cmakeCommand)
 
     exit(0)
