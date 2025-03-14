@@ -16,10 +16,6 @@ if __name__ == '__main__':
                                      description="Initialize the PWM",
                                      epilog="Created by Ben Haubrich March 11th, 2025")
 
-    #By not providing a default value these are made required.
-    parser.add_argument('peripheral', type=int, choices=[0],
-                            help="PWM peripheral number."
-                       )
     parser.add_argument('channel', type=int, choices=[0, 1],
                             help="PWM channel number."
                        )
@@ -38,9 +34,6 @@ if __name__ == '__main__':
     #Uncomment for help with debugging.
     #print("{}".format(args))
 
-    #Only zero is allowed by this script's argparse, but leaving this here in case using pwm1 is implemented in the future.
-    #`dtoverlay pwm1` doesn't seem to activate the overlay on Raspbian 12, leaving only PWM0 with either channel 0 or 1 to use.
-    pwmPeripheral = 'pwm' if 0 == args.peripheral else 'pwm' + str(args.peripheral)
     function = ''
     if (12 == args.outputPin):
         function = 4
@@ -54,7 +47,7 @@ if __name__ == '__main__':
     #https://raspberrypi.stackexchange.com/questions/143643/how-can-i-use-dtoverlay-pwm/143644#143644
     #https://www.kernel.org/doc/html/v5.10/driver-api/pwm.html#using-pwms-with-the-sysfs-interface
     dtOverlayCommand = ['dtoverlay',
-                        pwmPeripheral + ',' + 'pin=' + str(args.outputPin),
+                        'pwm-2chan' + ',' + 'pin=' + str(args.outputPin),
                         'func=' + str(function)]
     subprocess.run(dtOverlayCommand)
 
