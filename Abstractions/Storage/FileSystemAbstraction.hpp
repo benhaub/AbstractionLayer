@@ -14,6 +14,7 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <cstring>
 
 class StorageAbstraction;
 
@@ -28,10 +29,10 @@ namespace FileSystemTypes {
      * @brief The status of the file system.
     */
     struct Status {
-        std::string partitionName; ///< The name of the partition the file system is on.
-        bool mounted;              ///< True if the file system is mounted, false otherwise.
-        Percent freeSpace;         ///< The free space on the file system.
-        Count openedFiles;         ///< The number of files opened on the file system.
+        char partitionName[16];       ///< The name of the partition the file system is on.
+        bool mounted;                 ///< True if the file system is mounted, false otherwise.
+        Percent freeSpace;            ///< The free space on the file system.
+        Count openedFiles;            ///< The number of files opened on the file system.
     };
 
     /**
@@ -92,8 +93,8 @@ namespace FileSystemTypes {
 class FileSystemAbstraction {
 
     public:
-    FileSystemAbstraction(std::string &name, FileSystemTypes::Implementation implementation, StorageAbstraction &storage) : _implementation(implementation), _storage(storage) {
-        _status.partitionName.assign(name);
+    FileSystemAbstraction(const char name[], FileSystemTypes::Implementation implementation, StorageAbstraction &storage) : _implementation(implementation), _storage(storage) {
+        strncpy(_status.partitionName, name, sizeof(_status.partitionName));
     };
     virtual ~FileSystemAbstraction() = default;
 
@@ -228,7 +229,7 @@ class FileSystemAbstraction {
     /// @brief Get the mount prefix as a constant reference
     const std::string &mountPrefixConst() const { return _mountPrefix; }
     /// @brief Get the name of the file system as a constant reference
-    const std::string &nameConst() const { return _status.partitionName; }
+    const char &nameConst() const { return _status.partitionName[0]; }
     /// @brief Get the status of the file system as a constant reference
     const FileSystemTypes::Status &statusConst() {
         Bytes available;
@@ -301,7 +302,7 @@ class FileSystemAbstraction {
     FileSystemTypes::Implementation _implementation;
     /// @brief The status of the file system.
     FileSystemTypes::Status _status = {
-        .partitionName = "",
+        .partitionName = {0},
         .mounted = false,
         .freeSpace = -1,
         .openedFiles = 0
