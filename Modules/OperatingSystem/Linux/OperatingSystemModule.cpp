@@ -70,10 +70,9 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
     struct InitThreadArgs {
         void *arguments = nullptr;
         void *(*startFunction)(void *);
-        pthread_t *threadId = nullptr;
+        pthread_t *const threadId = nullptr;
     };
     auto initThread = [](void *arguments) -> void * {
-
         InitThreadArgs *initThreadArgs = static_cast<InitThreadArgs *>(arguments);
         *(initThreadArgs->threadId) = pthread_self();
         (initThreadArgs->startFunction)(initThreadArgs->arguments);
