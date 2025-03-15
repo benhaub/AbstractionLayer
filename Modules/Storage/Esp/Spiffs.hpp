@@ -39,14 +39,14 @@ namespace Spiffs {
 
     ErrorType maxPartitionSize(FileSystem &fs, Bytes &size) {
         size_t maxSize;
-        ErrorType error = fromPlatformError(esp_spiffs_info(fs.nameConst().c_str(), &maxSize, NULL));
+        ErrorType error = fromPlatformError(esp_spiffs_info(&fs.nameConst(), &maxSize, NULL));
         size = maxSize;
         return error;
     }
 
     ErrorType availablePartition(FileSystem &fs, Bytes &size) {
         size_t availableSize;
-        ErrorType error = fromPlatformError(esp_spiffs_info(fs.nameConst().c_str(), NULL, &availableSize));
+        ErrorType error = fromPlatformError(esp_spiffs_info(&fs.nameConst(), NULL, &availableSize));
         size = availableSize;
         return error;
     }
@@ -56,7 +56,7 @@ namespace Spiffs {
         const esp_vfs_spiffs_conf_t conf = {
             //Base path has to be not null and not "/" or the undocumented ESP_ERR_INVALID_ARG is returned.
             .base_path = "/www",
-            .partition_label = fs.nameConst().c_str(),
+            .partition_label = &fs.nameConst(),
             .max_files = FileSystem::_MaxOpenFiles,
             .format_if_mount_failed = false
         };
@@ -90,16 +90,16 @@ namespace Spiffs {
     }
 
     ErrorType unmount(FileSystem &fs) {
-        return fromPlatformError(esp_vfs_spiffs_unregister(fs.nameConst().c_str()));
+        return fromPlatformError(esp_vfs_spiffs_unregister(&fs.nameConst()));
     }
 
     ErrorType erasePartition(FileSystem &fs) {
-        return fromPlatformError(esp_spiffs_format(fs.nameConst().c_str()));
+        return fromPlatformError(esp_spiffs_format(&fs.nameConst()));
     }
 
     ErrorType size(FileSystemTypes::File &file) {
         struct stat fileStat;
-        if (0 != stat(file.path.c_str(), &fileStat)) {
+        if (0 != stat(file.path.data(), &fileStat)) {
             return fromPlatformError(errno);
         }
 
@@ -129,7 +129,7 @@ namespace Spiffs {
             return error;
         }
 
-        spiffsFile = fopen(path.c_str(), posixMode.c_str());
+        spiffsFile = fopen(path.data(), posixMode.data());
         if (nullptr != spiffsFile) {
             file.path.assign(path);
             file.isOpen = true;
@@ -156,7 +156,7 @@ namespace Spiffs {
             }
         }
 
-        if (0 != unlink(file.path.c_str())) {
+        if (0 != unlink(file.path.data())) {
             return fromPlatformError(errno);
         }
 

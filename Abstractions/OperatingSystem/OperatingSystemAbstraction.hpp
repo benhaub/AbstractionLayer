@@ -22,6 +22,11 @@
  */
 namespace OperatingSystemConfig {
 
+    constexpr char MaxThreadNameLength = 16;
+    constexpr char MaxSemaphoreNameLength = 16;
+    constexpr char MaxQueueNameLength = 16;
+    constexpr char MaxMemoryRegionNameLength = 16;
+
     /**
      * @enum Priority
      * @brief The priority of a thread. Determines the preference of the scheduler for giving this thread CPU time.
@@ -55,8 +60,8 @@ namespace OperatingSystemConfig {
      * @brief The free memory in each memory region.
      */
     struct MemoryRegionInfo {
-        const std::string name;   ///< The name of the memory region
-        Percent free;             ///< The free memory in the region
+        const std::array<char, MaxThreadNameLength> name; ///< The name of the memory region
+        Percent free;                                     ///< The free memory in the region
     };
 
     /**
@@ -65,10 +70,10 @@ namespace OperatingSystemConfig {
      * TODO: When we ask for the status we should update it in all modules that have a status.
      */
     struct Status {
-        Count threadCount;                           ///< The number of threads currently running.
-        Percent idle;                                ///< The percent of time the system spent in idle mode. Definition varies depending on the underlying operating sytem.
-        Seconds upTime;                              ///< The amount of time since the system was last reset.
-        std::vector<MemoryRegionInfo> memoryRegion;  ///< Free memory on the system.
+        Count threadCount;                          ///< The number of threads currently running.
+        Percent idle;                               ///< The percent of time the system spent in idle mode. Definition varies depending on the underlying operating sytem.
+        Seconds upTime;                             ///< The amount of time since the system was last reset.
+        std::vector<MemoryRegionInfo> memoryRegion; ///< Free memory on the system.
     };
 }
 
@@ -123,12 +128,12 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::LimitReached if the maximum number of threads is reached.
      * @returns toPlatformError for all other errors produced by the underlying implementation
     */
-    virtual ErrorType createThread(const OperatingSystemConfig::Priority priority, const std::string &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) = 0;
+    virtual ErrorType createThread(const OperatingSystemConfig::Priority priority, const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) = 0;
     /**
      * @brief Delete a thread
      * @param[in] name The name of the thread to delete.
     */
-    virtual ErrorType deleteThread(const std::string &name) = 0;
+    virtual ErrorType deleteThread(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) = 0;
     /**
      * @brief Blocks the calling thread until the thread given by name terminates
      * @param[in] name The name of the thread to wait for.
@@ -137,7 +142,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NoData if no thread with the name given has been created.
      * @returns toPlatformError() for all other errors produced by the underlying implementation
     */
-    virtual ErrorType joinThread(const std::string &name) = 0;
+    virtual ErrorType joinThread(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) = 0;
     /**
      * @brief Gets the Id of the thread given by name.
      * @param[in] name The name of the thread.
@@ -147,7 +152,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NoData if no thread with the name given has been created.
      * @returns toPlatformError() for all other errors produced by the underlying implementation
     */
-    virtual ErrorType threadId(const std::string &name, Id &id) = 0;
+    virtual ErrorType threadId(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name, Id &id) = 0;
     /**
      * @brief Get the id of the currently running thread.
      * @param[out] id The id of the currently running thread.
@@ -167,21 +172,21 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NotImplemented if isDeleted is not implemented.
      * @returns ErrorType::NoData if no thread with the name given is deleted.
     */
-    virtual ErrorType isDeleted(const std::string &name) = 0;
+    virtual ErrorType isDeleted(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) = 0;
     /**
      * @brief creates a semaphore.
      * @param[in] max The maximum value of the semaphore.
      * @param[in] initial The initial value of the semaphore.
      * @param[in] name The name of the semaphore.
     */
-    virtual ErrorType createSemaphore(const Count max, const Count initial, const std::string &name) = 0;
+    virtual ErrorType createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) = 0;
     /**
      * @brief deletes a semaphore.
      * @param[in] name The name of the semaphore.
      * @returns ErrorType::Success if the semaphore was deleted.
      * @returns ErrorType::NoData if the semaphore does not exist.
     */
-    virtual ErrorType deleteSemaphore(const std::string &name) = 0;
+    virtual ErrorType deleteSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) = 0;
     /**
      * @brief waits for a semaphore.
      * @param[in] name The name of the semaphore.
@@ -190,21 +195,21 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Success if the was decremented.
      * @returns ErrorType::NoData if the semaphore does not exist.
     */
-    virtual ErrorType waitSemaphore(const std::string &name, const Milliseconds timeout) = 0;
+    virtual ErrorType waitSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name, const Milliseconds timeout) = 0;
     /**
      * @brief increments a semaphore.
      * @param[in] name The name of the semaphore.
      * @returns ErrorType::Success if the semaphore was incremented
      * @returns ErrorType::NoData if the semaphore does not exist.
     */
-    virtual ErrorType incrementSemaphore(const std::string &name) = 0;
+    virtual ErrorType incrementSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) = 0;
     /**
      * @brief decrements a semaphore.
      * @param[in] name The name of the semaphore.
      * @returns ErrorType::Success if the semaphore was incremented
      * @returns ErrorType::NoData if the semaphore does not exist.
     */
-    virtual ErrorType decrementSemaphore(const std::string &name) = 0;
+    virtual ErrorType decrementSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) = 0;
     /**
      * @brief Create a timer.
      * @param[out] timer The id of the timer.
@@ -248,7 +253,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NoMemory if the queue can not be created with the specified size and/or length
      * @returns ErrorType::Failure otherwise
      */
-    virtual ErrorType createQueue(const std::string &name, const Bytes size, const Count length) = 0;
+    virtual ErrorType createQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, const Bytes size, const Count length) = 0;
     /**
      * @brief Insert data into the queue
      * @param[in] name The name of the queue to send data to.
@@ -260,7 +265,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Timeout if the item could not be sent to the queue in time.
      * @returns ErrorType::Failure otherwise
      */
-    virtual ErrorType sendToQueue(const std::string &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) = 0;
+    virtual ErrorType sendToQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) = 0;
     /**
      * @brief Receive data from the queue
      * @param[in] name The name of the queue to receive data from
@@ -271,7 +276,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Timeout if the item was not received from the queue in time.
      * @returns ErrorType::Failure otherwise
      */
-    virtual ErrorType receiveFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) = 0;
+    virtual ErrorType receiveFromQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) = 0;
     /**
      * @brief Read from the queue without removing an item from it
      * @param[in] name The name of the queue to peek from
@@ -282,7 +287,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Timeout if the item was not peeked from the queue in time.
      * @returns ErrorType::Failure otherwise
      */
-    virtual ErrorType peekFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) = 0;
+    virtual ErrorType peekFromQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) = 0;
     /**
      * @brief Get the current system time
      * @param[out] currentSystemUnixTime The current unix time of the system.
@@ -367,7 +372,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NotImplemented if getting the heap size is not implemented
      * @returns ErrorType::Failure otherwise
      */
-    virtual ErrorType maxHeapSize(Bytes &size, const std::string &memoryRegionName) = 0;
+    virtual ErrorType maxHeapSize(Bytes &size, const std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> &memoryRegionName) = 0;
     /**
      * @brief Get the amount of heap that is allocatable
      * @param size[out] The amount of heap that is allocatable
@@ -376,7 +381,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NotImplemented if getting the heap size is not implemented
      * @returns ErrorType::Failure otherwise
      */
-    virtual ErrorType availableHeapSize(Bytes &size, const std::string &memoryRegionName) = 0;
+    virtual ErrorType availableHeapSize(Bytes &size, const std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> &memoryRegionName) = 0;
     /**
      * @brief Get the names of all the memory regions
      * @param[out] memoryRegions The names of all the memory regions
@@ -401,9 +406,9 @@ class OperatingSystemAbstraction {
         uptime(_status.upTime);
         if (_status.memoryRegion.empty()) {
             Bytes maxHeap;
-            maxHeapSize(maxHeap, std::string());
+            maxHeapSize(maxHeap, {});
             Bytes availableHeap;
-            availableHeapSize(availableHeap, std::string());
+            availableHeapSize(availableHeap, {});
             Percent free = 0;
             if (0 != maxHeap) {
                 free = ((float)availableHeap / maxHeap) * 100.0f;

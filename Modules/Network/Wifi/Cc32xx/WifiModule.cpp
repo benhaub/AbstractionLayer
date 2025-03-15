@@ -17,10 +17,11 @@ Wifi::Wifi() : WifiAbstraction() {
     //API for Wifi and storage and may do so independently of each other. The Operating System must be check for this presence of this thread
     //before attempting to start it. Checking the return value of sl_start() is not sufficient since the wifi radio can be turned on or off at
     //any time.
-    if (ErrorType::NoData == OperatingSystem::Instance().threadId(SIMPLELINK_THREAD_NAME, thread)) {
+    constexpr std::array<char, OperatingSystemConfig::MaxThreadNameLength> simplelinkThreadName = {SIMPLELINK_THREAD_NAME};
+    if (ErrorType::NoData == OperatingSystem::Instance().threadId(simplelinkThreadName, thread)) {
         
         error = OperatingSystem::Instance().createThread(OperatingSystemConfig::Priority::High,
-                                                std::string(SIMPLELINK_THREAD_NAME),
+                                                simplelinkThreadName,
                                                 nullptr,
                                                 2*kilobyte,
                                                 sl_Task,

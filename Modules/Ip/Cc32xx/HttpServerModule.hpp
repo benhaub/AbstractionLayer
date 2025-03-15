@@ -8,7 +8,7 @@
 #include "ti/drivers/net/wifi/simplelink.h"
 
 //Global because the SimpleLink C handlers are outside the scope of this class and need to be able to access the queue.
-static constexpr char SimpleLinkEventQueue[] = "SimpleLinkEventQueue";
+static constexpr std::array<char, OperatingSystemConfig::MaxQueueNameLength> SimpleLinkEventQueue = {"SLEventQueue"};
 
 //I am aware of the Network Services API that includes various servers and clients pre-made by TI and that one of them is an HTTP server.
 //For some reason, the example code in the SDK does not use this API so unfortunately I only became aware of this API after I started working

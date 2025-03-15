@@ -43,7 +43,7 @@ ErrorType OperatingSystem::delay(Microseconds delay) {
 
     const TickType_t now = xTaskGetTickCount();
     const TickType_t oneMillisecond = pdMS_TO_TICKS(1);
-    const TickType_t oneMicrosecond = oneMillisecond / 1000;
+    const Microseconds oneMicrosecond = oneMillisecond * 1000;
 
     Microseconds remainingDelay = delay;
 
@@ -60,7 +60,7 @@ ErrorType OperatingSystem::startScheduler() {
     return ErrorType::NotAvailable;
 }
 
-ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority priority, const std::string &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
+ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority priority, const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
     ErrorType error = ErrorType::Failure;
     static Id nextThreadId = 1;
 
@@ -101,7 +101,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
     };
 
     TaskHandle_t thread;
-    const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.c_str(), stackSize/4, &initThreadArgs, toEspPriority(priority), &thread));
+    const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, &initThreadArgs, toEspPriority(priority), &thread));
     if (threadWasCreated) {
         error = ErrorType::Success;
     }
@@ -115,7 +115,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
     return error;
 }
 
-ErrorType OperatingSystem::deleteThread(const std::string &name) {
+ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) {
     ErrorType error = ErrorType::NoData;
 
     if (threads.contains(name)) {
@@ -127,7 +127,7 @@ ErrorType OperatingSystem::deleteThread(const std::string &name) {
     return error;
 }
 
-ErrorType OperatingSystem::joinThread(const std::string &name) {
+ErrorType OperatingSystem::joinThread(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) {
     while (ErrorType::NoData != isDeleted(name)) {
         delay(Milliseconds(1));
     }
@@ -135,7 +135,7 @@ ErrorType OperatingSystem::joinThread(const std::string &name) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::threadId(const std::string &name, Id &thread) {
+ErrorType OperatingSystem::threadId(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name, Id &thread) {
     if (threads.contains(name)) {
         thread = threads[name].threadId;
         return ErrorType::Success;
@@ -156,7 +156,7 @@ ErrorType OperatingSystem::currentThreadId(Id &thread) const {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::isDeleted(const std::string &name) {
+ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) {
     if (threads.contains(name)) {
         return ErrorType::Success;
     }
@@ -164,7 +164,7 @@ ErrorType OperatingSystem::isDeleted(const std::string &name) {
     return ErrorType::NoData;
 }
 
-ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::string &name) {
+ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
     SemaphoreHandle_t freertosSemaphore;
     freertosSemaphore = xSemaphoreCreateCounting(max, initial);
 
@@ -173,7 +173,7 @@ ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial,
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::deleteSemaphore(const std::string &name) {
+ErrorType OperatingSystem::deleteSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -183,7 +183,7 @@ ErrorType OperatingSystem::deleteSemaphore(const std::string &name) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::waitSemaphore(const std::string &name, const Milliseconds timeout) {
+ErrorType OperatingSystem::waitSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name, const Milliseconds timeout) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -195,7 +195,7 @@ ErrorType OperatingSystem::waitSemaphore(const std::string &name, const Millisec
     return ErrorType::Timeout;
 }
 
-ErrorType OperatingSystem::incrementSemaphore(const std::string &name) {
+ErrorType OperatingSystem::incrementSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -207,7 +207,7 @@ ErrorType OperatingSystem::incrementSemaphore(const std::string &name) {
     return ErrorType::Failure;
 }
 
-ErrorType OperatingSystem::decrementSemaphore(const std::string &name) {
+ErrorType OperatingSystem::decrementSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -278,19 +278,19 @@ ErrorType OperatingSystem::stopTimer(const Id timer, const Milliseconds timeout)
     return ErrorType::Failure;
 }
 
-ErrorType OperatingSystem::createQueue(const std::string &name, const Bytes size, const Count length) {
+ErrorType OperatingSystem::createQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, const Bytes size, const Count length) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType OperatingSystem::sendToQueue(const std::string &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) {
+ErrorType OperatingSystem::sendToQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType OperatingSystem::receiveFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
+ErrorType OperatingSystem::receiveFromQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType OperatingSystem::peekFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
+ErrorType OperatingSystem::peekFromQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
     return ErrorType::NotImplemented;
 }
 
@@ -354,28 +354,34 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::string &memoryRegionName) {
+ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> &memoryRegionName) {
+    constexpr std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> dram = {"DRAM"};
+    constexpr std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> spiram = {"SPIRAM"};
+
     if (memoryRegionName.empty()) {
         return ErrorType::InvalidParameter;
     }
-    else if (0 == memoryRegionName.compare("DRAM")) {
+    else if (0 == strncmp(memoryRegionName.data(), dram.data(), OperatingSystemConfig::MaxMemoryRegionNameLength)) {
         size = heap_caps_get_total_size(MALLOC_CAP_8BIT);
     }
-    else if (0 == memoryRegionName.compare("SPIRAM")) {
+    else if (0 == strncmp(memoryRegionName.data(), spiram.data(), OperatingSystemConfig::MaxMemoryRegionNameLength)) {
         size = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
     }
 
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &memoryRegionName) {
+ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> &memoryRegionName) {
+    constexpr std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> dram = {"DRAM"};
+    constexpr std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> spiram = {"SPIRAM"};
+
     if (memoryRegionName.empty()) {
         return ErrorType::InvalidParameter;
     }
-    else if (0 == memoryRegionName.compare("DRAM")) {
+    else if (0 == strncmp(memoryRegionName.data(), dram.data(), OperatingSystemConfig::MaxMemoryRegionNameLength)) {
         size = heap_caps_get_free_size(MALLOC_CAP_8BIT);
     }
-    else if (0 == memoryRegionName.compare("SPIRAM")) {
+    else if (0 == strncmp(memoryRegionName.data(), spiram.data(), OperatingSystemConfig::MaxMemoryRegionNameLength)) {
         size = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
     }
 

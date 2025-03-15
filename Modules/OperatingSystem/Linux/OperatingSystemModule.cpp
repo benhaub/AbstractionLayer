@@ -45,7 +45,7 @@ ErrorType OperatingSystem::startScheduler() {
     return ErrorType::NotAvailable;
 }
 
-ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority priority, const std::string &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
+ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority priority, const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
     pthread_attr_t attr;
     sched_param param;
     int res;
@@ -119,7 +119,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
 //I want to use pthreads since I like the portability of them, however, ESP does not implement pthread_kill.
 //The work around is to set the thread in the deatched state and then have the main loops of each thread regularly check their status
 //to see if they have been terminated by the operating system, which will set isTerminated when the thread is detached.
-ErrorType OperatingSystem::deleteThread(const std::string &name) {
+ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) {
     ErrorType error = ErrorType::NoData;
 
     if (threads.contains(name)) {
@@ -129,7 +129,7 @@ ErrorType OperatingSystem::deleteThread(const std::string &name) {
     return error;
 }
 
-ErrorType OperatingSystem::joinThread(const std::string &name) {
+ErrorType OperatingSystem::joinThread(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) {
     Id thread;
     int ret;
     if (ErrorType::NoData == threadId(name, thread)) {
@@ -152,7 +152,7 @@ ErrorType OperatingSystem::currentThreadId(Id &thread) const {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::threadId(const std::string &name, Id &thread) {
+ErrorType OperatingSystem::threadId(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name, Id &thread) {
     if (threads.contains(name)) {
         thread = threads[name].threadId;
         return ErrorType::Success;
@@ -161,7 +161,7 @@ ErrorType OperatingSystem::threadId(const std::string &name, Id &thread) {
     return ErrorType::NoData;
 }
 
-ErrorType OperatingSystem::isDeleted(const std::string &name) {
+ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) {
     if (threads.contains(name)) {
         return ErrorType::Success;
     }
@@ -169,10 +169,11 @@ ErrorType OperatingSystem::isDeleted(const std::string &name) {
     return ErrorType::NoData;
 }
 
-ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::string &name) {
+ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
     //The internal name is the name with a leading / to make it a valid semaphore name on POSIX systems.
     //For all other purposes inside this operating system abstraction, the name should be used directly.
-    std::string internalName = std::string("/").append(name);
+    std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> internalName = {'/'};
+    strncat(internalName.data(), name.data(), OperatingSystemConfig::MaxSemaphoreNameLength - 1);
 
     if (internalName.size() > NAME_MAX-4) {
         return ErrorType::InvalidParameter;
@@ -181,7 +182,7 @@ ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial,
     //On POSIX systems, a created semaphore has peristence within the kernel until it is removed.
     //So delete old semaphores first and then create the new one since we specify O_EXCL as a flag.
     deleteSemaphore(name); //Using name and not internalName is NOT a bug.
-    sem_t *semaphore = sem_open(internalName.c_str(), O_CREAT | O_EXCL, S_IRWXU, initial);
+    sem_t *semaphore = sem_open(internalName.data(), O_CREAT | O_EXCL, S_IRWXU, initial);
     if (SEM_FAILED == semaphore) {
         return fromPlatformError(errno);
     }
@@ -191,10 +192,11 @@ ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial,
     }
 }
 
-ErrorType OperatingSystem::deleteSemaphore(const std::string &name) {
-    std::string internalName = std::string("/").append(name);
+ErrorType OperatingSystem::deleteSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
+    std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> internalName = {'/'};
+    strncat(internalName.data(), name.data(), OperatingSystemConfig::MaxSemaphoreNameLength - 1);
 
-    if (0 != sem_unlink(internalName.c_str())) {
+    if (0 != sem_unlink(internalName.data())) {
         return fromPlatformError(errno);
     }
 
@@ -203,7 +205,7 @@ ErrorType OperatingSystem::deleteSemaphore(const std::string &name) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::waitSemaphore(const std::string &name, const Milliseconds timeout) {
+ErrorType OperatingSystem::waitSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name, const Milliseconds timeout) {
     Milliseconds timeRemaining = timeout;
     constexpr Milliseconds delayTime = 1;
     int result;
@@ -232,12 +234,13 @@ ErrorType OperatingSystem::waitSemaphore(const std::string &name, const Millisec
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::incrementSemaphore(const std::string &name) {
+ErrorType OperatingSystem::incrementSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
 
-    std::string internalName = std::string("/").append(name);
+    std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> internalName = {'/'};
+    strncat(internalName.data(), name.data(), OperatingSystemConfig::MaxSemaphoreNameLength - 1);
 
     if (0 != sem_post(semaphores[name])) {
         return fromPlatformError(errno);
@@ -246,12 +249,10 @@ ErrorType OperatingSystem::incrementSemaphore(const std::string &name) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::decrementSemaphore(const std::string &name) {
+ErrorType OperatingSystem::decrementSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
-
-    std::string internalName = std::string("/").append(name);
 
     if (0 != sem_trywait(semaphores[name])) {
         return fromPlatformError(errno);
@@ -372,19 +373,19 @@ ErrorType OperatingSystem::stopTimer(const Id timer, const Milliseconds timeout)
     return ErrorType::Failure;
 }
 
-ErrorType OperatingSystem::createQueue(const std::string &name, const Bytes size, const Count length) {
+ErrorType OperatingSystem::createQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, const Bytes size, const Count length) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType OperatingSystem::sendToQueue(const std::string &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) {
+ErrorType OperatingSystem::sendToQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType OperatingSystem::receiveFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
+ErrorType OperatingSystem::receiveFromQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType OperatingSystem::peekFromQueue(const std::string &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
+ErrorType OperatingSystem::peekFromQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
     return ErrorType::NotImplemented;
 }
 
@@ -516,7 +517,7 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     return error;
 }
 
-ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::string &memoryRegionName) {
+ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> &memoryRegionName) {
     ErrorType error = ErrorType::Failure;
 
     //Will return the size of RAM in bytes.
@@ -544,7 +545,7 @@ ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::string &memoryReg
     return error;
 }
 
-ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::string &memoryRegionName) {
+ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> &memoryRegionName) {
     ErrorType error = ErrorType::Failure;
 
     //Will return the size of available RAM in bytes.

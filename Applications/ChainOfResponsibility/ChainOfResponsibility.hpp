@@ -18,6 +18,7 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <array>
 
 /**
  * @namespace ChainOfResponsibilityTypes
@@ -75,11 +76,11 @@ class ChainOfResponsibility : public Global<ChainOfResponsibility> {
     /// @brief Tag for logging
     static constexpr char TAG[] = "ChainOfResponsibility";
     /// @brief The maximum amount of command objects that can be in a queue at the same time
-    static constexpr Count MaxCommandObjectSize = 8;
+    static constexpr Count _MaxCommandObjectSize = 8;
     /// @brief The maximum amount of time to wait for a semaphore
-    static constexpr Milliseconds SemaphoreTimeout = 0;
+    static constexpr Milliseconds _SemaphoreTimeout = 0;
     /// @brief The name of the semaphore
-    std::string binarySemaphore;
+    std::array<char, 16> _binarySemaphore;
     /// @brief The status of the Chain of Responsibility
     ChainOfResponsibilityTypes::Status _status;
 

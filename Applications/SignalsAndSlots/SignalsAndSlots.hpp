@@ -17,6 +17,7 @@
 //C++
 #include <functional>
 #include <memory>
+#include <cstring>
 
 /**
  * @namespace SignalsAndSlots
@@ -48,7 +49,11 @@ namespace SignalsAndSlots {
          */
         Signal() {
             _SemaphoreCount++;
-            _binarySemaphore = std::string("eventQueueBinarySemaphore").append(std::to_string(_SemaphoreCount));
+            std::string semaphoreNumber = std::to_string(_SemaphoreCount);
+            assert(_binarySemaphore.max_size() == OperatingSystemConfig::MaxSemaphoreNameLength);
+            strncpy(_binarySemaphore.data(), "sigSlotSem", OperatingSystemConfig::MaxSemaphoreNameLength);
+            assert(strlen(_binarySemaphore.data()) + semaphoreNumber.length() < OperatingSystemConfig::MaxSemaphoreNameLength);
+            strncat(_binarySemaphore.data(), semaphoreNumber.c_str(), semaphoreNumber.length());
             ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _binarySemaphore);
             assert(ErrorType::Success == error);
         }
@@ -137,7 +142,7 @@ namespace SignalsAndSlots {
         /// @brief List of all observer callbacks
         std::vector<std::pair<EventQueue &, std::function<ErrorType(Args...)>>> _slots;
         /// @brief The semaphore used to synchronize access to _slots.
-        std::string _binarySemaphore;
+        std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> _binarySemaphore;
 
         /**
          * @brief Calls all of the observers with the callbacks they have registered using the connect() call

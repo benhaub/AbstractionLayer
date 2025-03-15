@@ -1,11 +1,18 @@
+//AbsractionLayer
 #include "EventQueue.hpp"
 #include "OperatingSystemModule.hpp"
+//C++
+#include <cstring>
 
 int EventQueue::_SemaphoreCount = 0;
 
 EventQueue::EventQueue() {
     _SemaphoreCount++;
-    _binarySemaphore = std::string("eventQueueBinarySemaphore").append(std::to_string(_SemaphoreCount));
+    std::string semaphoreNumber = std::to_string(_SemaphoreCount);
+    assert(_binarySemaphore.max_size() == OperatingSystemConfig::MaxSemaphoreNameLength);
+    strncpy(_binarySemaphore.data(), "eventQSem", OperatingSystemConfig::MaxSemaphoreNameLength);
+    assert(strlen(_binarySemaphore.data()) + semaphoreNumber.length() < OperatingSystemConfig::MaxSemaphoreNameLength);
+    strncat(_binarySemaphore.data(), semaphoreNumber.c_str(), semaphoreNumber.length());
     ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _binarySemaphore);
     assert(ErrorType::Success == error);
     error = OperatingSystem::Instance().currentThreadId(_ownerThreadId);

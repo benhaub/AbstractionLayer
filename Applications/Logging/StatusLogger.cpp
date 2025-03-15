@@ -135,7 +135,7 @@ void StatusLogger::printLog(void) {
         status.threadCount, status.idle, status.upTime);
         for (const auto &memoryRegion : status.memoryRegion) {
             PLT_LOGI(TAG, "<Memory Region:%s> <Free (%%):%.1f> <Line>",
-            memoryRegion.name.c_str(), memoryRegion.free);
+            memoryRegion.name.data(), memoryRegion.free);
         }
     }
     for (const auto &filesystem : _filesystems) {

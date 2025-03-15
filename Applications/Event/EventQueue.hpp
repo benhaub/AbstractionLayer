@@ -166,7 +166,8 @@ class EventQueue {
     /// @brief The queue of events to run.
     std::vector<std::unique_ptr<EventAbstraction>> events;
     /// @brief The binary semaphore name for the next created semaphore.
-    std::string _binarySemaphore;
+    /// @details. Did not use the constant defined in OperatingSystemConfig since I don't want to inlcude the header for it. There is an assert to enforce this size instead.
+    std::array<char, 16> _binarySemaphore;
     /// @brief The thread id of the owner of the event queue. Used to determine if we can skip event queuing.
     Id _ownerThreadId;
 };

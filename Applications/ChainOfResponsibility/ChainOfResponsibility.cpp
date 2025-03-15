@@ -1,11 +1,14 @@
-//Foundation
+//AbstractionLayer
 #include "ChainOfResponsibility.hpp"
 #include "OperatingSystemModule.hpp"
+//C++
+#include <cstring>
 
 ChainOfResponsibility::ChainOfResponsibility() {
-    binarySemaphore = std::string("chainBinarySemaphore");
+    assert(_binarySemaphore.max_size() == OperatingSystemConfig::MaxSemaphoreNameLength);
+    strncpy(_binarySemaphore.data(), "chainBinarySem", OperatingSystemConfig::MaxSemaphoreNameLength);
 
-    ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, binarySemaphore);
+    ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _binarySemaphore);
     assert(ErrorType::Success == error);
 
     _status.commandObjectCount = 0;
@@ -14,15 +17,15 @@ ChainOfResponsibility::ChainOfResponsibility() {
 ErrorType ChainOfResponsibility::addCommandObject(std::unique_ptr<CommandObject> &commandObject) {
     assert(nullptr != commandObject.get());
 
-    ErrorType error = OperatingSystem::Instance().waitSemaphore(binarySemaphore, SemaphoreTimeout);
+    ErrorType error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout);
     if (ErrorType::Success != error) {
         return ErrorType::Timeout;
     }
 
     LogicSignature logicSignature = commandObject->logicSignature();
 
-    if (_commandObjects[logicSignature].size() >= MaxCommandObjectSize) {
-        error = OperatingSystem::Instance().incrementSemaphore(binarySemaphore);
+    if (_commandObjects[logicSignature].size() >= _MaxCommandObjectSize) {
+        error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
         assert(ErrorType::Success == error);
         return ErrorType::LimitReached;
     }
@@ -32,13 +35,13 @@ ErrorType ChainOfResponsibility::addCommandObject(std::unique_ptr<CommandObject>
 
     //commandObject is now nullptr after being moved to the vector. The vector owns the command object now
     //and it will be deleted when it is removed from the vector.
-    error = OperatingSystem::Instance().incrementSemaphore(binarySemaphore);
+    error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
     assert(ErrorType::Success == error);
     return ErrorType::Success;
 }
 
 std::unique_ptr<CommandObject> ChainOfResponsibility::getNextCommand(LogicSignature signature, ErrorType &error) {
-    error = OperatingSystem::Instance().waitSemaphore(binarySemaphore, SemaphoreTimeout);
+    error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout);
     if (ErrorType::Success != error) {
         error = ErrorType::Timeout;
         return nullptr;
@@ -47,13 +50,13 @@ std::unique_ptr<CommandObject> ChainOfResponsibility::getNextCommand(LogicSignat
     if (isCommandWaiting(signature)) {
         auto command = std::move(_commandObjects[signature].front());
         _commandObjects[signature].erase(_commandObjects[signature].begin());
-        error = OperatingSystem::Instance().incrementSemaphore(binarySemaphore);
+        error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
         assert(ErrorType::Success == error);
         error = ErrorType::Success;
         return command;
     }
 
-    error = OperatingSystem::Instance().incrementSemaphore(binarySemaphore);
+    error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
     assert(ErrorType::Success == error);
     error = ErrorType::NoData;
     return nullptr;
