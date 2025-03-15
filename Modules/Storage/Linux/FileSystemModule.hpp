@@ -11,7 +11,7 @@
 class FileSystem : public FileSystemAbstraction {
 
     public:
-    FileSystem(std::string name, FileSystemTypes::Implementation implementation, StorageAbstraction &storage) : FileSystemAbstraction(name, implementation, storage) {}
+    FileSystem(const char name[], FileSystemTypes::Implementation implementation, StorageAbstraction &storage) : FileSystemAbstraction(name, implementation, storage) {}
     ~FileSystem() = default;
 
     static constexpr Count _MaxOpenFiles = 10;

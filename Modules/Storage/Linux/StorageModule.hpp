@@ -19,7 +19,7 @@ class Storage : public StorageAbstraction, public Global<Storage, std::string> {
     ErrorType mainLoop() override;
 
     private:
-    std::string getEnvironment(std::string variable, ErrorType &error);
+    ErrorType getEnvironment(std::string variable, ErrorType &error, std::array<char, 32> expandedVariable);
 };
 
 #endif //__STORAGE_MODULE_HPP__

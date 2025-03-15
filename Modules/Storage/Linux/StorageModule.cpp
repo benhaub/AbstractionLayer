@@ -6,33 +6,37 @@
 //Posix
 #include <sys/statvfs.h>
 #include <sys/stat.h>
+//C++
+#include <cstring>
 
 ErrorType Storage::init() {
     if (_status.isInitialized) {
         return ErrorType::Success;
     }
 
-    std::string mediumString;
+    std::array<char, 32> mediumString;
     switch (medium()) {
         case StorageTypes::Medium::Flash:
-            mediumString = "abstractionLayerFlashStorage";
+            strncpy(mediumString.data(), "abstractionLayerFlashStorage", sizeof(mediumString));
             break;
         case StorageTypes::Medium::Eeprom:
-            mediumString = "abstractionLayerEepromStorage";
+            strncpy(mediumString.data(), "abstractionLayerEepromStorage", sizeof(mediumString));
             break;
         case StorageTypes::Medium::Sd:
-            mediumString = "abstractionLayerSdStorage";
+            strncpy(mediumString.data(), "abstractionLayerSdStorage", sizeof(mediumString));
             break;
         case StorageTypes::Medium::Otp:
-            mediumString = "abstractionLayerOtpStorage";
+            strncpy(mediumString.data(), "abstractionLayerOtpStorage", sizeof(mediumString));
             break;
         default:
             return ErrorType::InvalidParameter;
     }
 
     ErrorType error;
-    _rootPrefix = getEnvironment("HOME", error);
-    _rootPrefix.append("/").append(mediumString);
+    constexpr char home[] = "HOME";
+    std::array<char, 32> expandedHome;
+    getEnvironment(home, error, expandedHome);
+    _rootPrefix.assign("/").append(mediumString.data(), mediumString.size());
     mkdir(_rootPrefix.c_str(), S_IRWXU); 
 
     _status.isInitialized = true;
@@ -47,16 +51,16 @@ ErrorType Storage::mainLoop() {
     return runNextEvent();
 }
 
-std::string Storage::getEnvironment(std::string variable, ErrorType &error) {
+ErrorType Storage::getEnvironment(std::string variable, ErrorType &error, std::array<char, 32> expandedVariable) {
     
-    std::string environmentVariable(std::getenv(variable.c_str()));
+    std::getenv(expandedVariable.data());
 
-    if (nullptr == environmentVariable.data()) {
+    if (nullptr == expandedVariable.data()) {
         error = ErrorType::Failure;
-        return environmentVariable;
     }
     else {
         error = ErrorType::Success;
-        return environmentVariable;
     }
+
+    return error;
 }
