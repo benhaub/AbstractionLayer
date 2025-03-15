@@ -118,6 +118,8 @@ namespace HttpServerTypes {
     /**
      * @struct Headers
      * @brief Http Headers
+     * @details Since not all headers may be used, it's desireable to have a string as opposed to std::array with fixed size.
+     *          Also these headeers are usually short enough for a Small String Optimization.
      */
     struct Headers {
         std::string userAgent;          ///< User-Agent:
