@@ -2,8 +2,6 @@
 An abstraction layer for building cross-platform, [component-based](https://en.wikipedia.org/wiki/Component-based_software_engineering) C++/CMake projects.
 
 ## How to include Abstraction Layer in your project
-https://github.com/benhaub/AbstractionLayerExample
-
 https://github.com/benhaub/sm10001slidePotentiometer
 
 ## Why use an abstraction layer
