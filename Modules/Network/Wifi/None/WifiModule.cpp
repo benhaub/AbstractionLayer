@@ -40,26 +40,26 @@ ErrorType Wifi::mainLoop() {
     return ErrorType::NotImplemented;
 }
 
-ErrorType radioOn() {
+ErrorType Wifi::radioOn() {
     return ErrorType::NotImplemented;
 }
 
-ErrorType radioOff() {
+ErrorType Wifi::radioOff() {
     return ErrorType::NotImplemented;
 }
 
-ErrorType setSsid(WifiConfig::Mode mode, const std::string &ssid) {
+ErrorType Wifi::setSsid(WifiConfig::Mode mode, const std::string &ssid) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType setPassword(WifiConfig::Mode mode, const std::string &password) {
+ErrorType Wifi::setPassword(WifiConfig::Mode mode, const std::string &password) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType setMode(WifiConfig::Mode mode) {
+ErrorType Wifi::setMode(WifiConfig::Mode mode) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType setAuthMode(WifiConfig::AuthMode authMode) {
+ErrorType Wifi::setAuthMode(WifiConfig::AuthMode authMode) {
     return ErrorType::NotImplemented;
 }

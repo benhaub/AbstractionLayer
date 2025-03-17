@@ -1,29 +1,18 @@
 //AbstractionLayer
+#include "Error.hpp"
 #include "StorageModule.hpp"
+#include "OperatingSystemModule.hpp"
+#include "Log.hpp"
+//C++
+#include <cstring>
 
-ErrorType Storage::initStorage() {
+ErrorType Storage::init() {
     return ErrorType::NotImplemented;
-}
+} 
 
-ErrorType Storage::deinitStorage() {
+ErrorType Storage::deinit() {
     return ErrorType::NotImplemented;
-}
-
-ErrorType Storage::maxStorageSize(Bytes &size, std::string partitionName) {
-    return ErrorType::NotImplemented;
-}
-
-ErrorType Storage::availableStorage(Bytes &size, std::string partitionName) {
-    return ErrorType::NotImplemented;
-}
-
-ErrorType Storage::erasePartition(const std::string &partitionName) {
-    return ErrorType::NotImplemented;
-}
-
-ErrorType Storage::eraseAllPartitions() {
-    return ErrorType::NotImplemented;
-}
+} 
 
 ErrorType Storage::mainLoop() {
     return ErrorType::NotImplemented;
