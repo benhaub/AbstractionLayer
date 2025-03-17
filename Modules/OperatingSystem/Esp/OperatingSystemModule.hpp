@@ -21,6 +21,8 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
 
     public:
     OperatingSystem() : OperatingSystemAbstraction(), Global<OperatingSystem>() {
+        static_assert(1 == configUSE_TIMERS);
+        static_assert(1 == configUSE_IDLE_HOOK);
         memoryRegions(_status.memoryRegion);
     }
     ~OperatingSystem() = default;
