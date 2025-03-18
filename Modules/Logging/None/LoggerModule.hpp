@@ -12,7 +12,6 @@ class Logger : public LoggingAbstraction, public Global<Logger> {
 
     virtual ErrorType log(const LogType type, const char *tag, const char *format, ...) override;
     virtual ErrorType logBuffer(const LogType logType, const char *tag, const char *buffer, Bytes length) override;
-    virtual ErrorType periodicSystemStateLog(const LogType logType, const char *tag) override;
 };
 
 #endif // __LOGGER_MODULE_HPP__

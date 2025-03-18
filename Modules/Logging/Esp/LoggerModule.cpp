@@ -54,7 +54,3 @@ ErrorType Logger::logBuffer(const LogType logType, const char *tag, const char *
 
     return ErrorType::Success;
 }
-
-ErrorType Logger::periodicSystemStateLog(const LogType logType, const char *tag) {
-    return ErrorType::NotImplemented;
-}

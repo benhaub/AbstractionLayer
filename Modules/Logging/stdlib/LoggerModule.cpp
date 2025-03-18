@@ -33,7 +33,3 @@ ErrorType Logger::log(const LogType type, const char *tag, const char *format, .
 ErrorType Logger::logBuffer(const LogType logType, const char *tag, const char *buffer, Bytes length) {
     return ErrorType::NotImplemented;
 }
-
-ErrorType Logger::periodicSystemStateLog(const LogType logType, const char *tag) {
-    return ErrorType::NotImplemented;
-}
