@@ -1,3 +1,4 @@
+//AbstractionLayer
 #include "LoggerModule.hpp"
 
 ErrorType Logger::log(const LogType type, const char *tag, const char *format, ...) {

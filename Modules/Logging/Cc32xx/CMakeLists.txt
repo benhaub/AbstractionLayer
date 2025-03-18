@@ -11,6 +11,7 @@ STATIC
 target_include_directories(Logging INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(Cc32xxLogger PRIVATE abstractionLayer)
+target_link_libraries(Cc32xxLogger PRIVATE Logging)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE Cc32xxLogger)
 
 target_include_directories(Cc32xxLogger PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
