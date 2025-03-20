@@ -54,4 +54,17 @@ constexpr inline T differenceBetween(T expectedLargerValue, T expectedSmallerVal
     }
 }
 
+/**
+ * @brief Test if a value is within a the specified error
+ * @param[in] value1 The first value to compare
+ * @param[in] value2 The second value to compare
+ * @param[in] error The error to use for comparison
+ * @returns True if the values are within the specified error
+ * @returns False otherwise
+ */
+template<typename T>
+constexpr inline bool withinError(T value1, T value2, T error) {
+    return std::abs(value1 - value2) <= error;
+}
+
 #endif // __MATH_HPP__
