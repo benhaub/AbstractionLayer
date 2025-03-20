@@ -9,3 +9,7 @@ ErrorType PowerResetClockManagement::init() {
     PRCMCC3200MCUInit();
     return fromPlatformError(Power_init());
 }
+
+ErrorType PowerResetClockManagement::setClockFrequency(const Hertz frequency, const Hertz externalCrystalFrequency) {
+    return ErrorType::NotImplemented;
+}

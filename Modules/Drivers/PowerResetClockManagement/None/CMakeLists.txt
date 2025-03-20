@@ -10,15 +10,15 @@ STATIC
 
 target_include_directories(PowerResetClockManagement INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
-target_link_libraries(NonePowerResetClockManagement PUBLIC Utilities)
-target_link_libraries(NonePowerResetClockManagement PUBLIC abstractionLayer)
+target_link_libraries(NonePowerResetClockManagement PRIVATE abstractionLayer)
+target_link_libraries(NonePowerResetClockManagement PRIVATE PowerResetClockManagement)
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE NonePowerResetClockManagement)
 
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC NonePowerResetClockManagement)
-
-target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 target_compile_options(NonePowerResetClockManagement PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
+target_compile_definitions(NonePowerResetClockManagement PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)
 
 if (ESP_PLATFORM)
-  target_include_directories(__idf_main PUBLIC $<TARGET_PROPERTY:PowerResetClockManagement,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:PowerResetClockManagement,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()

@@ -9,6 +9,7 @@ class PowerResetClockManagement : public PowerResetClockManagementAbstraction {
     ~PowerResetClockManagement() = default;
 
     ErrorType init() override;
+    ErrorType setClockFrequency(const Hertz frequency, const Hertz externalCrystalFrequency) override;
 };
 
 #endif //__POWER_RESET_CLOCK_MANAGEMENT_HPP__
