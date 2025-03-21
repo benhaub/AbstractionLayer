@@ -129,6 +129,7 @@ enum class PeripheralNumber : uint8_t {
     Five,     ///< Peripheral number 5.
     Six,      ///< Peripheral number 6.
     Seven,    ///< Peripheral number 7.
+    Eight,    ///< Peripheral number 8.
     Unknown   ///< Unknown and invalid peripheral number.
 };
 ///@typedef Register
