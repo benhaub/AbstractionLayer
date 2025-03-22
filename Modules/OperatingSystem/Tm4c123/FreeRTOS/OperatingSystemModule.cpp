@@ -31,7 +31,58 @@ ErrorType OperatingSystem::startScheduler() {
 }
 
 ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority priority, const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
-    return ErrorType::NotImplemented;
+    ErrorType error = ErrorType::Failure;
+    static Id nextThreadId = 1;
+
+    //On Tm4c123, the start function is called before pthread_create returns so we have to add in an init function to make sure
+    //that the details of thread are properly saved before the thread code runs. For example, if a thread calls currentThreadId,
+    //the posix ID will not be saved yet because pthread_create has not returned and so this function will fail even though the thread
+    //exists and has an ID.
+    struct InitThreadArgs {
+        void *arguments;
+        void *(*startFunction)(void *);
+        TaskHandle_t *threadId;
+    };
+    auto initThread = [](void *arguments) -> void {
+
+        InitThreadArgs *initThreadArgs = static_cast<InitThreadArgs *>(arguments);
+        *(initThreadArgs->threadId) = xTaskGetCurrentTaskHandle();
+        (initThreadArgs->startFunction)(initThreadArgs->arguments);
+    };
+
+    Thread newThread = {
+        .name = name,
+        .threadId = nextThreadId++
+    };
+
+    if (threads.size() < MaxThreads) {
+        threads[name] = newThread;
+    }
+    else {
+        return ErrorType::LimitReached;
+    }
+
+    number = newThread.threadId;
+
+    InitThreadArgs initThreadArgs = {
+        .arguments = arguments,
+        .startFunction = startFunction,
+        .threadId = &threads[name].tm4c123ThreadId,
+    };
+
+    TaskHandle_t thread;
+    const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, &initThreadArgs, toTm4c123Priority(priority), &thread));
+    if (threadWasCreated) {
+        error = ErrorType::Success;
+    }
+    else {
+        deleteThread(name);
+        return ErrorType::Failure;
+    }
+
+    _status.threadCount = threads.size();
+
+    return error;
 }
 
 //I want to use pthreads since I like the portability of them, however, ESP does not implement pthread_kill.
@@ -73,23 +124,63 @@ ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemConfi
 }
 
 ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
-    return ErrorType::NotImplemented;
+    SemaphoreHandle_t freertosSemaphore;
+
+    freertosSemaphore = xSemaphoreCreateCounting(max, initial);
+
+    if (nullptr == freertosSemaphore) {
+        return ErrorType::NoMemory;
+    }
+
+    semaphores[name] = freertosSemaphore;
+
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::deleteSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
-    return ErrorType::NotImplemented;
+    if (!semaphores.contains(name)) {
+        return ErrorType::NoData;
+    }
+
+    vSemaphoreDelete(semaphores[name]);
+
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::waitSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name, const Milliseconds timeout) {
-    return ErrorType::NotImplemented;
+    if (!semaphores.contains(name)) {
+        return ErrorType::NoData;
+    }
+
+    if (pdTRUE == xSemaphoreTake(semaphores[name], timeout)) {
+        return ErrorType::Success;
+    }
+
+    return ErrorType::Timeout;
 }
 
 ErrorType OperatingSystem::incrementSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
-    return ErrorType::NotImplemented;
+    if (!semaphores.contains(name)) {
+        return ErrorType::NoData;
+    }
+
+    if (pdTRUE == xSemaphoreGive(semaphores[name])) {
+        return ErrorType::Success;
+    }
+
+    return ErrorType::Failure;
 }
 
 ErrorType OperatingSystem::decrementSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
-    return ErrorType::NotImplemented;
+    if (!semaphores.contains(name)) {
+        return ErrorType::NoData;
+    }
+
+    if (pdTRUE == xSemaphoreTake(semaphores[name], 0)) {
+        return ErrorType::Success;
+    }
+
+    return ErrorType::Failure;
 }
 
 ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, const bool autoReload, std::function<void(void)> callback) {

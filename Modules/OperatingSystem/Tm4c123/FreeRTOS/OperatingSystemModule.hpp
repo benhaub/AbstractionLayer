@@ -9,6 +9,7 @@
 #include <map>
 //FreeRTOS
 #include "FreeRTOS.h"
+#include "semphr.h"
 #include "task.h"
 #include "queue.h"
 #include "timers.h"
@@ -64,7 +65,7 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
 
     void callTimerCallback(TimerHandle_t timer);
 
-    size_t toCc32xxPriority(OperatingSystemConfig::Priority priority) {
+    size_t toTm4c123Priority(OperatingSystemConfig::Priority priority) {
         static_assert(configMAX_PRIORITIES >= 5);
 
         switch (priority) {
@@ -101,6 +102,7 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
     std::map<std::array<char, OperatingSystemConfig::MaxThreadNameLength>, Thread> threads;
     //std::map<std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength>, sem_t> semaphores;
     std::map<std::array<char, OperatingSystemConfig::MaxQueueNameLength>, QueueHandle_t> queues;
+    std::map<std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength>, SemaphoreHandle_t> semaphores;
     std::map<TimerHandle_t, Timer> timers;
 };
 

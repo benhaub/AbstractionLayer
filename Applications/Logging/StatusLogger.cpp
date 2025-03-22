@@ -106,9 +106,6 @@ ErrorType StatusLogger::toggleLoggingFor(StorageAbstraction *storage, bool toggl
 
 // These logs are written with syntax compatible with 
 void StatusLogger::printLog(void) {
-#ifdef configTIMER_TASK_STACK_DEPTH
-    static_assert(configTIMER_TASK_STACK_DEPTH >= 256, "StatusLogger: Timer stack too small");
-#endif
     for (const auto &client : _ipClients) {
         const IpClientTypes::ClientStatus &status = client->statusConst();
         PLT_LOGI(TAG, "<IpClientStatus> <Connected:%s> <Pie, Line>",

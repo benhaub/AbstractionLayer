@@ -11,17 +11,6 @@ ErrorType PowerResetClockManagement::init() {
 ErrorType PowerResetClockManagement::setClockFrequency(const Hertz frequency, const Hertz externalCrystalFrequency) {
     ErrorType error = ErrorType::Failure;
 
-    uint32_t frequencyToTest = frequency;
-    uint32_t output;
-    while (true) {
-        output = toTm4c123SysCtlClockFrequency(frequencyToTest, true, true);
-        frequencyToTest -= 5E6;
-        output += 1;
-        if (output > frequency) {
-            output = 0;
-        }
-    }
-
     if (isValidFrequency(frequency)) {
         uint32_t clockConfig = SYSCTL_USE_PLL | SYSCTL_OSC_MAIN;
 

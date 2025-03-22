@@ -24,12 +24,17 @@ class StatusLogger {
 
     public:
     StatusLogger(Seconds interval) {
-        if (ErrorType::Success == OperatingSystem::Instance().createTimer(_logTimer, interval*1000, true, std::bind(&StatusLogger::printLog, this))) {
-            if (ErrorType::Success != OperatingSystem::Instance().startTimer(_logTimer, 0)) {
-                PLT_LOGW(TAG, "Failed to start timer for status logging");
-            }
+        if (configTIMER_TASK_STACK_DEPTH >= 256) {
+            if (ErrorType::Success == OperatingSystem::Instance().createTimer(_logTimer, interval*1000, true, std::bind(&StatusLogger::printLog, this))) {
+                if (ErrorType::Success != OperatingSystem::Instance().startTimer(_logTimer, 0)) {
+                    PLT_LOGW(TAG, "Failed to start timer for status logging");
+                }
 
-            _interval = interval;
+                _interval = interval;
+            }
+        }
+        else {
+            PLT_LOGI(TAG, "Timer stack too small for status logging");
         }
     }
     ~StatusLogger() {
