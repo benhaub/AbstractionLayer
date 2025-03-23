@@ -100,7 +100,6 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
     Id nextTimerId = 0;
 
     std::map<std::array<char, OperatingSystemConfig::MaxThreadNameLength>, Thread> threads;
-    //std::map<std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength>, sem_t> semaphores;
     std::map<std::array<char, OperatingSystemConfig::MaxQueueNameLength>, QueueHandle_t> queues;
     std::map<std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength>, SemaphoreHandle_t> semaphores;
     std::map<TimerHandle_t, Timer> timers;

@@ -113,7 +113,16 @@ ErrorType OperatingSystem::threadId(const std::array<char, OperatingSystemConfig
 }
 
 ErrorType OperatingSystem::currentThreadId(Id &thread) const {
-    return ErrorType::NotImplemented;
+    const TaskHandle_t threadId = xTaskGetCurrentTaskHandle();
+
+    auto it = std::find_if(threads.begin(), threads.end(), [threadId](const auto &pair) { return pair.second.tm4c123ThreadId == threadId; });
+    if (threads.end() == it) {
+        return ErrorType::NoData;
+    }
+
+    thread = it->second.threadId;
+
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) {
