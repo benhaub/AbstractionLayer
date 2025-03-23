@@ -94,7 +94,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
 
     number = newThread.threadId;
 
-    InitThreadArgs *initThreadArgs = new InitThreadArgs{
+    InitThreadArgs *initThreadArgs = new InitThreadArgs {
         .arguments = arguments,
         .startFunction = startFunction,
         .threadId = &threads[name].posixThreadId,

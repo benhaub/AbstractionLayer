@@ -44,10 +44,11 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
         TaskHandle_t *threadId;
     };
     auto initThread = [](void *arguments) -> void {
-
         InitThreadArgs *initThreadArgs = static_cast<InitThreadArgs *>(arguments);
         *(initThreadArgs->threadId) = xTaskGetCurrentTaskHandle();
         (initThreadArgs->startFunction)(initThreadArgs->arguments);
+        delete initThreadArgs;
+        return;
     };
 
     Thread newThread = {
@@ -64,14 +65,14 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
 
     number = newThread.threadId;
 
-    InitThreadArgs initThreadArgs = {
+    InitThreadArgs *initThreadArgs = new InitThreadArgs {
         .arguments = arguments,
         .startFunction = startFunction,
         .threadId = &threads[name].tm4c123ThreadId,
     };
 
     TaskHandle_t thread;
-    const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, &initThreadArgs, toTm4c123Priority(priority), &thread));
+    const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, initThreadArgs, toTm4c123Priority(priority), &thread));
     if (threadWasCreated) {
         error = ErrorType::Success;
     }
