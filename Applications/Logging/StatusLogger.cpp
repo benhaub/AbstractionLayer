@@ -104,7 +104,7 @@ ErrorType StatusLogger::toggleLoggingFor(StorageAbstraction *storage, bool toggl
     }
 }
 
-// These logs are written with syntax compatible with 
+// These logs are written with syntax compatible with logPlot
 void StatusLogger::printLog(void) {
     for (const auto &client : _ipClients) {
         const IpClientTypes::ClientStatus &status = client->statusConst();

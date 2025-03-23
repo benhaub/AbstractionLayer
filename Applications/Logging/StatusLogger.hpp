@@ -20,23 +20,30 @@ class WifiAbstraction;
 class FileSystemAbstraction;
 class StorageAbstraction;
 
+/**
+ * @class StatusLogger
+ * @brief Periodic logging of all modules that offer a status
+ */
 class StatusLogger {
 
     public:
+    /**
+     * @brief Construct a new Status Logger object
+     * @param interval Interval between logs
+     * @pre Make sure the timer stack is large enough to be able to print.
+     */
     StatusLogger(Seconds interval) {
-        if (configTIMER_TASK_STACK_DEPTH >= 256) {
-            if (ErrorType::Success == OperatingSystem::Instance().createTimer(_logTimer, interval*1000, true, std::bind(&StatusLogger::printLog, this))) {
-                if (ErrorType::Success != OperatingSystem::Instance().startTimer(_logTimer, 0)) {
-                    PLT_LOGW(TAG, "Failed to start timer for status logging");
-                }
-
-                _interval = interval;
+        if (ErrorType::Success == OperatingSystem::Instance().createTimer(_logTimer, interval*1000, true, std::bind(&StatusLogger::printLog, this))) {
+            if (ErrorType::Success != OperatingSystem::Instance().startTimer(_logTimer, 0)) {
+                PLT_LOGW(TAG, "Failed to start timer for status logging");
             }
-        }
-        else {
-            PLT_LOGI(TAG, "Timer stack too small for status logging");
+
+            _interval = interval;
         }
     }
+    /**
+     * @brief Deconstructor
+     */
     ~StatusLogger() {
         OperatingSystem::Instance().stopTimer(_logTimer, 0);
         OperatingSystem::Instance().deleteTimer(_logTimer);
@@ -50,6 +57,7 @@ class StatusLogger {
     /// @brief Get the logging interval as a constant reference
     const Seconds &loggingInterval() const { return _interval; }
 
+    /// @brief Toggle logging for a specified Abstraction
     ErrorType toggleLoggingFor(IpClientAbstraction *ipClient, bool toggleOn);
     ErrorType toggleLoggingFor(IpServerAbstraction *ipServer, bool toggleOn);
     ErrorType toggleLoggingFor(NetworkAbstraction *network, bool toggleOn);
@@ -58,18 +66,27 @@ class StatusLogger {
     ErrorType toggleLoggingFor(StorageAbstraction *storage, bool toggleOn);
 
     private:
+    /// @brief Interval between logs
     Seconds _interval = 60;
+    /// @brief Timer ID
     Id _logTimer;
 
+    /// @brief List of IpClients to log
     std::vector<IpClientAbstraction *> _ipClients = { };
+    /// @brief List of IpServers to log
     std::vector<IpServerAbstraction *> _ipServers = { };
+    /// @brief List of CellularNetworks to log
     std::vector<CellularAbstraction *> _cellularNetworks = { };
+    /// @brief List of WifiNetworks to log
     std::vector<WifiAbstraction *> _wifiNetworks = { };
     //I hope for your sake that you are not working with two operating systems at the same time
     OperatingSystemAbstraction *_operatingSystem = nullptr;
+    /// @brief List of FileSystems to log
     std::vector<FileSystemAbstraction *> _filesystems = { };
+    /// @brief List of StorageMediums to log
     std::vector<StorageAbstraction *> _storageMediums = { };
 
+    /// @brief Print the status of all registered Abstractions
     void printLog(void);
 };
 #endif /* __STATUS_LOGGER_HPP__ */
