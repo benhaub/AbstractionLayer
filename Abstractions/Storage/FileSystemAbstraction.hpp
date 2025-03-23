@@ -24,15 +24,17 @@ class StorageAbstraction;
  */
 namespace FileSystemTypes {
 
+    static constexpr Count _PartitionNameLength = 16;
+
     /**
      * @struct Status
      * @brief The status of the file system.
     */
     struct Status {
-        char partitionName[16];       ///< The name of the partition the file system is on.
-        bool mounted;                 ///< True if the file system is mounted, false otherwise.
-        Percent freeSpace;            ///< The free space on the file system.
-        Count openedFiles;            ///< The number of files opened on the file system.
+        std::array<char, _PartitionNameLength> partitionName;///< The name of the partition the file system is on.
+        bool mounted;                                        ///< True if the file system is mounted, false otherwise.
+        Percent freeSpace;                                   ///< The free space on the file system.
+        Count openedFiles;                                   ///< The number of files opened on the file system.
     };
 
     /**
@@ -93,9 +95,9 @@ namespace FileSystemTypes {
 class FileSystemAbstraction {
 
     public:
-    FileSystemAbstraction(const char name[], FileSystemTypes::Implementation implementation, StorageAbstraction &storage) : _implementation(implementation), _storage(storage) {
-        strncpy(_status.partitionName, name, sizeof(_status.partitionName));
-    };
+    FileSystemAbstraction(const std::array<char, FileSystemTypes::_PartitionNameLength> &name, FileSystemTypes::Implementation implementation, StorageAbstraction &storage) : _implementation(implementation), _storage(storage) {
+        _status.partitionName = name;
+    }
     virtual ~FileSystemAbstraction() = default;
 
     /**

@@ -138,7 +138,7 @@ void StatusLogger::printLog(void) {
     for (const auto &filesystem : _filesystems) {
         const FileSystemTypes::Status &status = filesystem->statusConst();
         PLT_LOGI(TAG, "<FileSystem:%s> <Mounted:%s, Open Files:%u, Free (%%):%.1f> <Pie, Stairs, Line>",
-        status.partitionName, status.mounted ? "true" : "false", status.openedFiles, status.freeSpace);
+        status.partitionName.data(), status.mounted ? "true" : "false", status.openedFiles, status.freeSpace);
     }
     for (const auto &storage : _storageMediums) {
         const StorageTypes::Status &status = storage->statusConst();

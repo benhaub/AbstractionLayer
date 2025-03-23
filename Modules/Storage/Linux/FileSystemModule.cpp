@@ -8,8 +8,8 @@
 ErrorType FileSystem::mount() {
     const bool fileSystemHasNotBeenMounted = !_status.mounted;
     if (fileSystemHasNotBeenMounted) {
-        _mountPrefix.assign(_storage.rootPrefixConst());
-        _mountPrefix.append("/").append(_status.partitionName);
+        _mountPrefix.assign(_storage.rootPrefixConst() + "/");
+        _mountPrefix.append(std::string(_status.partitionName.data(), strlen(_status.partitionName.data())));
         mkdir(_mountPrefix.c_str(), S_IRWXU); 
         _status.mounted = true;
     }
@@ -101,7 +101,8 @@ ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenM
             if (!isOpen(file)) {
                 std::ios_base::openmode openMode = toStdOpenMode(mode, callbackError);
                 if (ErrorType::Success == callbackError) {
-                    const std::string absolutePath = mountPrefixConst() + path;
+                    std::string absolutePath(mountPrefixConst());
+                    absolutePath.append(path);
                     openFiles[file.path] = std::make_unique<std::fstream>();
                     assert(nullptr != openFiles[file.path].get());
                     openFiles[file.path]->open(absolutePath, openMode);

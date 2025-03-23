@@ -36,7 +36,9 @@ ErrorType Storage::init() {
     constexpr char home[] = "HOME";
     std::array<char, 32> expandedHome;
     getEnvironment(home, error, expandedHome);
-    _rootPrefix.assign("/").append(mediumString.data(), mediumString.size());
+    _rootPrefix.assign(expandedHome.data(), strlen(expandedHome.data()));
+    _rootPrefix.append("/");
+    _rootPrefix.append(mediumString.data(), strlen(mediumString.data()));
     mkdir(_rootPrefix.c_str(), S_IRWXU); 
 
     _status.isInitialized = true;
@@ -51,14 +53,14 @@ ErrorType Storage::mainLoop() {
     return runNextEvent();
 }
 
-ErrorType Storage::getEnvironment(std::string variable, ErrorType &error, std::array<char, 32> expandedVariable) {
+ErrorType Storage::getEnvironment(std::string variable, ErrorType &error, std::array<char, 32> &expandedVariable) {
     
-    std::getenv(expandedVariable.data());
-
-    if (nullptr == expandedVariable.data()) {
+    const char *environmentVariable = std::getenv(variable.data());
+    if (nullptr == environmentVariable) {
         error = ErrorType::Failure;
     }
     else {
+        strncpy(expandedVariable.data(), environmentVariable, expandedVariable.size());
         error = ErrorType::Success;
     }
 

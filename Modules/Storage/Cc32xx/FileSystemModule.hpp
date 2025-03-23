@@ -9,7 +9,7 @@
 class FileSystem : public FileSystemAbstraction {
 
     public:
-    FileSystem(const char name[], FileSystemTypes::Implementation implementation, StorageAbstraction &storage) : FileSystemAbstraction(name, implementation, storage) {
+    FileSystem(const std::array<char, 16> &name, FileSystemTypes::Implementation implementation, StorageAbstraction &storage) : FileSystemAbstraction(name, implementation, storage) {
         //Since mounting is not supported on simplelink.
         _status.mounted = true;
     }
