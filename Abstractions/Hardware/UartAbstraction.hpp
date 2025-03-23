@@ -91,6 +91,23 @@ class UartAbstraction : public IcCommunicationProtocol{
      * @return Always returns ErrorType::Success.
     */
     virtual ErrorType setFirmwareConfig(Bytes receiveBufferSize, Bytes transmitBufferSize, int8_t terminatingByte = -1) = 0;
+    /**
+     * @brief Set interrupt configuration parameters.
+     * @param [in] overrun True to enable overrun error interrupt.
+     * @param [in] breakError True to enable break error interrupt.
+     * @param [in] parityError True to enable parity error interrupt.
+     * @param [in] framingError True to enable framing error interrupt.
+     * @param [in] receiveTimeout True to enable receive timeout interrupt.
+     * @param [in] transmitted True to enable transmitted interrupt.
+     * @param [in] received True to enable received interrupt.
+     * @param [in] dsrModem True to enable DSR modem interrupt.
+     * @param [in] dcdModem True to enable DCD modem interrupt.
+     * @param [in] ctsModem True to enable CTS modem interrupt.
+     * @param [in] riModem True to enable RI modem interrupt.
+     * @returns ErrorType::Success if the interrupt configuration was set successfully.
+     * @returns ErrorType::Failure otherwise.
+    */
+    virtual ErrorType setInterruptConfig(const bool overrun, const bool breakError, const bool parityError, const bool framingError, const bool receiveTimeout, const bool transmitted, const bool received, const bool dsrModem, const bool dcdModem, const bool ctsModem, const bool riModem) = 0;
 
     /// @brief Get the baud rate.
     uint32_t baudRate() const { return _baudRate; }
@@ -150,6 +167,28 @@ class UartAbstraction : public IcCommunicationProtocol{
     Bytes _receiveBufferSize = 0;
     /// @brief Transmit buffer size.
     Bytes _transmitBufferSize = 0;
+    /// @brief Overrun error interrupt enable.
+    bool _overrunInterruptEnable = false;
+    /// @brief Break error interrupt enable.
+    bool _breakErrorInterruptEnable = false;
+    /// @brief Parity error interrupt enable.
+    bool _parityErrorInterruptEnable = false;
+    /// @brief Framing error interrupt enable.
+    bool _framingErrorInterruptEnable = false;
+    /// @brief Receive timeout interrupt enable.
+    bool _receiveTimeoutInterruptEnable = false;
+    /// @brief Transmitted interrupt enable.
+    bool _transmittedInterruptEnable = false;
+    /// @brief Received interrupt enable.
+    bool _receivedInterruptEnable = false;
+    /// @brief Data Set Ready interrupt enable.
+    bool _dsrInterruptEnable = false;
+    /// @brief Data Carrier Detect interrupt enable.
+    bool _dcdInterruptEnable = false;
+    /// @brief Clear to Send interrupt enable.
+    bool _ctsInterruptEnable = false;
+    /// @brief Ring Indicator interrupt enable.
+    bool _riInterruptEnable = false;
 };
 
 #endif // __UART_ABSTRACTION_HPP__

@@ -195,3 +195,7 @@ ErrorType Uart::setFirmwareConfig(Bytes receiveBufferSize, Bytes transmitBufferS
 
     return ErrorType::Success;
 }
+
+ErrorType Uart::setInterruptConfig(const bool overrun, const bool breakError, const bool parityError, const bool framingError, const bool receiveTimeout, const bool transmitted, const bool received, const bool dsrModem, const bool dcdModem, const bool ctsModem, const bool riModem) {
+    return ErrorType::NotImplemented;
+}

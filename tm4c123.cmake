@@ -12,7 +12,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR})
 #E.g. to run on Linux, replace or add main/Modules/Drivers/Linux/<module> subdirectory.
 #To remove modules, use the "None" port since at least a function stub must exist for the main application
 #to call.
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/Uart/None)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/Uart/Tm4c123)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/Watchdog/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/Gpio/Tm4c123)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/I2c/None)
@@ -26,7 +26,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/OperatingSystem/Tm4c123/FreeR
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Network/Wifi/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Network/Cellular/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Ip/None)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Logging/None)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Logging/Tm4c123)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Storage/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Serialization/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Error/None)

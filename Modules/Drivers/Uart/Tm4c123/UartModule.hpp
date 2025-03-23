@@ -3,12 +3,8 @@
 
 //AbstractionLayer
 #include "UartAbstraction.hpp"
-//Modules
-#include "StorageModule.hpp"
-#include "FileModule.hpp"
 
 class Uart : public UartAbstraction {
-
     public:
     Uart() : UartAbstraction() {}
     ~Uart() = default;
@@ -17,8 +13,8 @@ class Uart : public UartAbstraction {
     ErrorType deinit() override;
     ErrorType txBlocking(const std::string &data, const Milliseconds timeout) override;
     ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout) override;
-    ErrorType txNonBlocking(const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) override;
-    ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) override;
+    ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
+    ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
     ErrorType flushRxBuffer() override;
 
     ErrorType setHardwareConfig(PinNumber txNumber, PinNumber rxNumber, PinNumber rtsNumber, PinNumber ctsNumber, PeripheralNumber peripheralNumber) override;
@@ -27,11 +23,10 @@ class Uart : public UartAbstraction {
     ErrorType setInterruptConfig(const bool overrun, const bool breakError, const bool parityError, const bool framingError, const bool receiveTimeout, const bool transmitted, const bool received, const bool dsrModem, const bool dcdModem, const bool ctsModem, const bool riModem) override;
 
     private:
-    std::unique_ptr<File> txBuffer;
-    std::unique_ptr<File> rxBuffer;
-
-    //The total number of bytes read so far from the file.
-    Bytes _totalRead = 0;
+    uint32_t toTm4c123SysCtlPeripheralNumber(PeripheralNumber peripheralNumber, ErrorType &error);
+    Register toTm4c123PeripheralBaseRegister(PeripheralNumber peripheralNumber, ErrorType &error);
+    uint32_t toTm4c123UartConfigBits(const uint32_t dataBits, const uint32_t stopBits, const char parity, ErrorType &error);
+    uint32_t toTm4c123UartFlowControl(const UartConfig::FlowControl flowControl, ErrorType &error);
 };
 
 #endif // __UART_MODULE_HPP__
