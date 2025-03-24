@@ -4,7 +4,7 @@
 ErrorType Mikroe28byj485V::init() {
     PeripheralNumber peripheral = PeripheralNumber::Unknown;
     constexpr uint8_t numberOfCoils = 4;
-    constexpr Milliseconds pwmPeriod = Milliseconds(200);
+    constexpr Microseconds pwmPeriod = Microseconds(200000);
     constexpr Percent pwmDutyCycle = Percent(100);
 
     for (int i = 0; i < numberOfCoils; i++) {
