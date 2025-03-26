@@ -13,6 +13,7 @@
 #include "PwmModule.hpp"
 #include "GpioModule.hpp"
 #include "AdcModule.hpp"
+#include "HBridge.hpp"
 //C++
 #include <vector>
 #include <memory>
@@ -22,106 +23,6 @@
  * @brief IC Drivers for the motorized slide potentiometer by adafruit
  */
 namespace Sm10001Drivers {
-    /**
-     * @struct HBridge
-     * @brief The H-Bridge that drives the motor.
-     */
-    struct HBridge {
-        public:
-        /// @brief Constructor
-        HBridge() = default;
-        /// @brief Destructor
-        virtual ~HBridge() = default;
-
-        /**
-         * @brief Drives the motor forward.
-         * @returns ErrorType::Success if the motor was driven forward
-         * @returns ErrorType::Failure otherwise
-         */
-        virtual ErrorType driveForward() = 0;
-        /**
-         * @brief Drives the motor backward.
-         * @returns ErrorType::Success if the motor was driven backward
-         * @returns ErrorType::Failure otherwise
-        */
-        virtual ErrorType driveBackward() = 0;
-        /**
-         * @brief The H-Bridge is put into coast mode for fast current decay
-         * @returns ErrorType::Success if the coast was successful
-         * @returns ErrorType::Failure otherwise
-         */
-        virtual ErrorType coast() = 0;
-        /**
-         * @brief The H-Bridge is put into brake mode for slow current decay
-         * @returns ErrorType::Success if the brake was successful
-         * @returns ErrorType::Failure otherwise
-         */
-        virtual ErrorType brake() = 0;
-
-        /**
-         * @brief Set the PWMs.
-         * @param gptPwms The PWMs implemented by the general purpose timer.
-         * @returns ErrorType::Success if the PWMs were set
-         * @returns ErrorType::Failure otherwise
-         */
-        void setPwms(std::vector<GptmPwmModule> &gptPwms) {
-            assert(gptPwms.size() == 2);
-            _pwmIsImplementedByGptm = true;
-            _gptPwms.swap(gptPwms);
-        }
-
-        /**
-         * @brief Set the PWMs.
-         * @param pwms The PWMs implemented by a standalone driver.
-         * @returns ErrorType::Success if the PWMs were set
-         * @returns ErrorType::Failure otherwise
-         */
-        void setPwms(std::vector<Pwm> &pwms) {
-            assert(pwms.size() == 2);
-            _pwmIsStandaloneDriver = true;
-            _pwms.swap(pwms);
-        }
-
-        /**
-         * @brief Set the GPIOs.
-         * @param gpios The GPIOs used to drive the H-Bridge.
-         * @returns ErrorType::Success if the GPIOs were set
-         * @returns ErrorType::Failure otherwise
-         */
-        void setGpios(std::vector<Gpio> &gpios) {
-            assert(gpios.size() == 2);
-            _hBridgeIsDrivenByGpio = true;
-            _gpios.swap(gpios);
-        }
-
-        /// @brief Get a constant reference to the pwms.
-        const std::vector<GptmPwmModule> &gptPwmsConst() const { return _gptPwms; }
-        /// @brief Get a mutable reference to the pwms
-        std::vector<GptmPwmModule> &gptPwms() { return _gptPwms; }
-        /// @brief Get a constant reference to the pwms.
-        const std::vector<Pwm> &standalonePwmsConst() const { return _pwms; }
-        /// @brief Get a mutable reference to the pwms
-        std::vector<Pwm> &standalonePwms() { return _pwms; }
-        /// @brief Get a constant reference to the gpios.
-        const std::vector<Gpio> &gpiosConst() const { return _gpios; }
-        /// @brief Get a mutable reference to the gpios
-        std::vector<Gpio> &gpios() { return _gpios; }
-
-        protected:
-        /// @brief The PWMs implemented by the general purpose timer.
-        std::vector<GptmPwmModule> _gptPwms;
-        /// @brief The PWMs implemented by a standalone driver.
-        std::vector<Pwm> _pwms;
-        /// @brief The GPIOs that are used to drive the H-Bridge.
-        std::vector<Gpio> _gpios;
-        /// @brief True for systems that implement PWM by the general purpose timer.
-        bool _pwmIsImplementedByGptm = false;
-        /// @brief True for systems that implement PWM by a standalone driver.
-        bool _pwmIsStandaloneDriver = false;
-        /// @brief True for systems that implement H-Bridge by GPIOs.
-        bool _hBridgeIsDrivenByGpio = false;
-    };
-
     /**
      * @struct Drv8872
      * @brief HBridge by Texas Instruments
@@ -136,24 +37,24 @@ namespace Sm10001Drivers {
 
         ErrorType driveForward() override {
             ErrorType error = ErrorType::Failure;
-            assert(_pwmIsImplementedByGptm || _pwmIsStandaloneDriver);
+            assert(isDrivenByGptmPwm() || isDrivenByStandalonePwm());
 
-            if (_pwmIsImplementedByGptm) {
-                error = _gptPwms[0].start();
+            if (isDrivenByGptmPwm()) {
+                error = _gptPwms[0]->start();
                 if (ErrorType::Success == error) {
-                    error = _gptPwms[1].stop();
+                    error = _gptPwms[1]->stop();
                 }
             }
-            else if (_pwmIsStandaloneDriver) {
-                error = _pwms[0].start();
+            else if (isDrivenByStandalonePwm()) {
+                error = _pwms[0]->start();
                 if (ErrorType::Success == error) {
-                    error = _pwms[1].stop();
+                    error = _pwms[1]->stop();
                 }
             }
-            else if (_hBridgeIsDrivenByGpio) {
-                error = _gpios[0].pinWrite(GpioTypes::LogicLevel::High);
+            else if (isDrivenByGpio()) {
+                error = _gpios[0]->pinWrite(GpioTypes::LogicLevel::High);
                 if (ErrorType::Success == error) {
-                error = _gpios[1].pinWrite(GpioTypes::LogicLevel::Low);
+                    error = _gpios[1]->pinWrite(GpioTypes::LogicLevel::Low);
                 }
             }
             else {
@@ -165,24 +66,24 @@ namespace Sm10001Drivers {
 
         ErrorType driveBackward() override {
             ErrorType error = ErrorType::Failure;
-            assert(_pwmIsImplementedByGptm || _pwmIsStandaloneDriver);
+            assert(isDrivenByGptmPwm() || isDrivenByStandalonePwm());
 
-            if (_pwmIsImplementedByGptm) {
-                error = _gptPwms[0].stop();
+            if (isDrivenByGptmPwm()) {
+                error = _gptPwms[0]->stop();
                 if (ErrorType::Success == error) {
-                    error = _gptPwms[1].start();
+                    error = _gptPwms[1]->start();
                 }
             }
-            else if (_pwmIsStandaloneDriver) {
-                error = _pwms[0].stop();
+            else if (isDrivenByStandalonePwm()) {
+                error = _pwms[0]->stop();
                 if (ErrorType::Success == error) {
-                    error = _pwms[1].start();
+                    error = _pwms[1]->start();
                 }
             }
-            else if (_hBridgeIsDrivenByGpio) {
-                error = _gpios[0].pinWrite(GpioTypes::LogicLevel::Low);
+            else if (isDrivenByGpio()) {
+                error = _gpios[0]->pinWrite(GpioTypes::LogicLevel::Low);
                 if (ErrorType::Success == error) {
-                    error = _gpios[1].pinWrite(GpioTypes::LogicLevel::High);
+                    error = _gpios[1]->pinWrite(GpioTypes::LogicLevel::High);
                 }
             }
             else {
@@ -194,24 +95,24 @@ namespace Sm10001Drivers {
 
         ErrorType coast() override {
             ErrorType error = ErrorType::Failure;
-            assert(_pwmIsImplementedByGptm || _pwmIsStandaloneDriver);
+            assert(isDrivenByGptmPwm() || isDrivenByStandalonePwm());
 
-            if (_pwmIsImplementedByGptm) {
-                error = _gptPwms[0].stop();
+            if (isDrivenByGptmPwm()) {
+                error = _gptPwms[0]->stop();
                 if (ErrorType::Success == error) {
-                    error = _gptPwms[1].stop();
+                    error = _gptPwms[1]->stop();
                 }
             }
-            else if (_pwmIsStandaloneDriver) {
-                error = _pwms[0].stop();
+            else if (isDrivenByStandalonePwm()) {
+                error = _pwms[0]->stop();
                 if (ErrorType::Success == error) {
-                    error = _pwms[1].stop();
+                    error = _pwms[1]->stop();
                 }
             }
-            else if (_hBridgeIsDrivenByGpio) {
-                error = _gpios[0].pinWrite(GpioTypes::LogicLevel::Low);
+            else if (isDrivenByGpio()) {
+                error = _gpios[0]->pinWrite(GpioTypes::LogicLevel::Low);
                 if (ErrorType::Success == error) {
-                    error = _gpios[1].pinWrite(GpioTypes::LogicLevel::Low);
+                    error = _gpios[1]->pinWrite(GpioTypes::LogicLevel::Low);
                 }
             }
             else {
@@ -223,24 +124,24 @@ namespace Sm10001Drivers {
 
         ErrorType brake() override {
             ErrorType error = ErrorType::Failure;
-            assert(_pwmIsImplementedByGptm || _pwmIsStandaloneDriver);
+            assert(isDrivenByGptmPwm() || isDrivenByStandalonePwm());
 
-            if (_pwmIsImplementedByGptm) {
-                error = _gptPwms[0].start();
+            if (isDrivenByGptmPwm()) {
+                error = _gptPwms[0]->start();
                 if (ErrorType::Success == error) {
-                    error = _gptPwms[1].start();
+                    error = _gptPwms[1]->start();
                 }
             }
-            else if (_pwmIsStandaloneDriver) {
-                error = _pwms[0].start();
+            else if (isDrivenByStandalonePwm()) {
+                error = _pwms[0]->start();
                 if (ErrorType::Success == error) {
-                    error = _pwms[1].start();
+                    error = _pwms[1]->start();
                 }
             }
-            else if (_hBridgeIsDrivenByGpio) {
-                error = _gpios[0].pinWrite(GpioTypes::LogicLevel::High);
+            else if (isDrivenByGpio()) {
+                error = _gpios[0]->pinWrite(GpioTypes::LogicLevel::High);
                 if (ErrorType::Success == error) {
-                    error = _gpios[1].pinWrite(GpioTypes::LogicLevel::High);
+                    error = _gpios[1]->pinWrite(GpioTypes::LogicLevel::High);
                 }
             }
             else {
@@ -268,7 +169,7 @@ class Sm10001 {
      * @post Ownership of the HBridge is transferred to the SM10001.
      * @post Ownership of the ADC is taken by this SM10001
      */
-    Sm10001(std::unique_ptr<Sm10001Drivers::HBridge> &hBridge,
+    Sm10001(std::unique_ptr<HBridge> &hBridge,
             std::unique_ptr<Adc> &adc,
             PinNumber motorInputA, PinNumber motorInputB) {
         _hBridge = std::move(hBridge);
@@ -318,7 +219,7 @@ class Sm10001 {
 
     private:
     /// @brief The H-Bridge that drives the motor
-    std::unique_ptr<Sm10001Drivers::HBridge> _hBridge;
+    std::unique_ptr<HBridge> _hBridge;
     /// @brief The ADC that reads the potentiometer voltage drop.
     std::unique_ptr<Adc> _adc;
     /// @brief The pin number of the motor input A.
