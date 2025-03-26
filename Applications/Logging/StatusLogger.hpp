@@ -30,7 +30,7 @@ class StatusLogger {
     /**
      * @brief Construct a new Status Logger object
      * @param interval Interval between logs
-     * @pre Make sure the timer stack is large enough to be able to print.
+     * @pre Make sure the timer stack is large enough to be able to print. Some tests have revealed the stack needs to be as large as 1.5kiB
      */
     StatusLogger(Seconds interval) {
         if (ErrorType::Success == OperatingSystem::Instance().createTimer(_logTimer, interval*1000, true, std::bind(&StatusLogger::printLog, this))) {
