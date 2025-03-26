@@ -10,7 +10,6 @@ STATIC
 
 target_include_directories(Adc INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
-target_link_libraries(NoneAdc PRIVATE Utilities)
 target_link_libraries(NoneAdc PRIVATE abstractionLayer)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE NoneAdc)
 

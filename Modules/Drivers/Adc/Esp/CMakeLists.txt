@@ -11,7 +11,6 @@ STATIC
 target_include_directories(Adc INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(Adc INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
 
-target_link_libraries(EspAdc PRIVATE Utilities)
 target_link_libraries(EspAdc PRIVATE abstractionLayer)
 target_link_libraries(EspAdc PRIVATE Adc)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE EspAdc)
