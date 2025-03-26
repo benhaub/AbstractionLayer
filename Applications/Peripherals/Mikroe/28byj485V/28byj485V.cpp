@@ -2,92 +2,73 @@
 #include "OperatingSystemModule.hpp"
 
 ErrorType Mikroe28byj485V::init() {
-    PeripheralNumber peripheral = PeripheralNumber::Unknown;
-    constexpr uint8_t numberOfCoils = 4;
-    constexpr Microseconds pwmPeriod = Microseconds(200000);
-    constexpr Percent pwmDutyCycle = Percent(100);
+    ErrorType error = ErrorType::PrerequisitesNotMet;
 
-    for (int i = 0; i < numberOfCoils; i++) {
-        //TODO These vectors need to have a size
-        assert(false);
-        //TODO: Should also have a constructor similar to Sm10001.
-        _pwmIsImplementedByGptm = _gptPwms[i].init() != ErrorType::NotImplemented;
-        _pwmIsStandaloneDriver = _pwms[i].init() != ErrorType::NotImplemented;
-
-        switch (i) {
-            case 0: peripheral = PeripheralNumber::Zero;
-                break;
-            case 1: peripheral = PeripheralNumber::One;
-                break;
-            case 2: peripheral = PeripheralNumber::Two;
-                break;
-            case 3: peripheral = PeripheralNumber::Three;
-                break;
-        }
-
-        if (_pwmIsStandaloneDriver) {
-            _pwms[i].peripheralNumber() = peripheral;
-            _pwms[i].setPeriod(pwmPeriod);
-            _pwms[i].setDutyCycle(pwmDutyCycle);
-            ErrorType error = _pwms[i].init();
-            if (ErrorType::Success != error) {
-                const bool isCriticalError = !(ErrorType::NotAvailable == error || ErrorType::NotImplemented == error);
-                if (isCriticalError) {
-                    return error;
+    if (_darlingtonArray->isDrivenByGpio()) {
+        error = ErrorType::NotSupported;
+    }
+    else if (_darlingtonArray->isDrivenByGptmPwm()) {
+        for (auto &gptPwm : _darlingtonArray->gptPwms()) {
+            if (-1 != gptPwm->outputPinConst()) {
+                if (PeripheralNumber::Unknown != gptPwm->peripheralNumber()) {
+                    gptPwm->setPeriod(Microseconds(200000));
+                    gptPwm->setDutyCycle(Percent(100));
+                    ErrorType error = gptPwm->init();
+                    if (ErrorType::Success == error) {
+                        error = gptPwm->stop();
+                    }
                 }
             }
-            else {
-                _pwms[i].stop();
-            }
         }
-        else if (_pwmIsImplementedByGptm) {
-            _gptPwms[i].peripheralNumber() = peripheral;
-            _gptPwms[i].setPeriod(pwmPeriod);
-            _gptPwms[i].setDutyCycle(pwmDutyCycle);
-            ErrorType error = _gptPwms[i].init();
-            if (ErrorType::Success != error) {
-                const bool isCriticalError = !(ErrorType::NotAvailable == error || ErrorType::NotImplemented == error);
-                if (isCriticalError) {
-                    return error;
+    }
+    else if (_darlingtonArray->isDrivenByStandalonePwm()) {
+        for (auto &pwm : _darlingtonArray->standalonePwms()) {
+            if (-1 != pwm->outputPinConst()) {
+                if (PeripheralNumber::Unknown != pwm->peripheralNumber()) {
+                    pwm->setPeriod(Microseconds(200000));
+                    pwm->setDutyCycle(Percent(100));
+                    ErrorType error = pwm->init();
+                    if (ErrorType::Success == error) {
+                        error = pwm->stop();
+                    }
                 }
-            }
-            else {
-                _gptPwms[i].stop();
             }
         }
     }
 
-    return ErrorType::Success;
+    return error;
 }
 
-ErrorType Mikroe28byj485V::start() {
-    constexpr uint8_t orangeWireInput = 3;
-    constexpr uint8_t pinkWireInput = 2;
-    constexpr uint8_t yellowWireInput = 1;
-    constexpr uint8_t blueWireInput = 0;
+//https://components101.com/motors/28byj-48-stepper-motor
+//https://www.python-exemplarisch.ch/index_en.php?inhalt_links=navigation_en.inc.php&inhalt_mitte=raspi/en/steppermotors.inc.php
+ErrorType Mikroe28byj485V::rotateForward() {
+    constexpr uint8_t orange = 3;
+    constexpr uint8_t pink = 2;
+    constexpr uint8_t yellow = 1;
+    constexpr uint8_t blue = 0;
 
     //Forward
-    for (int i = 0; i < 512; i++) {
-        if (_pwmIsStandaloneDriver) {
-            _pwms[pinkWireInput].start(); _pwms[orangeWireInput].stop(); _pwms[yellowWireInput].stop(); _pwms[blueWireInput].stop();
-            OperatingSystem::Instance().delay(Milliseconds(3));
-            _pwms[pinkWireInput].stop(); _pwms[orangeWireInput].start(); _pwms[yellowWireInput].stop(); _pwms[blueWireInput].stop();
-            OperatingSystem::Instance().delay(Milliseconds(3));
-            _pwms[pinkWireInput].stop(); _pwms[orangeWireInput].stop(); _pwms[yellowWireInput].start(); _pwms[blueWireInput].stop();
-            OperatingSystem::Instance().delay(Milliseconds(3));
-            _pwms[pinkWireInput].stop(); _pwms[orangeWireInput].stop(); _pwms[yellowWireInput].stop(); _pwms[blueWireInput].start();
-            OperatingSystem::Instance().delay(Milliseconds(3));
-        }
-        else {
-            _gptPwms[pinkWireInput].start(); _gptPwms[orangeWireInput].stop(); _gptPwms[yellowWireInput].stop(); _gptPwms[blueWireInput].stop();
-            OperatingSystem::Instance().delay(Milliseconds(3));
-            _gptPwms[pinkWireInput].stop(); _gptPwms[orangeWireInput].start(); _gptPwms[yellowWireInput].stop(); _gptPwms[blueWireInput].stop();
-            OperatingSystem::Instance().delay(Milliseconds(3));
-            _gptPwms[pinkWireInput].stop(); _gptPwms[orangeWireInput].stop(); _gptPwms[yellowWireInput].start(); _gptPwms[blueWireInput].stop();
-            OperatingSystem::Instance().delay(Milliseconds(3));
-            _gptPwms[pinkWireInput].stop(); _gptPwms[orangeWireInput].stop(); _gptPwms[yellowWireInput].stop(); _gptPwms[blueWireInput].start();
-            OperatingSystem::Instance().delay(Milliseconds(3));
-        }
+    for (int i = 0; i < 2048; i++) {
+        _darlingtonArray->togglePin(pink, true);
+        _darlingtonArray->togglePin(orange, false);
+        _darlingtonArray->togglePin(yellow, false);
+        _darlingtonArray->togglePin(blue, false);
+        OperatingSystem::Instance().delay(Milliseconds(3));
+        _darlingtonArray->togglePin(pink, false);
+        _darlingtonArray->togglePin(orange, true);
+        _darlingtonArray->togglePin(yellow, false);
+        _darlingtonArray->togglePin(blue, false);
+        OperatingSystem::Instance().delay(Milliseconds(3));
+        _darlingtonArray->togglePin(pink, false);
+        _darlingtonArray->togglePin(orange, false);
+        _darlingtonArray->togglePin(yellow, true);
+        _darlingtonArray->togglePin(blue, false);
+        OperatingSystem::Instance().delay(Milliseconds(3));
+        _darlingtonArray->togglePin(pink, false);
+        _darlingtonArray->togglePin(orange, false);
+        _darlingtonArray->togglePin(yellow, false);
+        _darlingtonArray->togglePin(blue, true);
+        OperatingSystem::Instance().delay(Milliseconds(3));
     }
 
     return ErrorType::Success;

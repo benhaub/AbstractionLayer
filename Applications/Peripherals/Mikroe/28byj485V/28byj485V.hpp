@@ -9,26 +9,24 @@
 #define __28BYJ48_5V_HPP__
 
 //AbstractionLayer
-#include "GptmPwmModule.hpp"
-#include "PwmModule.hpp"
-//C++
-#include <vector>
+#include "DarlingtonArrayAbstraction.hpp"
 
 class Mikroe28byj485V {
-    Mikroe28byj485V() = default;
+
+    public:
+    static constexpr Count _NumberOfCoils = 4;
+    Mikroe28byj485V(std::unique_ptr<DarlingtonArrayAbstraction<_NumberOfCoils>> &darlingtonArray) {
+        _darlingtonArray = std::move(darlingtonArray);
+    }
     ~Mikroe28byj485V() = default;
 
     static constexpr char TAG[] = "28byj485V";
 
     ErrorType init();
-
-    ErrorType start();
+    ErrorType rotateForward();
 
     private:
-    std::vector<GptmPwmModule> _gptPwms;
-    std::vector<Pwm> _pwms;
-    bool _pwmIsImplementedByGptm = false;
-    bool _pwmIsStandaloneDriver = false;
+    std::unique_ptr<DarlingtonArrayAbstraction<_NumberOfCoils>> _darlingtonArray;
 };
 
 #endif // __28BYJ48_5V_HPP__
