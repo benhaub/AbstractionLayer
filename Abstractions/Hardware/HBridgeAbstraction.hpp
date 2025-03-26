@@ -17,15 +17,15 @@
 #include <memory>
 
 /**
- * @struct HBridge
+ * @struct HBridgeAbstraction
  * @brief The H-Bridge that drives the motor.
  */
-struct HBridge {
+struct HBridgeAbstraction {
     public:
     /// @brief Constructor
-    HBridge() = default;
+    HBridgeAbstraction() = default;
     /// @brief Destructor
-    virtual ~HBridge() = default;
+    virtual ~HBridgeAbstraction() = default;
 
     /**
      * @brief Drives the motor forward.

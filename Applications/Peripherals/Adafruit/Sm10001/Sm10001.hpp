@@ -13,7 +13,7 @@
 #include "PwmModule.hpp"
 #include "GpioModule.hpp"
 #include "AdcModule.hpp"
-#include "HBridge.hpp"
+#include "HBridgeAbstraction.hpp"
 //C++
 #include <vector>
 #include <memory>
@@ -28,7 +28,7 @@ namespace Sm10001Drivers {
      * @brief HBridge by Texas Instruments
      * @sa https://www.ti.com/lit/ds/symlink/drv8872-q1.pdf?ts=1740601343172&ref_url=https%253A%252F%252Fwww.mouser.it%252F
      */
-    struct Drv8872 : public HBridge {
+    struct Drv8872 : public HBridgeAbstraction {
         public:
         /// @brief  Constructor
         Drv8872() = default;
@@ -169,7 +169,7 @@ class Sm10001 {
      * @post Ownership of the HBridge is transferred to the SM10001.
      * @post Ownership of the ADC is taken by this SM10001
      */
-    Sm10001(std::unique_ptr<HBridge> &hBridge,
+    Sm10001(std::unique_ptr<HBridgeAbstraction> &hBridge,
             std::unique_ptr<Adc> &adc,
             PinNumber motorInputA, PinNumber motorInputB) {
         _hBridge = std::move(hBridge);
@@ -219,7 +219,7 @@ class Sm10001 {
 
     private:
     /// @brief The H-Bridge that drives the motor
-    std::unique_ptr<HBridge> _hBridge;
+    std::unique_ptr<HBridgeAbstraction> _hBridge;
     /// @brief The ADC that reads the potentiometer voltage drop.
     std::unique_ptr<Adc> _adc;
     /// @brief The pin number of the motor input A.
