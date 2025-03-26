@@ -5,12 +5,12 @@
  * @brief HBridge by Texas Instruments
  * @sa https://www.ti.com/lit/ds/symlink/drv8872-q1.pdf?ts=1740601343172&ref_url=https%253A%252F%252Fwww.mouser.it%252F
  */
-class TiDrv8872 : public HBridgeAbstraction {
+class HBridge : public HBridgeAbstraction {
     public:
     /// @brief  Constructor
-    TiDrv8872() = default;
+    HBridge() = default;
     /// @brief Destructor
-    ~TiDrv8872() = default;
+    ~HBridge() = default;
 
     ErrorType driveForward() override;
     ErrorType driveBackward() override;

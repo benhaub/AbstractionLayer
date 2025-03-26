@@ -1,6 +1,6 @@
-#include "TiDrv8872.hpp"
+#include "HBridge.hpp"
 
-ErrorType TiDrv8872::driveForward() {
+ErrorType HBridge::driveForward() {
     ErrorType error = ErrorType::Failure;
     assert(isDrivenByGptmPwm() || isDrivenByStandalonePwm());
 
@@ -29,7 +29,7 @@ ErrorType TiDrv8872::driveForward() {
     return error;
 }
 
-ErrorType TiDrv8872::driveBackward() {
+ErrorType HBridge::driveBackward() {
     ErrorType error = ErrorType::Failure;
     assert(isDrivenByGptmPwm() || isDrivenByStandalonePwm());
 
@@ -58,7 +58,7 @@ ErrorType TiDrv8872::driveBackward() {
     return error;
 }
 
-ErrorType TiDrv8872::coast() {
+ErrorType HBridge::coast() {
     ErrorType error = ErrorType::Failure;
     assert(isDrivenByGptmPwm() || isDrivenByStandalonePwm());
 
@@ -87,7 +87,7 @@ ErrorType TiDrv8872::coast() {
     return error;
 }
 
-ErrorType TiDrv8872::brake() {
+ErrorType HBridge::brake() {
     ErrorType error = ErrorType::Failure;
     assert(isDrivenByGptmPwm() || isDrivenByStandalonePwm());
 

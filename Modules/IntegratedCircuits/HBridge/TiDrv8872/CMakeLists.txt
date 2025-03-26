@@ -1,11 +1,11 @@
 target_sources(${PROJECT_NAME}${EXECUTABLE_SUFFIX}
 PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
-  Drv8872.hpp
+  HBridge.hpp
 )
 
-add_library(Cc32xxAdc
+add_library(TexasInstrumentsDrv8872HBridge
 STATIC
-  Drv8872.cpp
+  HBridge.cpp
 )
 
 target_include_directories(HBridge INTERFACE ${CMAKE_CURRENT_LIST_DIR})

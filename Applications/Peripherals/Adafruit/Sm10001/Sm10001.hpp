@@ -9,10 +9,7 @@
 #define __SM10001_HPP__
 
 //AbstractionLayer
-#include "GptmPwmModule.hpp"
-#include "PwmModule.hpp"
-#include "GpioModule.hpp"
-#include "AdcModule.hpp"
+#include "AdcAbstraction.hpp"
 #include "HBridgeAbstraction.hpp"
 //C++
 #include <vector>
@@ -35,7 +32,7 @@ class Sm10001 {
      * @post Ownership of the ADC is taken by this SM10001
      */
     Sm10001(std::unique_ptr<HBridgeAbstraction> &hBridge,
-            std::unique_ptr<Adc> &adc,
+            std::unique_ptr<AdcAbstraction> &adc,
             PinNumber motorInputA, PinNumber motorInputB) {
         _hBridge = std::move(hBridge);
         _adc = std::move(adc);
@@ -86,7 +83,7 @@ class Sm10001 {
     /// @brief The H-Bridge that drives the motor
     std::unique_ptr<HBridgeAbstraction> _hBridge;
     /// @brief The ADC that reads the potentiometer voltage drop.
-    std::unique_ptr<Adc> _adc;
+    std::unique_ptr<AdcAbstraction> _adc;
     /// @brief The pin number of the motor input A.
     PinNumber _motorInputA;
     /// @brief The pin number of the motor input B.
