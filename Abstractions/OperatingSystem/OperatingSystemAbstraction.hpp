@@ -67,7 +67,6 @@ namespace OperatingSystemConfig {
     /**
      * @struct Status
      * @brief The status of the operating system
-     * TODO: When we ask for the status we should update it in all modules that have a status.
      */
     struct Status {
         Count threadCount;                          ///< The number of threads currently running.

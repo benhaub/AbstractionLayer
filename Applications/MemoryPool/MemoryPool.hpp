@@ -14,14 +14,15 @@
 //C++
 #include <array> //Some of the compilers that were tested did not have <span>
 #include <cstddef>
+#include <memory>
 
 /**
  * @class MemoryPool
- * @brief Statically allocate memory and then allocate memory from it at runtime as if it were dynamically allocated.
+ * @brief Statically allocate a block of memory and then allocate chunks of it from it at runtime as if it were dynamically allocated.
  * @details If we get carried away with features and trying to manage fragementation, we'll just end up implementing a heap allocator.
  *          The mempool is meant to be simple and naive so that it saves time in comparision to a heap allocator. If you are using a mempool,
- *          you know ahead of time what the max size of the allocations will be and the max number of items that will could be allocated at once.
- *          If you do not know this then a mempool is not a good idea.
+ *          You are making regular and frequent allocations that you know ahead of time what the max size of the allocations will be and the
+ *          max number of items that will could be allocated at once. If you do not know this then a mempool is not a good idea.
  * @pre _poolSize must be a multiple of sizeof(T) otherwise you're just wasting memory!
  * @tparam T The type of the memory pool.
  * @tparam _poolSize The size of the pool.
@@ -49,10 +50,11 @@ class MemoryPool {
      * @returns ErrorType::NoMemory if the memory was not allocated.
      * @sa setData for a safe way to set the newly allocated block
      */ 
-    ErrorType allocate(T *&poolBlock) {
+    constexpr ErrorType allocate(T *&poolBlock) {
         for (size_t i = 0; i < sizeof(_blockAllocationMap); i++) {
             if (blockIsAvailable(i)) {
                 poolBlock = &_pool[i];
+                _blockAllocationMap[i] = 1;
                 return ErrorType::Success;
             }
         }
@@ -66,7 +68,7 @@ class MemoryPool {
      * @return ErrorType::Success if the memory was deallocated
      * @returns ErrorType::InvalidParameter if the memory was not deallocated.
      */
-    ErrorType deallocate(T *&poolBlock) {
+    constexpr ErrorType deallocate(T *&poolBlock) {
         for (size_t i = 0; i < sizeof(_blockAllocationMap); i++) {
             if (&_pool[i] == poolBlock) {
                 _blockAllocationMap[i] = 0;
@@ -79,16 +81,16 @@ class MemoryPool {
 
     /**
      * @brief Set the data in a memory block.
-     * @param[in] poolBlock The pointer to the block of memory to set the data in.
-     * @param[in] data The data to set in the memory block.
-     * @param[in] dataSize The size of the data to set in the memory block.
+     * @param[in] poolBlock The pointer to the block of memory to set.
+     * @param[in] data The data to set the poolBlock to.
+     * @param[in] dataSize The size of the data.
      * @return ErrorType::Success if the data was set
      * @returns ErrorType::InvalidParameter if the data is too large to fit in the block.
-     * @returns ErrorType::InvalidParameter if the data being set does not belong to the pool.
+     * @returns ErrorType::InvalidParameter if the poolBlock being set does not belong to the pool.
      */
-    ErrorType setData(T *&poolBlock, const T *data, Bytes dataSize) {
+    constexpr ErrorType setData(T *&poolBlock, const T *data, Bytes dataSize) {
         const bool dataIsTooLarger = (dataSize > sizeof(T));
-        const bool dataDoesNotBelongToPool = (data < &_pool[0] || data >= &_pool[sizeof(_pool) - 1]);
+        const bool dataDoesNotBelongToPool = (poolBlock < &_pool[0] || poolBlock >= &_pool[sizeof(_pool) - 1]);
         if (dataIsTooLarger) {
             return ErrorType::InvalidParameter;
         }
@@ -105,7 +107,7 @@ class MemoryPool {
      * @param[out] size The size of the available memory in the pool.
      * @return ErrorType::Success always
      */
-    ErrorType available(Bytes &size) const {
+    constexpr ErrorType available(Bytes &size) const {
         size = 0;
         for (size_t i = 0; i < sizeof(_blockAllocationMap); i++) {
             if (blockIsAvailable(i)) {
@@ -128,10 +130,10 @@ class MemoryPool {
      * @return true if the block is available.
      * @return false if the block is not available.
      */
-    bool blockIsAvailable(const size_t i) const {
+    constexpr bool blockIsAvailable(const size_t i) const {
         constexpr int blockMarkedAvailable = 0;
         return _blockAllocationMap[i] == blockMarkedAvailable;
-    };
+    }
 };
 
 #endif // __MEMORY_POOL_HPP__
