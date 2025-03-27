@@ -5,6 +5,8 @@
 #include "FileSystemAbstraction.hpp"
 //TI driverlib
 #include "ti/drivers/net/wifi/fs.h"
+//C++
+#include <map>
 
 class FileSystem : public FileSystemAbstraction {
 
@@ -31,7 +33,7 @@ class FileSystem : public FileSystemAbstraction {
     ErrorType size(FileSystemTypes::File &file) override;
 
     private:
-    _i32 _deviceFileHandle = -1;
+    std::map<std::string, _i32> openFiles;
 
     _u32 toCc32xxAccessMode(const FileSystemTypes::OpenMode mode, ErrorType &error) {
         error = ErrorType::Success;

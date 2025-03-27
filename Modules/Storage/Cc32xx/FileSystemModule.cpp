@@ -95,19 +95,27 @@ ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenM
         Bytes maxSize = SL_FS_CREATE_MAX_SIZE(path.size());
         assert(maxSize <= maxFileSize);
 
-        retval = sl_FsOpen(reinterpret_cast<const _u8 *>(path.c_str()), toCc32xxAccessMode(mode, callbackError) | maxSize, &token);
-        if (retval >= 0) {
-            file.path.assign(path);
-            file.isOpen = true;
-            file.openMode = mode;
-            file.filePointer = 0;
-            _status.openedFiles++;
-            //TODO: This needs to be put in a list or map of open files.
-            _deviceFileHandle = retval;
-            callbackError = ErrorType::Success;
+        const bool fileIsNotOpen = !openFiles.contains(path);
+        if (fileIsNotOpen) {
+            retval = sl_FsOpen(reinterpret_cast<const _u8 *>(path.c_str()), toCc32xxAccessMode(mode, callbackError) | maxSize, &token);
+            if (retval >= 0) {
+                file.path.assign(path);
+                file.isOpen = true;
+                file.openMode = mode;
+                file.filePointer = 0;
+                openFiles[path] = retval;
+                _status.openedFiles = openFiles.size();
+                if (fileShouldBeTruncated(mode)) {
+                    file.size = 0;
+                }
+                callbackError = ErrorType::Success;
+            }
+            else {
+                callbackError = fromPlatformError(retval);
+            }
         }
         else {
-            callbackError = fromPlatformError(retval);
+            callbackError = ErrorType::Success;
         }
 
         openDone = true;
@@ -132,16 +140,23 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
     bool closeDone = false;
 
     auto closeCallback = [&]() -> ErrorType {
-        _i32 retval = sl_FsClose(_deviceFileHandle, NULL, NULL, 0);
-        if (SL_FS_OK == retval) {
-            _deviceFileHandle = -1;
-            file.isOpen = false;
-            file.openMode = FileSystemTypes::OpenMode::Unknown;
-            _status.openedFiles--;
+        const bool fileIsOpen = openFiles.contains(file.path);
+        if (fileIsOpen) {
+            _i32 retval = sl_FsClose(openFiles[file.path], NULL, NULL, 0);
+            if (SL_FS_OK == retval) {
+                openFiles.erase(file.path);
+                file.isOpen = false;
+                file.openMode = FileSystemTypes::OpenMode::Unknown;
+                _status.openedFiles = openFiles.size();
+            }
+
+            callbackError = fromPlatformError(retval);
+        }
+        else {
+            callbackError = ErrorType::Success;
         }
 
         closeDone = true;
-        callbackError = fromPlatformError(retval);
         return callbackError;
     };
 
@@ -197,7 +212,7 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
     bool readDone = false;
 
     auto readCallback = [&]() -> ErrorType {
-        _i32 retval = sl_FsRead(_deviceFileHandle, file.filePointer, reinterpret_cast<_u8 *>(buffer.data()), buffer.size());
+        _i32 retval = sl_FsRead(openFiles[file.path], file.filePointer, reinterpret_cast<_u8 *>(buffer.data()), buffer.size());
         if (retval > 0) {
             file.filePointer += static_cast<FileOffset>(retval);
             buffer.resize(retval);
@@ -245,10 +260,11 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::stri
     std::string &dataToWrite = const_cast<std::string &>(data);
 
     auto writeCallback = [&]() -> ErrorType {
-        _i32 retval = sl_FsWrite(_deviceFileHandle, file.filePointer, reinterpret_cast<_u8 *>(dataToWrite.data()), dataToWrite.size());
+        _i32 retval = sl_FsWrite(openFiles[file.path], file.filePointer, reinterpret_cast<_u8 *>(dataToWrite.data()), dataToWrite.size());
         if (retval >= 0) {
             writeDone = true;
             callbackError = ErrorType::Success;
+            file.size += dataToWrite.size();
         }
         else {
             callbackError = fromPlatformError(retval);
