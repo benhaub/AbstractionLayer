@@ -50,7 +50,7 @@ class MemoryPool {
      * @returns ErrorType::NoMemory if the memory was not allocated.
      * @sa setData for a safe way to set the newly allocated block
      */ 
-    constexpr ErrorType allocate(T *&poolBlock) {
+    constexpr ErrorType allocate(T *poolBlock) {
         for (size_t i = 0; i < sizeof(_blockAllocationMap); i++) {
             if (blockIsAvailable(i)) {
                 poolBlock = &_pool[i];
@@ -68,7 +68,7 @@ class MemoryPool {
      * @return ErrorType::Success if the memory was deallocated
      * @returns ErrorType::InvalidParameter if the memory was not deallocated.
      */
-    constexpr ErrorType deallocate(T *&poolBlock) {
+    constexpr ErrorType deallocate(const T *poolBlock) {
         for (size_t i = 0; i < sizeof(_blockAllocationMap); i++) {
             if (&_pool[i] == poolBlock) {
                 _blockAllocationMap[i] = 0;
@@ -88,7 +88,7 @@ class MemoryPool {
      * @returns ErrorType::InvalidParameter if the data is too large to fit in the block.
      * @returns ErrorType::InvalidParameter if the poolBlock being set does not belong to the pool.
      */
-    constexpr ErrorType setData(T *&poolBlock, const T *data, Bytes dataSize) {
+    constexpr ErrorType setData(T *poolBlock, const T *data, const Bytes dataSize) {
         const bool dataIsTooLarger = (dataSize > sizeof(T));
         const bool dataDoesNotBelongToPool = (poolBlock < &_pool[0] || poolBlock >= &_pool[sizeof(_pool) - 1]);
         if (dataIsTooLarger) {

@@ -265,10 +265,7 @@ ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, con
     struct sigevent signalEvent;
     timer_t *posixTimerId = nullptr;
     //The value of posixTimerId is local to this frame. Need a mempool to make sure it sticks around.
-    if (ErrorType::NoMemory == timerIdPool.allocate(posixTimerId)) {
-        posixTimerId = new timer_t;
-    }
-    assert(nullptr != posixTimerId);
+    assert(ErrorType::NoMemory != timerIdPool.allocate(posixTimerId));
     Timer newTimer = {
         .callback = callback,
         .id = nextTimerId++,
