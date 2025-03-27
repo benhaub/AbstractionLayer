@@ -50,7 +50,7 @@ class MemoryPool {
      * @returns ErrorType::NoMemory if the memory was not allocated.
      * @sa setData for a safe way to set the newly allocated block
      */ 
-    constexpr ErrorType allocate(T *poolBlock) {
+    constexpr ErrorType allocate(T *&poolBlock) {
         for (size_t i = 0; i < sizeof(_blockAllocationMap); i++) {
             if (blockIsAvailable(i)) {
                 poolBlock = &_pool[i];
