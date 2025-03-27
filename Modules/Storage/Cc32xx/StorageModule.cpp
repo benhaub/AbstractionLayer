@@ -31,6 +31,7 @@ ErrorType Storage::init() {
         assert(ErrorType::Success == error);
     }
 
+    sl_Start(NULL, NULL, NULL);
     _status.isInitialized = true;
 
     return error;
