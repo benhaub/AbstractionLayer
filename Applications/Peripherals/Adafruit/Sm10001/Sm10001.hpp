@@ -40,7 +40,7 @@ class Sm10001 {
         _motorInputB = motorInputB;
 
         //Note that this only begins to calculate once the period falls below 1000.
-        static_assert(1000 / _PwmPeriod <= 250, "Frequency is beyond max reccommended in data sheet.");
+        static_assert(1000 / _PwmPeriod <= 250, "Frequency is beyond max recommended in data sheet.");
     }
     /// @brief Destructor
     ~Sm10001() = default;
