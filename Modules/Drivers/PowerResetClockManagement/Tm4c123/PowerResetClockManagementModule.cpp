@@ -138,7 +138,7 @@ constexpr uint32_t PowerResetClockManagement::toTm4c123SysCtlDivider(const uint3
         return SYSCTL_SYSDIV_2_5;
     }
 
-    uint32_t scalar = (SYSCTL_SYSDIV_3 - SYSCTL_SYSDIV_2);
+    constexpr uint32_t scalar = (SYSCTL_SYSDIV_3 - SYSCTL_SYSDIV_2);
     //Note that SYSDIV 1 and 2 are reserved in the data sheet and not useable.
     //We subtract by 2 from the divider because we are starting at 2. To get a sysdiv of 3 we should scale by 1.
     uint32_t sysdiv = (SYSCTL_SYSDIV_2 + ((divider - 2) * scalar)) & ~(0xF0 << 24);

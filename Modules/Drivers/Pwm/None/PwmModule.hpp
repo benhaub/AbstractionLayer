@@ -13,7 +13,7 @@ class Pwm : public PwmAbstraction {
     ErrorType start() override;
     ErrorType stop() override;
     ErrorType setDutyCycle(Percent on) override;
-    ErrorType setPeriod(Milliseconds period) override;
+    ErrorType setPeriod(const Microseconds period) override;
 };
 
 #endif // __PWM_MODULE_HPP__

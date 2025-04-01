@@ -15,6 +15,6 @@ ErrorType Pwm::stop() {
 ErrorType Pwm::setDutyCycle(Percent on) {
     return ErrorType::NotImplemented;
 }
-ErrorType Pwm::setPeriod(Milliseconds frequency) {
+ErrorType Pwm::setPeriod(const Microseconds period) {
     return ErrorType::NotImplemented;
 }
