@@ -44,7 +44,7 @@ ErrorType Sm10001::init() {
 ErrorType Sm10001::slideForward() {
     ErrorType error = _hBridge->driveForward();
 
-    OperatingSystem::Instance().delay(Milliseconds(250));
+    OperatingSystem::Instance().delay(Milliseconds(75));
 
     if (ErrorType::Success == error) {
         error = _hBridge->brake();
@@ -56,7 +56,7 @@ ErrorType Sm10001::slideForward() {
 ErrorType Sm10001::slideBackward() {
     ErrorType error = _hBridge->driveBackward();
 
-    OperatingSystem::Instance().delay(Milliseconds(250));
+    OperatingSystem::Instance().delay(Milliseconds(75));
 
     if (ErrorType::Success == error) {
         error = _hBridge->brake();
