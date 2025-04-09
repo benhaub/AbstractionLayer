@@ -1,5 +1,5 @@
 #ifndef __I2C_MODULE_HPP__
-#define __I2C_MOUDLE_HPP__
+#define __I2C_MODULE_HPP__
 
 #include "I2cAbstraction.hpp"
 
