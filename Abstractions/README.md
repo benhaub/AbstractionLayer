@@ -1,0 +1,2 @@
+# Abstraction Layer
+The goal of the abstractions is to assume the least amount possible about the application that might use it. It is therefore up to the modules to further extend and specialize the class (e.g. making it global or giving it and event queue).
