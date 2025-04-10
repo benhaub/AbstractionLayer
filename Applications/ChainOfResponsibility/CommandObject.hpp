@@ -13,7 +13,7 @@
 //C++
 #include <string>
 #include <cassert>
-#include <typeinfo> //For making sure the LogicSignature type is compatible with the type you've set it to.
+#include <type_traits> //For making sure the LogicSignature type is compatible with the type you've set it to.
 
 using LogicSignature = uint32_t;
 
@@ -52,7 +52,7 @@ class CommandObject {
 
         //In case you update the logic signature type, this will catch it. You can of course change
         //these checks to support the current type required.
-        assert(typeid(uint32_t) == typeid(_uniqueLogicSignature));
+        static_assert(std::is_same<LogicSignature, uint32_t>::value, "LogicSignature must be uint32_t");
 
         _uniqueLogicSignature += 1;
 
