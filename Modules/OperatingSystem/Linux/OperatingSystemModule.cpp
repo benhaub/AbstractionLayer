@@ -40,7 +40,6 @@ ErrorType OperatingSystem::delay(Microseconds delay) {
     return ErrorType::Success;
 }
 
-
 ErrorType OperatingSystem::startScheduler() {
     return ErrorType::NotAvailable;
 }
@@ -437,8 +436,8 @@ ErrorType OperatingSystem::getSoftwareVersion(std::string &softwareVersion) {
 }
 
 ErrorType OperatingSystem::getResetReason(OperatingSystemConfig::ResetReason &resetReason) {
-    //There isn't really such thing as a reset reason for most posix systems, so we'll just call it power-on.
-    resetReason = OperatingSystemConfig::ResetReason::PowerOn;
+    //There isn't really such thing as a reset reason for most posix systems.
+    resetReason = OperatingSystemConfig::ResetReason::Unknown;
     return ErrorType::Success;
 }
 
@@ -446,9 +445,9 @@ ErrorType OperatingSystem::reset() {
     return ErrorType::NotAvailable;
 }
 
-//On system that use Posix, you shouldn't attempt to set the time of day, and the time that can be obtained
-//using the posix API will already be the correct time that you need as soon as you start your application.
 ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) {
+    //On systems that use Posix, you shouldn't attempt to set the time of day, and the time that can be obtained
+    //using the posix API will already be the correct time that you need as soon as you start your application.
     return ErrorType::NotAvailable;
 }
 

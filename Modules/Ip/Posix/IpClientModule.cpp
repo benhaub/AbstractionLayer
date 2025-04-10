@@ -61,9 +61,10 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         FD_ZERO(&fdset);
         FD_SET(_socket, &fdset);
 
+        const Microseconds tvUsec = timeout * 1000;
         struct timeval timeoutval = {
             .tv_sec = 0,
-            .tv_usec = timeout * 1000
+            .tv_usec = tvUsec
         };
 
         // Connection in progress -> have to wait until the connecting socket is marked as writable, i.e. connection completes

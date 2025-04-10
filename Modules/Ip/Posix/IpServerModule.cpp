@@ -112,9 +112,10 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
             return callbackError;
         }
         else {
+            const Microseconds tvUsec = timeout * 1000;
             struct timeval timeoutval = {
                 .tv_sec = 0,
-                .tv_usec = timeout * 1000
+                .tv_usec = tvUsec
             };
             fd_set readfds;
 
