@@ -164,7 +164,6 @@ class FileSystemAbstraction {
     /**
      * @brief Reads data from a file.
      * @param[in] file The file to read from.
-     * @param[in] offset The offset to start reading from.
      * @param[out] buffer The buffer to read into.
      * @pre The number of bytes to read is equal to the size of the buffer (use std::string::resize()).
      * @pre The file must be open with a mode that supports reads.
