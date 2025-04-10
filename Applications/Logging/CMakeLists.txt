@@ -10,9 +10,9 @@ add_library(StatusLogger STATIC
 
 target_include_directories(Logging INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
-target_link_libraries(StatusLogger PUBLIC abstractionLayer)
-target_link_libraries(StatusLogger PUBLIC Logging)
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC StatusLogger)
+target_link_libraries(StatusLogger PRIVATE abstractionLayer)
+target_link_libraries(StatusLogger PRIVATE Logging)
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE StatusLogger)
 
 target_include_directories(StatusLogger PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
 

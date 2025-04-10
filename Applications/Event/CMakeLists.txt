@@ -7,12 +7,12 @@ add_library(Event STATIC
   EventQueue.cpp
 )
 
-target_link_libraries(Event PUBLIC abstractionLayer)
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC Event)
+target_link_libraries(Event PRIVATE abstractionLayer)
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE Event)
 
-target_include_directories(Event PUBLIC $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
+target_include_directories(Event PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
 
-target_include_directories(Event PUBLIC $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
+target_include_directories(Event PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
 
 target_compile_options(Event PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
 target_compile_definitions(Event PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)
