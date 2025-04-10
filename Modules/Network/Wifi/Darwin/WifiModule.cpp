@@ -1,5 +1,6 @@
-//Modules
+//AbstractionLayer
 #include "WifiModule.hpp"
+#include "Log.hpp"
 //C++
 #include <cassert>
 #include <cstdio>
@@ -46,10 +47,15 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
     ErrorType error = ErrorType::Failure;
     ssize_t bytesReceived = 0;
 
-    struct timeval timeoutval = {
-        .tv_sec = 0,
-        .tv_usec = timeout * 1000
-    };
+    Microseconds tvUsec = timeout * 1000;
+    struct timeval timeoutval;
+    if (tvUsec > std::numeric_limits<decltype(timeoutval.tv_usec)>::max()) {
+        PLT_LOGW(TAG, "Truncating microseconds because it is bigger than the type used by this platform.");
+        tvUsec = std::numeric_limits<decltype(timeoutval.tv_usec)>::max();
+    }
+    timeoutval.tv_sec = 0;
+    timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
+
     fd_set readfds;
 
     FD_ZERO(&readfds);
@@ -60,13 +66,13 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
     int ret;
     ret = select(socket + 1, &readfds, NULL, NULL, &timeoutval);
     if (ret < 0) {
-        return toPlatformError(errno);
+        return fromPlatformError(errno);
     }
     }
 
     if (FD_ISSET(socket, &readfds)) {
         if (-1 == (bytesReceived = recv(socket, frameBuffer.data(), frameBuffer.size(), 0))) {
-            error = toPlatformError(errno);
+            error = fromPlatformError(errno);
         }
         else if ((size_t)bytesReceived > frameBuffer.size()) {
             error = ErrorType::PrerequisitesNotMet;
@@ -131,7 +137,7 @@ ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
         }
     }
 
-    sscanf(signalNoiseRatioString.data(), "%d", &signalStrength);
+    sscanf(signalNoiseRatioString.data(), "%hd", &signalStrength);
 
     _status.signalStrength = signalStrength;
 
