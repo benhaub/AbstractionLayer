@@ -2,7 +2,7 @@
 #include "IpServerModule.hpp"
 #include "OperatingSystemModule.hpp"
 #include "NetworkAbstraction.hpp"
-
+#include "Log.hpp"
 //Posix
 #include <netdb.h>
 #include <netinet/in.h>
@@ -13,6 +13,7 @@
 //C++
 #include <cassert>
 #include <cstring>
+#include <limits>
 
 ErrorType IpServer::listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) {
     Socket sock = _listenerSocket = -1;
@@ -112,11 +113,15 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
             return callbackError;
         }
         else {
-            const Microseconds tvUsec = timeout * 1000;
-            struct timeval timeoutval = {
-                .tv_sec = 0,
-                .tv_usec = tvUsec
-            };
+            Microseconds tvUsec = timeout * 1000;
+            struct timeval timeoutval;
+            if (tvUsec > std::numeric_limits<decltype(timeoutval.tv_usec)>::max()) {
+                PLT_LOGW(TAG, "Truncating microseconds because it is bigger than the type used by this platform.");
+                tvUsec = std::numeric_limits<decltype(timeoutval.tv_usec)>::max();
+            }
+            timeoutval.tv_sec = 0;
+            timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
+
             fd_set readfds;
 
             FD_ZERO(&readfds);
