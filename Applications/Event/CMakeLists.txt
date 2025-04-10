@@ -16,3 +16,7 @@ target_include_directories(Event PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXEC
 
 target_compile_options(Event PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
 target_compile_definitions(Event PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)
+
+if (ESP_PLATFORM)
+  target_include_directories(__idf_main PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+endif()

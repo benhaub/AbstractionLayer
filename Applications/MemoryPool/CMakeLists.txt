@@ -17,3 +17,7 @@ target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE ${CMAKE_C
 
 target_compile_options(MemoryPool PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
 target_compile_definitions(MemoryPool PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)
+
+if (ESP_PLATFORM)
+  target_include_directories(__idf_main PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+endif()

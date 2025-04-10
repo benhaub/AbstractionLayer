@@ -16,3 +16,7 @@ target_include_directories(SignalsAndSlots PRIVATE $<TARGET_PROPERTY:${PROJECT_N
 
 target_compile_options(SignalsAndSlots PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
 target_compile_definitions(SignalsAndSlots PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)
+
+if (ESP_PLATFORM)
+  target_include_directories(__idf_main PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+endif()
