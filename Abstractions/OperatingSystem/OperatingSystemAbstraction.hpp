@@ -89,7 +89,7 @@ class OperatingSystemAbstraction {
     virtual ~OperatingSystemAbstraction() = default;
 
     /// @brief The maximum number of threads
-    static constexpr Count MaxThreads = 256;
+    static constexpr Count _MaxThreads = 256;
     /// @brief The tag for logging.
     static constexpr char TAG[] = "OperatingSystem";
     /// @brief The maximum value for a counting semaphore.
