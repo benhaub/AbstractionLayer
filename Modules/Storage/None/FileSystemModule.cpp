@@ -1,7 +1,6 @@
 //AbstractionLayer
 #include "FileSystemModule.hpp"
 #include "OperatingSystemModule.hpp"
-//Posix
 
 ErrorType FileSystem::mount() {
     return ErrorType::NotImplemented;

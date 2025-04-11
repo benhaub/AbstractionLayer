@@ -15,6 +15,7 @@ target_include_directories(Storage INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(NoneStorage PUBLIC abstractionLayer)
 target_link_libraries(NoneStorage PUBLIC Storage)
 target_link_libraries(NoneStorage PUBLIC Event)
+target_link_libraries(NoneStorage PUBLIC OperatingSystem)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC NoneStorage)
 
 target_compile_options(NoneStorage PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
