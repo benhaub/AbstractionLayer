@@ -12,6 +12,7 @@ STATIC
 
 target_include_directories(Storage INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(Storage INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
+target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:Storage,INTERFACE_INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspStorage PRIVATE abstractionLayer)
 target_link_libraries(EspStorage PRIVATE Storage)

@@ -10,6 +10,7 @@ STATIC
 
 target_include_directories(Logging INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(Logging INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
+target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:Logging,INTERFACE_INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspLogger PRIVATE abstractionLayer)
 target_link_libraries(EspLogger PRIVATE Logging)

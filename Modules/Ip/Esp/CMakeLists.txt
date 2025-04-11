@@ -11,7 +11,11 @@ STATIC
 )
 
 target_include_directories(IpServer INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
+target_include_directories(IpServer INTERFACE $<TARGET_PROPERTY:Protocols,INTERFACE_INCLUDE_DIRECTORIES>)
 target_include_directories(IpClient INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
+target_include_directories(IpClient INTERFACE $<TARGET_PROPERTY:Protocols,INTERFACE_INCLUDE_DIRECTORIES>)
+target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:IpServer,INTERFACE_INCLUDE_DIRECTORIES>)
+target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:IpClient,INTERFACE_INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspIpClient PUBLIC abstractionLayer)
 target_link_libraries(EspIpClient PUBLIC IpClient)
