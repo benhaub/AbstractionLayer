@@ -12,6 +12,7 @@
 //C++
 #include <cassert>
 #include <cstring>
+#include <limits>
 
 /*
  * I tried the example code for non-blocking sockets from ESP github, it didn't work.
@@ -75,10 +76,14 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         FD_ZERO(&fdset);
         FD_SET(_socket, &fdset);
 
-        struct timeval timeoutval = {
-            .tv_sec = 0,
-            .tv_usec = timeout * 1000
-        };
+        Microseconds tvUsec = timeout * 1000;
+        struct timeval timeoutval;
+        if (tvUsec > std::numeric_limits<decltype(timeoutval.tv_usec)>::max()) {
+            PLT_LOGW(TAG, "Truncating microseconds because it is bigger than the type used by this platform.");
+            tvUsec = std::numeric_limits<decltype(timeoutval.tv_usec)>::max();
+        }
+        timeoutval.tv_sec = 0;
+        timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
 
         // Connection in progress -> have to wait until the connecting socket is marked as writable, i.e. connection completes
         int res = select(_socket+1, NULL, &fdset, NULL, &timeoutval);
