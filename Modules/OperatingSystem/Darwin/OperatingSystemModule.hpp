@@ -6,13 +6,14 @@
 //Common
 #include "Global.hpp"
 //C
-#include <unistd.h>
 #include <pthread.h>
 #include <sched.h>
 #include <semaphore.h>
 //C++
 #include <cassert>
 #include <map>
+//MacOS
+#include <dispatch/dispatch.h> //For timers
 
 class OperatingSystem : public OperatingSystemAbstraction, public Global<OperatingSystem> {
 
@@ -84,6 +85,8 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
                 assert(false);
         }
     }
+
+    void callTimerCallback(const dispatch_source_t macOsTimerId);
 
     private:
     struct Thread {

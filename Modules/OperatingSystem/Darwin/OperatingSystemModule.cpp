@@ -1,14 +1,18 @@
 //Modules
 #include "OperatingSystemModule.hpp"
-//C++
-#include <ctime>
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
 //Posix
-#include <sys/times.h>
-#include <sys/time.h>
-#include <sys/syslimits.h>
+#include <sys/times.h> //For timesample and system tick queries
+#include <sys/syslimits.h> //For max semaphore name length
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void TimerCallback(void *arg);
+
+#ifdef __cplusplus
+}
+#endif
 
 ErrorType OperatingSystem::delay(const Milliseconds delay) {
     usleep(delay*1000);
@@ -209,19 +213,91 @@ ErrorType OperatingSystem::decrementSemaphore(const std::array<char, OperatingSy
 }
 
 ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, const bool autoReload, std::function<void(void)> callback) {
-    return ErrorType::NotImplemented;
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_source_t dispatchTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
+    
+    if (dispatchTimer == nullptr) {
+        return ErrorType::Failure;
+    }
+
+    Timer newTimer = {
+        .callback = callback,
+        .id = nextTimerId++,
+        .autoReload = autoReload,
+        .period = period,
+        .isSuspended = false,
+        .isResumed = true //When the timer is activated, it's already resumed.
+    };
+
+    timers[dispatchTimer] = newTimer;
+    
+    dispatch_source_set_event_handler_f(dispatchTimer, TimerCallback);
+    dispatch_set_context(dispatchTimer, dispatchTimer);
+    dispatch_activate(dispatchTimer);
+    
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::deleteTimer(const Id timer) {
-    return ErrorType::NotImplemented;
+    auto it = std::find_if(timers.begin(), timers.end(),
+        [timer](const auto& pair) { return pair.second.id == timer; });
+    
+    if (it == timers.end()) {
+        return ErrorType::NoData;
+    }
+
+    //It is not a bug the we have not stopped the timer before deleting.
+    //https://developer.apple.com/documentation/dispatch/dispatchobject/suspend()?language=objc
+    dispatch_source_cancel(it->first);
+    dispatch_release(it->first);
+    timers.erase(it);
+    
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::startTimer(const Id timer, const Milliseconds timeout) {
-    return ErrorType::NotImplemented;
+    auto it = std::find_if(timers.begin(), timers.end(),
+        [timer](const auto& pair) { return pair.second.id == timer; });
+    
+    if (it == timers.end()) {
+        return ErrorType::NoData;
+    }
+
+    dispatch_source_t dispatchTimer = it->first;
+    Timer& timerData = it->second;
+
+    const uint64_t interval = timerData.period * NSEC_PER_MSEC;
+    const dispatch_time_t startTime = dispatch_time(DISPATCH_TIME_NOW, timeout * NSEC_PER_MSEC);
+    const uint64_t leeway = NSEC_PER_MSEC/2;
+    dispatch_source_set_timer(dispatchTimer, startTime, timerData.autoReload ? interval : DISPATCH_TIME_FOREVER, leeway);
+
+    const bool timerWasNotPreviouslyStopped = !timerData.isResumed;
+    if (timerWasNotPreviouslyStopped) {
+        dispatch_resume(dispatchTimer);
+        timerData.isResumed = true;
+    }
+
+    timerData.isSuspended = false;
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::stopTimer(const Id timer, const Milliseconds timeout) {
-    return ErrorType::NotImplemented;
+    auto it = std::find_if(timers.begin(), timers.end(),
+        [timer](const auto& pair) { return pair.second.id == timer; });
+    
+    if (it == timers.end()) {
+        return ErrorType::NoData;
+    }
+
+    if (it->second.isSuspended) {
+        return ErrorType::Success;
+    }
+
+    dispatch_suspend(it->first);
+    it->second.isResumed = false;
+    it->second.isSuspended = true;
+
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::createQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, const Bytes size, const Count length) {
@@ -451,7 +527,34 @@ ErrorType OperatingSystem::uptime(Seconds &uptime) {
         }
     }
 
-    uptime = std::strtoul(elapsedTime.c_str(), nullptr, 10);
+    uptime = std::strtoul(elapsedTime.data(), nullptr, 10);
 
     return error;
 }
+
+void OperatingSystem::callTimerCallback(const dispatch_source_t macOsTimerId) {
+    assert(nullptr != macOsTimerId);
+
+    if (timers.contains(macOsTimerId)) {
+        timers[macOsTimerId].callback();
+
+        const bool timerIsOneShot = !timers[macOsTimerId].autoReload;
+        if (timerIsOneShot) {
+            deleteTimer(timers[macOsTimerId].id);
+        }
+    }
+
+    return;
+}
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void TimerCallback(void *val) {
+    OperatingSystem::Instance().callTimerCallback((dispatch_source_t)val);
+}
+
+#ifdef __cplusplus
+}
+#endif

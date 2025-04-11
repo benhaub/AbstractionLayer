@@ -267,7 +267,7 @@ ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, con
     assert(ErrorType::NoMemory != timerIdPool.allocate(posixTimerId));
     Timer newTimer = {
         .callback = callback,
-        .id = nextTimerId++,
+        .id = _nextTimerId++,
         .posixTimerId = posixTimerId,
         .autoReload = autoReload,
         .period = period
