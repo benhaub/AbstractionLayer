@@ -205,10 +205,15 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
     ErrorType error = ErrorType::Timeout;
     ssize_t bytesReceived = 0;
 
-    struct timeval timeoutval = {
-        .tv_sec = 0,
-        .tv_usec = timeout * 1000
-    };
+    Microseconds tvUsec = timeout * 1000;
+    struct timeval timeoutval;
+    if (tvUsec > std::numeric_limits<decltype(timeoutval.tv_usec)>::max()) {
+        PLT_LOGW(TAG, "Truncating microseconds because it is bigger than the type used by this platform.");
+        tvUsec = std::numeric_limits<decltype(timeoutval.tv_usec)>::max();
+    }
+    timeoutval.tv_sec = 0;
+    timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
+
     fd_set readfds;
 
     FD_ZERO(&readfds);
