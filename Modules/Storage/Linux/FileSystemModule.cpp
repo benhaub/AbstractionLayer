@@ -2,8 +2,9 @@
 #include "FileSystemModule.hpp"
 #include "OperatingSystemModule.hpp"
 //Posix
-#include <sys/statvfs.h>
-#include <sys/stat.h>
+#include <sys/stat.h> //For mkdir
+//C++
+#include <filesystem>
 
 ErrorType FileSystem::mount() {
     const bool fileSystemHasNotBeenMounted = !_status.mounted;
@@ -24,25 +25,17 @@ ErrorType FileSystem::unmount() {
 
 ErrorType FileSystem::maxPartitionSize(Bytes &size) {
     bool maxStorageQueryDone = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
 
     auto maxStorageQueryCallback = [&]() -> ErrorType {
-        struct statvfs fiData;
-
-        if (0 == statvfs(mountPrefixConst().c_str(), &fiData)) {
-            size = fiData.f_blocks * fiData.f_frsize;
-        }
-        else {
-            error = fromPlatformError(errno);
-            size = 0;
-        }
-
+        std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefixConst());
+        size = spaceInfo.capacity;
         maxStorageQueryDone = true;
-        return error;
+        return callbackError;
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(maxStorageQueryCallback));
-    error = _storage.addEvent(event);
+    ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
@@ -51,31 +44,22 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
         OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType FileSystem::availablePartition(Bytes &size) {
     bool availableStorageQueryDone = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
 
     auto availableStorageQueryCallback = [&]() -> ErrorType {
-        struct statvfs fiData;
-        ErrorType error = ErrorType::Success;
-
-        if (0 == statvfs(mountPrefixConst().c_str(), &fiData)) {
-            size = fiData.f_bavail * fiData.f_frsize;
-        }
-        else {
-            error = fromPlatformError(errno);
-            size = 0;
-        }
-
+        std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefixConst());
+        size = spaceInfo.available;
         availableStorageQueryDone = true;
-        return error;
+        return callbackError;
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(availableStorageQueryCallback));
-    error = _storage.addEvent(event);
+    ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }   
@@ -84,7 +68,7 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
         OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType FileSystem::erasePartition() {
