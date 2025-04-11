@@ -1,8 +1,10 @@
 //AbstractionLayer
 #include "WifiModule.hpp"
+#include "Log.hpp"
 //C++
 #include <cassert>
 #include <cstdio>
+#include <limits>
 //Posix
 #include <netdb.h>
 #include <errno.h>
