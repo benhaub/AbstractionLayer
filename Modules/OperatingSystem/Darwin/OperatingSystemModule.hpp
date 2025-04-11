@@ -95,10 +95,20 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
         Id threadId;
     };
 
+    struct Timer {
+        std::function<void(void)> callback;
+        Id id;
+        bool autoReload;
+        bool isSuspended; //https://developer.apple.com/documentation/dispatch/dispatchobject/suspend()?language=objc
+        bool isResumed;   //It's an error to have imbalanced calls to suspend and resume
+        Milliseconds period;
+    };
+
+    std::map<dispatch_source_t, Timer> timers;
+    Id nextTimerId = 0;
+
     std::map<std::array<char, OperatingSystemConfig::MaxThreadNameLength>, Thread> threads;
     std::map<std::array<char, OperatingSystemConfig::MaxThreadNameLength>, sem_t *> semaphores;
-
-    ErrorType pid(Id &pid);
 };
 
 #endif // __OPERATING_SYSTEM_HPP__

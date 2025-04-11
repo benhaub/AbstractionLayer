@@ -382,53 +382,24 @@ ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const Seconds timeZo
     return ErrorType::NotAvailable;
 }
 
-ErrorType OperatingSystem::pid(Id &pid) {
-    ErrorType error = ErrorType::Failure;
-    std::string pidString(16, 0);
-
-    std::string programName(getprogname(), strlen(getprogname()));
-    std::string commandPid("pgrep -if ");
-    commandPid.append(programName);
-    commandPid.append(" | tail -1");
-
-    FILE *pipe = popen(commandPid.c_str(), "r");
-    if (nullptr != pipe) {
-        size_t bytesRead = fread(pidString.data(), sizeof(uint8_t), pidString.capacity(), pipe);
-        if (feof(pipe) || bytesRead == pidString.capacity()) {
-            error = ErrorType::Success;
-            pidString.resize(bytesRead);
-            while (pidString.back() == '\n') {
-                pidString.pop_back();
-            }
-        }
-        else if (ferror(pipe)) {
-            pclose(pipe);
-            error = ErrorType::Failure;
-        }
-    }
-
-    pid = strtoul(pidString.c_str(), nullptr, 10);
-
-    return error;
-}
-
 ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     ErrorType error = ErrorType::Failure;
-    std::string cpuUtilization(16, 0);
+    std::array<char, 16> cpuUtilization;
     Percent cpuUtilizationPercent;
-    Id processId;
-    pid(processId);
+    pid_t processId = getpid();
 
-    const std::string commandPercentUtilization(std::string("ps -p ").append(std::to_string(processId)).append(" -o %cpu | tail -1"));
+    std::array<char, 32> command;
+    snprintf(command.data(), command.size(), "ps -p %u -o %%cpu | tail -1", processId);
 
-    FILE *pipe = popen(commandPercentUtilization.c_str(), "r");
+    FILE *pipe = popen(command.data(), "r");
     if (nullptr != pipe) {
-        size_t bytesRead = fread(cpuUtilization.data(), sizeof(uint8_t), cpuUtilization.capacity(), pipe);
-        if (feof(pipe) || bytesRead == cpuUtilization.capacity()) {
+        size_t bytesRead = fread(cpuUtilization.data(), sizeof(uint8_t), cpuUtilization.max_size(), pipe);
+        if (feof(pipe) || bytesRead == cpuUtilization.max_size()) {
             error = ErrorType::Success;
-            cpuUtilization.resize(bytesRead);
-            while (cpuUtilization.back() == '\n') {
-                cpuUtilization.pop_back();
+            for (int i = cpuUtilization.max_size()-1; i >= 0; i--) {
+                if (cpuUtilization[i] == '\n') {
+                    cpuUtilization[i] = '\0';
+                }
             }
         }
         else if (ferror(pipe)) {
@@ -437,8 +408,8 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
         }
     }
 
-    cpuUtilizationPercent = strtof(cpuUtilization.c_str(), nullptr);
-    idlePercent = 100.0f - cpuUtilizationPercent;
+    cpuUtilizationPercent = strtof(cpuUtilization.data(), nullptr);
+    idlePercent = Percent(100.0f) - cpuUtilizationPercent;
 
     return error;
 }
@@ -447,17 +418,18 @@ ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::array<char, Opera
     ErrorType error = ErrorType::Failure;
 
     //Will return the size of RAM in GB.
-    std::string commandFinal("system_profiler SPMemoryDataType | egrep Memory | tail -2 | tr -s \" \" | cut -d \" \" -f3 | tail -1");
-    std::string ramSize(4, 0);
+    std::array<char, 128> commandFinal("system_profiler SPMemoryDataType | egrep Memory | tail -2 | tr -s \" \" | cut -d \" \" -f3 | tail -1");
+    std::array<char, 4> ramSize;
     
-    FILE* pipe = popen(commandFinal.c_str(), "r");
+    FILE* pipe = popen(commandFinal.data(), "r");
     if (nullptr != pipe) {
-        size_t bytesRead = fread(ramSize.data(), sizeof(uint8_t), ramSize.capacity(), pipe);
-        if (feof(pipe) || bytesRead == ramSize.capacity()) {
+        size_t bytesRead = fread(ramSize.data(), sizeof(uint8_t), ramSize.max_size(), pipe);
+        if (feof(pipe) || bytesRead == ramSize.max_size()) {
             error = ErrorType::Success;
-            ramSize.resize(bytesRead);
-            while (ramSize.back() == '\n') {
-                ramSize.pop_back();
+            for (int i = ramSize.max_size()-1; i >= 0; i--) {
+                if (ramSize[i] == '\n') {
+                    ramSize[i] = '\0';
+                }
             }
         }
         else if (ferror(pipe)) {
@@ -465,7 +437,7 @@ ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::array<char, Opera
             error = ErrorType::Failure;
         }
     }
-    size = std::strtoul(ramSize.c_str(), nullptr, 10);
+    size = std::strtoul(ramSize.data(), nullptr, 10);
     size = size * 1024 * 1024;
 
     return error;
@@ -475,17 +447,18 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::array<char,
     ErrorType error = ErrorType::Failure;
 
     //Will return the size of RAM used in kilobytes
-    std::string commandFinal("ps -o rss | awk '{sum += $1} END {print sum}'");
-    std::string ramUsed(6, 0);
+    std::array<char, 64> commandFinal = {"ps -o rss | awk '{sum += $1} END {print sum}'"};
+    std::array<char, 6> ramUsed;
     
-    FILE* pipe = popen(commandFinal.c_str(), "r");
+    FILE* pipe = popen(commandFinal.data(), "r");
     if (nullptr != pipe) {
-        size_t bytesRead = fread(ramUsed.data(), sizeof(uint8_t), ramUsed.capacity(), pipe);
-        if (feof(pipe) || bytesRead == ramUsed.capacity()) {
+        size_t bytesRead = fread(ramUsed.data(), sizeof(uint8_t), ramUsed.max_size(), pipe);
+        if (feof(pipe) || bytesRead == ramUsed.max_size()) {
             error = ErrorType::Success;
-            ramUsed.resize(bytesRead);
-            while (ramUsed.back() == '\n') {
-                ramUsed.pop_back();
+            for (int i = ramUsed.max_size()-1; i >= 0; i--) {
+                if (ramUsed[i] == '\n') {
+                    ramUsed[i] = '\0';
+                }
             }
         }
         else if (ferror(pipe)) {
@@ -497,7 +470,7 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::array<char,
     Bytes totalRam;
     maxHeapSize(totalRam, memoryRegionName);
 
-    size = totalRam - std::strtoul(ramUsed.c_str(), nullptr, 10);
+    size = totalRam - std::strtoul(ramUsed.data(), nullptr, 10);
 
     return error;
 }
@@ -505,20 +478,23 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::array<char,
 ErrorType OperatingSystem::uptime(Seconds &uptime) {
     ErrorType error = ErrorType::Failure;
 
-    std::string programName(getprogname(), strlen(getprogname()));
-    std::string commandFinal = "ps -p $(pgrep -if ";
-    commandFinal.append(programName);
-    commandFinal.append("| head -1) -o etimes | tail -1 | tr -d \" \"");
-    std::string elapsedTime(16, 0);
-    
-    FILE* pipe = popen(commandFinal.c_str(), "r");
+    pid_t processId = getpid();
+
+    //ps will print the elapsed time in the format of HH:MM:SS. awk will convert this to a single number of seconds.
+    const std::array<char, 128> convertHHMMSSToSeconds = {"awk -F: \'{ if (NF == 2) print $1 * 60 + $2; else if (NF == 3) print $1 * 3600 + $2 * 60 + $3 }\'"};
+    std::array<char, 64 + sizeof(convertHHMMSSToSeconds)> command = {"ps -p %u -o etime | tail -1 | tr -d \" \""};
+    snprintf(command.data(), command.max_size(), "ps -p %u -o etime | tail -1 | tr -d \" \" | %s", processId, convertHHMMSSToSeconds.data());
+    std::array<char, 16> elapsedTime;
+
+    FILE* pipe = popen(command.data(), "r");
     if (nullptr != pipe) {
-        size_t bytesRead = fread(elapsedTime.data(), sizeof(uint8_t), elapsedTime.capacity(), pipe);
-        if (feof(pipe) || bytesRead == elapsedTime.capacity()) {
+        size_t bytesRead = fread(elapsedTime.data(), sizeof(uint8_t), elapsedTime.max_size(), pipe);
+        if (feof(pipe) || bytesRead == elapsedTime.max_size()) {
             error = ErrorType::Success;
-            elapsedTime.resize(bytesRead);
-            while (elapsedTime.back() == '\n') {
-                elapsedTime.pop_back();
+            for (int i = elapsedTime.max_size()-1; i >= 0; i--) {
+                if (elapsedTime[i] == '\n') {
+                    elapsedTime[i] = '\0';
+                }
             }
         }
         else if (ferror(pipe)) {
