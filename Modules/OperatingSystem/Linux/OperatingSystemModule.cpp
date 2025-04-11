@@ -84,7 +84,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
         .threadId = nextThreadId++
     };
 
-    if (threads.size() < MaxThreads) {
+    if (threads.size() < _MaxThreads) {
         threads[name] = newThread;
     }
     else {
