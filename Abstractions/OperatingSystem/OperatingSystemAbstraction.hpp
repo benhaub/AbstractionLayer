@@ -412,7 +412,8 @@ class OperatingSystemAbstraction {
             if (0 != maxHeap) {
                 free = ((float)availableHeap / maxHeap) * 100.0f;
             }
-            OperatingSystemConfig::MemoryRegionInfo memoryRegion = {"Heap", free};
+            constexpr std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> memoryRegionName = {"Heap"};
+            OperatingSystemConfig::MemoryRegionInfo memoryRegion = {memoryRegionName, free};
             _status.memoryRegion.push_back(memoryRegion);
         }
         else {

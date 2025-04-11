@@ -233,6 +233,11 @@ class FileSystemAbstraction {
     const char &nameConst() const { return _status.partitionName[0]; }
     /// @brief Get the status of the file system as a constant reference
     const FileSystemTypes::Status &statusConst() {
+        //Bytes is a uint32_t so on systems with more than 4GiB of storage, this will overflow.
+        //which is why you might see percentages greater than 100%. Bytes is used a lot in the abstraction layer
+        //and since the primary goal of it is to develop applications for embedded systems it's not going to be that
+        //useful to change the type of Bytes to uint64_t and then force the CPU to do 2 accesses to memory
+        //to get values.
         Bytes available;
         availablePartition(available);
         Bytes maxSize;

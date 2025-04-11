@@ -50,7 +50,7 @@ class AdcAbstraction {
     /// @brief Constructor
     AdcAbstraction() = default;
     /// @brief Destructor
-    ~AdcAbstraction() = default;
+    virtual ~AdcAbstraction() = default;
 
     /// @brief Tag for logging
     static constexpr char TAG[] = "AdcAbstraction";
