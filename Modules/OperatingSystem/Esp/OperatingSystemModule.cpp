@@ -9,7 +9,6 @@
 //ESP
 #include "esp_pthread.h"
 #include "esp_app_desc.h"
-#include "esp_log.h"
 #include "esp_heap_caps.h"
 
 #ifdef __cplusplus

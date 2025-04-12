@@ -5,6 +5,7 @@
 #include <sys/stat.h> //For mkdir
 //C++
 #include <filesystem>
+#include <cstring>
 
 ErrorType FileSystem::mount() {
     const bool fileSystemHasNotBeenMounted = !_status.mounted;

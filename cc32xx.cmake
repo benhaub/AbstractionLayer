@@ -48,3 +48,8 @@ target_compile_definitions(${PROJECT_NAME}${EXECUTABLE_SUFFIX}
 PRIVATE
   SIMPLELINK_THREAD_NAME="simplelinkTask" 
 )
+
+target_compile_options(${PROJECT_NAME}${EXECUTABLE_SUFFIX}
+PRIVATE
+  $<$<COMPILE_LANGUAGE:CXX>:-fconcepts>
+)

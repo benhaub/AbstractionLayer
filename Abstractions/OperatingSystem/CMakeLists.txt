@@ -7,3 +7,5 @@ add_library(OperatingSystem INTERFACE)
 
 target_include_directories(OperatingSystem INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(abstractionLayer INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+
+target_link_libraries(OperatingSystem INTERFACE Logging)

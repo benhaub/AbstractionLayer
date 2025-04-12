@@ -9,12 +9,7 @@
 
 //AbstractionLayer
 #include "CommunicationProtocol.hpp"
-#include "Types.hpp"
-#include "Error.hpp"
-//C++
-#include <memory>
-#include <string>
-#include <functional>
+#include "Log.hpp"
 
 /**
  * @namespace IpServerTypes
@@ -69,6 +64,10 @@ class IpServerAbstraction : public CommunicationProtocol {
 
     /// @brief The tag for logging.
     static constexpr char TAG[] =  "IpServer";
+    void printStatus() {
+        PLT_LOGI(TAG, "<IpServerStatus> <Listening:%s, Active Connections:%u> <Pie, Line>",
+            statusConst().listening ? "true" : "false", statusConst().activeConnections);
+    }
 
     /**
      * @brief Listen for connections on a port

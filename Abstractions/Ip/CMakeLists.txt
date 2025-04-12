@@ -13,3 +13,7 @@ target_include_directories(IpClient INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(IpServer INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(HttpServer INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(abstractionLayer INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+
+target_link_libraries(IpClient INTERFACE Logging)
+target_link_libraries(IpServer INTERFACE Logging)
+target_link_libraries(HttpServer INTERFACE Logging)

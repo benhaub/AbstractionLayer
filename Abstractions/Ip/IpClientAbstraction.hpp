@@ -9,13 +9,7 @@
 
 //AbstractionLayer
 #include "CommunicationProtocol.hpp"
-#include "Types.hpp"
-#include "Error.hpp"
-//C++
-#include <memory>
-#include <string>
-#include <functional>
-#include <cassert>
+#include "Log.hpp"
 
 /**
  * @namespace IpClientTypes
@@ -70,6 +64,10 @@ class IpClientAbstraction : public CommunicationProtocol {
 
     /// @brief The tag for logging.
     static constexpr char TAG[] =  "IpClient";
+    void printStatus() const {
+        PLT_LOGI(TAG, "<IpClientStatus> <Connected:%s> <Pie, Line>",
+        statusConst().connected ? "true" : "false");
+    }
 
     /**
      * @brief Connect to a host

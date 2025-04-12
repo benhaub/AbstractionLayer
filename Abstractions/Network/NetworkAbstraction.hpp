@@ -9,8 +9,7 @@
 
 //AbstractionLayer
 #include "EventQueue.hpp"
-//C++
-#include <string>
+#include "Log.hpp"
 
 /**
  * @namespace NetworkTypes
@@ -58,6 +57,10 @@ class NetworkAbstraction : public EventQueue {
 
     /// @brief Tag for logging
     static constexpr char TAG[] = "Network";
+    void printStatus() {
+        PLT_LOGI(TAG, "<NetworkStatus> <Connected:%s, Signal Strength (dBm):%d> <Pie, Line>",
+        statusConst().isUp ? "true" : "false", statusConst().signalStrength);
+    }
 
     /**
     * @brief Initialize the interface.

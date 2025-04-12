@@ -10,11 +10,10 @@
 //AbstractionLayer
 #include "Error.hpp"
 #include "Types.hpp"
+#include "Log.hpp"
 //C++
-#include <string>
 #include <memory>
 #include <functional>
-#include <cstring>
 
 class StorageAbstraction;
 
@@ -99,6 +98,12 @@ class FileSystemAbstraction {
         _status.partitionName = name;
     }
     virtual ~FileSystemAbstraction() = default;
+
+    static constexpr char TAG[] = "FileSystem";
+    void printStatus() {
+        PLT_LOGI(TAG, "<FileSystem:%s> <Mounted:%s, Open Files:%u, Free (%%):%.1f> <Pie, Stairs, Line>",
+        statusConst().partitionName.data(), statusConst().mounted ? "true" : "false", statusConst().openedFiles, statusConst().freeSpace);
+    }
 
     /**
      * @brief Mount the file system

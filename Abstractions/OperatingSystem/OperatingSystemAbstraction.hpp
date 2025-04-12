@@ -12,6 +12,7 @@
 //AbstractionLayer
 #include "Types.hpp"
 #include "Error.hpp"
+#include "Log.hpp"
 //C++
 #include <functional>
 #include <string>
@@ -94,6 +95,15 @@ class OperatingSystemAbstraction {
     static constexpr char TAG[] = "OperatingSystem";
     /// @brief The maximum value for a counting semaphore.
     static constexpr Count MaxCountingSemaphore = 10;
+
+    void printStatus() {
+        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time (s):%d> <Line, Line, Omit>",
+        statusConst().threadCount, statusConst().idle, statusConst().upTime);
+        for (const auto &memoryRegion : statusConst().memoryRegion) {
+            PLT_LOGI(TAG, "<Memory Region:%s> <Free (%%):%.1f> <Line>",
+            memoryRegion.name.data(), memoryRegion.free);
+        }
+    }
 
     /**
      * @brief delays a thread by placing it in the blocking state.

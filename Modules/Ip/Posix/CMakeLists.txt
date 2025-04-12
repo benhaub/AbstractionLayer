@@ -10,12 +10,11 @@ STATIC
   IpClientModule.cpp
 )
 
-target_link_libraries(PosixIpClient PUBLIC abstractionLayer)
-target_link_libraries(PosixIpClient PUBLIC Network)
-target_link_libraries(PosixIpClient PUBLIC Logging)
-target_link_libraries(PosixIpClient PUBLIC OperatingSystem)
-target_link_libraries(PosixIpClient PUBLIC Event)
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC PosixIpClient)
+target_link_libraries(PosixIpClient PRIVATE abstractionLayer)
+target_link_libraries(PosixIpClient PRIVATE Network)
+target_link_libraries(PosixIpClient PRIVATE OperatingSystem)
+target_link_libraries(PosixIpClient PRIVATE Event)
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE PosixIpClient)
 
 target_compile_options(PosixIpClient PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
 target_compile_definitions(PosixIpClient PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)
@@ -27,12 +26,11 @@ STATIC
   HttpServerModule.cpp
 )
 
-target_link_libraries(PosixIpServer PUBLIC abstractionLayer)
-target_link_libraries(PosixIpServer PUBLIC Network)
-target_link_libraries(PosixIpServer PUBLIC Logging)
-target_link_libraries(PosixIpServer PUBLIC OperatingSystem)
-target_link_libraries(PosixIpServer PUBLIC Event)
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC PosixIpServer)
+target_link_libraries(PosixIpServer PRIVATE abstractionLayer)
+target_link_libraries(PosixIpServer PRIVATE Network)
+target_link_libraries(PosixIpServer PRIVATE OperatingSystem)
+target_link_libraries(PosixIpServer PRIVATE Event)
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE PosixIpServer)
 
 target_compile_options(PosixIpServer PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
 target_compile_definitions(PosixIpServer PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)

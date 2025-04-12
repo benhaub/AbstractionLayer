@@ -17,12 +17,11 @@ target_include_directories(IpClient INTERFACE $<TARGET_PROPERTY:Protocols,INTERF
 target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:IpServer,INTERFACE_INCLUDE_DIRECTORIES>)
 target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:IpClient,INTERFACE_INCLUDE_DIRECTORIES>)
 
-target_link_libraries(EspIpClient PUBLIC abstractionLayer)
-target_link_libraries(EspIpClient PUBLIC IpClient)
-target_link_libraries(EspIpClient PUBLIC Logging)
-target_link_libraries(EspIpClient PUBLIC Utilities)
-target_link_libraries(EspIpClient PUBLIC OperatingSystem)
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC EspIpClient)
+target_link_libraries(EspIpClient PRIVATE abstractionLayer)
+target_link_libraries(EspIpClient PRIVATE IpClient)
+target_link_libraries(EspIpClient PRIVATE Utilities)
+target_link_libraries(EspIpClient PRIVATE OperatingSystem)
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE EspIpClient)
 
 #Server
 add_library(EspIpServer
@@ -31,12 +30,11 @@ STATIC
   HttpServerModule.cpp
 )
 
-target_link_libraries(EspIpServer PUBLIC abstractionLayer)
-target_link_libraries(EspIpServer PUBLIC IpClient)
-target_link_libraries(EspIpServer PUBLIC Logging)
-target_link_libraries(EspIpServer PUBLIC Utilities)
-target_link_libraries(EspIpServer PUBLIC OperatingSystem)
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC EspIpServer)
+target_link_libraries(EspIpServer PRIVATE abstractionLayer)
+target_link_libraries(EspIpServer PRIVATE IpClient)
+target_link_libraries(EspIpServer PRIVATE Utilities)
+target_link_libraries(EspIpServer PRIVATE OperatingSystem)
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE EspIpServer)
 
 target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 

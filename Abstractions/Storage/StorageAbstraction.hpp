@@ -9,6 +9,7 @@
 
 //AbstractionLayer
 #include "EventQueue.hpp"
+#include "Log.hpp"
 
 /**
  * @namespace StorageTypes
@@ -54,6 +55,14 @@ class StorageAbstraction : public EventQueue {
     /// @brief Destructor
     virtual ~StorageAbstraction() = default;
 
+
+    /// @brief Tag for logging
+    static constexpr char TAG[] = "Storage";
+    void printStatus() {
+        PLT_LOGI(TAG, "<StorageStatus> <Initialized:%s> <Pie>",
+            statusConst().isInitialized ? "true" : "false");
+    }
+
     /**
      * @brief Initializes the storage
      * @returns ErrorType::Success if the storage was initialized
@@ -68,16 +77,13 @@ class StorageAbstraction : public EventQueue {
     virtual ErrorType deinit() = 0;
 
     /// @brief Get the status of the storage as a constant reference
-    const StorageTypes::Status &statusConst() const { return _status; }
+    const StorageTypes::Status &statusConst() { return _status; }
     /// @brief Get the storage medium
     StorageTypes::Medium medium() const { return _medium; }
     /// @brief The prefix of storage where filesystems will be mounted as a constant reference.
     const std::string &rootPrefixConst() const { return _rootPrefix; }
 
     private:
-    /// @brief Tag for logging
-    static constexpr char TAG[] = "Storage";
-
     /// @brief The storage medium.
     StorageTypes::Medium _medium;
 
