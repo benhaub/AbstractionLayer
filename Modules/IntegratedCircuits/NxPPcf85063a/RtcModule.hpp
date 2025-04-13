@@ -4,11 +4,11 @@
 #include "RtcAbstraction.hpp"
 #include "I2cModule.hpp"
 
-class Rtc : public RtcAbstraction {
+class Nxppcf8506a final : public RtcAbstraction {
 
     public:
-    Rtc() : RtcAbstraction() {}
-    ~Rtc() = default;
+    Nxppcf8506a() : RtcAbstraction() {}
+    virtual ~Nxppcf8506a() = default;
 
     ErrorType init() override;
     ErrorType deinit() override;

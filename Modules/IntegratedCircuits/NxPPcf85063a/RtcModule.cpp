@@ -1,8 +1,8 @@
-#include "RtcModule.hpp"
+#include "Nxppcf8506aModule.hpp"
 //AbstractionLayer Utilities
 #include "Log.hpp"
 
-ErrorType Rtc::init() {
+ErrorType Nxppcf8506a::init() {
     //Init and configure an IC device first.
     assert(nullptr != _ic);
 
@@ -15,7 +15,7 @@ ErrorType Rtc::init() {
     return ErrorType::Success;
 }
 
-ErrorType Rtc::deinit() {
+ErrorType Nxppcf8506a::deinit() {
     if (nullptr == _i2c) {
         return ErrorType::Success;
     }
@@ -23,7 +23,7 @@ ErrorType Rtc::deinit() {
     return ErrorType::Success;
 }
 
-ErrorType Rtc::writeDate(const DateTime& dateTime) {
+ErrorType Nxppcf8506a::writeDate(const DateTime& dateTime) {
     assert(isInitialized());
 
     stopClock();
@@ -50,7 +50,7 @@ ErrorType Rtc::writeDate(const DateTime& dateTime) {
     return error;
 }
 
-ErrorType Rtc::readDate(DateTime& dateTime) {
+ErrorType Nxppcf8506a::readDate(DateTime& dateTime) {
     assert(isInitialized());
 
     std::string dateTimeArray(7,0);
@@ -71,19 +71,19 @@ ErrorType Rtc::readDate(DateTime& dateTime) {
 }
 
 //TODO:
-ErrorType Rtc::writeAlarm(const DateTime& dateTime) {
+ErrorType Nxppcf8506a::writeAlarm(const DateTime& dateTime) {
     assert(isInitialized());
 
     return ErrorType::NotImplemented;
 }
 
-ErrorType Rtc::readAlarm(DateTime& dateTime) {
+ErrorType Nxppcf8506a::readAlarm(DateTime& dateTime) {
     assert(isInitialized());
 
     return ErrorType::NotImplemented;
 }
 
-ErrorType Rtc::setHourMode(bool twentyFourHourMode) {
+ErrorType Nxppcf8506a::setHourMode(bool twentyFourHourMode) {
     assert(isInitialized());
 
     ErrorType error = ErrorType::Failure;
@@ -103,7 +103,7 @@ ErrorType Rtc::setHourMode(bool twentyFourHourMode) {
     return error;
 }
 
-ErrorType Rtc::startClock() {
+ErrorType Nxppcf8506a::startClock() {
     assert(isInitialized());
 
     ErrorType error = ErrorType::Failure;
@@ -126,7 +126,7 @@ ErrorType Rtc::startClock() {
     return error;
 }
 
-ErrorType Rtc::stopClock() {
+ErrorType Nxppcf8506a::stopClock() {
     assert(isInitialized());
 
     ErrorType error = ErrorType::Failure;
@@ -147,7 +147,7 @@ ErrorType Rtc::stopClock() {
     return error;
 }
 
-ErrorType Rtc::softwareReset() {
+ErrorType Nxppcf8506a::softwareReset() {
     assert(isInitialized());
 
     ErrorType error = ErrorType::Failure;
