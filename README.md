@@ -4,6 +4,11 @@ An abstraction layer for building cross-platform, [component-based](https://en.w
 ## How to include Abstraction Layer in your project
 https://github.com/benhaub/sm10001slidePotentiometer
 
+## Helpful boilerplates
+https://github.com/benhaub/vscode
+https://github.com/benhaub/buildScript
+https://github.com/benhaub/abstractionLayerTopLevelCMake
+
 ## Why use an abstraction layer
 ### 1. Reduce the amount of testing required for code changes
 An abstraction layer allows you to build your main application code separate from common software components such as hardware peripherals, storage, networks, etc.
