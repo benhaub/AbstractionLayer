@@ -4,7 +4,7 @@
 #Authour: Ben Haubrich                                                         #
 #Synopsis: Top level CMakeList.txt.                                            # 
 ################################################################################
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.21.3)
 
 #Use cmake '--help-policy <POLICY>` to learn more
 cmake_policy(SET CMP0079 NEW)

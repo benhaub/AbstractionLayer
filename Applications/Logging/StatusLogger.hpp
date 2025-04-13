@@ -27,7 +27,7 @@ namespace {
         std::is_base_of<OperatingSystemAbstraction, Abstraction>::value ||
         std::is_base_of<FileSystemAbstraction, Abstraction>::value ||
         std::is_base_of<StorageAbstraction, Abstraction>::value;
-#if _GLIBCXX_CONCEPTS
+#if _GLIBCXX_CONCEPTS || _LIBCPP_STD_VER >= 20
         { abstraction.printStatus() } -> std::same_as<void>;
 #endif
     };
