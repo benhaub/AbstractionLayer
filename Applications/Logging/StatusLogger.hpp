@@ -83,7 +83,7 @@ class StatusLogger {
             //https://en.cppreference.com/w/cpp/utility/tuple/get
             //We get the list that holds the Abstraction given by giving the type to std::get.
             //https://youtu.be/gTNJXVmuRRA?list=PLc1ANd9mG2dwG-kovSjkjuWq8CpskvEye&t=1451
-            auto abstracionList = std::get<std::vector<Abstraction *>>(_loggers);
+            auto &abstracionList = std::get<std::vector<Abstraction *>>(_loggers);
 
             if (toggleOn) {
                 abstracionList.push_back(abstraction);
@@ -107,7 +107,6 @@ class StatusLogger {
     Id _logTimer;
 
     /// @brief Print the status of all registered Abstractions
-    //TODO: Doesn't look like this is printing.
     void printLogs(void) {
         expandToListOfVectors(_loggerToggler._loggers);
     }
@@ -119,7 +118,7 @@ class StatusLogger {
         (
             [this](AbstractionsThatLog &... abstractions) -> void {
                 //https://en.cppreference.com/w/cpp/language/pack
-                //Pack expansion. Looks like: printStatus(std::vector<IpClientAbstraction *>); printStatus(std::vector<IpServerAbstraction *>), etc.
+                //Pack expansion of tuple of vectors. Looks like: printStatus(std::vector<IpClientAbstraction *>); printStatus(std::vector<IpServerAbstraction *>), etc.
                 (printStatus(abstractions), ...);
             },
             abstractions
@@ -127,8 +126,9 @@ class StatusLogger {
     }
 
     template<typename Abstraction>
-    void printStatus(std::vector<Abstraction *> &abstraction) {
-        for (auto *abstraction : abstraction) {
+    requires CompatibleLoggers<Abstraction>
+    void printStatus(std::vector<Abstraction *> &abstractions) {
+        for (auto *abstraction : abstractions) {
             abstraction->printStatus();
         }
     }
