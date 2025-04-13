@@ -40,9 +40,9 @@ struct DateTime {
     uint8_t second; ///< Seconds. 0-59
     uint8_t minute; ///< minutes. 0-59
     uint8_t hour;   ///< hour. 0-23
-    uint8_t day;    ///< day. 0-31
-    uint8_t weekday;///< week 0-7 (Sun-Sat)
-    uint8_t month;  ///< month. 0-12
+    uint8_t day;    ///< day. 1-31
+    uint8_t weekday;///< week 1-7 (Sun-Sat)
+    uint8_t month;  ///< month. 1-12
     uint16_t year;   ///< year.
 };
 ///@struct Time
@@ -55,10 +55,10 @@ struct Time {
 ///@struct Date
 ///@brief Date
 struct Date {
-    uint8_t day;    ///< day. 0-31
-    uint8_t weekday;///< week 0-7 (Sun-Sat)
-    uint8_t month;  ///< month. 0-12
-    uint8_t year;   ///< year. 0-99.
+    uint8_t day;    ///< day. 1-31
+    uint8_t weekday;///< week 1-7 (Sun-Sat)
+    uint8_t month;  ///< month. 1-12
+    uint16_t year;  ///< year.
 };
 
 //-------------------------------Storage sizes
@@ -163,7 +163,7 @@ static constexpr UnixTime ToUnixTime(DateTime dt) {
 
     //Number of days from the beginning of the non leap-year
     auto daysFromJanuaryToNow = [](uint8_t month) {
-        if (month <= 12 && month >= 1) {
+        if (month > 12 || month < 1) {
             return 0;
         }
 
