@@ -6,7 +6,9 @@ https://github.com/benhaub/sm10001slidePotentiometer
 
 ## Helpful boilerplates
 https://github.com/benhaub/vscode
+
 https://github.com/benhaub/buildScript
+
 https://github.com/benhaub/abstractionLayerTopLevelCMake
 
 ## Why use an abstraction layer
