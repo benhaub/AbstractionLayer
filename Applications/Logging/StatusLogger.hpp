@@ -19,6 +19,11 @@
 #include "StorageAbstraction.hpp"
 
 namespace {
+    /**
+     * @brief Concept for compatible loggers. Any calls that prints must be a base of an Abstraction listed below.
+     * @details The concepts headers is not available with all compilers so the check to make sure the abstraction
+     *          has a printStatus class can only be done on some compilers.
+     */
     template <typename Abstraction>
     concept CompatibleLoggers = requires(Abstraction abstraction) {
         std::is_base_of<IpClientAbstraction, Abstraction>::value ||
@@ -70,13 +75,23 @@ class StatusLogger {
     /// @brief Get the logging interval as a constant reference
     const Seconds &loggingInterval() const { return _interval; }
 
-    /// @brief Toggle logging for a specified Abstraction
+    /**
+     * @class LoggerToggler
+     * @brief Toggle logging for a specified Abstraction
+     * @tparam Variable number of Abstraction types that can print a status.
+     */
     template <typename... ListOfAbstractionsThatLog>
     //How's that for a class name?
     class LoggerToggler {
         public:
         friend StatusLogger;
 
+        /**
+         * @brief Toggle logging for a specified Abstraction
+         * @param abstraction Pointer to the Abstraction to toggle logging for
+         * @param toggleOn True to enable logging, false to disable logging
+         * @return Always returns ErrorType::Success
+         */
         template <typename Abstraction>
         requires CompatibleLoggers<Abstraction>
         ErrorType toggleLoggingFor(Abstraction *abstraction, bool toggleOn) {
@@ -96,8 +111,10 @@ class StatusLogger {
         }
 
         private:
+        /// @brief List of Abstractions that will log a status periodically.
         std::tuple<std::vector<ListOfAbstractionsThatLog>...> _loggers;
     };
+    /// @brief Used to toggle logging for an Abstraction
     LoggerToggler<IpClientAbstraction *, IpServerAbstraction *, NetworkAbstraction *, FileSystemAbstraction *, OperatingSystemAbstraction *, StorageAbstraction *> _loggerToggler;
 
     private:
@@ -111,7 +128,12 @@ class StatusLogger {
         expandToListOfVectors(_loggerToggler._loggers);
     }
 
-    //https://en.cppreference.com/w/cpp/utility/apply
+    /**
+     * @brief Expand a tuple of vectors into a list of vectors and print all the Abstractions that log in each vector.
+     * @tparam AbstractionsThatLog. A list of Abstractions that can print a status
+     * @param abstractions Tuple of vectors of Abstractions that can print a status
+     * @details https://en.cppreference.com/w/cpp/utility/apply
+     */
     template<typename... AbstractionsThatLog>
     void expandToListOfVectors(std::tuple<AbstractionsThatLog...> &abstractions) {
         std::apply
@@ -124,7 +146,14 @@ class StatusLogger {
             abstractions
         );
     }
-
+    
+    /**
+     * @brief Print the status of the Abstraction given.
+     * @tparam Abstraction. An Abstraction that can print a status
+     * @param abstractions Vector of Abstractions that can print a status
+     * @pre Must be CompatibleLogger
+     * @sa CompatibleLoggers
+     */
     template<typename Abstraction>
     requires CompatibleLoggers<Abstraction>
     void printStatus(std::vector<Abstraction *> &abstractions) {
