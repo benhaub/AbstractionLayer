@@ -52,3 +52,4 @@ target_link_libraries(DarwinCryptography PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libsod
 target_include_directories(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 target_compile_options(DarwinCryptography PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
+target_compile_definitions(DarwinCryptography PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)
