@@ -6,26 +6,14 @@ ErrorType Nxppcf8506a::init() {
     //Init and configure an IC device first.
     assert(nullptr != _ic);
 
-    _i2c = dynamic_cast<I2c *>(_ic);
-    if (nullptr == _i2c) {
-        PLT_LOGE(TAG, "The NXP PCF85063a requires an I2C for communication");
-        return ErrorType::PrerequisitesNotMet;
-    }
-
     return ErrorType::Success;
 }
 
 ErrorType Nxppcf8506a::deinit() {
-    if (nullptr == _i2c) {
-        return ErrorType::Success;
-    }
-
     return ErrorType::Success;
 }
 
 ErrorType Nxppcf8506a::writeDate(const DateTime& dateTime) {
-    assert(isInitialized());
-
     stopClock();
 
     //To write the date to the RTC, we use the fact that register writes cause
@@ -43,7 +31,7 @@ ErrorType Nxppcf8506a::writeDate(const DateTime& dateTime) {
     dateTimeArray.push_back(toBinaryCodedDecimal(dateTime.month));
     dateTimeArray.push_back(toBinaryCodedDecimal(dateTime.year));
 
-    ErrorType error = _i2c->txBlocking(dateTimeArray, _I2cAddress, static_cast<uint8_t>(RegisterMap::Seconds), Milliseconds(1000));
+    ErrorType error = i2c()->txBlocking(dateTimeArray, _I2cAddress, static_cast<uint8_t>(RegisterMap::Seconds), Milliseconds(1000));
 
     startClock();
 
@@ -51,13 +39,11 @@ ErrorType Nxppcf8506a::writeDate(const DateTime& dateTime) {
 }
 
 ErrorType Nxppcf8506a::readDate(DateTime& dateTime) {
-    assert(isInitialized());
-
     std::string dateTimeArray(7,0);
 
     //Same as reading. The registers will auto increment with each read. So If we read 7 times starting at the seconds register,
     //we will get all the date data from second to year.
-    ErrorType error = _i2c->rxBlocking(dateTimeArray, _I2cAddress, static_cast<uint8_t>(RegisterMap::Seconds), Milliseconds(1000));
+    ErrorType error = i2c()->rxBlocking(dateTimeArray, _I2cAddress, static_cast<uint8_t>(RegisterMap::Seconds), Milliseconds(1000));
 
     dateTime.second = fromBinaryCodedDecimal(dateTimeArray.at(0));
     dateTime.minute = fromBinaryCodedDecimal(dateTimeArray.at(1));
@@ -72,40 +58,32 @@ ErrorType Nxppcf8506a::readDate(DateTime& dateTime) {
 
 //TODO:
 ErrorType Nxppcf8506a::writeAlarm(const DateTime& dateTime) {
-    assert(isInitialized());
-
     return ErrorType::NotImplemented;
 }
 
 ErrorType Nxppcf8506a::readAlarm(DateTime& dateTime) {
-    assert(isInitialized());
-
     return ErrorType::NotImplemented;
 }
 
 ErrorType Nxppcf8506a::setHourMode(bool twentyFourHourMode) {
-    assert(isInitialized());
-
     ErrorType error = ErrorType::Failure;
     constexpr Milliseconds timeout = 1000;
     std::string controlRegisterData(1, 0);
 
     //Read the contents of the register so that we don't modify anything we didn't intend to.
-    error = _i2c->rxBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
+    error = i2c()->rxBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
     if (ErrorType::Success != error) {
         return error;
     }
 
     twentyFourHourMode ? controlRegisterData.at(0) &= ~(1 << 1) : controlRegisterData.at(0) |= (1 << 1);
 
-    error = _i2c->txBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
+    error = i2c()->txBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
 
     return error;
 }
 
 ErrorType Nxppcf8506a::startClock() {
-    assert(isInitialized());
-
     ErrorType error = ErrorType::Failure;
     constexpr Milliseconds timeout = 1000;
     constexpr uint8_t stopBitPosition = 5;
@@ -113,7 +91,7 @@ ErrorType Nxppcf8506a::startClock() {
     std::string controlRegisterData(1, 0);
 
     //Read the contents of the register so that we don't modify anything we didn't intend to.
-    error = _i2c->rxBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
+    error = i2c()->rxBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
     if (ErrorType::Success != error) {
         return error;
     }
@@ -121,42 +99,38 @@ ErrorType Nxppcf8506a::startClock() {
     controlRegisterData.at(0) &= ~(1 << stopBitPosition);
     controlRegisterData.at(0) &= ~(1 << externalTestBitPosition);
 
-    error = _i2c->txBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
+    error = i2c()->txBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
 
     return error;
 }
 
 ErrorType Nxppcf8506a::stopClock() {
-    assert(isInitialized());
-
     ErrorType error = ErrorType::Failure;
     constexpr Milliseconds timeout = 1000;
     constexpr uint8_t stopBitPosition = 5;
     std::string controlRegisterData(1, 0);
 
     //Read the contents of the register so that we don't modify anything we didn't intend to.
-    error = _i2c->rxBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
+    error = i2c()->rxBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
     if (ErrorType::Success != error) {
         return error;
     }
 
     controlRegisterData.at(0) |= (1 << stopBitPosition);
 
-    error = _i2c->txBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
+    error = i2c()->txBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
 
     return error;
 }
 
 ErrorType Nxppcf8506a::softwareReset() {
-    assert(isInitialized());
-
     ErrorType error = ErrorType::Failure;
     constexpr Milliseconds timeout = 1000;
     constexpr uint8_t resetCode = 0x58;
     std::string controlRegisterData(1, 0);
 
     //Read the contents of the register so that we don't modify anything we didn't intend to.
-    error = _i2c->rxBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
+    error = i2c()->rxBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
     if (ErrorType::Success != error) {
         return error;
     }
@@ -164,7 +138,7 @@ ErrorType Nxppcf8506a::softwareReset() {
     //Pg. 55, Sect. 7.2.1.3 Software reset, datasheet PCF85063A datasheet.
     controlRegisterData.at(0) = resetCode;
 
-    error = _i2c->txBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
+    error = i2c()->txBlocking(controlRegisterData, _I2cAddress, static_cast<uint8_t>(RegisterMap::Control1), timeout);
 
     stopClock();
     startClock();

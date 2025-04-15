@@ -20,9 +20,9 @@ class Nxppcf8506a final : public RtcAbstraction {
     ErrorType startClock();
     ErrorType stopClock();
     ErrorType softwareReset();
+
     private:
     static constexpr uint8_t _I2cAddress = 0b1010001;
-    I2c *_i2c = nullptr;
 
     enum class RegisterMap : uint8_t {
         Control1 = 0,
@@ -62,9 +62,7 @@ class Nxppcf8506a final : public RtcAbstraction {
         return value;
     }
 
-    inline bool isInitialized() {
-        return nullptr != _i2c && nullptr != _ic;
-    }
+    I2c *i2c() const { assert(nullptr != _ic); return static_cast<I2c *>(_ic); }
 };
 
 #endif //__RTC_MODULE_HPP__
