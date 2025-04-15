@@ -44,6 +44,43 @@ struct DateTime {
     uint8_t weekday;///< week 1-7 (Sun-Sat)
     uint8_t month;  ///< month. 1-12
     uint16_t year;   ///< year.
+
+    bool operator == (const DateTime &other) const {
+        return year == other.year && month == other.month && day == other.day &&
+               hour == other.hour && minute == other.minute && second == other.second;
+    }
+    bool operator < (const DateTime &other) const {
+        if (year != other.year) return year < other.year;
+        if (month != other.month) return month < other.month;
+        if (day != other.day) return day < other.day;
+        if (hour != other.hour) return hour < other.hour;
+        if (minute != other.minute) return minute < other.minute;
+        return second < other.second;
+    }
+    bool operator > (const DateTime &other) const {
+        if (year != other.year) return year > other.year;
+        if (month != other.month) return month > other.month;
+        if (day != other.day) return day > other.day;
+        if (hour != other.hour) return hour > other.hour;
+        if (minute != other.minute) return minute > other.minute;
+        return second > other.second;
+    }
+    bool operator <= (const DateTime &other) const {
+        return *this < other || *this == other;
+    }
+    bool operator >= (const DateTime &other) const {
+        return *this > other || *this == other;
+    }
+    DateTime operator = (const DateTime &other) {
+        second = other.second;
+        minute = other.minute;
+        hour = other.hour;
+        day = other.day;
+        weekday = other.weekday;
+        month = other.month;
+        year = other.year;
+        return *this;
+    }
 };
 ///@struct Time
 ///@brief Time
