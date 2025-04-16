@@ -10,8 +10,8 @@
 //AbstractionLayer
 #include "Log.hpp"
 #include "OperatingSystemModule.hpp"
+#include "SignalsAndSlots.hpp"
 
-#include "HttpServerAbstraction.hpp"
 #include "IpClientAbstraction.hpp"
 #include "IpServerAbstraction.hpp"
 #include "NetworkAbstraction.hpp"
@@ -51,7 +51,7 @@ class StatusLogger {
      * @pre Make sure the timer stack is large enough to be able to print. Some tests have revealed the stack needs to be as large as 1.5kiB
      */
     StatusLogger(Seconds interval) {
-        if (ErrorType::Success == OperatingSystem::Instance().createTimer(_logTimer, interval*1000, true, std::bind(&StatusLogger::printLogs, this))) {
+        if (ErrorType::Success == OperatingSystem::Instance().createTimer(_logTimer, interval*1000, true, std::bind(&StatusLogger::timerElapsed, this))) {
             if (ErrorType::Success != OperatingSystem::Instance().startTimer(_logTimer, 0)) {
                 PLT_LOGW(TAG, "Failed to start timer for status logging");
             }
@@ -69,11 +69,6 @@ class StatusLogger {
 
     /// @brief Tag for logging
     static constexpr char TAG[] = "StatusLogger";
-
-    /// @brief Get the logging interval as a mutable reference
-    Seconds &loggingInterval() { return _interval; }
-    /// @brief Get the logging interval as a constant reference
-    const Seconds &loggingInterval() const { return _interval; }
 
     /**
      * @class LoggerToggler
@@ -116,6 +111,18 @@ class StatusLogger {
     };
     /// @brief Used to toggle logging for an Abstraction
     LoggerToggler<IpClientAbstraction *, IpServerAbstraction *, NetworkAbstraction *, FileSystemAbstraction *, OperatingSystemAbstraction *, StorageAbstraction *> _loggerToggler;
+    /// @brief Emitted when the logging interval has elapsed
+    SignalsAndSlots::Signal<> _intervalElapsed;
+
+    /// @brief Get the logging interval as a mutable reference
+    Seconds &loggingInterval() { return _interval; }
+    /// @brief Get the logging interval as a constant reference
+    const Seconds &loggingInterval() const { return _interval; }
+
+    /// @brief Print the status of all registered Abstractions
+    void printLogs(void) {
+        expandToListOfVectors(_loggerToggler._loggers);
+    }
 
     private:
     /// @brief Interval between logs
@@ -123,9 +130,9 @@ class StatusLogger {
     /// @brief Timer ID
     Id _logTimer;
 
-    /// @brief Print the status of all registered Abstractions
-    void printLogs(void) {
-        expandToListOfVectors(_loggerToggler._loggers);
+    /// @brief Emits a signal when the logging interval has elapsed so that users can call printLogs periodically.
+    void timerElapsed(void) {
+        _intervalElapsed.emit();
     }
 
     /**
