@@ -76,22 +76,22 @@ ErrorType Rtc::setHourMode(bool twentyFourHourMode) {
 
 SlDateTime_t Rtc::fromDateTime(const DateTime& dateTime) const {
     SlDateTime_t slDateTime;
-    slDateTime.tm_year = dateTime.year;
-    slDateTime.tm_mon  = dateTime.month;
-    slDateTime.tm_day  = dateTime.day;
-    slDateTime.tm_hour = dateTime.hour;
-    slDateTime.tm_min  = dateTime.minute;
-    slDateTime.tm_sec  = dateTime.second;
+    slDateTime.tm_year = dateTime._year + 1970;
+    slDateTime.tm_mon  = dateTime._month;
+    slDateTime.tm_day  = dateTime._day;
+    slDateTime.tm_hour = dateTime._hour;
+    slDateTime.tm_min  = dateTime._minute;
+    slDateTime.tm_sec  = dateTime._second;
     return slDateTime;
 }
 
 DateTime Rtc::toDateTime(const SlDateTime_t& slDateTime) const {
     DateTime dateTime;
-    dateTime.year = slDateTime.tm_year;
-    dateTime.month = slDateTime.tm_mon;
-    dateTime.day = slDateTime.tm_day;
-    dateTime.hour = slDateTime.tm_hour;
-    dateTime.minute = slDateTime.tm_min;
-    dateTime.second = slDateTime.tm_sec;
+    dateTime._year = slDateTime.tm_year - 1970;
+    dateTime._month = slDateTime.tm_mon;
+    dateTime._day = slDateTime.tm_day;
+    dateTime._hour = slDateTime.tm_hour;
+    dateTime._minute = slDateTime.tm_min;
+    dateTime._second = slDateTime.tm_sec;
     return dateTime;
 }

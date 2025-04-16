@@ -37,33 +37,38 @@ using Ticks = uint32_t;
 ///@struct DateTime
 ///@brief Date and time
 struct DateTime {
-    uint8_t second; ///< Seconds. 0-59
-    uint8_t minute; ///< minutes. 0-59
-    uint8_t hour;   ///< hour. 0-23
-    uint8_t day;    ///< day. 1-31
-    uint8_t weekday;///< week 1-7 (Sun-Sat)
-    uint8_t month;  ///< month. 1-12
-    uint16_t year;   ///< year.
+    uint8_t _second; ///< Seconds. 0-59
+    uint8_t _minute; ///< minutes. 0-59
+    uint8_t _hour;   ///< hour. 0-23
+    uint8_t _day;    ///< day. 1-31
+    uint8_t _weekday;///< week 1-7 (Sun-Sat)
+    uint8_t _month;  ///< month. 1-12
+    uint16_t _year;  ///< years since 1970 (e.g. 1 is 1971, 2 is 1972, etc.).
+
+    /// @brief Constructor. Initializes to UnixTime 0
+    constexpr DateTime() : _second(0), _minute(0), _hour(0), _day(1), _weekday(1), _month(1), _year(0) {}
+    /// @brief Copy constructor
+    constexpr DateTime(const DateTime &other) = default;
 
     bool operator == (const DateTime &other) const {
-        return year == other.year && month == other.month && day == other.day &&
-               hour == other.hour && minute == other.minute && second == other.second;
+        return _year == other._year && _month == other._month && _day == other._day &&
+               _hour == other._hour && _minute == other._minute && _second == other._second;
     }
     bool operator < (const DateTime &other) const {
-        if (year != other.year) return year < other.year;
-        if (month != other.month) return month < other.month;
-        if (day != other.day) return day < other.day;
-        if (hour != other.hour) return hour < other.hour;
-        if (minute != other.minute) return minute < other.minute;
-        return second < other.second;
+        if (_year != other._year) return _year < other._year;
+        if (_month != other._month) return _month < other._month;
+        if (_day != other._day) return _day < other._day;
+        if (_hour != other._hour) return _hour < other._hour;
+        if (_minute != other._minute) return _minute < other._minute;
+        return _second < other._second;
     }
     bool operator > (const DateTime &other) const {
-        if (year != other.year) return year > other.year;
-        if (month != other.month) return month > other.month;
-        if (day != other.day) return day > other.day;
-        if (hour != other.hour) return hour > other.hour;
-        if (minute != other.minute) return minute > other.minute;
-        return second > other.second;
+        if (_year != other._year) return _year > other._year;
+        if (_month != other._month) return _month > other._month;
+        if (_day != other._day) return _day > other._day;
+        if (_hour != other._hour) return _hour > other._hour;
+        if (_minute != other._minute) return _minute > other._minute;
+        return _second > other._second;
     }
     bool operator <= (const DateTime &other) const {
         return *this < other || *this == other;
@@ -72,13 +77,13 @@ struct DateTime {
         return *this > other || *this == other;
     }
     DateTime operator = (const DateTime &other) {
-        second = other.second;
-        minute = other.minute;
-        hour = other.hour;
-        day = other.day;
-        weekday = other.weekday;
-        month = other.month;
-        year = other.year;
+        _second = other._second;
+        _minute = other._minute;
+        _hour = other._hour;
+        _day = other._day;
+        _weekday = other._weekday;
+        _month = other._month;
+        _year = other._year;
         return *this;
     }
 };
@@ -95,7 +100,7 @@ struct Date {
     uint8_t day;    ///< day. 1-31
     uint8_t weekday;///< week 1-7 (Sun-Sat)
     uint8_t month;  ///< month. 1-12
-    uint16_t year;  ///< year.
+    uint16_t year;  ///< years since 1970 (e.g. 1 is 1971, 2 is 1972, etc.).
 };
 
 //-------------------------------Storage sizes
@@ -236,21 +241,21 @@ static constexpr UnixTime ToUnixTime(DateTime dt) {
     };
 
     //Since the epoch from the given year
-    uint16_t daysSince = dt.year * daysInAYear;
+    uint16_t daysSince = dt._year * daysInAYear;
     //Since the epoch of the given year with leap days included.
-    daysSince += ((1970 + dt.year) / 4) - (1970 / 4);
+    daysSince += ((1970 + dt._year) / 4) - (1970 / 4);
     //We are at January of this year, now go to our month.
-    daysSince += daysFromJanuaryToNow(dt.month);
+    daysSince += daysFromJanuaryToNow(dt._month);
     //Now go to the day for the month.
-    if (dt.day > 0) {
-        daysSince += ((uint32_t )dt.day - 1);
+    if (dt._day > 0) {
+        daysSince += ((uint32_t )dt._day - 1);
     }
     //If this year is a leap year and it's less than or equal February
-    if (0 != dt.year && 0 == (dt.year & 3) && dt.year <= 2) {
+    if (0 != dt._year && 0 == (dt._year & 3) && dt._year <= 2) {
         daysSince--;
     }
 
-    uint32_t secondsSince = (daysSince * secondsInADay) + (dt.hour * secondsInAnHour) + (dt.minute * secondsInAMinute) + dt.second;
+    uint32_t secondsSince = (daysSince * secondsInADay) + (dt._hour * secondsInAnHour) + (dt._minute * secondsInAMinute) + dt._second;
 
     return secondsSince;
 }
@@ -312,14 +317,14 @@ static constexpr DateTime ToDateTime(UnixTime seconds) {
     secondsLeftToAddToDatetime %= secondsInADay;
 
     DateTime dateSince {};
-    dateSince.hour = (uint8_t)(secondsLeftToAddToDatetime / secondsInAnHour);
+    dateSince._hour = (uint8_t)(secondsLeftToAddToDatetime / secondsInAnHour);
     secondsLeftToAddToDatetime %= secondsInAnHour;
-    dateSince.minute = (uint8_t)(secondsLeftToAddToDatetime / secondsInAMinute);
-    dateSince.second = (uint8_t)(secondsLeftToAddToDatetime % secondsInAMinute);
+    dateSince._minute = (uint8_t)(secondsLeftToAddToDatetime / secondsInAMinute);
+    dateSince._second = (uint8_t)(secondsLeftToAddToDatetime % secondsInAMinute);
     uint16_t yearsSinceStartingFrom1970 = 0;
 
     while (daysSince > daysInAYear) {
-        if ((dateSince.year & 3U) == 0U) {
+        if ((dateSince._year & 3U) == 0U) {
             daysSince--;
         }
 
@@ -327,19 +332,19 @@ static constexpr DateTime ToDateTime(UnixTime seconds) {
         yearsSinceStartingFrom1970++;
     }
 
-    dateSince.year = yearsSinceStartingFrom1970;
+    dateSince._year = yearsSinceStartingFrom1970;
 
     for (int m = 0; m <= 12 && daysSince > 0; m++) {
-        uint8_t daysInMonth = daysPerMonth(dateSince.year, m);
+        uint8_t daysInMonth = daysPerMonth(dateSince._year, m);
         if (0 != daysInMonth && daysSince <= daysInMonth) {
-            dateSince.month = m;
+            dateSince._month = m;
         }
         else {
             daysSince -= daysInMonth;
         }
     }
 
-    dateSince.day = daysSince;
+    dateSince._day = daysSince;
 
     return dateSince;
 }
