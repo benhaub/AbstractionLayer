@@ -30,6 +30,9 @@ ErrorType OperatingSystem::delay(const Milliseconds delay) {
 
     //The default tick rate is 100Hz, so trying to delay for a thousandth of a second is 10 times shorter than the
     //minimum needed to block.
+    #if configTICK_RATE_HZ < 1000
+        #warning "If you have delays of 1ms or less the block time will be increased to ensure FreeRTOS actually blocks the task."
+    #endif
     const Milliseconds minimumDelayToBlock = delay * (1000 / configTICK_RATE_HZ);
     usleep(minimumDelayToBlock * 1000);
     return ErrorType::Success;

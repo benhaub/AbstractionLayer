@@ -20,7 +20,8 @@ void TimerCallback(TimerHandle_t timer);
 #endif
 
 ErrorType OperatingSystem::delay(Milliseconds delay) {
-    vTaskDelay(delay);
+    const Milliseconds minimumDelayToBlock = delay * (1000 / configTICK_RATE_HZ);
+    vTaskDelay(minimumDelayToBlock);
     return ErrorType::Success;
 }
 
