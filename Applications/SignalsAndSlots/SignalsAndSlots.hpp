@@ -152,7 +152,7 @@ namespace SignalsAndSlots {
          *          last failure will be returned.
         */
         template <std::size_t... IndexSequence>
-        ErrorType _emit(const std::tuple<Args...> params, const std::index_sequence<IndexSequence...>) const {
+        ErrorType _emit([[maybe_unused]] const std::tuple<Args...> params, [[maybe_unused]] const std::index_sequence<IndexSequence...>) const {
             ErrorType returnError = ErrorType::Failure;
 
             for (const auto &slot : _slots) {
