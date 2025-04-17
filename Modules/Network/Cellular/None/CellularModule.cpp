@@ -21,7 +21,7 @@ ErrorType Cellular::rxBlocking(std::string &frameBuffer, const Socket socket, co
 ErrorType Cellular::rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) {
     return ErrorType::NotImplemented;
 }
-ErrorType Cellular::getMacAddress(std::string &macAddress) {
+ErrorType Cellular::getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) {
     return ErrorType::NotImplemented;
 }
 ErrorType Cellular::getSignalStrength(DecibelMilliWatts &signalStrength) {

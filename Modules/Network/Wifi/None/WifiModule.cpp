@@ -28,7 +28,7 @@ ErrorType Wifi::rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const So
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::getMacAddress(std::string &macAddress) {
+ErrorType Wifi::getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) {
     return ErrorType::NotImplemented;
 }
 

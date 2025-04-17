@@ -252,11 +252,9 @@ ErrorType Wifi::rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const So
     return ErrorType::NotAvailable;
 }
 
-ErrorType Wifi::getMacAddress(std::string &macAddress) {
+ErrorType Wifi::getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) {
     uint8_t macAddressByteArray[6];
-    constexpr Count macAddressStringSize = 17;
     esp_err_t err;
-    assert(macAddress.size() >= macAddressStringSize);
 
     err = esp_read_mac(macAddressByteArray, ESP_MAC_WIFI_STA);
     if (ESP_OK != err) {
@@ -264,7 +262,6 @@ ErrorType Wifi::getMacAddress(std::string &macAddress) {
     }
 
     assert(snprintf(macAddress.data(), macAddress.size(), MACSTR, MAC2STR(macAddressByteArray)) > 0);
-    macAddress.resize(macAddressStringSize);
 
     return ErrorType::Success;
 }

@@ -5,10 +5,14 @@
 #include <cassert>
 #include <cstdio>
 #include <limits>
+#include <cstring>
 //Posix
 #include <netdb.h>
 #include <errno.h>
 #include <unistd.h>
+#include <net/if.h>     //For getting the MAC address
+#include <sys/ioctl.h>  //For getting the MAC address
+#include <arpa/inet.h> //For getting the MAC address
 
 ErrorType Wifi::init() {
     return ErrorType::NotAvailable;
@@ -100,36 +104,30 @@ ErrorType Wifi::rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const So
  * The we use this hostname as our interface that we use to connect to the internet
  * and get the macAddress from that interface.
 */
-ErrorType Wifi::getMacAddress(std::string &macAddress) {
-    std::string interface(16, 0);
-    std::string host("google.com");
-    std::string ipAddress("127.127.127.127");
-
-    hostToIp(host, ipAddress);
-    interfaceRoutedTo(ipAddress, interface);
-
-    const std::string command1("sh -c \"ip addr show ");
-    const std::string command2("\" | egrep \"link/ether\" | tr -s ' ' | cut -d' ' -f3");
-    std::string commandFinal(command1.size() + command2.size() + macAddress.size(), 0);
-    commandFinal.assign(command1);
-    commandFinal.append(interface);
-    commandFinal.append(command2);
-
+ErrorType Wifi::getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) {
+    std::array<char, IFNAMSIZ> interface;
+    constexpr std::string_view host{"google.com"};
+    std::array<char, NetworkTypes::Ipv4AddressStringSize> ipAddress;
     ErrorType error = ErrorType::Failure;
-    
-    FILE* pipe = popen(commandFinal.c_str(), "r");
-    if (nullptr != pipe) {
-        size_t bytesRead = fread(macAddress.data(), sizeof(uint8_t), macAddress.capacity(), pipe);
-        if (feof(pipe) || bytesRead == macAddress.capacity()) {
-            error = ErrorType::Success;
-            macAddress.resize(bytesRead);
-            while (macAddress.back() == '\n') {
-                macAddress.pop_back();
+
+    if (ErrorType::Success == hostToIp(host, ipAddress)) {
+        if (ErrorType::Success == interfaceRoutedTo(ipAddress, interface)) {
+            int fd = socket(AF_INET, SOCK_DGRAM, 0);
+            if (fd >= 0) {
+                struct ifreq ifr;
+                std::memset(&ifr, 0, sizeof(ifr));
+                std::strncpy(ifr.ifr_name, interface.data(), sizeof(ifr.ifr_name) - 1);
+                if (0 == ioctl(fd, SIOCGIFHWADDR, &ifr)) {
+                    unsigned char* hwaddr = reinterpret_cast<unsigned char*>(ifr.ifr_hwaddr.sa_data);
+                    snprintf(macAddress.data(), macAddress.size(),
+                        "%02x:%02x:%02x:%02x:%02x:%02x",
+                        hwaddr[0], hwaddr[1], hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
+                    error = ErrorType::Success;
+                }
+
             }
-        }
-        else if (ferror(pipe)) {
-            pclose(pipe);
-            error = ErrorType::Failure;
+
+            close(fd);
         }
     }
 
@@ -140,53 +138,50 @@ ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::hostToIp(const std::string &host, std::string &ipAddress) {
-    const std::string command1("sh -c \"getent ahosts ");
-    const std::string command2(" | awk '{print $1; exit}' | cut -d' ' -f1\"");
-    std::string commandFinal(command1.size() + command2.size() + ipAddress.size(), 0);
-    commandFinal.assign(command1);
-    commandFinal.append(host);
-    commandFinal.append(command2);
-
+ErrorType Wifi::hostToIp(const std::string_view host, std::array<char, NetworkTypes::Ipv4AddressStringSize> &ipAddress) {
+    struct addrinfo hints {};
+    struct addrinfo* res = nullptr;
     ErrorType error = ErrorType::Failure;
-    
-    FILE* pipe = popen(commandFinal.c_str(), "r");
-    if (nullptr != pipe) {
-        const size_t bytesRead = fread(ipAddress.data(), sizeof(uint8_t), ipAddress.capacity(), pipe);
-        if (feof(pipe) || bytesRead == ipAddress.capacity()) {
-            error = ErrorType::Success;
-            ipAddress.resize(bytesRead);
-            while (ipAddress.back() == '\n') {
-                ipAddress.pop_back();
-            }
-        }
-        else if (ferror(pipe)) {
-            pclose(pipe);
+
+    hints.ai_family = AF_INET; // IPv4
+    hints.ai_socktype = SOCK_STREAM;
+
+    int ret = getaddrinfo(host.data(), nullptr, &hints, &res);
+    if (ret == 0) {
+        // Extract the IPv4 address
+        struct sockaddr_in* addr = reinterpret_cast<struct sockaddr_in*>(res->ai_addr);
+        const char* result = inet_ntop(AF_INET, &(addr->sin_addr), ipAddress.data(), ipAddress.size());
+        freeaddrinfo(res);
+
+        if (result == nullptr) {
+            ipAddress[0] = '\0';
             error = ErrorType::Failure;
+        }
+        else {
+            error = ErrorType::Success;
         }
     }
 
     return error;
 }
 
-ErrorType Wifi::interfaceRoutedTo(const std::string &ipAddress, std::string &interface) {
-    const std::string command1("sh -c \"ip route get ");
-    const std::string command2("\" | awk -F \"dev \" \'{print $2}\' | cut -d' ' -f1");
-    std::string commandFinal(command1.size() + command2.size() + ipAddress.size(), 0);
-    commandFinal.assign(command1);
-    commandFinal.append(ipAddress);
-    commandFinal.append(command2);
+ErrorType Wifi::interfaceRoutedTo(const std::array<char, NetworkTypes::Ipv4AddressStringSize> &ipAddress, std::array<char, IFNAMSIZ> &interface) {
+    constexpr std::array<char, 128> command = {"sh -c \"ip route get %s\" | awk -F \"dev \" \'{print $2}\' | cut -d' ' -f1"};
+    std::array<char, command.size() + NetworkTypes::Ipv4AddressStringSize> commandFinal;
+
+    assert(snprintf(commandFinal.data(), commandFinal.size(), command.data(), ipAddress.data()) > 0);
 
     ErrorType error = ErrorType::Failure;
     
-    FILE* pipe = popen(commandFinal.c_str(), "r");
+    FILE* pipe = popen(commandFinal.data(), "r");
     if (nullptr != pipe) {
-        const size_t bytesRead = fread(interface.data(), sizeof(uint8_t), interface.capacity(), pipe);
-        if (feof(pipe) || bytesRead == interface.capacity()) {
+        const size_t bytesRead = fread(interface.data(), sizeof(uint8_t), interface.max_size(), pipe);
+        if (feof(pipe) || bytesRead == interface.max_size()) {
             error = ErrorType::Success;
-            interface.resize(bytesRead);
-            while (interface.back() == '\n') {
-                interface.pop_back();
+            for (size_t i = 0; i < interface.size(); i++) {
+                if (interface.at(i) == '\n') {
+                    interface.at(i) = '\0';
+                }
             }
         }
         else {

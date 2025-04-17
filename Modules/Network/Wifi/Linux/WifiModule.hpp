@@ -30,7 +30,7 @@ class Wifi : public WifiAbstraction {
     ErrorType txNonBlocking(const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
     ErrorType rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) override;
     ErrorType rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) override;
-    ErrorType getMacAddress(std::string &macAddress) override;
+    ErrorType getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) override;
     ErrorType getSignalStrength(DecibelMilliWatts &signalStrength) override;
 
     ErrorType mainLoop() override;
@@ -50,7 +50,7 @@ class Wifi : public WifiAbstraction {
      * @returns ErrorType::Success if the IP address was returned.
      * @returns ErrorType::Failure otherwise.
      */
-    ErrorType hostToIp(const std::string &host, std::string &ipAddress);
+    ErrorType hostToIp(const std::string_view host, std::array<char, NetworkTypes::Ipv4AddressStringSize> &ipAddress);
     /**
      * @brief Given a destination IP address, get the interface that the outgoing packet was routed to to reach the destination.
      * @param[in] ipAddress The destination IP address
@@ -58,7 +58,7 @@ class Wifi : public WifiAbstraction {
      * @returns ErrorType::Success if the interface was returned
      * @returns ErrorType::Failure if the interface was not returned.
      */
-    ErrorType interfaceRoutedTo(const std::string &ipAddress, std::string &interface);
+    ErrorType interfaceRoutedTo(const std::array<char, NetworkTypes::Ipv4AddressStringSize> &ipAddress, std::array<char, 16> &interface);
 };
 
 #endif // __WIFI_MODULE_HPP__

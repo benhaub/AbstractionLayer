@@ -41,6 +41,11 @@ namespace NetworkTypes {
         std::string manufacturerName;        ///< The manufacturer name of the network interface.
         DecibelMilliWatts signalStrength;    ///< The signal strength of the network interface.
     };
+
+    /// @brief Size of an IPv4 address string with tombstone
+    constexpr uint8_t Ipv4AddressStringSize = 18;
+    /// @brief Size of a MAC address string with tombstone
+    constexpr uint8_t MacAddressStringSize = 18;
 }
 
 /**
@@ -132,7 +137,7 @@ class NetworkAbstraction : public EventQueue {
      * @returns ErrorType::Success if the MAC address was successfully retrieved
      * @returns ErrorType::Failure if the MAC address was not successfully retrieved
     */
-    virtual ErrorType getMacAddress(std::string &macAddress) = 0;
+    virtual ErrorType getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) = 0;
     /**
     * @brief Get the signal strength of the network interface.
     * @param[out] signalStrength The signal strength of the network interface.

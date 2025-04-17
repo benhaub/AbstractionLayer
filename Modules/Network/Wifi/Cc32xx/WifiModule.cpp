@@ -128,8 +128,7 @@ ErrorType Wifi::rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const So
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::getMacAddress(std::string &macAddress) {
-    assert(macAddress.size() >= 6);
+ErrorType Wifi::getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) {
     uint16_t macAddressLen = macAddress.size();
 
     return fromPlatformError(sl_NetCfgGet(SL_NETCFG_MAC_ADDRESS_GET, NULL, &macAddressLen, reinterpret_cast<unsigned char *>(macAddress.data())));
