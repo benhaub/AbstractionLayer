@@ -67,7 +67,7 @@ class Wifi : public WifiAbstraction {
         }
     }
 
-    signed short toCc32xxSecurityType(const WifiTypes::AuthMode authMode, ErrorType &error) {
+    _u8 toCc32xxSecurityType(const WifiTypes::AuthMode authMode, ErrorType &error) {
         error = ErrorType::Success;
 
         switch (authMode) {

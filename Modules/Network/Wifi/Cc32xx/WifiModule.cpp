@@ -72,6 +72,17 @@ ErrorType Wifi::init() {
         return error;
     }
 
+    if (_mode == WifiTypes::Mode::AccessPointAndStation || _mode == WifiTypes::Mode::Station) {
+        ErrorType error;
+        const SlWlanSecParams_t securityParameters = {
+            .Type = toCc32xxSecurityType(_authMode, error),
+            .Key = reinterpret_cast<_i8 *>(_stationPassword.data()),
+            .KeyLen = static_cast<_u8>(_stationPassword.length())
+        };
+
+        sl_WlanConnect(reinterpret_cast<_i8 *>(_stationSsid.data()), static_cast<_u8>(_stationSsid.length()), 0, &securityParameters, nullptr);
+    }
+
     return networkUp();
 
     return error;
@@ -165,25 +176,33 @@ ErrorType Wifi::radioOff() {
 }
 
 ErrorType Wifi::setSsid(WifiTypes::Mode mode, const std::string &ssid) {
+    ErrorType error = ErrorType::Success;
+
     if (mode != WifiTypes::Mode::AccessPoint) {
         return ErrorType::NotSupported;
     }
 
-    signed short result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_SSID, ssid.size(), reinterpret_cast<const unsigned char *>(ssid.c_str()));
-    if (0 == result) {
-        _accessPointSsid.assign(ssid);
+    _u16 result = 0;
+    if (mode == WifiTypes::Mode::AccessPoint) {
+        result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_SSID, ssid.size(), reinterpret_cast<const unsigned char *>(ssid.c_str()));
+
+        if (0 == result) {
+            _accessPointSsid.assign(ssid);
+        }
+
+        error = fromPlatformError(result);
+    }
+    else if (mode == WifiTypes::Mode::Station) {
+        _stationSsid = ssid;
     }
 
-    return fromPlatformError(result);
+    return error;
 }
 
 ErrorType Wifi::setPassword(WifiTypes::Mode mode, const std::string &password) {
     //Passwords have length requirements based on the authorization mode
     assert(WifiTypes::AuthMode::Unknown != _authMode);
-
-    if (WifiTypes::Mode::AccessPoint != mode) {
-        return ErrorType::NotSupported;
-    }
+    ErrorType error = ErrorType::Success;
 
     if (WifiTypes::AuthMode::Wpa == _authMode || WifiTypes::AuthMode::WpaWpa2 == _authMode) {
         if (password.size() < 8) {
@@ -195,13 +214,25 @@ ErrorType Wifi::setPassword(WifiTypes::Mode mode, const std::string &password) {
         return ErrorType::InvalidParameter;
     }
 
-    signed short result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_PASSWORD, password.size(), reinterpret_cast<const unsigned char *>(password.c_str()));
-
-    if (0 == result) {
-        _accessPointPassword = password;
+    if (mode == WifiTypes::Mode::AccessPointAndStation) {
+        return ErrorType::InvalidParameter;
     }
 
-    return fromPlatformError(result);
+    _u16 result = 0;
+    if (mode == WifiTypes::Mode::AccessPoint) {
+        result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_PASSWORD, password.size(), reinterpret_cast<const unsigned char *>(password.c_str()));
+
+        if (0 == result) {
+            _accessPointPassword = password;
+        }
+
+        error = fromPlatformError(result);
+    }
+    else if (mode == WifiTypes::Mode::Station) {
+        _stationPassword = password;
+    }
+
+    return error;
 }
 
 ErrorType Wifi::setMode(WifiTypes::Mode mode) {
@@ -223,12 +254,12 @@ ErrorType Wifi::setMode(WifiTypes::Mode mode) {
 ErrorType Wifi::setAuthMode(WifiTypes::AuthMode authMode) {
     ErrorType error = ErrorType::Failure;
 
-    unsigned short securityType = toCc32xxSecurityType(authMode, error);
+    _u8 securityType = toCc32xxSecurityType(authMode, error);
     if (ErrorType::Success != error) {
         return error;
     }
 
-    signed short result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_SECURITY_TYPE, 1, (_u8 *)&securityType);
+    _u16 result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_SECURITY_TYPE, 1, (_u8 *)&securityType);
     if (0 == result) {
         _authMode = authMode;
     }

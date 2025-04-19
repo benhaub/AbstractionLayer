@@ -40,10 +40,10 @@ namespace NetworkFactoryTypes {
         WifiTypes::AuthMode authMode;
         WifiTypes::Mode mode;
     } wifiParams = {
-        "defaultAccessPointSsid",
-        "defaultAccessPointPassword",
-        "defaultStationSsid",
-        "defaultStationPassword",
+        "\0",
+        "\0",
+        "\0",
+        "\0",
         WifiTypes::AuthMode::WpaWpa2,
         WifiTypes::Mode::AccessPoint
     };
@@ -56,6 +56,12 @@ namespace {
 
         if (WifiTypes::Mode::AccessPointAndStation == NetworkFactoryTypes::wifiParams.mode) {
             error = wifi.setSsid(WifiTypes::Mode::AccessPoint, NetworkFactoryTypes::wifiParams.accessPointSsid);
+            error = wifi.setSsid(WifiTypes::Mode::Station, NetworkFactoryTypes::wifiParams.stationSsid);
+        }
+        else if (WifiTypes::Mode::AccessPoint == NetworkFactoryTypes::wifiParams.mode) {
+            error = wifi.setSsid(WifiTypes::Mode::AccessPoint, NetworkFactoryTypes::wifiParams.accessPointSsid);
+        }
+        else if (WifiTypes::Mode::Station == NetworkFactoryTypes::wifiParams.mode) {
             error = wifi.setSsid(WifiTypes::Mode::Station, NetworkFactoryTypes::wifiParams.stationSsid);
         }
         if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
@@ -75,6 +81,12 @@ namespace {
 
         if (WifiTypes::Mode::AccessPointAndStation == NetworkFactoryTypes::wifiParams.mode) {
             error = wifi.setPassword(WifiTypes::Mode::AccessPoint, NetworkFactoryTypes::wifiParams.accessPointPassword);
+            error = wifi.setPassword(WifiTypes::Mode::Station, NetworkFactoryTypes::wifiParams.stationPassword);
+        }
+        else if (WifiTypes::Mode::AccessPoint == NetworkFactoryTypes::wifiParams.mode) {
+            error = wifi.setPassword(WifiTypes::Mode::AccessPoint, NetworkFactoryTypes::wifiParams.accessPointPassword);
+        }
+        else if (WifiTypes::Mode::Station == NetworkFactoryTypes::wifiParams.mode) {
             error = wifi.setPassword(WifiTypes::Mode::Station, NetworkFactoryTypes::wifiParams.stationPassword);
         }
         if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {

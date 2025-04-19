@@ -96,6 +96,7 @@ class WifiAbstraction : public NetworkAbstraction {
      * @param[in] mode The wifi mode to set the SSID for
      * @param[in] ssid The ssid to set
      * @returns ErrorType::InvalidParameter if the ssid is longer thatn 32 bytes.
+     * @returns ErrorType::InvalidParameter if the mode is AccessPointAndStation.
      * @returns ErrorType::Success if the ssid is set.
      * @post No changes take effect until either initialization is complete or wifi is reinitialized
      */
@@ -106,6 +107,7 @@ class WifiAbstraction : public NetworkAbstraction {
      * @param[in] mode The wifi mode to set the password for
      * @param[in] password The password to set
      * @returns ErrorType::InvalidParameter if the password is longer than 64 bytes.
+     * @returns ErrorType::InvalidParameter if the mode is AccessPointAndStation.
      * @returns ErrorType::Success if the password is set.
      * @post No changes take effect until either initialization is complete or wifi is reinitialized
     */
