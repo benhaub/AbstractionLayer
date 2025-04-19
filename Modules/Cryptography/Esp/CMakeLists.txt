@@ -7,7 +7,9 @@ add_library(EspCryptography
 STATIC
   CryptographyModule.cpp
 )
+
 target_include_directories(Cryptography INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:Cryptography,INTERFACE_INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspCryptography PUBLIC abstractionLayer)
 target_link_libraries(EspCryptography PUBLIC Cryptography)
