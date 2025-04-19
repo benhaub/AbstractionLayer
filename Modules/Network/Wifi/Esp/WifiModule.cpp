@@ -329,8 +329,6 @@ extern "C" {
 #endif
 
 static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData) {
-    static int s_retry_num = 0;
-
     //This is here just to inform you of what arg is.
     __attribute__((unused)) Wifi *self = reinterpret_cast<Wifi *>(arg);
 
@@ -364,10 +362,7 @@ static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t even
     else if (eventBase == IP_EVENT && eventId == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *) eventData;
         PLT_LOGI(Wifi::TAG, "Got IP:" IPSTR, IP2STR(&event->ip_info.ip));
-        s_retry_num = 0;
     }
-
-    s_retry_num++;
 }
 
 #ifdef __cplusplus
