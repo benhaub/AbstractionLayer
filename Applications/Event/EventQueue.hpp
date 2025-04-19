@@ -50,7 +50,8 @@ class EventQueue {
     
     public:
     EventQueue();
-    ~EventQueue() = default;
+    //TODO: This should be handled instead of asserting. Delete the queue when the last event is removed.
+    ~EventQueue() { assert(events.size() == 0); };
 
     /**
      * @brief Adds an event to the to the queue.

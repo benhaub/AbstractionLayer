@@ -16,6 +16,8 @@ EventQueue::EventQueue() {
     ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _binarySemaphore);
     assert(ErrorType::Success == error);
     error = OperatingSystem::Instance().currentThreadId(_ownerThreadId);
+    //If assert fails, the thread is not known to the OperatingSystem. It only knows about threads that it explicitely creates.
+    //e.g. You create an event queue in main.cpp. This thread is not known to the OperatingSystem.
     assert(ErrorType::Success == error);
 }
 
