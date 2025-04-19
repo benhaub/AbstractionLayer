@@ -33,15 +33,19 @@ namespace NetworkFactoryTypes {
      * @note Declared static so that multiple definition errors don't occur if the NetworkFactory is included more than once.
      */
     static struct WifiParams {
-        const char ssid[32];
-        const char password[64];
-        WifiConfig::AuthMode authMode;
-        WifiConfig::Mode mode;
+        const char accessPointSsid[32];
+        const char accessPointPassword[64];
+        const char stationSsid[32];
+        const char stationPassword[64];
+        WifiTypes::AuthMode authMode;
+        WifiTypes::Mode mode;
     } wifiParams = {
-        "defaultSsid",
-        "defaultPassword",
-        WifiConfig::AuthMode::WpaWpa2,
-        WifiConfig::Mode::AccessPoint
+        "defaultAccessPointSsid",
+        "defaultAccessPointPassword",
+        "defaultStationSsid",
+        "defaultStationPassword",
+        WifiTypes::AuthMode::WpaWpa2,
+        WifiTypes::Mode::AccessPoint
     };
 }
 
@@ -50,7 +54,10 @@ namespace {
     ErrorType WifiConfigure(Wifi &wifi) {
         ErrorType error = ErrorType::Success;
 
-        error = wifi.setSsid(NetworkFactoryTypes::wifiParams.mode, NetworkFactoryTypes::wifiParams.ssid);
+        if (WifiTypes::Mode::AccessPointAndStation == NetworkFactoryTypes::wifiParams.mode) {
+            error = wifi.setSsid(WifiTypes::Mode::AccessPoint, NetworkFactoryTypes::wifiParams.accessPointSsid);
+            error = wifi.setSsid(WifiTypes::Mode::Station, NetworkFactoryTypes::wifiParams.stationSsid);
+        }
         if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
             PLT_LOGW(NetworkFactoryTag, "Setting wifi SSID is not allowed on this platform <error:%u>", (uint8_t)error);
         }
@@ -66,7 +73,10 @@ namespace {
             PLT_LOGE(NetworkFactoryTag, "Failed to set atuhorization mode <error:%u>", (uint8_t)error);
         }
 
-        error = wifi.setPassword(NetworkFactoryTypes::wifiParams.mode, NetworkFactoryTypes::wifiParams.password);
+        if (WifiTypes::Mode::AccessPointAndStation == NetworkFactoryTypes::wifiParams.mode) {
+            error = wifi.setPassword(WifiTypes::Mode::AccessPoint, NetworkFactoryTypes::wifiParams.accessPointPassword);
+            error = wifi.setPassword(WifiTypes::Mode::Station, NetworkFactoryTypes::wifiParams.stationPassword);
+        }
         if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
             PLT_LOGW(NetworkFactoryTag, "Setting wifi password is not allowed on this platform <error:%u>", (uint8_t)error);
         }

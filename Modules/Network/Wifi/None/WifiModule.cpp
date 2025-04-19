@@ -48,18 +48,18 @@ ErrorType Wifi::radioOff() {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::setSsid(WifiConfig::Mode mode, const std::string &ssid) {
+ErrorType Wifi::setSsid(WifiTypes::Mode mode, const std::string &ssid) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::setPassword(WifiConfig::Mode mode, const std::string &password) {
+ErrorType Wifi::setPassword(WifiTypes::Mode mode, const std::string &password) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::setMode(WifiConfig::Mode mode) {
+ErrorType Wifi::setMode(WifiTypes::Mode mode) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::setAuthMode(WifiConfig::AuthMode authMode) {
+ErrorType Wifi::setAuthMode(WifiTypes::AuthMode authMode) {
     return ErrorType::NotImplemented;
 }

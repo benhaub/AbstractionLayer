@@ -30,76 +30,76 @@ class Wifi : public WifiAbstraction {
 
     ErrorType radioOn() override;
     ErrorType radioOff() override;
-    ErrorType setSsid(WifiConfig::Mode mode, const std::string &ssid) override;
-    ErrorType setPassword(WifiConfig::Mode mode, const std::string &password) override;
-    ErrorType setMode(WifiConfig::Mode mode) override;
-    ErrorType setAuthMode(WifiConfig::AuthMode authMode) override;
+    ErrorType setSsid(WifiTypes::Mode mode, const std::string &ssid) override;
+    ErrorType setPassword(WifiTypes::Mode mode, const std::string &password) override;
+    ErrorType setMode(WifiTypes::Mode mode) override;
+    ErrorType setAuthMode(WifiTypes::AuthMode authMode) override;
 
     private:
-    WifiConfig::Mode fromCc32xxRole(const _i16 role) {
+    WifiTypes::Mode fromCc32xxRole(const _i16 role) {
         switch (role) {
             case ROLE_STA:
-                return WifiConfig::Mode::Station;
+                return WifiTypes::Mode::Station;
             case ROLE_AP:
-                return WifiConfig::Mode::AccessPoint;
+                return WifiTypes::Mode::AccessPoint;
             case ROLE_P2P:
-                return WifiConfig::Mode::PointToPoint;
+                return WifiTypes::Mode::PointToPoint;
             case ROLE_TAG:
             default:
-                return WifiConfig::Mode::Unknown;
+                return WifiTypes::Mode::Unknown;
         }
     }
 
-    _u8 toCc32xxRole(const WifiConfig::Mode mode, ErrorType &error) {
+    _u8 toCc32xxRole(const WifiTypes::Mode mode, ErrorType &error) {
         error = ErrorType::Success;
 
         switch (mode) {
-            case WifiConfig::Mode::Station:
+            case WifiTypes::Mode::Station:
                 return ROLE_STA;
-            case WifiConfig::Mode::AccessPoint:
+            case WifiTypes::Mode::AccessPoint:
                 return ROLE_AP;
-            case WifiConfig::Mode::PointToPoint:
+            case WifiTypes::Mode::PointToPoint:
                 return ROLE_P2P;
-            case WifiConfig::Mode::Unknown:
+            case WifiTypes::Mode::Unknown:
             default:
                 error = ErrorType::InvalidParameter;
                 return ROLE_STA;
         }
     }
 
-    signed short toCc32xxSecurityType(const WifiConfig::AuthMode authMode, ErrorType &error) {
+    signed short toCc32xxSecurityType(const WifiTypes::AuthMode authMode, ErrorType &error) {
         error = ErrorType::Success;
 
         switch (authMode) {
-            case WifiConfig::AuthMode::Open:
+            case WifiTypes::AuthMode::Open:
                 return SL_WLAN_SEC_TYPE_OPEN;
-            case WifiConfig::AuthMode::Wep:
+            case WifiTypes::AuthMode::Wep:
                 return SL_WLAN_SEC_TYPE_WEP;
-            case WifiConfig::AuthMode::Wpa:
+            case WifiTypes::AuthMode::Wpa:
                 return SL_WLAN_SEC_TYPE_WPA;
-            case WifiConfig::AuthMode::WpaWpa2:
+            case WifiTypes::AuthMode::WpaWpa2:
                 return SL_WLAN_SEC_TYPE_WPA_WPA2;
-            case WifiConfig::AuthMode::WpsPbc:
+            case WifiTypes::AuthMode::WpsPbc:
                 return SL_WLAN_SEC_TYPE_WPS_PBC;
-            case WifiConfig::AuthMode::WpsPin:
+            case WifiTypes::AuthMode::WpsPin:
                 return SL_WLAN_SEC_TYPE_WPS_PIN;
-            case WifiConfig::AuthMode::WpaEnt:
+            case WifiTypes::AuthMode::WpaEnt:
                 return SL_WLAN_SEC_TYPE_WPA_ENT;
-            case WifiConfig::AuthMode::P2pPbc:
+            case WifiTypes::AuthMode::P2pPbc:
                 return SL_WLAN_SEC_TYPE_P2P_PBC;
-            case WifiConfig::AuthMode::P2pPinKeypad:
+            case WifiTypes::AuthMode::P2pPinKeypad:
                 return SL_WLAN_SEC_TYPE_P2P_PIN_KEYPAD;
-            case WifiConfig::AuthMode::P2pPinDisplay:
+            case WifiTypes::AuthMode::P2pPinDisplay:
                 return SL_WLAN_SEC_TYPE_P2P_PIN_DISPLAY;
-            case WifiConfig::AuthMode::P2pPinAuto:
+            case WifiTypes::AuthMode::P2pPinAuto:
                 return SL_WLAN_SEC_TYPE_P2P_PIN_AUTO;
-            case WifiConfig::AuthMode::WepShared:
+            case WifiTypes::AuthMode::WepShared:
                 return SL_WLAN_SEC_TYPE_WEP_SHARED;
-            case WifiConfig::AuthMode::Wpa2Plus:
+            case WifiTypes::AuthMode::Wpa2Plus:
                 return SL_WLAN_SEC_TYPE_WPA2_PLUS;
-            case WifiConfig::AuthMode::Wpa3:
+            case WifiTypes::AuthMode::Wpa3:
                 return SL_WLAN_SEC_TYPE_WPA3;
-            case WifiConfig::AuthMode::WpaPmk:
+            case WifiTypes::AuthMode::WpaPmk:
                 return SL_WLAN_SEC_TYPE_WPA_PMK;
             default:
                 error = ErrorType::InvalidParameter;

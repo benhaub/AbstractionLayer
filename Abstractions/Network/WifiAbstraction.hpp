@@ -9,7 +9,11 @@
 
 #include "NetworkAbstraction.hpp"
 
-namespace WifiConfig {
+/**
+ * @namespace WifiTypes
+ * @brief Types for the wifi abstraction.
+*/
+namespace WifiTypes {
 
     /**
      * @enum Mode
@@ -95,7 +99,7 @@ class WifiAbstraction : public NetworkAbstraction {
      * @returns ErrorType::Success if the ssid is set.
      * @post No changes take effect until either initialization is complete or wifi is reinitialized
      */
-    virtual ErrorType setSsid(WifiConfig::Mode mode, const std::string &ssid) = 0;
+    virtual ErrorType setSsid(WifiTypes::Mode mode, const std::string &ssid) = 0;
     /**
      * @brief Set the password for the selected mode.
      * @pre Since passwords have length requirements based on the authorization mode, you must call setAuthMode first.
@@ -105,24 +109,24 @@ class WifiAbstraction : public NetworkAbstraction {
      * @returns ErrorType::Success if the password is set.
      * @post No changes take effect until either initialization is complete or wifi is reinitialized
     */
-    virtual ErrorType setPassword(WifiConfig::Mode mode, const std::string &password) = 0;
+    virtual ErrorType setPassword(WifiTypes::Mode mode, const std::string &password) = 0;
     /**
      * @brief set the wifi mode.
      * @param[in] mode The mode to set.
      * @sa WifiConfig::Mode
      * @post No changes take effect until either initialization is complete or wifi is reinitialized
     */
-    virtual ErrorType setMode(WifiConfig::Mode mode) = 0;
+    virtual ErrorType setMode(WifiTypes::Mode mode) = 0;
     /**
      * @brief set the wifi authentication mode.
      * @param[in] authMode The authentication mode to set.
      * @sa WifiConfig::AuthMode
      * @post No changes take effect until either initialization is complete or wifi is reinitialized
      */
-    virtual ErrorType setAuthMode(WifiConfig::AuthMode authMode) = 0;
+    virtual ErrorType setAuthMode(WifiTypes::AuthMode authMode) = 0;
 
     /// @brief  Get the mode as a constant reference
-    const WifiConfig::Mode &mode() const { return _mode; }
+    const WifiTypes::Mode &mode() const { return _mode; }
     /// @brief Get the SSID for the access point as a constant reference
     const std::string &accessPointSsid() const { return _accessPointSsid; }
     /// @brief Get the password for the access point as a constant reference
@@ -136,13 +140,13 @@ class WifiAbstraction : public NetworkAbstraction {
     /// @brief Get the max connections as a constant reference
     const uint8_t &maxConnections() const { return _maxConnections; }
     /// @brief Get the authentication mode as a constant reference
-    const WifiConfig::AuthMode &authMode() const { return _authMode; }
+    const WifiTypes::AuthMode &authMode() const { return _authMode; }
     /// @brief Get the ip address as a constant reference
     const std::string &ipAddress() const { return _ipAddress; }
 
     protected:
     /// @brief The current wifi mode
-    WifiConfig::Mode _mode = WifiConfig::Mode::Unknown;
+    WifiTypes::Mode _mode = WifiTypes::Mode::Unknown;
     /// @brief The current access point ssid
     std::string _accessPointSsid;
     /// @brief The current access point password
@@ -158,7 +162,7 @@ class WifiAbstraction : public NetworkAbstraction {
     /// @brief The current limit on the number of connections
     uint8_t _maxConnections = 0;
     /// @brief The current authentication mode
-    WifiConfig::AuthMode _authMode = WifiConfig::AuthMode::Unknown;
+    WifiTypes::AuthMode _authMode = WifiTypes::AuthMode::Unknown;
 };
 
 #endif

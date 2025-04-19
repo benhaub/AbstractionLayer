@@ -78,10 +78,10 @@ ErrorType Wifi::init() {
 }
 
 ErrorType Wifi::networkUp() {
-    assert(WifiConfig::Mode::Unknown != _mode);
+    assert(WifiTypes::Mode::Unknown != _mode);
     Seconds timeout = 30;
 
-    if (_mode == WifiConfig::Mode::AccessPointAndStation) {
+    if (_mode == WifiTypes::Mode::AccessPointAndStation) {
         return ErrorType::NotSupported;
     }
 
@@ -147,7 +147,7 @@ ErrorType Wifi::radioOn() {
     const _i16 mode = sl_Start(NULL, NULL, NULL);
     _mode = fromCc32xxRole(mode);
 
-    if (_mode != WifiConfig::Mode::Unknown) {
+    if (_mode != WifiTypes::Mode::Unknown) {
         return ErrorType::Success;
     }
     else {
@@ -164,8 +164,8 @@ ErrorType Wifi::radioOff() {
     return fromPlatformError(result);
 }
 
-ErrorType Wifi::setSsid(WifiConfig::Mode mode, const std::string &ssid) {
-    if (mode != WifiConfig::Mode::AccessPoint) {
+ErrorType Wifi::setSsid(WifiTypes::Mode mode, const std::string &ssid) {
+    if (mode != WifiTypes::Mode::AccessPoint) {
         return ErrorType::NotSupported;
     }
 
@@ -177,15 +177,15 @@ ErrorType Wifi::setSsid(WifiConfig::Mode mode, const std::string &ssid) {
     return fromPlatformError(result);
 }
 
-ErrorType Wifi::setPassword(WifiConfig::Mode mode, const std::string &password) {
+ErrorType Wifi::setPassword(WifiTypes::Mode mode, const std::string &password) {
     //Passwords have length requirements based on the authorization mode
-    assert(WifiConfig::AuthMode::Unknown != _authMode);
+    assert(WifiTypes::AuthMode::Unknown != _authMode);
 
-    if (WifiConfig::Mode::AccessPoint != mode) {
+    if (WifiTypes::Mode::AccessPoint != mode) {
         return ErrorType::NotSupported;
     }
 
-    if (WifiConfig::AuthMode::Wpa == _authMode || WifiConfig::AuthMode::WpaWpa2 == _authMode) {
+    if (WifiTypes::AuthMode::Wpa == _authMode || WifiTypes::AuthMode::WpaWpa2 == _authMode) {
         if (password.size() < 8) {
             return ErrorType::InvalidParameter;
         }
@@ -204,7 +204,7 @@ ErrorType Wifi::setPassword(WifiConfig::Mode mode, const std::string &password) 
     return fromPlatformError(result);
 }
 
-ErrorType Wifi::setMode(WifiConfig::Mode mode) {
+ErrorType Wifi::setMode(WifiTypes::Mode mode) {
     ErrorType error = ErrorType::Failure;
 
     //TI uses mode and role interchangeably and I wish they wouldn't.
@@ -220,7 +220,7 @@ ErrorType Wifi::setMode(WifiConfig::Mode mode) {
     return fromPlatformError(result);
 }
 
-ErrorType Wifi::setAuthMode(WifiConfig::AuthMode authMode) {
+ErrorType Wifi::setAuthMode(WifiTypes::AuthMode authMode) {
     ErrorType error = ErrorType::Failure;
 
     unsigned short securityType = toCc32xxSecurityType(authMode, error);

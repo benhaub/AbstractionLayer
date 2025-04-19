@@ -34,7 +34,7 @@ ErrorType Wifi::init() {
     ErrorType error;
     _status.isUp = false;
 
-    if (WifiConfig::Mode::Unknown == mode() || WifiConfig::AuthMode::Unknown == authMode()) {
+    if (WifiTypes::Mode::Unknown == mode() || WifiTypes::AuthMode::Unknown == authMode()) {
         return ErrorType::PrerequisitesNotMet;
     }
 
@@ -68,17 +68,17 @@ ErrorType Wifi::init() {
     esp_wifi_set_mode(toEspWifiMode(mode()));
     unsigned int eventBitsToWaitFor = 0;
     switch (mode()) {
-        case WifiConfig::Mode::AccessPoint: {
+        case WifiTypes::Mode::AccessPoint: {
             error = initAccessPoint();
             eventBitsToWaitFor |= wifiApStartedBit;
             break;
         }
-        case WifiConfig::Mode::Station: {
+        case WifiTypes::Mode::Station: {
             error = initStation();
             eventBitsToWaitFor |= wifiStaStartedBit;
             break;
         }
-        case WifiConfig::Mode::AccessPointAndStation: {
+        case WifiTypes::Mode::AccessPointAndStation: {
             error = initStation();
             if (ErrorType::Success == error) {
                 error = initAccessPoint();
@@ -280,14 +280,14 @@ ErrorType Wifi::mainLoop() {
     return runNextEvent();
 }
 
-ErrorType Wifi::setSsid(WifiConfig::Mode mode, const std::string &ssid) {
-    if (WifiConfig::Mode::Station == mode) {
+ErrorType Wifi::setSsid(WifiTypes::Mode mode, const std::string &ssid) {
+    if (WifiTypes::Mode::Station == mode) {
         setStationSsid(ssid);
     }
-    else if (WifiConfig::Mode::AccessPoint == mode) {
+    else if (WifiTypes::Mode::AccessPoint == mode) {
         setAccessPointSsid(ssid);
     }
-    else if (WifiConfig::Mode::AccessPointAndStation == mode) {
+    else if (WifiTypes::Mode::AccessPointAndStation == mode) {
         return ErrorType::InvalidParameter;
     }
 
@@ -306,16 +306,16 @@ ErrorType Wifi::setAccessPointSsid(const std::string &ssid) {
     return ErrorType::Success;
 }
 
-ErrorType Wifi::setPassword(WifiConfig::Mode mode, const std::string &password) {
+ErrorType Wifi::setPassword(WifiTypes::Mode mode, const std::string &password) {
     ErrorType error = ErrorType::Success;
 
-    if (WifiConfig::Mode::Station == mode) {
+    if (WifiTypes::Mode::Station == mode) {
         _stationPassword = password;
     }
-    else if (WifiConfig::Mode::AccessPoint == mode) {
+    else if (WifiTypes::Mode::AccessPoint == mode) {
         _accessPointPassword = password;
     }
-    else if (WifiConfig::Mode::AccessPointAndStation == mode) {
+    else if (WifiTypes::Mode::AccessPointAndStation == mode) {
         error = ErrorType::InvalidParameter;
     }
 

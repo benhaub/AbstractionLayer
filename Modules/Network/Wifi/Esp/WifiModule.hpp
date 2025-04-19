@@ -36,34 +36,34 @@ class Wifi : public WifiAbstraction {
 
     ErrorType radioOn() override;
     ErrorType radioOff() override;
-    ErrorType setSsid(WifiConfig::Mode mode, const std::string &ssid) override;
-    ErrorType setPassword(WifiConfig::Mode mode, const std::string &password) override;
-    ErrorType setMode(WifiConfig::Mode mode) override { _mode = mode; return ErrorType::Success; }
-    ErrorType setAuthMode(WifiConfig::AuthMode authMode) override { _authMode = authMode; return ErrorType::Success; }
+    ErrorType setSsid(WifiTypes::Mode mode, const std::string &ssid) override;
+    ErrorType setPassword(WifiTypes::Mode mode, const std::string &password) override;
+    ErrorType setMode(WifiTypes::Mode mode) override { _mode = mode; return ErrorType::Success; }
+    ErrorType setAuthMode(WifiTypes::AuthMode authMode) override { _authMode = authMode; return ErrorType::Success; }
 
     private:
-    wifi_auth_mode_t toEspAuthMode(WifiConfig::AuthMode authMode) {
+    wifi_auth_mode_t toEspAuthMode(WifiTypes::AuthMode authMode) {
         switch (authMode) {
-            case WifiConfig::AuthMode::Open:
+            case WifiTypes::AuthMode::Open:
                 return WIFI_AUTH_OPEN;
-            case WifiConfig::AuthMode::Wep:
+            case WifiTypes::AuthMode::Wep:
                 return WIFI_AUTH_WEP;
-            case WifiConfig::AuthMode::Wpa:
+            case WifiTypes::AuthMode::Wpa:
                 return WIFI_AUTH_WPA_PSK;
-            case WifiConfig::AuthMode::WpaWpa2:
+            case WifiTypes::AuthMode::WpaWpa2:
                 return WIFI_AUTH_WPA2_PSK;
             default:
                 return WIFI_AUTH_OPEN;
         }
     }
 
-    wifi_mode_t toEspWifiMode(WifiConfig::Mode mode) {
+    wifi_mode_t toEspWifiMode(WifiTypes::Mode mode) {
         switch (mode) {
-            case WifiConfig::Mode::AccessPoint:
+            case WifiTypes::Mode::AccessPoint:
                 return WIFI_MODE_AP;
-            case WifiConfig::Mode::Station:
+            case WifiTypes::Mode::Station:
                 return WIFI_MODE_STA;
-            case WifiConfig::Mode::AccessPointAndStation:
+            case WifiTypes::Mode::AccessPointAndStation:
                 return WIFI_MODE_APSTA;
             default:
                 return WIFI_MODE_AP;

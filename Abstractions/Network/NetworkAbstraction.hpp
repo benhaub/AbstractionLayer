@@ -46,6 +46,8 @@ namespace NetworkTypes {
     constexpr uint8_t Ipv4AddressStringSize = 18;
     /// @brief Size of a MAC address string with tombstone
     constexpr uint8_t MacAddressStringSize = 18;
+    /// @brief Size of a MAC address byte array
+    constexpr uint8_t MacAddressByteArraySize = 6;
 }
 
 /**
