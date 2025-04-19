@@ -121,12 +121,12 @@ ErrorType Wifi::initAccessPoint() {
     esp_netif_create_default_wifi_ap();
 
     wifi_config_t wifiAccessPointConfig;
+    memset(&wifiAccessPointConfig, 0, sizeof(wifi_config_t));
+
     memcpy(wifiAccessPointConfig.ap.ssid, accessPointSsid().data(), accessPointSsid().length());
     wifiAccessPointConfig.ap.ssid_len = accessPointSsid().length();
     wifiAccessPointConfig.ap.channel = 1;
     memcpy(wifiAccessPointConfig.ap.password, accessPointPassword().data(), accessPointPassword().length());
-    //Wifi driver only knows how to verify the password if it's properly terminated.
-    wifiAccessPointConfig.ap.password[accessPointPassword().length()] = '\0';
     wifiAccessPointConfig.ap.max_connection = 10;
     wifiAccessPointConfig.ap.authmode = toEspAuthMode(authMode());
     wifiAccessPointConfig.ap.pmf_cfg.required = false;
@@ -142,6 +142,8 @@ ErrorType Wifi::initStation() {
     esp_netif_create_default_wifi_sta();
 
     wifi_config_t wifiStationConfig;
+    memset(&wifiStationConfig, 0, sizeof(wifi_config_t));
+
     memcpy(wifiStationConfig.sta.ssid, stationSsid().data(), stationSsid().length());
     memcpy(wifiStationConfig.sta.password, stationPassword().data(), stationPassword().length());
     wifiStationConfig.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
