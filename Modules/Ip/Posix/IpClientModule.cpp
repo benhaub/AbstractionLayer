@@ -68,8 +68,15 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
             PLT_LOGW(TAG, "Truncating microseconds because it is bigger than the type used by this platform.");
             tvUsec = std::numeric_limits<decltype(timeoutval.tv_usec)>::max();
         }
-        timeoutval.tv_sec = 0;
-        timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
+        //There is some kind of undocumented limit on the amount of usec's that can be used for Darwin, so try to use seconds if possible
+        if (timeout >= 1000) {
+            timeoutval.tv_sec = timeout / 1000;
+            timeoutval.tv_usec = 0;
+        }
+        else {
+            timeoutval.tv_sec = 0;
+            timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
+        }
 
         // Connection in progress -> have to wait until the connecting socket is marked as writable, i.e. connection completes
         int res = select(_socket+1, NULL, &fdset, NULL, &timeoutval);
