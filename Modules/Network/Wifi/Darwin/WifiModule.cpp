@@ -95,20 +95,23 @@ ErrorType Wifi::rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const So
     return ErrorType::NotAvailable;
 }
 
-ErrorType Wifi::getMacAddress(std::string &macAddress) {
-    const Count macAddressSize = 17;
+ErrorType Wifi::getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) {
     //The command extracts just the mac address from the output.
     constexpr char command[] = "sh -c \"networksetup -getmacaddress Wi-Fi | cut -f 3 -d\' \' \"";
     ErrorType error = ErrorType::Failure;
     
     FILE* pipe = popen(command, "r");
     if (nullptr != pipe) {
-        if (nullptr != fgets(macAddress.data(), macAddress.capacity(), pipe)) {
-            macAddress.resize(macAddressSize);
+        const size_t bytesRead = fread(macAddress.data(), sizeof(uint8_t), macAddress.max_size(), pipe);
+        if (feof(pipe) || bytesRead == macAddress.max_size()) {
             error = ErrorType::Success;
+            for (size_t i = 0; i < macAddress.size(); i++) {
+                if (macAddress.at(i) == '\n') {
+                    macAddress.at(i) = '\0';
+                }
+            }
         }
         else {
-            macAddress.clear();
             pclose(pipe);
             error = ErrorType::Failure;
         }
@@ -118,7 +121,7 @@ ErrorType Wifi::getMacAddress(std::string &macAddress) {
 }
 
 ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
-    std::string signalNoiseRatioString(64, 0);
+    std::array<char, 64> signalNoiseRatioString;
     
     //The command extracts just the mac address from the output.
     //You can use the same command to get the noise as well to calculate a ratio .
@@ -127,11 +130,16 @@ ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
     
     FILE* pipe = popen(command, "r");
     if (nullptr != pipe) {
-        if (nullptr != fgets(signalNoiseRatioString.data(), signalNoiseRatioString.capacity(), pipe)) {
+        const size_t bytesRead = fread(signalNoiseRatioString.data(), sizeof(uint8_t), signalNoiseRatioString.max_size(), pipe);
+        if (feof(pipe) || bytesRead == signalNoiseRatioString.max_size()) {
             error = ErrorType::Success;
+            for (size_t i = 0; i < signalNoiseRatioString.size(); i++) {
+                if (signalNoiseRatioString.at(i) == '\n') {
+                    signalNoiseRatioString.at(i) = '\0';
+                }
+            }
         }
         else {
-            signalNoiseRatioString.clear();
             pclose(pipe);
             error = ErrorType::Failure;
         }
