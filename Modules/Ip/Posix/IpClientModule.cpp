@@ -137,20 +137,20 @@ ErrorType IpClient::disconnect() {
 ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds timeout) {
     assert(0 != _socket);
     bool doneSending = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
 
-    auto tx = [this, &error, &doneSending](const std::string &frame, const Milliseconds timeout) -> ErrorType {
-        error = network().txBlocking(frame, _socket, timeout);
-        if (ErrorType::Success != error) {
+    auto tx = [&](const std::string &frame, const Milliseconds timeout) -> ErrorType {
+        callbackError = network().txBlocking(frame, _socket, timeout);
+        if (ErrorType::Success != callbackError) {
             _status.connected = false;
         }
 
         doneSending = true;
-        return error;
+        return callbackError;
     };
 
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(tx, data, timeout));
-    error = network().addEvent(event);
+    ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
@@ -159,7 +159,7 @@ ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds tim
         OperatingSystem::Instance().delay(timeout);
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds timeout) {
