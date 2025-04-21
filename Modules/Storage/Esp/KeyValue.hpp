@@ -136,11 +136,14 @@ namespace KeyValue {
     }
 
     ErrorType writeBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, const std::string &data) {
-        if (nullptr == _handle.get()) {
-            return ErrorType::InvalidParameter;
+        ErrorType error = ErrorType::InvalidParameter;
+        if (nullptr != _handle.get()) {
+            if (file.path.length() < NVS_KEY_NAME_MAX_SIZE) {
+                error = fromPlatformError(_handle->set_blob(file.path.c_str(), data.c_str(), data.size()));
+            }
         }
 
-        return fromPlatformError(_handle->set_blob(file.path.c_str(), data.c_str(), data.size()));
+        return error;
     }
 
     ErrorType size(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file) {

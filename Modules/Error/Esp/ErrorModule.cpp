@@ -3,6 +3,7 @@
 //ESP
 #include "esp_log.h"
 #include "esp_err.h"
+#include "esp_check.h"
 #include "esp_wifi.h" //For wifi error codes.
 #include "nvs.h"     //For NVS error codes.
 #include <cerrno>
@@ -30,6 +31,7 @@ ErrorType fromPlatformError(int32_t err) {
         case ESP_ERR_INVALID_ARG:
         case ESP_ERR_INVALID_SIZE:
         case ESP_ERR_NVS_VALUE_TOO_LONG:
+        case ESP_ERR_NVS_KEY_TOO_LONG:
         case ESP_ERR_NVS_INVALID_NAME:
         case ESP_ERR_NVS_INVALID_LENGTH:
         case ESP_ERR_NVS_PART_NOT_FOUND:
