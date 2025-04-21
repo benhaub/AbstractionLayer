@@ -13,7 +13,7 @@ ErrorType Mikroe28byj485V::init() {
                 if (PeripheralNumber::Unknown != gptPwm->peripheralNumber()) {
                     gptPwm->setPeriod(Microseconds(200000));
                     gptPwm->setDutyCycle(Percent(100));
-                    ErrorType error = gptPwm->init();
+                    error = gptPwm->init();
                     if (ErrorType::Success == error) {
                         error = gptPwm->stop();
                     }
@@ -27,7 +27,7 @@ ErrorType Mikroe28byj485V::init() {
                 if (PeripheralNumber::Unknown != pwm->peripheralNumber()) {
                     pwm->setPeriod(Microseconds(200000));
                     pwm->setDutyCycle(Percent(100));
-                    ErrorType error = pwm->init();
+                    error = pwm->init();
                     if (ErrorType::Success == error) {
                         error = pwm->stop();
                     }

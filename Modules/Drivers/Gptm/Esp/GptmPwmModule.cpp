@@ -3,6 +3,7 @@
 //ESP
 #include "driver/mcpwm_oper.h"
 #include "driver/mcpwm_gen.h"
+#include "hal/mcpwm_ll.h"
 
 namespace {
     Count _GroupZeroActiveTimers = 0;
@@ -25,12 +26,12 @@ ErrorType GptmPwmModule::init() {
     const mcpwm_timer_config_t timerConfig = {
         .group_id = _groupId,
         .clk_src = MCPWM_TIMER_CLK_SRC_DEFAULT,
-        .resolution_hz = 1000000,
+        .resolution_hz = _TimerResolution,
         .count_mode = MCPWM_TIMER_COUNT_MODE_UP,
         .period_ticks = microsecondsToEspTimerTicks(_period) 
     };
 
-    esp_err_t err;
+    esp_err_t err = ESP_FAIL;
     if (ESP_OK == (err = mcpwm_new_timer(&timerConfig, &_timer))) {
         const mcpwm_operator_config_t operatorConfig = {
             .group_id = _groupId
@@ -135,4 +136,9 @@ ErrorType GptmPwmModule::setPeriod(const Microseconds period) {
     }
 
     return fromPlatformError(err);
+}
+
+constexpr uint32_t GptmPwmModule::microsecondsToEspTimerTicks(const Microseconds period) {
+    const float periodToResolutionRatio = static_cast<float>(period) / _TimerResolution;
+    return static_cast<uint32_t>(static_cast<float>(MCPWM_LL_MAX_COUNT_VALUE) * periodToResolutionRatio);
 }
