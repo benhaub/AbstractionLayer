@@ -25,16 +25,17 @@
 ErrorType IpClient::connectTo(const std::string &hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) {
     sock = -1;
     bool doneConnecting = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
 
     auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
         disconnect();
 
         if (version != IpClientTypes::Version::IPv4) {
             PLT_LOGE(TAG, "only IPv4 is supported");
-            error =  ErrorType::NotSupported;
+            callbackError =  ErrorType::NotSupported;
             doneConnecting = true;
-            return error;
+            _status.connected = false;
+            return callbackError;
         }
 
         //While I think I have the code to do the rest of this in Ipv6, I don't know the code to do the DNS stuff in Ipv6.
@@ -46,9 +47,10 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         struct hostent *hent = gethostbyname(hostname.c_str());
         if (NULL == hent) {
             PLT_LOGE(TAG, "couldn't get address for %s", hostname.c_str());
-            error = ErrorType::Failure;
+            callbackError = ErrorType::Failure;
             doneConnecting = true;
-            return error;
+            _status.connected = false;
+            return callbackError;
         }
         struct in_addr **addr_list = (struct in_addr **)hent->h_addr_list;
         struct sockaddr_in dest_ip;
@@ -58,20 +60,21 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
 
         if (-1 == (_socket = socket(toPosixFamily(version), toPosixSocktype(protocol), IPPROTO_IP))) {
             PLT_LOGE(TAG, "couldn't create socket");
-            error = ErrorType::Failure;
+            callbackError = ErrorType::Failure;
             doneConnecting = true;
-            return error;
+            _status.connected = false;
+            return callbackError;
         }
 
         if (-1 == connect(_socket, (struct sockaddr *)&dest_ip, sizeof(dest_ip))) {
             PLT_LOGE(TAG, "couldn't connect to %s (%s)", hostname.c_str(), inet_ntoa(*(struct in_addr *)hent->h_addr_list[0]));
             close(_socket);
-            error = ErrorType::Failure;
+            callbackError = ErrorType::Failure;
             doneConnecting = true;
-            return error;
+            _status.connected = false;
+            return callbackError;
         }
 
-        PLT_LOGI(TAG, "connection in progress");
         fd_set fdset;
         FD_ZERO(&fdset);
         FD_SET(_socket, &fdset);
@@ -82,22 +85,32 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
             PLT_LOGW(TAG, "Truncating microseconds because it is bigger than the type used by this platform.");
             tvUsec = std::numeric_limits<decltype(timeoutval.tv_usec)>::max();
         }
-        timeoutval.tv_sec = 0;
-        timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
+        //Try to use seconds if possible. Some systems don't like very large usec timeouts.
+        if (timeout >= 1000) {
+            timeoutval.tv_sec = timeout / 1000;
+            timeoutval.tv_usec = 0;
+        }
+        else {
+            timeoutval.tv_sec = 0;
+            timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
+        }
 
+        PLT_LOGI(TAG, "connection in progress <timeout(ms): %u>", timeout);
         // Connection in progress -> have to wait until the connecting socket is marked as writable, i.e. connection completes
         int res = select(_socket+1, NULL, &fdset, NULL, &timeoutval);
         if (res < 0) {
             PLT_LOGE(TAG, "Error during connection: select for socket to be writable %s", strerror(errno));
-            error = ErrorType::Failure;
+            callbackError = ErrorType::Failure;
             doneConnecting = true;
-            return error;
+            _status.connected = false;
+            return callbackError;
         }
         else if (res == 0) {
             PLT_LOGE(TAG, "Connection timeout: select for socket to be writable %s", strerror(errno));
-            error = ErrorType::Timeout;
+            callbackError = ErrorType::Timeout;
             doneConnecting = true;
-            return error;
+            _status.connected = false;
+            return callbackError;
         }
         else {
             int sockerr;
@@ -105,38 +118,37 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
 
             if (getsockopt(_socket, SOL_SOCKET, SO_ERROR, (void*)(&sockerr), &len) < 0) {
                 PLT_LOGE(TAG, "Error when getting socket error using getsockopt() %s", strerror(errno));
-                error = ErrorType::Failure;
+                callbackError = ErrorType::Failure;
                 doneConnecting = true;
-                return error;
+                _status.connected = false;
+                return callbackError;
             }
             if (sockerr) {
                 PLT_LOGE(TAG, "Connection error %d", sockerr);
-                error = ErrorType::Failure;
+                callbackError = ErrorType::Failure;
                 doneConnecting = true;
-                return error;
+                _status.connected = false;
+                return callbackError;
             }
         }
 
         sock = _socket;
         _status.connected = true;
+        doneConnecting = true;
         return ErrorType::Success;
     };
 
+    ErrorType error = ErrorType::Failure;
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(connectCb, timeout));
-    if (ErrorType::Success != network().addEvent(event)) {
-        return ErrorType::Failure;
+    if (ErrorType::Success != (error = network().addEvent(event))) {
+        return error;
     }
 
     while (!doneConnecting) {
         OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
-    if (statusConst().connected) {
-        return ErrorType::Success;
-    }
-    else {
-        return error;
-    }
+    return error;
 }
 
 ErrorType IpClient::disconnect() {
