@@ -17,16 +17,17 @@
 ErrorType IpClient::connectTo(const std::string &hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) {
     sock = -1;
     bool doneConnecting = false;
-    ErrorType error = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Failure;
 
     auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
         disconnect();
 
         if (version != IpClientTypes::Version::IPv4) {
             PLT_LOGE(TAG, "only IPv4 is supported");
-            error = ErrorType::NotSupported;
+            callbackError = ErrorType::NotSupported;
             doneConnecting = true;
-            return error;
+            _status.connected = false;
+            return callbackError;
         }
 
         struct hostent *hent = gethostbyname(hostname.c_str());
@@ -34,7 +35,8 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
             PLT_LOGW(TAG, "couldn't get address for %s", hostname.c_str());
             error = ErrorType::Failure;
             doneConnecting = true;
-            return error;
+            _status.connected = false;
+            return callbackError;
         }
         struct in_addr **addr_list = (struct in_addr **)hent->h_addr_list;
         struct sockaddr_in dest_ip;
@@ -44,20 +46,21 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
 
         if (-1 == (_socket = socket(toPosixFamily(version), toPosixSocktype(protocol), IPPROTO_IP))) {
             PLT_LOGW(TAG, "couldn't create socket");
-            error = ErrorType::Failure;
+            callbackError = ErrorType::Failure;
             doneConnecting = true;
-            return error;
+            _status.connected = false;
+            return callbackError;
         }
 
         if (-1 == connect(_socket, (struct sockaddr *)&dest_ip, sizeof(dest_ip))) {
             PLT_LOGW(TAG, "couldn't connect to %s (%s)", hostname.c_str(), inet_ntoa(*(struct in_addr *)hent->h_addr_list[0]));
             close(_socket);
-            error = ErrorType::Failure;
+            callbackError = ErrorType::Failure;
             doneConnecting = true;
-            return error;
+            _status.connected = false;
+            return callbackError;
         }
 
-        PLT_LOGI(TAG, "connection in progress");
         fd_set fdset;
         FD_ZERO(&fdset);
         FD_SET(_socket, &fdset);
@@ -68,7 +71,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
             PLT_LOGW(TAG, "Truncating microseconds because it is bigger than the type used by this platform.");
             tvUsec = std::numeric_limits<decltype(timeoutval.tv_usec)>::max();
         }
-        //There is some kind of undocumented limit on the amount of usec's that can be used for Darwin, so try to use seconds if possible
+        //There is some a limit on the amount of usec's that can be used for Darwin but the limit is not stated, so try to use seconds if possible
         if (timeout >= 1000) {
             timeoutval.tv_sec = timeout / 1000;
             timeoutval.tv_usec = 0;
@@ -78,6 +81,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
             timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
         }
 
+        PLT_LOGI(TAG, "connection in progress <timeout(ms): %u>", timeout);
         // Connection in progress -> have to wait until the connecting socket is marked as writable, i.e. connection completes
         int res = select(_socket+1, NULL, &fdset, NULL, &timeoutval);
         if (res < 0) {
@@ -94,15 +98,17 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
 
             if (getsockopt(_socket, SOL_SOCKET, SO_ERROR, (void*)(&sockerr), &len) < 0) {
                 PLT_LOGW(TAG, "Error when getting socket error using getsockopt() %s", strerror(errno));
-                error = ErrorType::Failure;
+                callbackError = ErrorType::Failure;
                 doneConnecting = true;
-                return error;
+                _status.connected = false;
+                return callbackError;
             }
             if (sockerr) {
                 PLT_LOGW(TAG, "Connection error %d", sockerr);
-                error = ErrorType::Failure;
+                callbackError = ErrorType::Failure;
                 doneConnecting = true;
-                return error;
+                _status.connected = false;
+                return callbackError;
             }
         }
 
@@ -112,6 +118,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         return ErrorType::Success;
     };
 
+    ErrorType error = ErrorType::Failure;
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(connectCb, timeout));
     if (ErrorType::Success != (error = network().addEvent(event))) {
         PLT_LOGW(TAG, "Could not add connection event to network");
@@ -122,12 +129,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
-    if (statusConst().connected) {
-        return ErrorType::Success;
-    }
-    else {
-        return error;
-    }
+    return error;
 }
 
 ErrorType IpClient::disconnect() {
@@ -156,7 +158,7 @@ ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds tim
     }
 
     while (!doneSending) {
-        OperatingSystem::Instance().delay(timeout);
+        OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
     return callbackError;
@@ -178,9 +180,8 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
         return callbackError;
     };
 
-    //For some reason, I couldn't pass buffer as a reference parameter to the callback. It had to be a pointer otherwise the
-    //pointer to the data inside the string would change.
     std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx));
+    assert(nullptr != event.get());
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
