@@ -110,7 +110,7 @@
 #define PLT_LOGD(tag, format, ... ) PLT_LOG_LEVEL(LogType::Debug,   tag, format, ##__VA_ARGS__)
 
 /**
- * @def PLT_LOG_BUFFER_HEXDUMP(tag, buffer, buff_len, level)
+ * @def PLT_LOG_BUFFER_HEXDUMP(TAG, buffer, buff_len, LogType)
  * @brief Dump the memory contents of a buffer.
  * @param[in] tag The log tag. Can be whatever you want to help you identify where the log came from.
  * @param[in] buffer The buffer to dump
