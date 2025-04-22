@@ -53,8 +53,15 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
         PLT_LOGW(TAG, "Truncating microseconds because it is bigger than the type used by this platform.");
         tvUsec = std::numeric_limits<decltype(timeoutval.tv_usec)>::max();
     }
-    timeoutval.tv_sec = 0;
-    timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
+    //There is some a limit on the amount of usec's that can be used for Darwin but the limit is not stated, so try to use seconds if possible
+    if (timeout >= 1000) {
+        timeoutval.tv_sec = timeout / 1000;
+        timeoutval.tv_usec = 0;
+    }
+    else {
+        timeoutval.tv_sec = 0;
+        timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
+    }
 
     fd_set readfds;
 
