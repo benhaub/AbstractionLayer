@@ -3,7 +3,7 @@
 //C++
 #include <cstring>
 
-Cryptography::Cryptography(std::string_view privateStaticKey, Bytes keySize) : CryptographyAbstraction(privateStaticKey, keySize) {
+Cryptography::Cryptography(const std::string &privateStaticKey, Bytes keySize) : CryptographyAbstraction(privateStaticKey, keySize) {
 }
 
 ErrorType Cryptography::generateKeys(CryptographyTypes::Algorithm algorithm) {
@@ -17,18 +17,18 @@ ErrorType Cryptography::generateKeys(CryptographyTypes::Algorithm algorithm) {
     }
 }
 
-ErrorType Cryptography::generatePrivateKey(CryptographyTypes::Algorithm algorithm, std::string_view myPrivateKey, std::string_view theirPublicKey, std::string &newPrivateKey) {
+ErrorType Cryptography::generatePrivateKey(CryptographyTypes::Algorithm algorithm, const std::string &myPrivateKey, const std::string &theirPublicKey, std::string &newPrivateKey) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Cryptography::encrypt(std::string_view dataToEncrypt, std::string &encryptedData, const CryptographyTypes::AlgorithmParameters &parameters) {
+ErrorType Cryptography::encrypt(const std::string &dataToEncrypt, std::string &encryptedData, const CryptographyTypes::AlgorithmParameters &parameters) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Cryptography::decrypt(std::string_view encrpytedData, std::string &decryptedData, const CryptographyTypes::AlgorithmParameters &parameters) {
+ErrorType Cryptography::decrypt(const std::string &encrpytedData, std::string &decryptedData, const CryptographyTypes::AlgorithmParameters &parameters) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Cryptography::hash(CryptographyTypes::HashFunction hashFunction, std::string_view key, std::string_view data, std::string &hashedData, const CryptographyTypes::HashPart hashPart) {
+ErrorType Cryptography::hash(CryptographyTypes::HashFunction hashFunction, const std::string &key, const std::string &data, std::string &hashedData, const CryptographyTypes::HashPart hashPart) {
     return ErrorType::NotImplemented;
 }

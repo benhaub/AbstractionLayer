@@ -12,7 +12,6 @@
 #include "Types.hpp"
 //C++
 #include <string>
-#include <variant>
 /**
  * @namespace CryptographyTypes
  * @brief Types for the Cryptography Abstraction
@@ -64,7 +63,7 @@ namespace CryptographyTypes {
     */
     struct AeadChaCha20Poly1305IetfParameters final : public AlgorithmParameters {
         public:
-        AeadChaCha20Poly1305IetfParameters(std::string_view associatedData, uint64_t nonce, std::string_view key) :
+        AeadChaCha20Poly1305IetfParameters(const std::string &associatedData, uint64_t nonce, const std::string &key) :
         _associatedData(associatedData), _nonce(nonce), _key(key)
         {
 
@@ -73,14 +72,14 @@ namespace CryptographyTypes {
 
         Algorithm algorithmType() const override { return Algorithm::AeadChaCha20Poly1305Ietf; }
 
-        const std::string_view &associatedData() const { return _associatedData; }
-        const uint64_t &nonce() const { return _nonce; }
-        const std::string_view &key() const { return _key; }
+        const std::string &associatedData() const { return _associatedData; }
+        uint64_t nonce() const { return _nonce; }
+        const std::string &key() const { return _key; }
 
         private:
-        std::string_view _associatedData;
+        const std::string &_associatedData;
         uint64_t _nonce;
-        std::string_view _key;
+        const std::string &_key;
     };
 
     /**
@@ -121,8 +120,7 @@ class CryptographyAbstraction {
      * @post If privateStaticKey is not empty, the private and public static keys will be initialized with the private key.
      *       If privateStaticKey is empty, the private and public static keys will be generated.
     */
-    CryptographyAbstraction(std::string_view privateStaticKey, Bytes keySize) : _privateKey(privateStaticKey) {
-        _privateKey.reserve(keySize);
+    CryptographyAbstraction(const std::string &privateStaticKey, const Bytes keySize) : _keySize(keySize), _privateKey(privateStaticKey) {
         _publicKey.reserve(keySize);
     }
     virtual ~CryptographyAbstraction() = default;
@@ -141,7 +139,7 @@ class CryptographyAbstraction {
      * @returns ErrorType::Success if the key was generated successfully
      * @post The size of the new private key can be obtained from privateKey.size()
     */
-    virtual ErrorType generatePrivateKey(CryptographyTypes::Algorithm algorithm, std::string_view myPrivateKey, std::string_view theirPublicKey, std::string &newPrivateKey) = 0;
+    virtual ErrorType generatePrivateKey(CryptographyTypes::Algorithm algorithm, const std::string &myPrivateKey, const std::string &theirPublicKey, std::string &newPrivateKey) = 0;
     /**
      * @brief Encrypt data
      * @param[in] dataToEncrypt The data to encrypt
@@ -158,7 +156,7 @@ class CryptographyAbstraction {
      * ErrorType error = crypto->encrypt(dataToEncrypt, encryptedData, parameters);
      * @endcode
      */
-    virtual ErrorType encrypt(std::string_view dataToEncrypt, std::string &encryptedData, const CryptographyTypes::AlgorithmParameters &parameters) = 0;
+    virtual ErrorType encrypt(const std::string &dataToEncrypt, std::string &encryptedData, const CryptographyTypes::AlgorithmParameters &parameters) = 0;
     /**
      * @brief Decrypt data
      * @param[in] encryptedData The data to decrypt
@@ -168,7 +166,7 @@ class CryptographyAbstraction {
      * @returns ErrorType::Failure if the data was not decrypted successfully.
      * @sa CryptographyAbstraction::encrypt() for more information on the parameters.
      */
-    virtual ErrorType decrypt(std::string_view encryptedData, std::string &decryptedData, const CryptographyTypes::AlgorithmParameters &parameters) = 0;
+    virtual ErrorType decrypt(const std::string &encryptedData, std::string &decryptedData, const CryptographyTypes::AlgorithmParameters &parameters) = 0;
     /**
      * @brief Produce a hash
      * @param[in] algorithm The hash algorithm to use.
@@ -178,7 +176,7 @@ class CryptographyAbstraction {
      * @returns ErrorType::Success if the data was hashed.
      * @returns ErrorType::Failure if the data could not be hashed.
      */
-    virtual ErrorType hash(CryptographyTypes::HashFunction hashFunction, std::string_view key, std::string_view data, std::string &hashedData, const CryptographyTypes::HashPart hashPart = CryptographyTypes::HashPart::Single) = 0;
+    virtual ErrorType hash(CryptographyTypes::HashFunction hashFunction, const std::string &key, const std::string &data, std::string &hashedData, const CryptographyTypes::HashPart hashPart = CryptographyTypes::HashPart::Single) = 0;
 
     /// @brief Get the private key as a constant reference
     const std::string &privateKeyConst() const { return _privateKey; }
@@ -190,6 +188,8 @@ class CryptographyAbstraction {
     std::string &publicKey() { return _publicKey; }
 
     protected:
+    /// @brief The size of the keys to generate
+    Bytes _keySize;
     /// @brief The private key
     std::string _privateKey;
     /// @brief The public key

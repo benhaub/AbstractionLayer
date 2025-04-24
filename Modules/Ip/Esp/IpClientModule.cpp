@@ -95,7 +95,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
             timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
         }
 
-        PLT_LOGI(TAG, "connection in progress <timeout(ms): %u>", timeout);
+        PLT_LOGI(TAG, "Connection in progress <timeout(ms): %u>", timeout);
         // Connection in progress -> have to wait until the connecting socket is marked as writable, i.e. connection completes
         int res = select(_socket+1, NULL, &fdset, NULL, &timeoutval);
         if (res < 0) {

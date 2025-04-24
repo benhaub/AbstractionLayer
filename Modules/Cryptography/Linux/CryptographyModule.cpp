@@ -7,7 +7,7 @@
 
 crypto_generichash_state genericHashState;
 
-Cryptography::Cryptography(std::string_view privateStaticKey, Bytes keySize) : CryptographyAbstraction(privateStaticKey, keySize) {
+Cryptography::Cryptography(const std::string &privateStaticKey, Bytes keySize) : CryptographyAbstraction(privateStaticKey, keySize) {
     const bool noExistingKeyIsStored = privateStaticKey.empty();
     if (noExistingKeyIsStored) {
         _privateKey.resize(keySize);
@@ -33,7 +33,7 @@ ErrorType Cryptography::generateKeys(CryptographyTypes::Algorithm algorithm) {
     }
 }
 
-ErrorType Cryptography::generatePrivateKey(CryptographyTypes::Algorithm algorithm, std::string_view myPrivateKey, std::string_view theirPublicKey, std::string &newPrivateKey) {
+ErrorType Cryptography::generatePrivateKey(CryptographyTypes::Algorithm algorithm, const std::string &myPrivateKey, const std::string &theirPublicKey, std::string &newPrivateKey) {
 
     switch(algorithm) {
         case CryptographyTypes::Algorithm::Curve25519:
@@ -45,7 +45,7 @@ ErrorType Cryptography::generatePrivateKey(CryptographyTypes::Algorithm algorith
     }
 }
 
-ErrorType Cryptography::encrypt(std::string_view dataToEncrypt, std::string &encryptedData, const CryptographyTypes::AlgorithmParameters &parameters) {
+ErrorType Cryptography::encrypt(const std::string &dataToEncrypt, std::string &encryptedData, const CryptographyTypes::AlgorithmParameters &parameters) {
     ErrorType error = ErrorType::Failure;
 
     if (parameters.algorithmType() == CryptographyTypes::Algorithm::AeadChaCha20Poly1305Ietf) {
@@ -59,7 +59,7 @@ ErrorType Cryptography::encrypt(std::string_view dataToEncrypt, std::string &enc
     return error;
 }
 
-ErrorType Cryptography::decrypt(std::string_view encrpytedData, std::string &decryptedData, const CryptographyTypes::AlgorithmParameters &parameters) {
+ErrorType Cryptography::decrypt(const std::string &encrpytedData, std::string &decryptedData, const CryptographyTypes::AlgorithmParameters &parameters) {
     ErrorType error = ErrorType::Failure;
 
     if (parameters.algorithmType() == CryptographyTypes::Algorithm::AeadChaCha20Poly1305Ietf) {
@@ -75,9 +75,9 @@ ErrorType Cryptography::decrypt(std::string_view encrpytedData, std::string &dec
 
 ErrorType Cryptography::generateKeysX25519() {
     publicKey().clear();
-    publicKey().resize(publicKey().capacity());
+    publicKey().resize(_keySize);
     privateKey().clear();
-    privateKey().resize(privateKey().capacity());
+    privateKey().resize(_keySize);
     crypto_box_keypair(reinterpret_cast<unsigned char *>(publicKey().data()), reinterpret_cast<unsigned char *>(privateKey().data()));
 
     return ErrorType::Success;
@@ -88,7 +88,7 @@ ErrorType Cryptography::generateKeysEllipticCurveDiffieHellman() {
 }
 
 
-ErrorType Cryptography::generatePrivateKeyEllipticCurveDiffieHellman(std::string_view myPrivateKey, std::string_view theirPublicKey, std::string &newPrivateKey) {
+ErrorType Cryptography::generatePrivateKeyEllipticCurveDiffieHellman(const std::string &myPrivateKey, const std::string &theirPublicKey, std::string &newPrivateKey) {
     if (0 != crypto_scalarmult(reinterpret_cast<unsigned char *>(newPrivateKey.data()),
                                 reinterpret_cast<const unsigned char *>(myPrivateKey.data()),
                                 reinterpret_cast<const unsigned char *>(theirPublicKey.data()))) {
@@ -98,7 +98,7 @@ ErrorType Cryptography::generatePrivateKeyEllipticCurveDiffieHellman(std::string
     return ErrorType::Success;
 }
 
-ErrorType Cryptography::encryptAeadChaCha20Poly1305Ietf(std::string_view dataToEncrypt, std::string &encryptedData, std::string_view ad, uint64_t n, std::string_view k) {
+ErrorType Cryptography::encryptAeadChaCha20Poly1305Ietf(const std::string &dataToEncrypt, std::string &encryptedData, const std::string &ad, uint64_t n, const std::string &k) {
     uint8_t nonce[crypto_aead_chacha20poly1305_ietf_NPUBBYTES] = {0};
     memcpy(&nonce[4], &n, sizeof(n));
     long long unsigned int encryptedDataLength = 0;
@@ -115,7 +115,7 @@ ErrorType Cryptography::encryptAeadChaCha20Poly1305Ietf(std::string_view dataToE
     encryptedData.resize(encryptedDataLength);
     return ErrorType::Success;
 }
-ErrorType Cryptography::decrpytAeadChaCha20Poly1305Ietf(std::string_view encryptedData, std::string &decryptedData, std::string_view ad, uint64_t n, std::string_view k) {
+ErrorType Cryptography::decrpytAeadChaCha20Poly1305Ietf(const std::string &encryptedData, std::string &decryptedData, const std::string &ad, uint64_t n, const std::string &k) {
     uint8_t nonce[crypto_aead_chacha20poly1305_ietf_NPUBBYTES] = {0};
     memcpy(&nonce[4], &n, sizeof(n));
     long long unsigned int decryptedDataLength = 0;
@@ -138,7 +138,7 @@ ErrorType Cryptography::decrpytAeadChaCha20Poly1305Ietf(std::string_view encrypt
 }
 
 //https://doc.libsodium.org/hashing/generic_hashing
-ErrorType Cryptography::hash(CryptographyTypes::HashFunction hashFunction, std::string_view key, std::string_view data, std::string &hashedData, const CryptographyTypes::HashPart hashPart) {
+ErrorType Cryptography::hash(CryptographyTypes::HashFunction hashFunction, const std::string &key, const std::string &data, std::string &hashedData, const CryptographyTypes::HashPart hashPart) {
     switch (hashFunction) {
         case CryptographyTypes::HashFunction::Blake2B:
             return hashBlake2b(data, key, hashedData, hashPart);
@@ -151,7 +151,7 @@ ErrorType Cryptography::hash(CryptographyTypes::HashFunction hashFunction, std::
     }
 }
 
-ErrorType Cryptography::hashBlake2b(std::string_view data, std::string_view key, std::string &hashedData, const CryptographyTypes::HashPart hashPart) {
+ErrorType Cryptography::hashBlake2b(const std::string &data, const std::string &key, std::string &hashedData, const CryptographyTypes::HashPart hashPart) {
     switch (hashPart) {
         case CryptographyTypes::HashPart::Single:
             return fromPlatformError(crypto_generichash(reinterpret_cast<unsigned char *>(hashedData.data()),

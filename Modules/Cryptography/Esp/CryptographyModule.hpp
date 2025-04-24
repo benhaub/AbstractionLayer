@@ -1,30 +1,30 @@
 #ifndef __CRYPTOGRAPHY_MODULE_HPP__
 #define __CRYPTOGRAPHY_MODULE_HPP__
 
-//AbstractionLayer
+//Foundation
 #include "CryptographyAbstraction.hpp"
 
-class Cryptography : public CryptographyAbstraction {
-    
+class Cryptography final : public CryptographyAbstraction {
+
     public:
-    Cryptography(std::string_view privateStaticKey, Bytes keySize);
+    Cryptography(const std::string &privateStaticKey, Bytes keySize);
     virtual ~Cryptography() = default;
 
     ErrorType generateKeys(CryptographyTypes::Algorithm algorithm) override;
-    ErrorType generatePrivateKey(CryptographyTypes::Algorithm algorithm, std::string_view myPrivateKey, std::string_view theirPublicKey, std::string &newPrivateKey) override;
+    ErrorType generatePrivateKey(CryptographyTypes::Algorithm algorithm, const std::string &myPrivateKey, const std::string &theirPublicKey, std::string &newPrivateKey) override;
 
-    ErrorType encrypt(std::string_view dataToEncrypt, std::string &encryptedData, const CryptographyTypes::AlgorithmParameters &parameters) override;
-    ErrorType decrypt(std::string_view encrpytedData, std::string &decryptedData, const CryptographyTypes::AlgorithmParameters &parameters) override;
-    ErrorType hash(CryptographyTypes::HashFunction hashFunction, std::string_view key, std::string_view data, std::string &hashedData, const CryptographyTypes::HashPart hashPart) override;
+    ErrorType encrypt(const std::string &dataToEncrypt, std::string &encryptedData, const CryptographyTypes::AlgorithmParameters &parameters) override;
+    ErrorType decrypt(const std::string &encrpytedData, std::string &decryptedData, const CryptographyTypes::AlgorithmParameters &parameters) override;
+    ErrorType hash(CryptographyTypes::HashFunction hashFunction, const std::string &key, const std::string &data, std::string &hashedData, const CryptographyTypes::HashPart hashPart) override;
 
     private:
     ErrorType generateKeysX25519();
     ErrorType generateKeysEllipticCurveDiffieHellman();
-    ErrorType generatePrivateKeyEllipticCurveDiffieHellman(std::string_view myPrivateKey, std::string_view theirPublicKey, std::string &newPrivateKey);
-    ErrorType encryptAeadChaCha20Poly1305Ietf(std::string_view dataToEncrypt, std::string &encryptedData, std::string_view ad, uint64_t n, std::string_view k);
-    ErrorType decrpytAeadChaCha20Poly1305Ietf(std::string_view encryptedData, std::string &decryptedData, std::string_view ad, uint64_t n, std::string_view k);
+    ErrorType generatePrivateKeyEllipticCurveDiffieHellman(const std::string &myPrivateKey, const std::string &theirPublicKey, std::string &newPrivateKey);
+    ErrorType encryptAeadChaCha20Poly1305Ietf(const std::string &dataToEncrypt, std::string &encryptedData, const std::string &ad, uint64_t n, const std::string &k);
+    ErrorType decrpytAeadChaCha20Poly1305Ietf(const std::string &encryptedData, std::string &decryptedData, const std::string &ad, uint64_t n, const std::string &k);
 
-    ErrorType hashBlake2b(std::string_view data, std::string_view key, std::string &hashedData, const CryptographyTypes::HashPart hashPart);
+    ErrorType hashBlake2b(const std::string &data, const std::string &key, std::string &hashedData, const CryptographyTypes::HashPart hashPart);
 };
 
 #endif // __CRYPTOGRAPHY_MODULE_HPP__

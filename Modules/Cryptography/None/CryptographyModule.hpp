@@ -7,15 +7,15 @@
 class Cryptography : public CryptographyAbstraction {
     
     public:
-    Cryptography(std::string_view privateStaticKey, Bytes keySize);
+    Cryptography(const std::string &privateStaticKey, Bytes keySize);
     virtual ~Cryptography() = default;
 
     ErrorType generateKeys(CryptographyTypes::Algorithm algorithm) override;
-    ErrorType generatePrivateKey(CryptographyTypes::Algorithm algorithm, std::string_view myPrivateKey, std::string_view theirPublicKey, std::string &newPrivateKey) override;
+    ErrorType generatePrivateKey(CryptographyTypes::Algorithm algorithm, const std::string &myPrivateKey, const std::string &theirPublicKey, std::string &newPrivateKey) override;
 
-    ErrorType encrypt(std::string_view dataToEncrypt, std::string &encryptedData, const CryptographyTypes::AlgorithmParameters &parameters) override;
-    ErrorType decrypt(std::string_view encrpytedData, std::string &decryptedData, const CryptographyTypes::AlgorithmParameters &parameters) override;
-    ErrorType hash(CryptographyTypes::HashFunction hashFunction, std::string_view key, std::string_view data, std::string &hashedData, const CryptographyTypes::HashPart hashPart) override;
+    ErrorType encrypt(const std::string &dataToEncrypt, std::string &encryptedData, const CryptographyTypes::AlgorithmParameters &parameters) override;
+    ErrorType decrypt(const std::string &encrpytedData, std::string &decryptedData, const CryptographyTypes::AlgorithmParameters &parameters) override;
+    ErrorType hash(CryptographyTypes::HashFunction hashFunction, const std::string &key, const std::string &data, std::string &hashedData, const CryptographyTypes::HashPart hashPart) override;
 };
 
 #endif // __CRYPTOGRAPHY_MODULE_HPP__

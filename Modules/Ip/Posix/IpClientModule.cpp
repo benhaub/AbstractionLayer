@@ -33,7 +33,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         struct hostent *hent = gethostbyname(hostname.c_str());
         if (NULL == hent) {
             PLT_LOGW(TAG, "couldn't get address for %s", hostname.c_str());
-            error = ErrorType::Failure;
+            callbackError = ErrorType::Failure;
             doneConnecting = true;
             _status.connected = false;
             return callbackError;
@@ -86,11 +86,17 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         int res = select(_socket+1, NULL, &fdset, NULL, &timeoutval);
         if (res < 0) {
             PLT_LOGW(TAG, "Error during connection: select for socket to be writable %s", strerror(errno));
-            error = ErrorType::Failure;
+            callbackError = ErrorType::Failure;
+            doneConnecting = true;
+            _status.connected = false;
+            return callbackError;
         }
         else if (res == 0) {
             PLT_LOGW(TAG, "Connection timeout: select for socket to be writable %s", strerror(errno));
-            error = ErrorType::Timeout;
+            callbackError = ErrorType::Timeout;
+            doneConnecting = true;
+            _status.connected = false;
+            return callbackError;
         }
         else {
             int sockerr;
