@@ -24,36 +24,36 @@
  *          You are making regular and frequent allocations that you know ahead of time what the max size of the allocations will be and the
  *          max number of items that will could be allocated at once. If you do not know this then a mempool is not a good idea.
  * @pre _poolSize must be a multiple of sizeof(T) otherwise you're just wasting memory!
- * @tparam T The type of the memory pool.
+ * @tparam _blockSize The size of the block to allocate from the pool.
  * @tparam _poolSize The size of the pool.
  * @details We want to be able to initialize this at compile time so that's what the template is for.
  * @attention This class is not threadsafe. It is not reccomended to use the same pool accross multiple threads.
  */
-template<typename T, Bytes _poolSize>
+template<typename T, Bytes _numberOfBlocks>
 class MemoryPool {
 
     public:
     /// @brief Default constructor
     constexpr MemoryPool() {
-        static_assert(_poolSize % sizeof(T) == 0, "Pool size should be a multiple of the block size");
+        _blockAllocationMap.fill(0);
     }
 
     /// @brief Return the size of the memory pool
-    constexpr Bytes poolSize() const { return _poolSize; }
+    static constexpr Bytes poolSize() { return _numberOfBlocks * sizeof(T); }
     /// @brief Return the size of a block in the memory pool
-    constexpr Bytes blockSize() const { return sizeof(T); }
+    static constexpr Bytes blockSize() { return sizeof(T); }
 
     /**
      * @brief Allocate memory from the pool.
-     * @param[out] poolBlock The pointer to the block of memory allocated from the pool.
+     * @param[out] item The pointer to the item allocated from the pool.
      * @return ErrorType::Success if the memory was allocated
      * @returns ErrorType::NoMemory if the memory was not allocated.
      * @sa setData for a safe way to set the newly allocated block
      */ 
-    constexpr ErrorType allocate(T *&poolBlock) {
+    constexpr ErrorType allocate(T *&item) {
         for (size_t i = 0; i < sizeof(_blockAllocationMap); i++) {
             if (blockIsAvailable(i)) {
-                poolBlock = &_pool[i];
+                item = reinterpret_cast<T*>(&_pool[i*sizeof(T)]);
                 _blockAllocationMap[i] = 1;
                 return ErrorType::Success;
             }
@@ -68,9 +68,9 @@ class MemoryPool {
      * @return ErrorType::Success if the memory was deallocated
      * @returns ErrorType::InvalidParameter if the memory was not deallocated.
      */
-    constexpr ErrorType deallocate(const T *poolBlock) {
+    constexpr ErrorType deallocate(const T *const item) {
         for (size_t i = 0; i < sizeof(_blockAllocationMap); i++) {
-            if (&_pool[i] == poolBlock) {
+            if (item == reinterpret_cast<T*>(&_pool[i*sizeof(T)])) {
                 _blockAllocationMap[i] = 0;
                 return ErrorType::Success;
             }
@@ -88,17 +88,22 @@ class MemoryPool {
      * @returns ErrorType::InvalidParameter if the data is too large to fit in the block.
      * @returns ErrorType::InvalidParameter if the poolBlock being set does not belong to the pool.
      */
-    constexpr ErrorType setData(T *poolBlock, const T *data, const Bytes dataSize) {
-        const bool dataIsTooLarger = (dataSize > sizeof(T));
-        const bool dataDoesNotBelongToPool = (poolBlock < &_pool[0] || poolBlock >= &_pool[sizeof(_pool) - 1]);
-        if (dataIsTooLarger) {
+    constexpr ErrorType setData(const Id itemHandle, const T &data) {
+        Bytes availableInPool = available(availableInPool);
+        const bool dataIsTooLarge = (availableInPool < sizeof(T));
+        if (dataIsTooLarge) {
             return ErrorType::InvalidParameter;
         }
-        else if (dataDoesNotBelongToPool) {
+        const bool dataDoesNotBelongToPool = (itemHandle < 0 || itemHandle >= sizeof(_blockAllocationMap));
+        if (dataDoesNotBelongToPool) {
             return ErrorType::InvalidParameter;
+        }
+        const bool itemWasNotAllocated = (_blockAllocationMap[itemHandle] == 0);
+        if (itemWasNotAllocated) {
+            return ErrorType::PrerequisitesNotMet;
         }
 
-        std::copy(data, data + dataSize, poolBlock);
+        std::copy(&data, &data + sizeof(T), &_pool[itemHandle*sizeof(T)]);
         return ErrorType::Success;
     }
 
@@ -120,9 +125,9 @@ class MemoryPool {
 
     private:
     /// @brief The pool of memory
-    std::array<T, _poolSize> _pool;
+    std::array<uint8_t, poolSize()> _pool;
     /// @brief A map of which blocks are available.
-    uint8_t _blockAllocationMap[_poolSize / sizeof(T)] = {0};
+    std::array<uint8_t, _numberOfBlocks> _blockAllocationMap;
 
     /**
      * @brief Check if a block is available.
