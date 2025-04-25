@@ -32,7 +32,7 @@ ErrorType Uart::setHardwareConfig(PinNumber txNumber, PinNumber rxNumber, PinNum
     return ErrorType::NotImplemented;
 }
 
-ErrorType Uart::setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartConfig::FlowControl flowControl) {
+ErrorType Uart::setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartTypes::FlowControl flowControl) {
     return ErrorType::NotImplemented;
 }
 

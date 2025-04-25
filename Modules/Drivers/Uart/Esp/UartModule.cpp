@@ -150,7 +150,7 @@ ErrorType Uart::setHardwareConfig(int32_t txNumber, int32_t rxNumber, int32_t rt
     return ErrorType::Success;
 }
 
-ErrorType Uart::setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartConfig::FlowControl flowControl) {
+ErrorType Uart::setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartTypes::FlowControl flowControl) {
     _baudRate = baudRate;
     _dataBits = dataBits;
     _parity = parity;

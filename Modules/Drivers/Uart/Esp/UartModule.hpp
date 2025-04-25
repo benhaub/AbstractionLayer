@@ -24,7 +24,7 @@ class Uart : public UartAbstraction {
     ErrorType flushRxBuffer() override;
     
     ErrorType setHardwareConfig(PinNumber txNumber, PinNumber rxNumber, PinNumber rtsNumber, PinNumber ctsNumber, PeripheralNumber peripheralNumber) override;
-    ErrorType setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartConfig::FlowControl flowControl) override;
+    ErrorType setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartTypes::FlowControl flowControl) override;
     ErrorType setFirmwareConfig(Bytes receiveBufferSize, Bytes transmitBufferSize, int8_t terminatingByte) override;
     ErrorType setInterruptConfig(const bool overrun, const bool breakError, const bool parityError, const bool framingError, const bool receiveTimeout, const bool transmitted, const bool received, const bool dsrModem, const bool dcdModem, const bool ctsModem, const bool riModem) override;
 
@@ -97,17 +97,17 @@ class Uart : public UartAbstraction {
         return UART_STOP_BITS_1;
     }
 
-    uart_hw_flowcontrol_t toEspFlowControl(UartConfig::FlowControl flowControl, ErrorType &error) {
+    uart_hw_flowcontrol_t toEspFlowControl(UartTypes::FlowControl flowControl, ErrorType &error) {
         error = ErrorType::Success;
 
         switch (flowControl) {
-            case UartConfig::FlowControl::Disable:
+            case UartTypes::FlowControl::Disable:
                 return UART_HW_FLOWCTRL_DISABLE;
-            case UartConfig::FlowControl::Rts:
+            case UartTypes::FlowControl::Rts:
                 return UART_HW_FLOWCTRL_RTS;
-            case UartConfig::FlowControl::Cts:
+            case UartTypes::FlowControl::Cts:
                 return UART_HW_FLOWCTRL_CTS;
-            case UartConfig::FlowControl::CtsRts:
+            case UartTypes::FlowControl::CtsRts:
                 return UART_HW_FLOWCTRL_CTS_RTS;
             default:
                 error = ErrorType::InvalidParameter;

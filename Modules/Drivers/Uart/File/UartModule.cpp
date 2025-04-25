@@ -127,7 +127,7 @@ ErrorType Uart::setHardwareConfig(int32_t txPinNumber, int32_t rxPinNumber, int3
     return ErrorType::NotAvailable;
 }
 
-ErrorType Uart::setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartConfig::FlowControl flowControl) {
+ErrorType Uart::setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartTypes::FlowControl flowControl) {
     return ErrorType::NotAvailable;
 }
 

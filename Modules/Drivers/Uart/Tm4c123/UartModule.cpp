@@ -66,7 +66,7 @@ ErrorType Uart::setHardwareConfig(PinNumber txNumber, PinNumber rxNumber, PinNum
    return ErrorType::Success;
 }
 
-ErrorType Uart::setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartConfig::FlowControl flowControl) {
+ErrorType Uart::setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartTypes::FlowControl flowControl) {
     _baudRate = baudRate;
     _dataBits = dataBits;
     _parity = parity;
@@ -204,17 +204,17 @@ uint32_t Uart::toTm4c123UartConfigBits(const uint32_t dataBits, const uint32_t s
     return configBits;
 }
 
-uint32_t Uart::toTm4c123UartFlowControl(const UartConfig::FlowControl flowControl, ErrorType &error) {
+uint32_t Uart::toTm4c123UartFlowControl(const UartTypes::FlowControl flowControl, ErrorType &error) {
     error = ErrorType::Success;
 
     switch (flowControl) {
-        case UartConfig::FlowControl::Disable:
+        case UartTypes::FlowControl::Disable:
             return UART_FLOWCONTROL_NONE;
-        case UartConfig::FlowControl::Rts:
+        case UartTypes::FlowControl::Rts:
             return UART_FLOWCONTROL_RX;
-        case UartConfig::FlowControl::Cts:
+        case UartTypes::FlowControl::Cts:
             return UART_FLOWCONTROL_TX;
-        case UartConfig::FlowControl::CtsRts:
+        case UartTypes::FlowControl::CtsRts:
             return UART_FLOWCONTROL_TX | UART_FLOWCONTROL_RX;
         default:
             error = ErrorType::InvalidParameter;

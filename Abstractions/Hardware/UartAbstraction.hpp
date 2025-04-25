@@ -11,10 +11,10 @@
 #include "IcCommunicationProtocol.hpp"
 
 /**
- * @namespace UartConfig
+ * @namespace UartTypes
  * @brief Uart configuration types
 */
-namespace UartConfig {
+namespace UartTypes {
 
     /**
      * @enum FlowControl
@@ -82,7 +82,7 @@ class UartAbstraction : public IcCommunicationProtocol{
      * @returns ErrorType::Success if the driver configuration was set successfully.
      * @returns ErrorType::InvalidParameter if the baud rate, data bits, parity, stop bits, or flow control are invalid for the underlying hardware implementation.
     */
-    virtual ErrorType setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartConfig::FlowControl flowControl) = 0;
+    virtual ErrorType setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartTypes::FlowControl flowControl) = 0;
     /**
      * @brief Set firmware configuration parameters.
      * @param [in] receiveBufferSize The receive buffer size.
@@ -90,7 +90,7 @@ class UartAbstraction : public IcCommunicationProtocol{
      * @param [in] terminatingByte The terminating byte. Used for when you want to receive bytes until a certain character is read.
      * @return Always returns ErrorType::Success.
     */
-    virtual ErrorType setFirmwareConfig(Bytes receiveBufferSize, Bytes transmitBufferSize, int8_t terminatingByte = -1) = 0;
+    virtual ErrorType setFirmwareConfig(Bytes receiveBufferSize, Bytes transmitBufferSize, int8_t terminatingByte) = 0;
     /**
      * @brief Set interrupt configuration parameters.
      * @param [in] overrun True to enable overrun error interrupt.
@@ -118,7 +118,7 @@ class UartAbstraction : public IcCommunicationProtocol{
     /// @brief Get the parity.
     char parity() const { return _parity; }
     /// @brief Get the flow control.
-    UartConfig::FlowControl flowControl() const { return _flowControl; }
+    UartTypes::FlowControl flowControl() const { return _flowControl; }
     /// @brief Get the tx pin number.
     PinNumber txNumber() const { return _txNumber; }
     /// @brief Get the rx pin number.
@@ -149,7 +149,7 @@ class UartAbstraction : public IcCommunicationProtocol{
     /// @brief Stop bits.
     uint8_t _stopBits = 1;
     /// @brief Flow control.
-    UartConfig::FlowControl _flowControl = UartConfig::FlowControl::Disable;
+    UartTypes::FlowControl _flowControl = UartTypes::FlowControl::Disable;
     /// @brief Terminating byte. Default to not used.
     int8_t _terminatingByte = -1;
 
