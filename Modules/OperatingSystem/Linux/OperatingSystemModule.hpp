@@ -76,7 +76,7 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
                 return (sched_get_priority_max(SCHED_FIFO) / 2) - 3;
                 break;
             case OperatingSystemConfig::Priority::Lowest:
-                return (sched_get_priority_min(SCHED_FIFO) / 2) - 4;
+                return (sched_get_priority_max(SCHED_FIFO) / 2) - 4;
                 break;
             default:
                 assert(false);
