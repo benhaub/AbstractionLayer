@@ -5,9 +5,10 @@
 #include "StorageAbstraction.hpp"
 #include "Global.hpp"
 
-class Storage : public StorageAbstraction, public Global<Storage> {
+class Storage : public StorageAbstraction, public Global<Storage, StorageTypes::Medium> {
+
     public:
-    Storage(StorageTypes::Medium medium) : StorageAbstraction(medium), Global<Storage>(){
+    Storage(StorageTypes::Medium medium) : StorageAbstraction(medium), Global<Storage, StorageTypes::Medium>() {
         _status.isInitialized = false;
     }
     virtual ~Storage() = default;

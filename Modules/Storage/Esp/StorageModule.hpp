@@ -5,16 +5,10 @@
 #include "Global.hpp"
 #include "StorageAbstraction.hpp"
 
-class Storage : public StorageAbstraction, public Global<Storage, std::string> {
+class Storage : public StorageAbstraction, public Global<Storage, StorageTypes::Medium> {
 
     public:
-    /**
-     * @brief Constructor
-     * @param[in] name The name of the storage
-     * @param[in] os The operating system
-     * @attention Stdlib version is a Global class that is constructed with Init()
-    */
-    Storage(StorageTypes::Medium medium) : StorageAbstraction(medium) {
+    Storage(StorageTypes::Medium medium) : StorageAbstraction(medium), Global<Storage, StorageTypes::Medium>() {
         _status.isInitialized = false;
     }
     virtual ~Storage() = default;
