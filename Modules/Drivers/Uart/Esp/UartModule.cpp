@@ -112,7 +112,7 @@ ErrorType Uart::rxNonBlocking(std::shared_ptr<std::string> buffer, const Millise
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx, buffer, buffer->size()));
+    EventQueue::Event event = EventQueue::Event(std::bind(rx, buffer, buffer->size()));
     return addEvent(event);
 }
 

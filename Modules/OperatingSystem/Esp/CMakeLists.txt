@@ -15,6 +15,7 @@ target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:OperatingSystem,
 
 target_link_libraries(EspOperatingSystem PRIVATE abstractionLayer)
 target_link_libraries(EspOperatingSystem PRIVATE OperatingSystem)
+target_link_libraries(EspOperatingSystem PRIVATE Processor)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE EspOperatingSystem)
 
 target_compile_options(EspOperatingSystem PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)

@@ -70,6 +70,8 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
         return ErrorType::Success;
     }
     ErrorType uptime(Seconds &uptime) override;
+    ErrorType disableAllInterrupts() override;
+    ErrorType enableAllInterrupts() override;
 
     void callTimerCallback(TimerHandle_t timer);
 
@@ -90,6 +92,7 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
     std::map<std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength>, SemaphoreHandle_t> semaphores;
     std::map<TimerHandle_t, Timer> timers;
     Id nextTimerId = 0;
+    portMUX_TYPE _interruptSpinlock = portMUX_INITIALIZER_UNLOCKED;
 
     size_t toEspPriority(OperatingSystemConfig::Priority priority) {
         static_assert(configMAX_PRIORITIES >= 20);

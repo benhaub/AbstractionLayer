@@ -23,7 +23,9 @@
 * @attention Do not abuse this. Global access is not cohesive, connascent, or loosely coupled and can easily lead
 *            to spaghetti code. If you're having trouble accessing certain data, consider adding parameters to your
 *            constructor and member variables to your class or think about alternative places to access the data. 
-*            Don't immediately think of globals as the solution.
+*            Don't immediately think of globals as the solution. A good question to ask yourself is "Should this class
+*            have a [class] member variable? For example, should the network have an OperatingSystem? Well yeah, everything
+*            needs an OperatingSystem. So the OperatingSystem should be global."
 * @code
 *  class MyClass : public Fnd::Global<MyClass, int> {
 *     public:

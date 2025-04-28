@@ -61,6 +61,8 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
         return ErrorType::Success;
     }
     ErrorType uptime(Seconds &uptime) override;
+    ErrorType disableAllInterrupts() override;
+    ErrorType enableAllInterrupts() override;
 
     int toPosixPriority(OperatingSystemConfig::Priority priority) {
         assert(sched_get_priority_max(SCHED_FIFO) / 2 > 4);

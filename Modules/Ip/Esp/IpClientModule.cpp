@@ -139,7 +139,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
     };
 
     ErrorType error = ErrorType::Failure;
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(connectCb, timeout));
+    EventQueue::Event event = EventQueue::Event(std::bind(connectCb, timeout));
     if (ErrorType::Success != (error = network().addEvent(event))) {
         return error;
     }
@@ -177,7 +177,7 @@ ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds tim
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(tx, data, timeout));
+    EventQueue::Event event = EventQueue::Event(std::bind(tx, data, timeout));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -208,7 +208,7 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
 
     //For some reason, I could pass buffer as a reference parameter to the callback. It had to be a pointer otherwise the
     //pointer to the data inside the string would change.
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx, &buffer, timeout));
+    EventQueue::Event event = EventQueue::Event(std::bind(rx, &buffer, timeout));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -239,7 +239,7 @@ ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, con
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(tx, data, timeout));
+    EventQueue::Event event = EventQueue::Event(std::bind(tx, data, timeout));
     return network().addEvent(event);
 }
 
@@ -262,6 +262,6 @@ ErrorType IpClient::receiveNonBlocking(std::shared_ptr<std::string> buffer, cons
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx, buffer, timeout));
+    EventQueue::Event event = EventQueue::Event(std::bind(rx, buffer, timeout));
     return network().addEvent(event);
 }

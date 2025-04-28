@@ -10,14 +10,10 @@
 #define __SIGNALS_AND_SLOTS_HPP__
 
 //AbstractionLayer
-#include "Error.hpp"
-#include "Types.hpp"
 #include "OperatingSystemModule.hpp"
 #include "EventQueue.hpp"
 //C++
-#include <functional>
-#include <memory>
-#include <cstring>
+#include <cstring> //For setting the semaphore name in the ctor.
 
 /**
  * @namespace SignalsAndSlots
@@ -29,6 +25,9 @@
  *     std::function<ErrorType(bool)> observerCallback = std::bind(&Foo::baz, &foo, std::placeholders::_1);
  *     //You pass in foo so that SignalsAndSlots knows what event queue to add the callback to
  *     bar.connect(&foo, observerCallback);
+ * 
+ *     //The placeholder allows you to pass arguments to the callback function after the initial call to bind. 
+ *     bar.emit(true);
  * @endcode
  */
 namespace SignalsAndSlots {
@@ -123,9 +122,8 @@ namespace SignalsAndSlots {
             }
 
             std::erase_if(_slots, [&callback](const auto &observer) {
-                if (nullptr != observer.target() && observer.second.target() == callback.target())
-                    return true;
-                });
+                return (nullptr != observer.target() && observer.second.target() == callback.target());
+            });
             
             error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
             assert(ErrorType::Success == error);
@@ -159,8 +157,7 @@ namespace SignalsAndSlots {
                 EventQueue &eventQueue = slot.first;
                 const std::function<ErrorType(Args...)> &callback = slot.second;
 
-                std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(callback, std::get<IndexSequence>(params)...));
-                assert(nullptr != event.get());
+                EventQueue::Event event = EventQueue::Event(std::bind(callback, std::get<IndexSequence>(params)...));
                 ErrorType addEventError = eventQueue.addEvent(event);
                 if (ErrorType::Success != addEventError) {
                     returnError = addEventError;

@@ -73,7 +73,7 @@ ErrorType IpServer::listenTo(const IpServerTypes::Protocol protocol, const IpSer
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(listenCallback));
+    EventQueue::Event event = EventQueue::Event(std::bind(listenCallback));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -147,7 +147,7 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(acceptCallback));
+    EventQueue::Event event = EventQueue::Event(std::bind(acceptCallback));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -185,7 +185,7 @@ ErrorType IpServer::closeConnection(const Socket socket) {
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(closeConnection, socket));
+    EventQueue::Event event = EventQueue::Event(std::bind(closeConnection, socket));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -209,7 +209,7 @@ ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds tim
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(tx));
+    EventQueue::Event event = EventQueue::Event(std::bind(tx));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -244,7 +244,7 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(rx));
+    EventQueue::Event event = EventQueue::Event(std::bind(rx));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -273,7 +273,7 @@ ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, con
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(tx, data, socket, timeout));
+    EventQueue::Event event = EventQueue::Event(std::bind(tx, data, socket, timeout));
     return network().addEvent(event);
 }
 
@@ -295,6 +295,6 @@ ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, cons
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<>>(std::bind(receiveCallback));
+    EventQueue::Event event = EventQueue::Event(std::bind(receiveCallback));
     return network().addEvent(event);
 }

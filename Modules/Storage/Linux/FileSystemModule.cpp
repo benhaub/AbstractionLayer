@@ -35,7 +35,7 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(maxStorageQueryCallback));
+    EventQueue::Event event = EventQueue::Event(std::bind(maxStorageQueryCallback));
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -59,7 +59,7 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(availableStorageQueryCallback));
+    EventQueue::Event event = EventQueue::Event(std::bind(availableStorageQueryCallback));
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -116,7 +116,7 @@ ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenM
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(openCallback));
+    EventQueue::Event event = EventQueue::Event(std::bind(openCallback));
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -150,7 +150,7 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(closeCallback));
+    EventQueue::Event event = EventQueue::Event(std::bind(closeCallback));
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -179,7 +179,7 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::EventQueue::Event<>>(std::bind(removeCallback));
+    EventQueue::Event event = EventQueue::Event(std::bind(removeCallback));
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -224,7 +224,7 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(readCallback));
+    EventQueue::Event event = EventQueue::Event(std::bind(readCallback));
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -245,7 +245,7 @@ ErrorType FileSystem::readNonBlocking(FileSystemTypes::File &file, std::shared_p
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(readCallback, buffer));
+    EventQueue::Event event = EventQueue::Event(std::bind(readCallback, buffer));
     return _storage.addEvent(event);
 }
 
@@ -273,7 +273,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::stri
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(writeCallback, data));
+    EventQueue::Event event = EventQueue::Event(std::bind(writeCallback, data));
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -293,7 +293,7 @@ ErrorType FileSystem::writeNonBlocking(FileSystemTypes::File &file, const std::s
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(writeCallback, data));
+    EventQueue::Event event = EventQueue::Event(std::bind(writeCallback, data));
     return _storage.addEvent(event);
 }
 
@@ -321,7 +321,7 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(synchronizeCallback));
+    EventQueue::Event event = EventQueue::Event(std::bind(synchronizeCallback));
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -354,7 +354,7 @@ ErrorType FileSystem::size(FileSystemTypes::File &file) {
         return callbackError;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<StorageAbstraction::Event<>>(std::bind(sizeQueryCallback));
+    EventQueue::Event event = EventQueue::Event(std::bind(sizeQueryCallback));
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;

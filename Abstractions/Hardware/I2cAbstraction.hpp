@@ -8,6 +8,7 @@
 #ifndef __I2C_ABSTRACTION_HPP__
 #define __I2C_ABSTRACTION_HPP__
 
+//AbstractionLayer
 #include "IcCommunicationProtocol.hpp"
 
 namespace I2cConfig {

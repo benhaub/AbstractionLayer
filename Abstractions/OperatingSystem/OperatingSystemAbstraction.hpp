@@ -1,9 +1,7 @@
-
 /**************************************************************************//**
 * @author Ben Haubrich                                        
 * @file   OperatingSystemAbstraction.hpp
-* @details \b Synopsis: \n Encapsulates the operating system. Provides info and functions.
-           base class.
+* @details Encapsulates the operating system. Provides info and functions.
 * @ingroup Abstractions
 *******************************************************************************/
 #ifndef __OPERATING_SYSTEM_ABSTRACTION_HPP__
@@ -406,6 +404,20 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Failure otherwise.
      */
     virtual ErrorType uptime(Seconds &uptime) = 0;
+    /**
+     * @brief Disable interrupts
+     * @returns ErrorType::Success if the interrupts were successfully disabled
+     * @returns ErrorType::NotAvailable if disabling interrupts is not permissable on the system (i.e. an operating system environment)
+     * @returns ErrorType::Failure otherwise
+     */
+    virtual ErrorType disableAllInterrupts() = 0;
+    /**
+     * @brief Enable interrupts
+     * @returns ErrorType::Success if the interrupts were successfully enabled
+     * @returns ErrorType::NotAvailable if disabling interrupts is not permissable on the system (i.e. an operating system environment)
+     * @returns ErrorType::Failure otherwise
+     */
+    virtual ErrorType enableAllInterrupts() = 0;
     /**
      * @brief Get the status of the operatings system as a const reference.
      * @returns The status of the operating system.

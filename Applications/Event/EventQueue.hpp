@@ -16,24 +16,6 @@
 #include <vector>
 #include <tuple>
 #include <functional>
-#include <memory>
-#include <string>
-
-/**
- * @class EventAbstraction
- * @brief A user level interface for running queued events.
-*/
-class EventAbstraction {
-    public:
-    EventAbstraction() = default;
-    virtual ~EventAbstraction() = default;
-
-    /**
-     * @brief Run the next event in the event queue.
-     * @returns The error code of the callback that the event runs.
-    */
-    virtual ErrorType run() = 0;
-};
 
 /**
  * @class EventQueue
@@ -54,30 +36,15 @@ class EventQueue {
     ~EventQueue() { assert(events.size() == 0); };
 
     /**
-     * @brief Adds an event to the to the queue.
-     * @param[in] event The event to add.
-     * @post The event is added to a FIFO queue and will be executed when it reaches the first position in the queue and this thread
-     *       is running.
-     * @post Ownership of the event is transferred to the queue if, and only if, ErrorType::Success is returned.
-     * @returns ErrorType::Success if the event was added
-     * @returns ErrorType::LimitReached if the maximum number of events has been reached.
-     * @returns ErrorType::Timeout if the semaphore could not be obtained in time
-     * @returns the result of the event callback if the event is being added to from the same thread in which the event queue is run.
-    */
-    ErrorType addEvent(std::unique_ptr<EventAbstraction> &event);
-
-    /**
      * @class Event
      * @brief Runs the function and parameters passed to it by the constructor
-     * @tparam Args Optional arguments types that the function needs passed to it.
     */
-    template <class ...Args> class Event : public EventAbstraction { 
+    class Event { 
 
         public:
         /**
          * @brief Constructor.
          * @param eventCallback The function member to call.
-         * @param params The parameters to pass to the function member.
          * @post The eventCallback is not called.
          * @sa run
          * @code //Bind a function member. Can have any signature, any number of args.
@@ -85,14 +52,10 @@ class EventQueue {
          *     return ErrorType::Success;
          * }
          * 
-         * ErrorType Class::addEventToEventQueue() {
-         *     std::unique_ptr<EventAbstraction> event = std::make_unique<Event<Class, const std::string &>>(std::bind(&Class::eventToRun, this, std::placeholders::_1), param);
+         * ErrorType Class::addEventToEventQueue(uint8_t arg1, uint32_t arg2, ErrorType &arg3) {
+         *     EventQueue::Event event = EventQueue::Event(std::bind(&Class::functionMember, this, arg1, arg2, arg3));
          *     return addEvent(event);
          * 
-         *     return ErrorType::Success;
-         * }
-         * 
-         * ErrorType Class::eventToRun(const std::string &param) {
          *     return ErrorType::Success;
          * }
          * @endcode
@@ -103,37 +66,40 @@ class EventQueue {
          *     };
          *   
          *   //Pass it off as a parameter to Event. Do not need to pass `this` as the first argument as we did in function members.
-         *   std::unique_ptr<EventAbstraction> event = std::bind(lambdaFunc, arg1, arg2, arg3, ptr);
+         *   EventQueue::Event event = EventQueue::Event(std::bind(lambdaFunc, arg1, arg2, arg3, ptr));
          * 
          *   return ErrorType::Success;
          * }
          * @endcode
         */
-        Event(std::function<ErrorType(Args ...)> eventCallback, Args ...params) : EventAbstraction(), _eventCallback(eventCallback), _params(std::forward_as_tuple(params...)) {}
+        Event(std::function<ErrorType()> eventCallback) : _eventCallback(eventCallback) {}
         ~Event() = default;
 
         /**
          * @brief Calls the function member with the parameters that were passed to the constructor.
         */
-        ErrorType run() override {
-            return _run(_params, std::index_sequence_for<Args...>());
+        ErrorType run() {
+            return _eventCallback();
 
         }
 
         private:
         /// @brief The callback function of this event.
-        std::function<ErrorType(Args...)> _eventCallback;
-        /// @brief _params Tuple for forwarding parameter packs.
-        std::tuple<Args...> _params;
-
-        /**
-         * @brief Calls the callback with the parameters set in the constructor.
-         * @returns The error code of the function pointed to by the callback.
-        */
-        template <std::size_t... IndexSequence> ErrorType _run(std::tuple<Args...> &params, std::index_sequence<IndexSequence...>) const {
-            return (_eventCallback)(std::get<IndexSequence>(params)...);
-        }
+        std::function<ErrorType()> _eventCallback;
     };
+
+    /**
+     * @brief Adds an event to the to the queue.
+     * @param[in] event The event to add.
+     * @post The event is added to a FIFO queue and will be executed when it reaches the first position in the queue and this thread
+     *       is running.
+     * @post Ownership of the event is transferred to the queue if, and only if, ErrorType::Success is returned.
+     * @returns ErrorType::Success if the event was added
+     * @returns ErrorType::LimitReached if the maximum number of events has been reached.
+     * @returns ErrorType::Timeout if the semaphore could not be obtained in time
+     * @returns the result of the event callback if the event is being added to from the same thread in which the event queue is run.
+    */
+    ErrorType addEvent(Event &event);
 
     /// @brief Get the number of events available in the queue.
     /// @return The number of events available in the queue.
@@ -165,12 +131,20 @@ class EventQueue {
     /// @brief the number of semaphores that have been created.
     static int _SemaphoreCount;
     /// @brief The queue of events to run.
-    std::vector<std::unique_ptr<EventAbstraction>> events;
+    std::vector<Event> events;
     /// @brief The binary semaphore name for the next created semaphore.
     /// @details. Did not use the constant defined in OperatingSystemConfig since I don't want to inlcude the header for it. There is an assert to enforce this size instead.
     std::array<char, 16> _binarySemaphore;
     /// @brief The thread id of the owner of the event queue. Used to determine if we can skip event queuing.
     Id _ownerThreadId;
+
+    /**
+     * @brief Interrupt safe version of addEvent
+     * @sa addEvent
+     * @returns ErrorType::Success if the event was added
+     * @returns ErrorType::LimitReached if the queue is full
+     */
+    ErrorType addEventFromIsr(Event &event);
 };
 
 #endif //__EVENT_QUEUE_HPP__

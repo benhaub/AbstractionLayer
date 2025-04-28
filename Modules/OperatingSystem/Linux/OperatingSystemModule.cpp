@@ -599,6 +599,14 @@ ErrorType OperatingSystem::uptime(Seconds &uptime) {
     return error;
 }
 
+ErrorType OperatingSystem::disableAllInterrupts() {
+    return ErrorType::NotAvailable;
+}
+
+ErrorType OperatingSystem::enableAllInterrupts() {
+    return ErrorType::NotAvailable;
+}
+
 void OperatingSystem::callTimerCallback(timer_t *const posixTimerId) {
     assert(nullptr != posixTimerId);
 

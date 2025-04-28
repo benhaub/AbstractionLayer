@@ -50,7 +50,7 @@ ErrorType Storage::deinit() {
         return fromPlatformError(result);
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<Event<>>(std::bind(deinitializedCallback));
+    EventQueue::Event event = EventQueue::Event(std::bind(deinitializedCallback));
     ErrorType error = addEvent(event);
     if (ErrorType::Success != error) {
         return error;

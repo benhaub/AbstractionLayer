@@ -1,6 +1,7 @@
 //AbstractionLayer
 #include "OperatingSystemModule.hpp"
 #include "Math.hpp"
+#include "ProcessorModule.hpp"
 //C++
 #include <ctime>
 //Posix
@@ -449,6 +450,30 @@ ErrorType OperatingSystem::uptime(Seconds &uptime) {
         sinceLastRollover = uptimeNow / 1000;
     }
 
+
+    return ErrorType::Success;
+}
+
+ErrorType OperatingSystem::disableAllInterrupts() {
+    if (ErrorType::Success == Processor::Instance().isInterruptContext()) {
+        assert(savedInterruptContexts.size() < savedInterruptContexts.capacity() && "Can not allocate memory from interrupt context");
+        savedInterruptContexts.push_back(taskENTER_CRITICAL_FROM_ISR());
+    }
+    else {
+        taskENTER_CRITICAL();
+    }
+
+    return ErrorType::Success;
+}
+
+ErrorType OperatingSystem::enableAllInterrupts() {
+    if (ErrorType::Success == Processor::Instance().isInterruptContext()) {
+        taskEXIT_CRITICAL_FROM_ISR(savedInterruptContexts.back());
+        savedInterruptContexts.pop_back();
+    }
+    else {
+        taskEXIT_CRITICAL();
+    }
 
     return ErrorType::Success;
 }

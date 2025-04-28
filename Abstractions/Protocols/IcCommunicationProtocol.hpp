@@ -7,8 +7,10 @@
 #ifndef __IC_COMMUNICATION_PROTOCOL_HPP__
 #define __IC_COMMUNICATION_PROTOCOL_HPP__
 
-//AbstractionLayer applications
+//AbstractionLayer
 #include "EventQueue.hpp"
+//C++
+#include <memory>
 
 namespace IcCommunicationProtocolTypes {
     /**

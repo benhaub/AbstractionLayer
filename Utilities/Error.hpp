@@ -34,7 +34,8 @@ enum class ErrorType : uint8_t {
     FileExists          = 11,   ///< File already exists.
     EndOfFile           = 12,   ///< End of file reached.
     NoData              = 13,   ///< No data available.
-    LimitReached        = 14    ///< An imposed limit has been reached.
+    LimitReached        = 14,   ///< An imposed limit has been reached.
+    Negative            = 15    ///< The status or query is not true with respect to the predicate
 };
 
 /**

@@ -1,6 +1,7 @@
 //Modules
 #include "OperatingSystemModule.hpp"
 #include "Math.hpp"
+#include "ProcessorModule.hpp"
 //Posix
 #include <pthread.h>
 #include <unistd.h>
@@ -408,6 +409,30 @@ ErrorType OperatingSystem::uptime(Seconds &uptime) {
     else {
         _status.upTime += (uptimeNow / 1000) - sinceLastRollover;
         sinceLastRollover = uptimeNow / 1000;
+    }
+
+    return ErrorType::Success;
+}
+
+//https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/freertos_idf.html#critical-sections
+//These are specific to ESP_IDF version of FreeRTOS
+ErrorType OperatingSystem::disableAllInterrupts() {
+    if (ErrorType::Success == Processor::Instance().isInterruptContext()) {
+        taskENTER_CRITICAL_ISR(&_interruptSpinlock);
+    }
+    else {
+        taskENTER_CRITICAL(&_interruptSpinlock);
+    }
+
+    return ErrorType::Success;
+}
+
+ErrorType OperatingSystem::enableAllInterrupts() {
+    if (ErrorType::Success == Processor::Instance().isInterruptContext()) {
+        taskEXIT_CRITICAL_ISR(&_interruptSpinlock);
+    }
+    else {
+        taskEXIT_CRITICAL(&_interruptSpinlock);
     }
 
     return ErrorType::Success;

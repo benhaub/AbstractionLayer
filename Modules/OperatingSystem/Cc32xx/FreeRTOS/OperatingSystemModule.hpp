@@ -22,6 +22,7 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
         static_assert(1 == configUSE_TIMERS);
         static_assert(1 == configUSE_IDLE_HOOK);
         memoryRegions(_status.memoryRegion);
+        savedInterruptContexts.reserve(2);
     }
     ~OperatingSystem() = default;
 
@@ -63,6 +64,8 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
         return ErrorType::Success;
     }
     ErrorType uptime(Seconds &uptime) override;
+    ErrorType disableAllInterrupts() override;
+    ErrorType enableAllInterrupts() override;
 
     void callTimerCallback(TimerHandle_t timer);
 
@@ -104,6 +107,7 @@ class OperatingSystem : public OperatingSystemAbstraction, public Global<Operati
     std::map<std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength>, sem_t> semaphores;
     std::map<std::array<char, OperatingSystemConfig::MaxQueueNameLength>, QueueHandle_t> queues;
     std::map<TimerHandle_t, Timer> timers;
+    std::vector<UBaseType_t> savedInterruptContexts;
 };
 
 #endif // __OPERATING_SYSTEM_HPP__

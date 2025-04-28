@@ -1,6 +1,7 @@
 //AbsractionLayer
 #include "EventQueue.hpp"
 #include "OperatingSystemModule.hpp"
+#include "ProcessorModule.hpp"
 //C++
 #include <cstring>
 
@@ -21,7 +22,23 @@ EventQueue::EventQueue() {
     assert(ErrorType::Success == error);
 }
 
-ErrorType EventQueue::addEvent(std::unique_ptr<EventAbstraction> &event) {
+ErrorType EventQueue::addEventFromIsr(Event &event) {
+    if (events.size() >= _maxEvents) {
+        return ErrorType::LimitReached;
+    }
+
+    //If we are preempted during push_back, then the higher priorty interrupt may also call push_back
+    //and corrupt the queue.
+    assert(ErrorType::Success == OperatingSystem::Instance().disableAllInterrupts());
+    events.push_back(event);
+    assert(ErrorType::Success == OperatingSystem::Instance().enableAllInterrupts());
+    return ErrorType::Success;
+}
+
+ErrorType EventQueue::addEvent(Event &event) {
+    if (ErrorType::Success == Processor::Instance().isInterruptContext()) {
+        return addEventFromIsr(event);
+    }
 
     ErrorType error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout);
     if (ErrorType::Success != error) {
@@ -38,8 +55,13 @@ ErrorType EventQueue::addEvent(std::unique_ptr<EventAbstraction> &event) {
     OperatingSystem::Instance().currentThreadId(currentThreadId);
     assert(ErrorType::Success == error);
 
+    //Optimization for when you add an event from the same thread that owns the event queue
+    //Instead of pushing the event on the queue for the mainLoop to run, just run it right away.
     if (_ownerThreadId != currentThreadId) {
-        events.push_back(std::move(event));
+        //Guarentee that addEventFromIsr will not corrupt the queue when it tries to add to it.
+        assert(ErrorType::Success == OperatingSystem::Instance().disableAllInterrupts());
+        events.push_back(event);
+        assert(ErrorType::Success == OperatingSystem::Instance().enableAllInterrupts());
     }
 
     error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
@@ -47,14 +69,13 @@ ErrorType EventQueue::addEvent(std::unique_ptr<EventAbstraction> &event) {
 
     //Run the event outside of the sempahore protection so we don't block the event queue.
     if (_ownerThreadId == currentThreadId) {
-        return event->run();
+        return event.run();
     }
 
     return ErrorType::Success;
 }
 
 ErrorType EventQueue::runNextEvent() {
-
     ErrorType error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout);
     if (ErrorType::Success != error) {
         return ErrorType::Timeout;
@@ -66,15 +87,14 @@ ErrorType EventQueue::runNextEvent() {
         return ErrorType::NoData;
     }
 
-    auto event = std::move(events.front());
-    assert(nullptr != event.get());
+    Event event = events.front();
     events.erase(events.begin());
 
     error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
     assert(ErrorType::Success == error);
 
     //This needs to be run last, in case the event needs to add more events to the queue or run an event.
-    error = event->run();
+    error = event.run();
 
     return error;
 }

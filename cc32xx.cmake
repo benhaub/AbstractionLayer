@@ -34,6 +34,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/MemoryManagement/Cc32xx/FreeR
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Cryptography/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/IntegratedCircuits/HBridge/TiDrv8872)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/IntegratedCircuits/DarlingtonArray/StmUln2003)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Processor/Cc32xx)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Utilities)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Logging)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/ChainOfResponsibility)
