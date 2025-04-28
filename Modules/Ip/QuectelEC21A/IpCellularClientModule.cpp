@@ -136,7 +136,7 @@ ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port po
         return ErrorType::Success;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpCellularClient>>(std::bind(connectCb));
+    EventQueue::Event event = EventQueue::Event(std::bind(connectCb));
     if (ErrorType::Success != network().addEvent(event)) {
         return ErrorType::Failure;
     }
@@ -351,7 +351,7 @@ ErrorType IpCellularClient::sendNonBlocking(const std::shared_ptr<std::string> d
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpCellularClient>>(std::bind(tx, data, timeout));
+    EventQueue::Event event = EventQueue::Event(std::bind(tx, data, timeout));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -378,7 +378,7 @@ ErrorType IpCellularClient::receiveNonBlocking(std::shared_ptr<std::string> buff
         return error;
     };
 
-    std::unique_ptr<EventAbstraction> event = std::make_unique<EventQueue::Event<IpCellularClient>>(std::bind(rx, buffer, timeout));
+    EventQueue::Event event = EventQueue::Event(std::bind(rx, buffer, timeout));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;

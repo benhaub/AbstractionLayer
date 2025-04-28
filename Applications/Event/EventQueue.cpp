@@ -29,9 +29,20 @@ ErrorType EventQueue::addEventFromIsr(Event &event) {
 
     //If we are preempted during push_back, then the higher priorty interrupt may also call push_back
     //and corrupt the queue.
-    assert(ErrorType::Success == OperatingSystem::Instance().disableAllInterrupts());
+    ErrorType error;
+    if (ErrorType::Success != (error = OperatingSystem::Instance().disableAllInterrupts())) {
+        const bool isCriticalError = !(ErrorType::NotAvailable == error);
+        if (isCriticalError) {
+            assert(false);
+        }
+    }
     events.push_back(event);
-    assert(ErrorType::Success == OperatingSystem::Instance().enableAllInterrupts());
+    if (ErrorType::Success != OperatingSystem::Instance().enableAllInterrupts()) {
+        const bool isCriticalError = !(ErrorType::NotAvailable == error);
+        if (isCriticalError) {
+            assert(false);
+        }
+    }
     return ErrorType::Success;
 }
 
@@ -58,10 +69,21 @@ ErrorType EventQueue::addEvent(Event &event) {
     //Optimization for when you add an event from the same thread that owns the event queue
     //Instead of pushing the event on the queue for the mainLoop to run, just run it right away.
     if (_ownerThreadId != currentThreadId) {
+        ErrorType error;
         //Guarentee that addEventFromIsr will not corrupt the queue when it tries to add to it.
-        assert(ErrorType::Success == OperatingSystem::Instance().disableAllInterrupts());
+        if (ErrorType::Success != (error = OperatingSystem::Instance().disableAllInterrupts())) {
+            const bool isCriticalError = !(ErrorType::NotAvailable == error);
+            if (isCriticalError) {
+                assert(false);
+            }
+        }
         events.push_back(event);
-        assert(ErrorType::Success == OperatingSystem::Instance().enableAllInterrupts());
+        if (ErrorType::Success != OperatingSystem::Instance().enableAllInterrupts()) {
+            const bool isCriticalError = !(ErrorType::NotAvailable == error);
+            if (isCriticalError) {
+                assert(false);
+            }
+        }
     }
 
     error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
