@@ -38,6 +38,23 @@ namespace UartTypes {
         Rx,          ///< Receive line.
         Both         ///< Transmit and receive line.
     };
+
+    /// @brief Overrun interrupt.
+    constexpr uint32_t OverrunInterrupt = 0x01;
+    /// @brief Break error interrupt.
+    constexpr uint32_t BreakErrorInterrupt = 0x02;
+    /// @brief Parity error interrupt.
+    constexpr uint32_t ParityErrorInterrupt = 0x04;
+    /// @brief Framing error interrupt.
+    constexpr uint32_t FramingErrorInterrupt = 0x08;
+    /// @brief Receive timeout interrupt.
+    constexpr uint32_t ReceiveTimeoutInterrupt = 0x10;
+    /// @brief Transmitted interrupt.
+    constexpr uint32_t TransmittedInterrupt = 0x20;
+    /// @brief Received interrupt.
+    constexpr uint32_t ReceivedInterrupt = 0x40;
+    /// @brief Clear to send modem interrupt.
+    constexpr uint32_t CtsModemInterrupt = 0x80;
 }
 
 /**
@@ -93,21 +110,13 @@ class UartAbstraction : public IcCommunicationProtocol{
     virtual ErrorType setFirmwareConfig(Bytes receiveBufferSize, Bytes transmitBufferSize, int8_t terminatingByte) = 0;
     /**
      * @brief Set interrupt configuration parameters.
-     * @param [in] overrun True to enable overrun error interrupt.
-     * @param [in] breakError True to enable break error interrupt.
-     * @param [in] parityError True to enable parity error interrupt.
-     * @param [in] framingError True to enable framing error interrupt.
-     * @param [in] receiveTimeout True to enable receive timeout interrupt.
-     * @param [in] transmitted True to enable transmitted interrupt.
-     * @param [in] received True to enable received interrupt.
-     * @param [in] dsrModem True to enable DSR modem interrupt.
-     * @param [in] dcdModem True to enable DCD modem interrupt.
-     * @param [in] ctsModem True to enable CTS modem interrupt.
-     * @param [in] riModem True to enable RI modem interrupt.
+     * @param[in] interruptFlags The interrupt flags.
+     * @see UartTypes::OverrunInterrupt, UartTypes::BreakErrorInterrupt, UartTypes::ParityErrorInterrupt, UartTypes::FramingErrorInterrupt, UartTypes::ReceiveTimeoutInterrupt, UartTypes::TransmittedInterrupt, UartTypes::ReceivedInterrupt, UartTypes::CtsModemInterrupt
+     * @param[in] interruptCallback The interrupt callback function.
      * @returns ErrorType::Success if the interrupt configuration was set successfully.
      * @returns ErrorType::Failure otherwise.
     */
-    virtual ErrorType setInterruptConfig(const bool overrun, const bool breakError, const bool parityError, const bool framingError, const bool receiveTimeout, const bool transmitted, const bool received, const bool dsrModem, const bool dcdModem, const bool ctsModem, const bool riModem) = 0;
+    virtual ErrorType setInterruptConfig(InterruptFlags interruptFlags, InterruptCallback interruptCallback) = 0;
 
     /// @brief Get the baud rate.
     uint32_t baudRate() const { return _baudRate; }
@@ -139,6 +148,14 @@ class UartAbstraction : public IcCommunicationProtocol{
     /// @brief When a pin is unused, set it to this value
     static constexpr PinNumber Unused = -1;
 
+    /**
+     * @brief Get the current interrupt callback function
+     * @return The current interrupt callback function
+     */
+    static InterruptCallback interruptCallback(void) {
+        return _InterruptCallback;
+    }
+
     protected:
     /// @brief Baud rate.
     uint32_t _baudRate = 115200;
@@ -167,28 +184,10 @@ class UartAbstraction : public IcCommunicationProtocol{
     Bytes _receiveBufferSize = 0;
     /// @brief Transmit buffer size.
     Bytes _transmitBufferSize = 0;
-    /// @brief Overrun error interrupt enable.
-    bool _overrunInterruptEnable = false;
-    /// @brief Break error interrupt enable.
-    bool _breakErrorInterruptEnable = false;
-    /// @brief Parity error interrupt enable.
-    bool _parityErrorInterruptEnable = false;
-    /// @brief Framing error interrupt enable.
-    bool _framingErrorInterruptEnable = false;
-    /// @brief Receive timeout interrupt enable.
-    bool _receiveTimeoutInterruptEnable = false;
-    /// @brief Transmitted interrupt enable.
-    bool _transmittedInterruptEnable = false;
-    /// @brief Received interrupt enable.
-    bool _receivedInterruptEnable = false;
-    /// @brief Data Set Ready interrupt enable.
-    bool _dsrInterruptEnable = false;
-    /// @brief Data Carrier Detect interrupt enable.
-    bool _dcdInterruptEnable = false;
-    /// @brief Clear to Send interrupt enable.
-    bool _ctsInterruptEnable = false;
-    /// @brief Ring Indicator interrupt enable.
-    bool _riInterruptEnable = false;
+    /// @brief Interrupt flags.
+    InterruptFlags _interruptFlags = 0;
+    /// @brief Interrupt callback.
+    static InterruptCallback _InterruptCallback;
 };
 
 #endif // __UART_ABSTRACTION_HPP__

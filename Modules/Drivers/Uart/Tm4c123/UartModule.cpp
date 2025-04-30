@@ -82,18 +82,9 @@ ErrorType Uart::setFirmwareConfig(Bytes receiveBufferSize, Bytes transmitBufferS
     return ErrorType::Success;
 }
 
-ErrorType Uart::setInterruptConfig(const bool overrun, const bool breakError, const bool parityError, const bool framingError, const bool receiveTimeout, const bool transmitted, const bool received, const bool dsrModem, const bool dcdModem, const bool ctsModem, const bool riModem) {
-    _overrunInterruptEnable = overrun;
-    _breakErrorInterruptEnable = breakError;
-    _parityErrorInterruptEnable = parityError;
-    _framingErrorInterruptEnable = framingError;
-    _receiveTimeoutInterruptEnable = receiveTimeout;
-    _transmittedInterruptEnable = transmitted;
-    _receivedInterruptEnable = received;
-    _dsrInterruptEnable = dsrModem;
-    _dcdInterruptEnable = dcdModem;
-    _ctsInterruptEnable = ctsModem;
-    _riInterruptEnable = riModem;
+ErrorType Uart::setInterruptConfig(InterruptFlags interruptFlags, InterruptCallback interruptCallback) {
+    _interruptFlags = interruptFlags;
+    _InterruptCallback = interruptCallback;
     return ErrorType::Success;
 }
 

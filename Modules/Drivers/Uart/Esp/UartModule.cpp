@@ -196,6 +196,11 @@ ErrorType Uart::setFirmwareConfig(Bytes receiveBufferSize, Bytes transmitBufferS
     return ErrorType::Success;
 }
 
-ErrorType Uart::setInterruptConfig(const bool overrun, const bool breakError, const bool parityError, const bool framingError, const bool receiveTimeout, const bool transmitted, const bool received, const bool dsrModem, const bool dcdModem, const bool ctsModem, const bool riModem) {
-    return ErrorType::NotImplemented;
+//Interrupts are enabled internally by uart_driver_install. It uses some weird macros to set thresholds and I'm not going to touch it.
+//All interrupts are enabled by default, we will use the flags to evaluate just the ones that are set.
+ErrorType Uart::setInterruptConfig(InterruptFlags interruptFlags, InterruptCallback interruptCallback) {
+    _interruptFlags = interruptFlags;
+    _InterruptCallback = interruptCallback;
+
+    return ErrorType::Success;
 }

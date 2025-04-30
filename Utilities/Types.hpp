@@ -177,6 +177,12 @@ enum class PeripheralNumber : uint8_t {
 ///@typedef Register
 ///Hardware register address
 using Register = volatile uint32_t *;
+///@typedef InterruptFlags
+///Interrupt flags
+using InterruptFlags = uint32_t;
+///@typedef InterruptCallback
+///Interrupt callback
+using InterruptCallback = void (*)(InterruptFlags flags);
 
 //-------------------------------Networks
 ///@typedef Port
