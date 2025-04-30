@@ -164,20 +164,19 @@ ErrorType IpClient::disconnect() {
 ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds timeout) {
     assert(0 != _socket);
     bool doneSending = false;
+    ErrorType callbackError = ErrorType::Failure;
 
-    auto tx = [this, &doneSending](const std::string &frame, const Milliseconds timeout) -> ErrorType {
-        ErrorType error = ErrorType::Failure;
-
-        error = network().txBlocking(frame, _socket, timeout);
-        if (ErrorType::Success != error) {
+    auto tx = [&]() -> ErrorType {
+        callbackError = network().txBlocking(data, _socket, timeout);
+        if (ErrorType::Success != callbackError) {
             _status.connected = false;
         }
 
         doneSending = true;
-        return error;
+        return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(tx, data, timeout));
+    EventQueue::Event event = EventQueue::Event(std::bind(tx));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -187,28 +186,26 @@ ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds tim
         OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds timeout) {
     bool doneReceiving = false;
+    ErrorType callbackError = ErrorType::Failure;
 
-    auto rx = [this, &doneReceiving](std::string *buffer, const Milliseconds timeout) -> ErrorType {
-        ErrorType error = ErrorType::Failure;
-
+    auto rx = [&]() -> ErrorType {
         assert(0 != _socket);
-        error = network().rxBlocking(*buffer, _socket, timeout);
-        if (ErrorType::Success != error) {
+
+        callbackError = network().rxBlocking(buffer, _socket, timeout);
+        if (ErrorType::Success != callbackError) {
             _status.connected = false;
         }
 
         doneReceiving = true;
-        return error;
+        return callbackError;
     };
 
-    //For some reason, I could pass buffer as a reference parameter to the callback. It had to be a pointer otherwise the
-    //pointer to the data inside the string would change.
-    EventQueue::Event event = EventQueue::Event(std::bind(rx, &buffer, timeout));
+    EventQueue::Event event = EventQueue::Event(std::bind(rx));
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -218,7 +215,7 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
         OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
