@@ -9,7 +9,7 @@
 //ESP
 #include "driver/uart.h"
 
-class Uart : public UartAbstraction {
+class Uart final : public UartAbstraction {
 
     public:
     Uart() : UartAbstraction() {}
