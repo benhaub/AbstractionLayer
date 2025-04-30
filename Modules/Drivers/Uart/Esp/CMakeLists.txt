@@ -10,6 +10,7 @@ STATIC
 
 target_include_directories(Uart INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(Uart INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
+target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:Uart,INTERFACE_INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspUart PRIVATE abstractionLayer)
 target_link_libraries(EspUart PRIVATE Gpio)

@@ -10,6 +10,7 @@ STATIC
 
 target_include_directories(I2c INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(I2c INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
+target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:I2c,INTERFACE_INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspI2c PRIVATE abstractionLayer)
 target_link_libraries(EspI2c PRIVATE Gpio)
