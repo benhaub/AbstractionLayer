@@ -26,43 +26,50 @@ static constexpr char NetworkFactoryTag[] = "NetworkFactory";
  * @brief Contains types and constants used by the NetworkFactory.
  */
 namespace NetworkFactoryTypes {
+
+    /**
+     * @struct FactoryParams
+     * @brief Contains the parameters used to configure the network.
+     */
+    struct FactoryParams {
+        public:
+        virtual NetworkTypes::Technology technology() const = 0;
+    };
+
     /**
      * @struct WifiParams
      * @brief Contains the parameters used to configure the wifi.
-     * @details Set these params before calling the factory. Only needed if you're creating wifi, of course.
-     * @note Declared static so that multiple definition errors don't occur if the NetworkFactory is included more than once.
      */
-    static struct WifiParams {
-        const char accessPointSsid[32];
-        const char accessPointPassword[64];
-        const char stationSsid[32];
-        const char stationPassword[64];
+    struct WifiParams final : public FactoryParams {
+        NetworkTypes::Technology technology() const override { return NetworkTypes::Technology::Wifi; }
+
+        char accessPointSsid[32];
+        char accessPointPassword[64];
+        char stationSsid[32];
+        char stationPassword[64];
         WifiTypes::AuthMode authMode;
         WifiTypes::Mode mode;
-    } wifiParams = {
-        "\0",
-        "\0",
-        "\0",
-        "\0",
-        WifiTypes::AuthMode::WpaWpa2,
-        WifiTypes::Mode::AccessPoint
+    };
+
+    struct EthernetParams final : public FactoryParams {
+        NetworkTypes::Technology technology() const override { return NetworkTypes::Technology::Ethernet; }
     };
 }
 
 //Anonymous namespace.
 namespace {
-    ErrorType WifiConfigure(Wifi &wifi) {
+    ErrorType WifiConfigure(Wifi &wifi, const NetworkFactoryTypes::WifiParams &params) {
         ErrorType error = ErrorType::Success;
 
-        if (WifiTypes::Mode::AccessPointAndStation == NetworkFactoryTypes::wifiParams.mode) {
-            error = wifi.setSsid(WifiTypes::Mode::AccessPoint, NetworkFactoryTypes::wifiParams.accessPointSsid);
-            error = wifi.setSsid(WifiTypes::Mode::Station, NetworkFactoryTypes::wifiParams.stationSsid);
+        if (WifiTypes::Mode::AccessPointAndStation == params.mode) {
+            error = wifi.setSsid(WifiTypes::Mode::AccessPoint, params.accessPointSsid);
+            error = wifi.setSsid(WifiTypes::Mode::Station, params.stationSsid);
         }
-        else if (WifiTypes::Mode::AccessPoint == NetworkFactoryTypes::wifiParams.mode) {
-            error = wifi.setSsid(WifiTypes::Mode::AccessPoint, NetworkFactoryTypes::wifiParams.accessPointSsid);
+        else if (WifiTypes::Mode::AccessPoint == params.mode) {
+            error = wifi.setSsid(WifiTypes::Mode::AccessPoint, params.accessPointSsid);
         }
-        else if (WifiTypes::Mode::Station == NetworkFactoryTypes::wifiParams.mode) {
-            error = wifi.setSsid(WifiTypes::Mode::Station, NetworkFactoryTypes::wifiParams.stationSsid);
+        else if (WifiTypes::Mode::Station == params.mode) {
+            error = wifi.setSsid(WifiTypes::Mode::Station, params.stationSsid);
         }
         if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
             PLT_LOGW(NetworkFactoryTag, "Setting wifi SSID is not allowed on this platform <error:%u>", (uint8_t)error);
@@ -71,7 +78,7 @@ namespace {
             PLT_LOGE(NetworkFactoryTag, "Failed to set ssid <error:%u>", (uint8_t)error);
         }
 
-        error = wifi.setAuthMode(NetworkFactoryTypes::wifiParams.authMode);
+        error = wifi.setAuthMode(params.authMode);
         if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
             PLT_LOGW(NetworkFactoryTag, "Setting authorization modes is not allowed on this platform <error:%u>", (uint8_t)error);
         }
@@ -79,15 +86,15 @@ namespace {
             PLT_LOGE(NetworkFactoryTag, "Failed to set atuhorization mode <error:%u>", (uint8_t)error);
         }
 
-        if (WifiTypes::Mode::AccessPointAndStation == NetworkFactoryTypes::wifiParams.mode) {
-            error = wifi.setPassword(WifiTypes::Mode::AccessPoint, NetworkFactoryTypes::wifiParams.accessPointPassword);
-            error = wifi.setPassword(WifiTypes::Mode::Station, NetworkFactoryTypes::wifiParams.stationPassword);
+        if (WifiTypes::Mode::AccessPointAndStation == params.mode) {
+            error = wifi.setPassword(WifiTypes::Mode::AccessPoint, params.accessPointPassword);
+            error = wifi.setPassword(WifiTypes::Mode::Station, params.stationPassword);
         }
-        else if (WifiTypes::Mode::AccessPoint == NetworkFactoryTypes::wifiParams.mode) {
-            error = wifi.setPassword(WifiTypes::Mode::AccessPoint, NetworkFactoryTypes::wifiParams.accessPointPassword);
+        else if (WifiTypes::Mode::AccessPoint == params.mode) {
+            error = wifi.setPassword(WifiTypes::Mode::AccessPoint, params.accessPointPassword);
         }
-        else if (WifiTypes::Mode::Station == NetworkFactoryTypes::wifiParams.mode) {
-            error = wifi.setPassword(WifiTypes::Mode::Station, NetworkFactoryTypes::wifiParams.stationPassword);
+        else if (WifiTypes::Mode::Station == params.mode) {
+            error = wifi.setPassword(WifiTypes::Mode::Station, params.stationPassword);
         }
         if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
             PLT_LOGW(NetworkFactoryTag, "Setting wifi password is not allowed on this platform <error:%u>", (uint8_t)error);
@@ -96,7 +103,7 @@ namespace {
             PLT_LOGE(NetworkFactoryTag, "Failed to set password <error:%u>", (uint8_t)error);
         }
 
-        error = wifi.setMode(NetworkFactoryTypes::wifiParams.mode);
+        error = wifi.setMode(params.mode);
         if (ErrorType::Success != error) {
             const bool isCriticalErrror = !((ErrorType::NotImplemented == error) || (ErrorType::NotAvailable == error));
             if (isCriticalErrror) {
@@ -125,15 +132,16 @@ namespace NetworkFactory {
      * @param error The error code following the return of this function.
      * @returns Pointer to a NetworkAbstraction that contains the network of the type selected.
      */
-    static std::unique_ptr<NetworkAbstraction> Factory(NetworkTypes::Technology technology, ErrorType &error) {
+    inline std::unique_ptr<NetworkAbstraction> Factory(NetworkTypes::Technology technology, const NetworkFactoryTypes::FactoryParams &params, ErrorType &error) {
         error = ErrorType::Success;
 
         switch (technology) {
         case NetworkTypes::Technology::Wifi: {
             auto wifi = std::make_unique<Wifi>();
             assert(nullptr != wifi.get());
+            assert(params.technology() == NetworkTypes::Technology::Wifi);
 
-            error = WifiConfigure(*(wifi.get()));
+            error = WifiConfigure(*(wifi.get()), static_cast<const NetworkFactoryTypes::WifiParams &>(params));
             if (ErrorType::Success != error) {
                 const bool isCriticalError = !(ErrorType::NotAvailable == error);
                 if (isCriticalError) {

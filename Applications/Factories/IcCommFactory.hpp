@@ -25,13 +25,23 @@ static constexpr char IcCommFactoryTag[] = "IcCommFactory";
  * @brief Contains types and constants used by the NetworkFactory.
  */
 namespace IcCommFactoryTypes {
+
     /**
-     * @struct WifiParams
-     * @brief Contains the parameters used to configure the wifi.
-     * @details Set these params before calling the factory. Only needed if you're creating wifi, of course.
-     * @note Declared static so that multiple definition errors don't occur if the NetworkFactory is included more than once.
+     * @brief Parameters to pass to the factory.
      */
-    static struct UartParams {
+    struct FactoryParams {
+        public:
+        virtual IcCommunicationProtocolTypes::IcDevice deviceType() const = 0;
+    };
+
+    /**
+     * @struct UartParams
+     * @brief Contains the parameters used to configure the uart.
+     */
+    struct UartParams final : public FactoryParams {
+        public:
+        IcCommunicationProtocolTypes::IcDevice deviceType() const override { return IcCommunicationProtocolTypes::IcDevice::Uart; }
+
         struct hardwareConfig {
             UartTypes::Line line;
             PinNumber tx;
@@ -53,56 +63,31 @@ namespace IcCommFactoryTypes {
             int8_t terminatingByte;
         } firmwareConfig;
         struct interruptConfig {
-            bool overrun;
-            bool breakError;
-            bool parityError;
-            bool framingError;
-            bool receiveTimeout;
+            InterruptFlags interruptFlags;
+            InterruptCallback interruptCallback;
         } interruptConfig;
-    } uartParams = {
-        {
-            //Hardware config
-            UartTypes::Line::Both,
-            UartAbstraction::Unused,
-            UartAbstraction::Unused,
-            UartAbstraction::Unused,
-            UartAbstraction::Unused,
-            PeripheralNumber::Unknown
-        },
-        {
-            //Driver config
-            115200,
-            8,
-            'N',
-            1,
-            UartTypes::FlowControl::Disable
-        },
-        {
-            //Firmware config
-            256,
-            256,
-            -1
-        },
-        {
-            //Interrupt config
-            false,
-            false,
-            false,
-            false,
-            false
-        }
+    };
+
+    struct SpiParams final : public FactoryParams {
+        public:
+        IcCommunicationProtocolTypes::IcDevice deviceType() const override { return IcCommunicationProtocolTypes::IcDevice::Spi; }
+    };
+
+    struct I2cParams final : public FactoryParams {
+        public:
+        IcCommunicationProtocolTypes::IcDevice deviceType() const override { return IcCommunicationProtocolTypes::IcDevice::I2c; }
     };
 }
 
 //Anonymous namespace.
 namespace {
-    ErrorType UartConfigure(Uart &uart) {
+    ErrorType UartConfigure(Uart &uart, const IcCommFactoryTypes::UartParams &params) {
         ErrorType error = uart.setHardwareConfig(
-            IcCommFactoryTypes::uartParams.hardwareConfig.tx, 
-            IcCommFactoryTypes::uartParams.hardwareConfig.rx, 
-            IcCommFactoryTypes::uartParams.hardwareConfig.rts,
-            IcCommFactoryTypes::uartParams.hardwareConfig.cts,
-            IcCommFactoryTypes::uartParams.hardwareConfig.peripheralNumber
+            params.hardwareConfig.tx, 
+            params.hardwareConfig.rx, 
+            params.hardwareConfig.rts,
+            params.hardwareConfig.cts,
+            params.hardwareConfig.peripheralNumber
         );
         if (ErrorType::NotImplemented == error) {
             return ErrorType::NotImplemented;
@@ -112,11 +97,11 @@ namespace {
         }
 
         error = uart.setDriverConfig(
-            IcCommFactoryTypes::uartParams.driverConfig.baudRate,
-            IcCommFactoryTypes::uartParams.driverConfig.dataBits,
-            IcCommFactoryTypes::uartParams.driverConfig.parity,
-            IcCommFactoryTypes::uartParams.driverConfig.stopBits,
-            IcCommFactoryTypes::uartParams.driverConfig.flowControl
+            params.driverConfig.baudRate,
+            params.driverConfig.dataBits,
+            params.driverConfig.parity,
+            params.driverConfig.stopBits,
+            params.driverConfig.flowControl
         );
         if (ErrorType::NotImplemented == error) {
             return ErrorType::NotImplemented;
@@ -126,9 +111,9 @@ namespace {
         }
 
         error = uart.setFirmwareConfig(
-            IcCommFactoryTypes::uartParams.firmwareConfig.receiveBufferSize,
-            IcCommFactoryTypes::uartParams.firmwareConfig.transmitBufferSize,
-            IcCommFactoryTypes::uartParams.firmwareConfig.terminatingByte
+            params.firmwareConfig.receiveBufferSize,
+            params.firmwareConfig.transmitBufferSize,
+            params.firmwareConfig.terminatingByte
         );
         if (ErrorType::NotImplemented == error) {
             return ErrorType::NotImplemented;
@@ -164,15 +149,16 @@ namespace IcCommFactory {
      * @param error The error code following the return of this function.
      * @returns Pointer to an IcCommunicationProtocol that contains the IC device of the type selected.
      */
-    static std::unique_ptr<IcCommunicationProtocol> Factory(IcCommunicationProtocolTypes::IcDevice device, ErrorType &error) {
+    inline std::unique_ptr<IcCommunicationProtocol> Factory(IcCommunicationProtocolTypes::IcDevice device, const IcCommFactoryTypes::FactoryParams &params, ErrorType &error) {
         error = ErrorType::Success;
 
         switch (device) {
         case IcCommunicationProtocolTypes::IcDevice::Uart: {
             auto uart = std::make_unique<Uart>();
             assert(nullptr != uart.get());
+            assert(params.deviceType() == IcCommunicationProtocolTypes::IcDevice::Uart);
 
-            error = UartConfigure(*(uart.get()));
+            error = UartConfigure(*(uart.get()), static_cast<const IcCommFactoryTypes::UartParams &>(params));
             if (ErrorType::Success != error) {
                 const bool isCriticalError = !(ErrorType::NotAvailable == error);
                 if (isCriticalError) {
