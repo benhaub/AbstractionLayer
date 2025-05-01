@@ -11,7 +11,6 @@ class Uart : public UartAbstraction {
 
     public:
     Uart() : UartAbstraction() {}
-    ~Uart() = default;
 
     ErrorType init() override;
     ErrorType deinit() override;

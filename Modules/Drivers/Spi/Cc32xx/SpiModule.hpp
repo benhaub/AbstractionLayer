@@ -6,7 +6,6 @@
 class Spi : public SpiAbstraction {
     public:
     Spi() : SpiAbstraction() {}
-    ~Spi() = default;
 
     ErrorType init() override;
     ErrorType deinit() override;

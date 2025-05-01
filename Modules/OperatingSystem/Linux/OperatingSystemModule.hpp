@@ -18,7 +18,6 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     OperatingSystem() : OperatingSystemAbstraction(), Global<OperatingSystem>() {
         memoryRegions(_status.memoryRegion);
     }
-    ~OperatingSystem() = default;
 
     ErrorType delay(const Milliseconds delay) override;
     ErrorType delay(const Microseconds delay) override;

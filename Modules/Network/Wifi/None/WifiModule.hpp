@@ -12,7 +12,6 @@ class Wifi final : public WifiAbstraction {
 
     public:
     Wifi() : WifiAbstraction() {}
-    ~Wifi() = default;
 
     ErrorType init() override;
     ErrorType networkUp() override;

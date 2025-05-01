@@ -9,7 +9,6 @@
 class Rtc final : public RtcAbstraction {
     public:
     Rtc();
-    virtual ~Rtc() = default;
 
     ErrorType init() override;
     ErrorType deinit() override;

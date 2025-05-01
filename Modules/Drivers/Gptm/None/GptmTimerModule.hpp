@@ -5,7 +5,6 @@
 
 class GptmTimerModule final : public GptmTimerAbstraction {
     GptmTimerModule() : GptmTimerAbstraction() {}
-    ~GptmTimerModule() = default;
 
     ErrorType init() override;
     ErrorType deinit() override;

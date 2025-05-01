@@ -12,7 +12,6 @@ class GptmPwmModule final : public GptmPwmAbstraction {
 
     public:
     GptmPwmModule() : GptmPwmAbstraction() {}
-    ~GptmPwmModule() = default;
 
     /**
      * @brief ESP PWM hardware limit on the amount of timers per PWM block.

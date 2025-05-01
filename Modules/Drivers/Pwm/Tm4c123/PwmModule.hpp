@@ -9,7 +9,6 @@
 class Pwm : public PwmAbstraction {
     public:
     Pwm() : PwmAbstraction() {}
-    ~Pwm() = default;
 
     ErrorType init() override;
     ErrorType deinit() override;

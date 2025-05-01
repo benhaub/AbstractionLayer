@@ -14,7 +14,6 @@ class Logger final : public LoggingAbstraction, public Global<Logger> {
 
         display = Display_open(Display_Type_UART, NULL);
     }
-    virtual ~Logger() = default;
 
     virtual ErrorType log(const LogType type, const char *tag, const char *format, ...) override;
     virtual ErrorType logBuffer(const LogType logType, const char *tag, const char *buffer, Bytes length) override;

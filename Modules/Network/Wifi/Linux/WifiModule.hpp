@@ -21,7 +21,6 @@ class Wifi final : public WifiAbstraction {
         //Wifi on a posix system is always up.
         _status.isUp = true;
     }
-    ~Wifi() = default;
 
     ErrorType init() override;
     ErrorType networkUp() override;

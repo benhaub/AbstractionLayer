@@ -16,7 +16,6 @@ class IpCellularClient final : public IpClientAbstraction {
 
     public:
     IpCellularClient() : IpClientAbstraction() {}
-    ~IpCellularClient() = default;
 
     ErrorType connectTo(const std::string &hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &socket, const Milliseconds timeout) override;
     ErrorType disconnect() override;

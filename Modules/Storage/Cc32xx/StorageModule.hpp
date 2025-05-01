@@ -11,7 +11,6 @@ class Storage final : public StorageAbstraction, public Global<Storage, StorageT
     Storage(StorageTypes::Medium medium) : StorageAbstraction(medium), Global<Storage, StorageTypes::Medium>() {
         _status.isInitialized = false;
     }
-    virtual ~Storage() = default;
 
     ErrorType init() override;
     ErrorType deinit() override;

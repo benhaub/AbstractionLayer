@@ -24,8 +24,7 @@ class OperatingSystem final: public OperatingSystemAbstraction, public Global<Op
         memoryRegions(_status.memoryRegion);
         savedInterruptContexts.reserve(2);
     }
-    ~OperatingSystem() = default;
-
+    
     ErrorType delay(const Milliseconds delay) override;
     ErrorType delay(const Microseconds delay) override;
     ErrorType startScheduler() override;

@@ -13,7 +13,6 @@ class Logger final : public LoggingAbstraction, public Global<Logger> {
     Logger() : LoggingAbstraction(), Global<Logger>() {
         UARTStdioConfig(static_cast<uint8_t>(PeripheralNumber::One), 115200, SysCtlClockGet());
     }
-    virtual ~Logger() = default;
 
     virtual ErrorType log(const LogType type, const char *tag, const char *format, ...) override;
     virtual ErrorType logBuffer(const LogType logType, const char *tag, const char *buffer, Bytes length) override;

@@ -7,7 +7,6 @@ template <Count _numberOfPins>
 class DarlingtonArray final : public DarlingtonArrayAbstraction<_numberOfPins> {
     public:
     DarlingtonArray() : DarlingtonArrayAbstraction<_numberOfPins>() {}
-    ~DarlingtonArray() = default;
 
     /**
      * @brief Drive the input pin specified on the darlington array to the specified state.

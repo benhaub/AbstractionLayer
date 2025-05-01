@@ -10,7 +10,6 @@
 class Adc : public AdcAbstraction {
     public:
     Adc() = default;
-    ~Adc() = default;
 
     ErrorType init() override;
     ErrorType deinit() override;

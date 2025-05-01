@@ -25,7 +25,6 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
         static_assert(1 == configUSE_IDLE_HOOK);
         memoryRegions(_status.memoryRegion);
     }
-    ~OperatingSystem() = default;
 
     ErrorType delay(const Milliseconds delay) override;
     ErrorType delay(const Microseconds delay) override;

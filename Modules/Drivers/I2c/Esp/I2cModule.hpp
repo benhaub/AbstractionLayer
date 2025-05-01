@@ -10,7 +10,6 @@ class I2c final : public I2cAbstraction {
 
     public:
     I2c() : I2cAbstraction() {}
-    ~I2c() = default;
 
     ErrorType init() override;
     ErrorType deinit() override;

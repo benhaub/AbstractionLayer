@@ -18,7 +18,6 @@ class HttpServer final : public HttpServerAbstraction {
     HttpServer() : HttpServerAbstraction() {
         OperatingSystem::Instance().createQueue(SimpleLinkEventQueue, sizeof(SlNetAppRequest_t), 10);
     }
-    virtual ~HttpServer() = default;
 
     ErrorType listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) override;
     ErrorType acceptConnection(Socket &socket, const Milliseconds timeout) override;

@@ -7,7 +7,6 @@ class GptmCaptureModule final : public GptmCaptureAbstraction {
 
     public:
     GptmCaptureModule() : GptmCaptureAbstraction() {}
-    ~GptmCaptureModule() = default;
 
     ErrorType init() override;
     ErrorType deinit() override;

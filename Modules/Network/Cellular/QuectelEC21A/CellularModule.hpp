@@ -26,7 +26,6 @@ class Cellular final : public CellularAbstraction {
     Cellular() : CellularAbstraction() {
         _connectionIds.fill(-1);
     }
-    ~Cellular() = default;
 
     ErrorType init() override;
     ErrorType networkUp() override;

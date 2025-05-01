@@ -15,7 +15,6 @@ class IpClient final : public IpClientAbstraction {
 
     public:
     IpClient() : IpClientAbstraction() {};
-    ~IpClient() = default;
 
     ErrorType connectTo(const std::string &hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) override;
     ErrorType disconnect() override;

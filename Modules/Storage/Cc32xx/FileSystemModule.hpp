@@ -15,7 +15,6 @@ class FileSystem final: public FileSystemAbstraction {
         //Since mounting is not supported on simplelink.
         _status.mounted = true;
     }
-    ~FileSystem() = default;
 
     ErrorType mount() override;
     ErrorType unmount() override; 

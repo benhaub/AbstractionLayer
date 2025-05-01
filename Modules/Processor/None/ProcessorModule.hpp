@@ -8,7 +8,6 @@
 class Processor final : public ProcessorAbstraction, public Global<Processor> {
     public:
     Processor() = default;
-    virtual ~Processor() = default;
 
     ErrorType isInterruptContext() override;
     ErrorType interruptRequestNumber(uint32_t &interruptRequestNumber) override;

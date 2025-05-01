@@ -12,7 +12,6 @@
 class Cellular final : public CellularAbstraction {
     public:
     Cellular() : CellularAbstraction() {}
-    ~Cellular() = default;
 
     ErrorType init() override;
     ErrorType networkUp() override;

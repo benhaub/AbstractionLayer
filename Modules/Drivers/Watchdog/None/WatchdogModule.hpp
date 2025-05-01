@@ -8,7 +8,6 @@ class Watchdog : public WatchdogAbstraction{
     
     public:
     Watchdog() : WatchdogAbstraction(){}
-    ~Watchdog() = default;
 
     ErrorType startPetting() override;
     ErrorType stopPetting() override;

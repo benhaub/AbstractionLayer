@@ -9,8 +9,6 @@ class HBridge final : public HBridgeAbstraction {
     public:
     /// @brief  Constructor
     HBridge() = default;
-    /// @brief Destructor
-    ~HBridge() = default;
 
     ErrorType driveForward() override;
     ErrorType driveBackward() override;

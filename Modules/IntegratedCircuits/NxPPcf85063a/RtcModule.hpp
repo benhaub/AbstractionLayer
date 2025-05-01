@@ -8,7 +8,6 @@ class Nxppcf8506a final : public RtcAbstraction {
 
     public:
     Nxppcf8506a() : RtcAbstraction() {}
-    virtual ~Nxppcf8506a() = default;
 
     ErrorType init() override;
     ErrorType deinit() override;

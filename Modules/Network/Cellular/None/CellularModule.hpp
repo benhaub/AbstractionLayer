@@ -15,7 +15,6 @@ class Cellular final : public CellularAbstraction {
         _status.isUp = false;
         _status.technology = NetworkTypes::Technology::Cellular;
     }
-    ~Cellular() = default;
 
     ErrorType init() override;
     ErrorType networkUp() override;

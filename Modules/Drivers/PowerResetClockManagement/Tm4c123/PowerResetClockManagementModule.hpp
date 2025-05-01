@@ -13,7 +13,6 @@ class PowerResetClockManagement : public PowerResetClockManagementAbstraction {
         //This function is not meant to have any purpose other than to make a reference to the library so linking works.
         SysCtlClockGet();
     }
-    ~PowerResetClockManagement() = default;
 
     ErrorType init() override;
     ErrorType setClockFrequency(const Hertz frequency, const Hertz externalCrystalFrequency) override;

@@ -5,7 +5,7 @@
 //TI
 #include "ti/drivers/net/wifi/device.h"
 
-Rtc::Rtc() {
+Rtc::Rtc() : RtcAbstraction() {
     Spi spi;
     Id thread;
     ErrorType error = spi.init();

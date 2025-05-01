@@ -8,7 +8,6 @@ class Cryptography final : public CryptographyAbstraction {
 
     public:
     Cryptography(const std::string &privateStaticKey, Bytes keySize);
-    virtual ~Cryptography() = default;
 
     ErrorType generateKeys(CryptographyTypes::Algorithm algorithm) override;
     ErrorType generatePrivateKey(CryptographyTypes::Algorithm algorithm, const std::string &myPrivateKey, const std::string &theirPublicKey, std::string &newPrivateKey) override;

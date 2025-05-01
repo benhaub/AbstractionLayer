@@ -14,7 +14,6 @@ class GptmCaptureModule final : public GptmCaptureAbstraction {
     GptmCaptureModule() : GptmCaptureAbstraction() {
         Capture_Params_init(&_captureParams);
     }
-    ~GptmCaptureModule() = default;
 
     ErrorType init() override;
     ErrorType deinit() override;

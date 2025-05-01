@@ -13,7 +13,6 @@ class Gpio final : public GpioAbstraction {
 
     public:
     Gpio() : GpioAbstraction() {}
-    virtual ~Gpio() = default;
 
     ErrorType init() override;
     ErrorType setHardwareConfig(const uint32_t *basePeripheralRegister, const PinNumber pinNumber, const GpioTypes::PinDirection direction, const GpioTypes::InterruptMode interruptMode, const bool pullUpEnable, const bool pullDownEnable) override;

@@ -12,7 +12,6 @@ class HttpServer final : public HttpServerAbstraction {
         _ipServer = std::make_unique<IpServer>();
         assert(nullptr != _ipServer.get());
     }
-    virtual ~HttpServer() = default;
 
     ErrorType listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) override;
     ErrorType acceptConnection(Socket &socket, const Milliseconds timeout) override;

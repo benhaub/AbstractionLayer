@@ -10,7 +10,6 @@ class IpServer final : public IpServerAbstraction {
 
     public:
     IpServer() : IpServerAbstraction() {}
-    ~IpServer() = default;
 
     ErrorType listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) override;
     ErrorType acceptConnection(Socket &socket, const Milliseconds timeout) override;

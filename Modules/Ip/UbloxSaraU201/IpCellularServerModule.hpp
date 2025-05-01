@@ -6,6 +6,8 @@
 class IpCellularServer final : public IpServerAbstraction {
 
     public:
+    IpCellularServer() : IpServerAbstraction() {}
+
     ErrorType listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) override;
     ErrorType acceptConnection(Socket &socket) override;
     ErrorType closeConnection() override;

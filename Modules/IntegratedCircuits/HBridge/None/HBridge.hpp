@@ -3,7 +3,6 @@
 class HBridge final : public HBridgeAbstraction {
     public:
     HBridge() = default;
-    ~HBridge() = default;
 
     ErrorType driveForward() override;
     ErrorType driveBackward() override;
