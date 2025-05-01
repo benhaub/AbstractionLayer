@@ -14,6 +14,7 @@ OBJECT
 target_include_directories(IpClient INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(Cc32xxIpClient PRIVATE abstractionLayer)
+target_include_directories(Cc32xxIpClient PRIVATE IpClient)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE Cc32xxIpClient)
 
 target_include_directories(Cc32xxIpClient PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
@@ -31,6 +32,7 @@ OBJECT
 target_include_directories(IpServer INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(Cc32xxIpServer PRIVATE abstractionLayer)
+target_link_libraries(Cc32xxIpServer PRIVATE IpServer)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE Cc32xxIpServer)
 
 target_include_directories(Cc32xxIpServer PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
