@@ -4,7 +4,7 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
   ChainOfResponsibility.hpp
 )
 
-add_library(ChainOfResponsibility STATIC
+add_library(ChainOfResponsibility OBJECT
   ChainOfResponsibility.cpp
 )
 

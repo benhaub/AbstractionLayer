@@ -4,7 +4,7 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
   StatusLogger.hpp
 )
 
-add_library(StatusLogger STATIC
+add_library(StatusLogger OBJECT
   StatusLogger.cpp
 )
 

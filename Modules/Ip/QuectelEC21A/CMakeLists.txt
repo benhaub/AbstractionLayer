@@ -5,7 +5,7 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
 )
 #Client
 add_library(QuectelEC21AIpCellularClient
-STATIC
+OBJECT
   IpCellularClientModule.cpp
 )
 
@@ -17,7 +17,7 @@ target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE QuectelEC21AIp
 
 #Server
 add_library(QuectelEC21AIpCellularServer
-STATIC
+OBJECT
   IpCellularServerModule.cpp
 )
 

@@ -6,7 +6,7 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
 )
 #Client
 add_library(PosixIpClient
-STATIC
+OBJECT
   IpClientModule.cpp
 )
 
@@ -21,7 +21,7 @@ target_compile_definitions(PosixIpClient PRIVATE $<TARGET_PROPERTY:${PROJECT_NAM
 
 #Server
 add_library(PosixIpServer
-STATIC
+OBJECT
   IpServerModule.cpp
   HttpServerModule.cpp
 )

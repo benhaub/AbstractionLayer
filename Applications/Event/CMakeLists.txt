@@ -3,7 +3,7 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
   EventQueue.hpp
 )
 
-add_library(Event STATIC
+add_library(Event OBJECT
   EventQueue.cpp
 )
 

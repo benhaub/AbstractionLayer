@@ -1,5 +1,5 @@
 add_library(Cc32xxError
-STATIC
+OBJECT
   ErrorModule.cpp
 )
 

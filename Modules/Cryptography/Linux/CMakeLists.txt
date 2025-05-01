@@ -4,7 +4,7 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
 )
 
 add_library(LinuxCryptography
-STATIC
+OBJECT
   CryptographyModule.cpp
 )
 
@@ -13,7 +13,7 @@ target_include_directories(Cryptography INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(LinuxCryptography PRIVATE ${CMAKE_CURRENT_LIST_DIR}/libsodium-stable/src/libsodium/include)
 
 target_link_libraries(LinuxCryptography PRIVATE abstractionLayer)
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PUBLIC LinuxCryptography)
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE LinuxCryptography)
 
 set(libsodium "libsodium-1.0.20-stable")
 add_custom_command(

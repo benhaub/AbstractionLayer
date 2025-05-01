@@ -7,7 +7,7 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
 
 #Client
 add_library(Cc32xxIpClient
-STATIC
+OBJECT
   IpClientModule.cpp
 )
 
@@ -23,7 +23,7 @@ target_compile_definitions(Cc32xxIpClient PRIVATE $<TARGET_PROPERTY:${PROJECT_NA
 
 #Server
 add_library(Cc32xxIpServer
-STATIC
+OBJECT
   IpServerModule.cpp
   HttpServerModule.cpp
 )

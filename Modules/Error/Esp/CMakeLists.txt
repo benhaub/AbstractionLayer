@@ -1,5 +1,5 @@
 add_library(EspError
-STATIC
+OBJECT
   ErrorModule.cpp
 )
 
