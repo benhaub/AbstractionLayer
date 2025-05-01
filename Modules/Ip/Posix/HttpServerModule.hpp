@@ -5,7 +5,7 @@
 #include "HttpServerAbstraction.hpp"
 #include "IpServerModule.hpp"
 
-class HttpServer : public HttpServerAbstraction {
+class HttpServer final : public HttpServerAbstraction {
 
     public:
     HttpServer() : HttpServerAbstraction() {

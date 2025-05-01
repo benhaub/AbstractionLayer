@@ -8,7 +8,7 @@
 #include "utils/uartstdio.h"
 #include "driverlib/sysctl.h"
 
-class Logger : public LoggingAbstraction, public Global<Logger> {
+class Logger final : public LoggingAbstraction, public Global<Logger> {
     public:
     Logger() : LoggingAbstraction(), Global<Logger>() {
         UARTStdioConfig(static_cast<uint8_t>(PeripheralNumber::One), 115200, SysCtlClockGet());

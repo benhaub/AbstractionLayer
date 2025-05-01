@@ -3,7 +3,7 @@
 
 #include "PowerResetClockManagementAbstraction.hpp"
 
-class PowerResetClockManagement : public PowerResetClockManagementAbstraction {
+class PowerResetClockManagement final : public PowerResetClockManagementAbstraction {
     public:
     PowerResetClockManagement() = default;
     ~PowerResetClockManagement() = default;

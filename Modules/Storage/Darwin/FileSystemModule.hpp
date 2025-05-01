@@ -8,7 +8,7 @@
 #include <map>
 #include <fstream>
 
-class FileSystem : public FileSystemAbstraction {
+class FileSystem final : public FileSystemAbstraction {
 
     public:
     FileSystem(const std::array<char, 16> &name, FileSystemTypes::Implementation implementation, StorageAbstraction &storage) : FileSystemAbstraction(name, implementation, storage) {}

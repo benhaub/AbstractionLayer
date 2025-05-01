@@ -16,7 +16,7 @@
  * @class Wifi
  * @brief Wifi for ESP32
 */
-class Wifi : public WifiAbstraction {
+class Wifi final : public WifiAbstraction {
 
     public:
     Wifi() : WifiAbstraction() {}

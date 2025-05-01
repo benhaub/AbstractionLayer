@@ -14,7 +14,7 @@
 #include <memory>
 #include <string>
 
-class Wifi : public WifiAbstraction {
+class Wifi final : public WifiAbstraction {
 
     public:
     Wifi() : WifiAbstraction() {

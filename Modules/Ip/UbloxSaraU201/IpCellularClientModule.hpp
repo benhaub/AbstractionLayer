@@ -4,7 +4,7 @@
 //AbstractionLayer
 #include "IpClientAbstraction.hpp"
 
-class IpCellularClient : public IpClientAbstraction {
+class IpCellularClient final : public IpClientAbstraction {
 
     public:
     IpCellularClient() : IpClientAbstraction() {};

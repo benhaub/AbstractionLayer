@@ -6,7 +6,7 @@
 //TI Drivers
 #include "ti/drivers/net/wifi/simplelink.h"
 
-class IpServer : public IpServerAbstraction {
+class IpServer final : public IpServerAbstraction {
 
     public:
     IpServer() : IpServerAbstraction() {}

@@ -7,7 +7,7 @@
 //TI drivers
 #include "ti/display/Display.h"
 
-class Logger : public LoggingAbstraction, public Global<Logger> {
+class Logger final : public LoggingAbstraction, public Global<Logger> {
     public:
     Logger() : LoggingAbstraction(), Global<Logger>() {
         Display_init();

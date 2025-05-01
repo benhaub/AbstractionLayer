@@ -3,7 +3,7 @@
 
 #include "GptmCaptureAbstraction.hpp"
 
-class GptmCaptureModule : public GptmCaptureAbstraction {
+class GptmCaptureModule final : public GptmCaptureAbstraction {
 
     public:
     GptmCaptureModule() : GptmCaptureAbstraction() {}

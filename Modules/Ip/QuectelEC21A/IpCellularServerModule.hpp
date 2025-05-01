@@ -3,7 +3,7 @@
 
 #include "IpServerAbstraction.hpp"
 
-class IpCellularServer : public IpServerAbstraction {
+class IpCellularServer final : public IpServerAbstraction {
 
     public:
     ErrorType listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) override;

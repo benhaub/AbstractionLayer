@@ -5,7 +5,7 @@
 #include "ProcessorAbstraction.hpp"
 #include "Global.hpp"
 
-class Processor : public ProcessorAbstraction, public Global<Processor> {
+class Processor final : public ProcessorAbstraction, public Global<Processor> {
     public:
     Processor() = default;
     virtual ~Processor() = default;

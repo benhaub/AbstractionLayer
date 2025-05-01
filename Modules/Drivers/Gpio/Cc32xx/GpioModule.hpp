@@ -6,7 +6,7 @@
 //C++
 #include <cstdint>
 
-class Gpio : public GpioAbstraction {
+class Gpio final : public GpioAbstraction {
 
     public:
     Gpio() : GpioAbstraction() {}

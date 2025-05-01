@@ -3,7 +3,8 @@
 
 #include "I2cAbstraction.hpp"
 
-class I2c : public I2cAbstraction {
+class I2c final : public I2cAbstraction {
+
     public:
     I2c() : I2cAbstraction() {}
     ~I2c() = default;

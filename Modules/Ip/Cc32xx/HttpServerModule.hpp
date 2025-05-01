@@ -13,7 +13,7 @@ static constexpr std::array<char, OperatingSystemConfig::MaxQueueNameLength> Sim
 //I am aware of the Network Services API that includes various servers and clients pre-made by TI and that one of them is an HTTP server.
 //For some reason, the example code in the SDK does not use this API so unfortunately I only became aware of this API after I started working
 //on this implementation using the lower level Host Driver API.
-class HttpServer : public HttpServerAbstraction {
+class HttpServer final : public HttpServerAbstraction {
     public:
     HttpServer() : HttpServerAbstraction() {
         OperatingSystem::Instance().createQueue(SimpleLinkEventQueue, sizeof(SlNetAppRequest_t), 10);

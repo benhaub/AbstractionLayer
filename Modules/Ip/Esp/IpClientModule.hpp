@@ -11,7 +11,7 @@
 #include "IpClientAbstraction.hpp"
 #include "lwip/sockets.h"
 
-class IpClient : public IpClientAbstraction {
+class IpClient final : public IpClientAbstraction {
 
     public:
     IpClient() : IpClientAbstraction() {};

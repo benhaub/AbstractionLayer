@@ -8,7 +8,7 @@
 //TI Drivers
 #include "ti/drivers/ADC.h"
 
-class Adc : public AdcAbstraction {
+class Adc final : public AdcAbstraction {
     public:
     Adc() = default;
     ~Adc() = default;

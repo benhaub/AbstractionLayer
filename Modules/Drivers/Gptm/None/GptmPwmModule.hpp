@@ -3,7 +3,7 @@
 
 #include "GptmPwmAbstraction.hpp"
 
-class GptmPwmModule : public GptmPwmAbstraction {
+class GptmPwmModule final : public GptmPwmAbstraction {
 
     public:
     GptmPwmModule() : GptmPwmAbstraction() {}

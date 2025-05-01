@@ -4,7 +4,7 @@
 //AbstractionLayer
 #include "HttpServerAbstraction.hpp"
 
-class HttpServer : public HttpServerAbstraction {
+class HttpServer final : public HttpServerAbstraction {
 
     public:
     HttpServer() : HttpServerAbstraction() {}

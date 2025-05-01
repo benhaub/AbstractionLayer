@@ -12,7 +12,7 @@
 //Posix
 #include <sys/socket.h>
 
-class IpClient : public IpClientAbstraction {
+class IpClient final : public IpClientAbstraction {
 
     public:
     IpClient() : IpClientAbstraction() {};

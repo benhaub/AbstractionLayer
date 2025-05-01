@@ -3,7 +3,7 @@
 
 #include "GptmTimerAbstraction.hpp"
 
-class GptmTimerModule : public GptmTimerAbstraction {
+class GptmTimerModule final : public GptmTimerAbstraction {
     GptmTimerModule() : GptmTimerAbstraction() {}
     ~GptmTimerModule() = default;
 

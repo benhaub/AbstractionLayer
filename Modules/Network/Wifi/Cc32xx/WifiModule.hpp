@@ -10,7 +10,7 @@
 //TI Drivers
 #include "ti/drivers/net/wifi/device.h"
 
-class Wifi : public WifiAbstraction {
+class Wifi final : public WifiAbstraction {
 
     public:
     Wifi();

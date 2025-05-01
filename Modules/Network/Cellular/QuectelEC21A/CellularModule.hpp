@@ -21,7 +21,7 @@ enum class ContextType : uint8_t {
     Ipv4v6
 };
 
-class Cellular : public CellularAbstraction {
+class Cellular final : public CellularAbstraction {
     public:
     Cellular() : CellularAbstraction() {
         _connectionIds.fill(-1);

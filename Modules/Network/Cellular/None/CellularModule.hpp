@@ -9,7 +9,7 @@
 
 #include "CellularAbstraction.hpp"
 
-class Cellular : public CellularAbstraction {
+class Cellular final : public CellularAbstraction {
     public:
     Cellular() : CellularAbstraction() {
         _status.isUp = false;

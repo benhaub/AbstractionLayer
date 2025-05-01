@@ -5,7 +5,7 @@
 #include "LoggingAbstraction.hpp"
 #include "Global.hpp"
 
-class Logger : public LoggingAbstraction, public Global<Logger> {
+class Logger final : public LoggingAbstraction, public Global<Logger> {
     public:
     Logger() : LoggingAbstraction(), Global<Logger>() {}
     virtual ~Logger() = default;

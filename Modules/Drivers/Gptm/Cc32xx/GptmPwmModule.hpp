@@ -7,7 +7,7 @@
 //TI driverlib
 #include "ti/drivers/PWM.h"
 
-class GptmPwmModule : public GptmPwmAbstraction {
+class GptmPwmModule final : public GptmPwmAbstraction {
 
     public:
     GptmPwmModule() : GptmPwmAbstraction() {}

@@ -3,7 +3,7 @@
 
 #include "IpServerAbstraction.hpp"
 
-class IpServer : public IpServerAbstraction {
+class IpServer final : public IpServerAbstraction {
 
     public:
     IpServer() : IpServerAbstraction() {};

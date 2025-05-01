@@ -6,7 +6,7 @@
 //ESP
 #include "lwip/sockets.h"
 
-class IpServer : public IpServerAbstraction {
+class IpServer final : public IpServerAbstraction {
 
     public:
     IpServer() : IpServerAbstraction() {};

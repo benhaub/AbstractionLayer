@@ -5,7 +5,7 @@
 #include "StorageAbstraction.hpp"
 #include "Global.hpp"
 
-class Storage : public StorageAbstraction, public Global<Storage, StorageTypes::Medium> {
+class Storage final : public StorageAbstraction, public Global<Storage, StorageTypes::Medium> {
 
     public:
     Storage(StorageTypes::Medium medium) : StorageAbstraction(medium), Global<Storage, StorageTypes::Medium>() {

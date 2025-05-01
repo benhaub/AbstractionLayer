@@ -4,7 +4,7 @@
 //AbstractionLayer
 #include "CryptographyAbstraction.hpp"
 
-class Cryptography : public CryptographyAbstraction {
+class Cryptography final : public CryptographyAbstraction {
     
     public:
     Cryptography(const std::string &privateStaticKey, Bytes keySize);

@@ -15,7 +15,7 @@
 //MacOS
 #include <dispatch/dispatch.h> //For timers
 
-class OperatingSystem : public OperatingSystemAbstraction, public Global<OperatingSystem> {
+class OperatingSystem final : public OperatingSystemAbstraction, public Global<OperatingSystem> {
 
     public:
     OperatingSystem() : OperatingSystemAbstraction(), Global<OperatingSystem>() {

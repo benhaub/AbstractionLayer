@@ -9,7 +9,7 @@
 #include "hal/gpio_types.h"
 #include "driver/gpio.h"
 
-class Gpio : public GpioAbstraction {
+class Gpio final : public GpioAbstraction {
 
     public:
     Gpio() : GpioAbstraction() {}

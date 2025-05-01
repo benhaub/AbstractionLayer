@@ -6,7 +6,7 @@
 //ESP
 #include "driver/i2c.h"
 
-class I2c : public I2cAbstraction {
+class I2c final : public I2cAbstraction {
 
     public:
     I2c() : I2cAbstraction() {}

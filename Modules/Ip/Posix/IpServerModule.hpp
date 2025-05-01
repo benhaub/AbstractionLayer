@@ -6,7 +6,7 @@
 //Posix
 #include <sys/socket.h>
 
-class IpServer : public IpServerAbstraction {
+class IpServer final : public IpServerAbstraction {
 
     public:
     ErrorType listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) override;

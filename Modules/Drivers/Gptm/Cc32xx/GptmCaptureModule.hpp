@@ -8,7 +8,7 @@
 //TI sysconfig (auto-generated)
 #include "ti_drivers_config.h"
 
-class GptmCaptureModule : public GptmCaptureAbstraction {
+class GptmCaptureModule final : public GptmCaptureAbstraction {
 
     public:
     GptmCaptureModule() : GptmCaptureAbstraction() {

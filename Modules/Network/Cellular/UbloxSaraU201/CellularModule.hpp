@@ -9,7 +9,7 @@
 
 #include "NetworkAbstraction.hpp"
 
-class Cellular : public CellularAbstraction {
+class Cellular final : public CellularAbstraction {
     public:
     Cellular() : CellularAbstraction() {}
     ~Cellular() = default;

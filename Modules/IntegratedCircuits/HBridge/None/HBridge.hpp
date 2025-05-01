@@ -1,6 +1,6 @@
 #include "HBridgeAbstraction.hpp"
 
-class HBridge : public HBridgeAbstraction {
+class HBridge final : public HBridgeAbstraction {
     public:
     HBridge() = default;
     ~HBridge() = default;

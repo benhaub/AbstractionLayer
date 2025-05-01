@@ -12,7 +12,7 @@
 
 class Cellular;
 
-class IpCellularClient : public IpClientAbstraction {
+class IpCellularClient final : public IpClientAbstraction {
 
     public:
     IpCellularClient() : IpClientAbstraction() {}

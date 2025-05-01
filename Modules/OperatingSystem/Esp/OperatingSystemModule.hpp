@@ -17,7 +17,7 @@
 //C++
 #include <map>
 
-class OperatingSystem : public OperatingSystemAbstraction, public Global<OperatingSystem> {
+class OperatingSystem final : public OperatingSystemAbstraction, public Global<OperatingSystem> {
 
     public:
     OperatingSystem() : OperatingSystemAbstraction(), Global<OperatingSystem>() {
