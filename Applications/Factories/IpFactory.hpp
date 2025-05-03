@@ -48,7 +48,7 @@ namespace IpFactory {
      * @param error
      * @sa ErrorType
      */
-    std::unique_ptr<IpClientAbstraction> ClientFactory(NetworkTypes::Technology technology, IpFactory::Protocol protocol, ErrorType &error) {
+    inline std::unique_ptr<IpClientAbstraction> ClientFactory(NetworkTypes::Technology technology, IpFactory::Protocol protocol, ErrorType &error) {
         switch (technology) {
             case NetworkTypes::Technology::Wifi: {
                 auto client = std::make_unique<IpClient>();
@@ -78,7 +78,7 @@ namespace IpFactory {
      *            in a function that dynamic_cast<>()'s the IpServerAbstraction to an HttpServer.
      * @sa https://en.wikipedia.org/wiki/SOLID
      */
-    std::unique_ptr<IpServerAbstraction> ServerFactory(NetworkTypes::Technology technology, IpFactory::Protocol protocol, ErrorType &error) {
+    inline std::unique_ptr<IpServerAbstraction> ServerFactory(NetworkTypes::Technology technology, IpFactory::Protocol protocol, ErrorType &error) {
         std::unique_ptr<IpServerAbstraction> server;
 
         switch (technology) {
