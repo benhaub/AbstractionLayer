@@ -77,6 +77,8 @@ class UartAbstraction : public IcCommunicationProtocol{
 
     /// @brief Tag for logging.
     static constexpr char TAG[] = "Uart";
+    /// @brief When a pin is unused, set it to this value
+    static constexpr PinNumber Unused = -1;
 
     /**
      * @brief Set hardware configuration parameters.
