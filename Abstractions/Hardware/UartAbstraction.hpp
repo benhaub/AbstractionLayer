@@ -145,17 +145,6 @@ class UartAbstraction : public IcCommunicationProtocol{
     /// @brief Get the terminating byte.
     int8_t terminatingByte() const { return _terminatingByte; }
 
-    /// @brief When a pin is unused, set it to this value
-    static constexpr PinNumber Unused = -1;
-
-    /**
-     * @brief Get the current interrupt callback function
-     * @return The current interrupt callback function
-     */
-    static InterruptCallback interruptCallback(void) {
-        return _InterruptCallback;
-    }
-
     protected:
     /// @brief Baud rate.
     uint32_t _baudRate = 115200;
@@ -187,7 +176,7 @@ class UartAbstraction : public IcCommunicationProtocol{
     /// @brief Interrupt flags.
     InterruptFlags _interruptFlags = 0;
     /// @brief Interrupt callback.
-    static InterruptCallback _InterruptCallback;
+    InterruptCallback _interruptCallback;
 };
 
 #endif // __UART_ABSTRACTION_HPP__

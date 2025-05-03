@@ -122,6 +122,17 @@ namespace {
             PLT_LOGW(IcCommFactoryTag, "Firmware configuration is unavailable on this platform");
         }
 
+        error = uart.setInterruptConfig(
+            params.interruptConfig.interruptFlags,
+            params.interruptConfig.interruptCallback
+        );
+        if (ErrorType::NotImplemented == error) {
+            return ErrorType::NotImplemented;
+        }
+        else if (ErrorType::NotAvailable == error) {
+            PLT_LOGW(IcCommFactoryTag, "Interrupt configuration is unavailable on this platform");
+        }
+
         return error;
     }
 

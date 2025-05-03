@@ -200,7 +200,7 @@ ErrorType Uart::setFirmwareConfig(Bytes receiveBufferSize, Bytes transmitBufferS
 //All interrupts are enabled by default, we will use the flags to evaluate just the ones that are set.
 ErrorType Uart::setInterruptConfig(InterruptFlags interruptFlags, InterruptCallback interruptCallback) {
     _interruptFlags = interruptFlags;
-    _InterruptCallback = interruptCallback;
+    _interruptCallback = interruptCallback;
 
     return ErrorType::Success;
 }
