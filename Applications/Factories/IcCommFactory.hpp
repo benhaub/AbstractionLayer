@@ -191,7 +191,7 @@ namespace IcCommFactory {
 
             if (ErrorType::Success == error || !isCriticalError) {
                 PLT_LOGI(IcCommFactoryTag, "Uart initialized <Peripheral:%u, Tx pin:%d, Rx pin:%d, Baud rate:%u, Data bits:%u, Parity:%c, Stop bits:%u,\
-                                             Flow control:%u, Receive buffer size:%u, Transmit buffer size:%u, Terminating byte:%u>",
+                                             Flow control:%u, Receive buffer size:%u, Transmit buffer size:%u, Terminating byte:%d>",
                     (uint8_t)uart->peripheralNumber(), uart->txNumber(), uart->rxNumber(), uart->baudRate(), uart->dataBits(), uart->parity(), uart->stopBits(), (uint8_t)uart->flowControl(), uart->receiveBufferSize(), uart->transmitBufferSize(), uart->terminatingByte());
                 return uart;
             }
