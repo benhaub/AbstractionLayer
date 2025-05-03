@@ -6,7 +6,7 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
 )
 
 add_library(Raspbian12Pi4ModelBGptm
-STATIC
+OBJECT
   GptmCaptureModule.cpp
   GptmPwmModule.cpp
   GptmTimerModule.cpp

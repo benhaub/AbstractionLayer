@@ -4,7 +4,7 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
 )
 
 add_library(TexasInstrumentsDrv8872HBridge
-STATIC
+OBJECT
   HBridge.cpp
 )
 

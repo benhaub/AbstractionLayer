@@ -3,7 +3,8 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
   MemoryPool.hpp
 )
 
-add_library(MemoryPool STATIC
+add_library(MemoryPool
+OBJECT
   MemoryPool.cpp
 )
 

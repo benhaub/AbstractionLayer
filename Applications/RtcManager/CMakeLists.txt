@@ -3,7 +3,8 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
   RtcManager.hpp
 )
 
-add_library(RtcManager STATIC
+add_library(RtcManager
+OBJECT
   RtcManager.cpp
 )
 

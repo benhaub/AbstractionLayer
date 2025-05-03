@@ -3,7 +3,8 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
   28byj485V.hpp
 )
 
-add_library(28byj485V STATIC
+add_library(28byj485V
+OBJECT
   28byj485V.cpp
 )
 

@@ -4,7 +4,7 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
 )
 
 add_library(Tm4c123Pwm
-STATIC
+OBJECT
   PwmModule.cpp
 )
 

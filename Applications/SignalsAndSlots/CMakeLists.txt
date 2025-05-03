@@ -3,7 +3,8 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
   SignalsAndSlots.hpp
 )
 
-add_library(SignalsAndSlots STATIC
+add_library(SignalsAndSlots
+OBJECT
   SignalsAndSlots.cpp
 )
 
