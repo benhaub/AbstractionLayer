@@ -84,7 +84,7 @@ ErrorType Uart::setFirmwareConfig(Bytes receiveBufferSize, Bytes transmitBufferS
 
 ErrorType Uart::setInterruptConfig(InterruptFlags interruptFlags, InterruptCallback interruptCallback) {
     _interruptFlags = interruptFlags;
-    _InterruptCallback = interruptCallback;
+    _interruptCallback = interruptCallback;
     return ErrorType::Success;
 }
 
