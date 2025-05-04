@@ -118,8 +118,8 @@ class CellularAbstraction : public NetworkAbstraction {
     */
     const CellularConfig::AccessMode &accessModeConst() const { return _accessMode; }
     /**
-     * @brief Set the network abstraction that this client communicates on.
-     * @param network The network abstraction to use.
+     * @brief Set the IC device used to communicate with the network device.
+     * @param ic The IC device to use.
      */
     ErrorType setIcDevice(IcCommunicationProtocol &ic) { _ic = &ic; return ErrorType::Success; }
 

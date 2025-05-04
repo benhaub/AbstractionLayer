@@ -58,6 +58,8 @@ class StorageAbstraction : public EventQueue {
 
     /// @brief Tag for logging
     static constexpr char TAG[] = "Storage";
+
+    /// @brief Print the status of the storage
     void printStatus() {
         PLT_LOGI(TAG, "<StorageStatus> <Initialized:%s> <Pie>",
             statusConst().isInitialized ? "true" : "false");
@@ -90,6 +92,7 @@ class StorageAbstraction : public EventQueue {
     protected:
     /// @brief The status of the storage.
     StorageTypes::Status _status = { .isInitialized = false };
+    /// @brief Typically for desktop systems. Specifies the location which to emulate the storage.
     std::string _rootPrefix;
 };
 

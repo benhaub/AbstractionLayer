@@ -64,6 +64,8 @@ class IpClientAbstraction : public CommunicationProtocol {
 
     /// @brief The tag for logging.
     static constexpr char TAG[] =  "IpClient";
+
+    /// @brief Print the status of the IP client
     void printStatus() const {
         PLT_LOGI(TAG, "<IpClientStatus> <Connected:%s> <Pie, Line>",
         statusConst().connected ? "true" : "false");

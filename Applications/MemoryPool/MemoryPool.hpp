@@ -64,7 +64,7 @@ class MemoryPool {
 
     /**
      * @brief Deallocate memory from the pool.
-     * @param[in] poolBlock The pointer to the block of memory to deallocate.
+     * @param[in] item The pointer to the block of memory to deallocate.
      * @return ErrorType::Success if the memory was deallocated
      * @returns ErrorType::InvalidParameter if the memory was not deallocated.
      */
@@ -81,12 +81,12 @@ class MemoryPool {
 
     /**
      * @brief Set the data in a memory block.
-     * @param[in] poolBlock The pointer to the block of memory to set.
+     * @param[in] itemHandle The pointer to the block of memory to set.
      * @param[in] data The data to set the poolBlock to.
-     * @param[in] dataSize The size of the data.
      * @return ErrorType::Success if the data was set
      * @returns ErrorType::InvalidParameter if the data is too large to fit in the block.
      * @returns ErrorType::InvalidParameter if the poolBlock being set does not belong to the pool.
+     * @returns ErrorType::PrerequisitesNotMet if the poolBlock being set was not allocated.
      */
     constexpr ErrorType setData(const Id itemHandle, const T &data) {
         Bytes availableInPool = available(availableInPool);

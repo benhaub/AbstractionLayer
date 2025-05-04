@@ -37,7 +37,7 @@ ErrorType OperatingSystem::startScheduler() {
     return ErrorType::Failure;
 }
 
-ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority priority, const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
+ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority priority, const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
     pthread_attr_t attrs;
     struct sched_param priParam;
     int retc;
@@ -89,7 +89,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemConfig::Priority pr
 //I want to use pthreads since I like the portability of them, however, ESP does not implement pthread_kill.
 //The work around is to set the thread in the deatched state and then have the main loops of each thread regularly check their status
 //to see if they have been terminated by the operating system, which will set isTerminated when the thread is detached.
-ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) {
+ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
     ErrorType error = ErrorType::NoData;
 
     if (threads.contains(name)) {
@@ -99,7 +99,7 @@ ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemCo
     return error;
 }
 
-ErrorType OperatingSystem::joinThread(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) {
+ErrorType OperatingSystem::joinThread(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
     Id thread;
     int ret;
     if (ErrorType::NoData == threadId(name, thread)) {
@@ -110,7 +110,7 @@ ErrorType OperatingSystem::joinThread(const std::array<char, OperatingSystemConf
     return fromPlatformError(ret);
 }
 
-ErrorType OperatingSystem::threadId(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name, Id &thread) {
+ErrorType OperatingSystem::threadId(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name, Id &thread) {
     if (threads.contains(name)) {
         thread = threads[name].threadId;
         return ErrorType::Success;
@@ -131,7 +131,7 @@ ErrorType OperatingSystem::currentThreadId(Id &thread) const {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) {
+ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
     if (threads.contains(name)) {
         return ErrorType::Success;
     }
@@ -139,7 +139,7 @@ ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemConfi
     return ErrorType::NoData;
 }
 
-ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
+ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
     sem_t semaphore;
     int pshared = 0;
     int ret = sem_init(&semaphore, pshared, initial);
@@ -152,7 +152,7 @@ ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial,
     }
 }
 
-ErrorType OperatingSystem::deleteSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
+ErrorType OperatingSystem::deleteSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
     if (0 != sem_destroy(&(semaphores[name]))) {
         return fromPlatformError(errno);
     }
@@ -162,7 +162,7 @@ ErrorType OperatingSystem::deleteSemaphore(const std::array<char, OperatingSyste
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::waitSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name, const Milliseconds timeout) {
+ErrorType OperatingSystem::waitSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name, const Milliseconds timeout) {
     Milliseconds timeRemaining = timeout;
     constexpr Milliseconds delayTime = 1;
     int result;
@@ -191,7 +191,7 @@ ErrorType OperatingSystem::waitSemaphore(const std::array<char, OperatingSystemC
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::incrementSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
+ErrorType OperatingSystem::incrementSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -203,7 +203,7 @@ ErrorType OperatingSystem::incrementSemaphore(const std::array<char, OperatingSy
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::decrementSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) {
+ErrorType OperatingSystem::decrementSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -274,7 +274,7 @@ ErrorType OperatingSystem::stopTimer(const Id timer, const Milliseconds timeout)
     return ErrorType::Failure;
 }
 
-ErrorType OperatingSystem::createQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, const Bytes size, const Count length) {
+ErrorType OperatingSystem::createQueue(const std::array<char, OperatingSystemTypes::MaxQueueNameLength> &name, const Bytes size, const Count length) {
     QueueHandle_t handle = nullptr;
 
     handle = xQueueCreate(length, size);
@@ -288,7 +288,7 @@ ErrorType OperatingSystem::createQueue(const std::array<char, OperatingSystemCon
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::sendToQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) {
+ErrorType OperatingSystem::sendToQueue(const std::array<char, OperatingSystemTypes::MaxQueueNameLength> &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) {
     if (!queues.contains(name)) {
         return ErrorType::NoData;
     }
@@ -324,7 +324,7 @@ ErrorType OperatingSystem::sendToQueue(const std::array<char, OperatingSystemCon
     }
 }
 
-ErrorType OperatingSystem::receiveFromQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
+ErrorType OperatingSystem::receiveFromQueue(const std::array<char, OperatingSystemTypes::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
     if (!queues.contains(name)) {
         return ErrorType::NoData;
     }
@@ -351,7 +351,7 @@ ErrorType OperatingSystem::receiveFromQueue(const std::array<char, OperatingSyst
     }
 }
 
-ErrorType OperatingSystem::peekFromQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
+ErrorType OperatingSystem::peekFromQueue(const std::array<char, OperatingSystemTypes::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
     if (!queues.contains(name)) {
         return ErrorType::NoData;
     }
@@ -399,9 +399,9 @@ ErrorType OperatingSystem::getSoftwareVersion(std::string &softwareVersion) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType OperatingSystem::getResetReason(OperatingSystemConfig::ResetReason &resetReason) {
+ErrorType OperatingSystem::getResetReason(OperatingSystemTypes::ResetReason &resetReason) {
     //There isn't really such thing as a reset reason for most posix systems, so we'll just call it power-on.
-    resetReason = OperatingSystemConfig::ResetReason::PowerOn;
+    resetReason = OperatingSystemTypes::ResetReason::PowerOn;
     return ErrorType::Success;
 }
 
@@ -422,12 +422,12 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> &memoryRegionName) {
+ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) {
     size = configTOTAL_HEAP_SIZE;
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> &memoryRegionName) {
+ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) {
     size = xPortGetFreeHeapSize();
     return ErrorType::Success;
 }

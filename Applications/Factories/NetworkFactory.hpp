@@ -33,6 +33,7 @@ namespace NetworkFactoryTypes {
      */
     struct FactoryParams {
         public:
+        /// @brief The technology type these parameters are meant for
         virtual NetworkTypes::Technology technology() const = 0;
     };
 
@@ -41,17 +42,23 @@ namespace NetworkFactoryTypes {
      * @brief Contains the parameters used to configure the wifi.
      */
     struct WifiParams final : public FactoryParams {
+        /// @brief The technology type these parameters are meant for
         NetworkTypes::Technology technology() const override { return NetworkTypes::Technology::Wifi; }
 
-        char accessPointSsid[32];
-        char accessPointPassword[64];
-        char stationSsid[32];
-        char stationPassword[64];
-        WifiTypes::AuthMode authMode;
-        WifiTypes::Mode mode;
+        char accessPointSsid[32];     ///< The SSID of the access point (Connecting to this device)
+        char accessPointPassword[64]; ///< The password of the access point
+        char stationSsid[32];         ///< The SSID of the station (Wifi that this device connects to)
+        char stationPassword[64];     ///< The password of the station
+        WifiTypes::AuthMode authMode; ///< Password authentication
+        WifiTypes::Mode mode;         ///< Station, access point, or both
     };
 
+    /**
+     * @struct EthernetParams
+     * @brief Contains the parameters used to configure the ethernet.
+     */
     struct EthernetParams final : public FactoryParams {
+        /// @brief The technology type these parameters are meant for
         NetworkTypes::Technology technology() const override { return NetworkTypes::Technology::Ethernet; }
     };
 }
@@ -129,6 +136,7 @@ namespace NetworkFactory {
      * @brief Creates a network interface for the type selected.
      * @param technology The technology to use for the network interface.
      * @sa NetworkTypes::Technology
+     * @param params The parameters to use for the network interface.
      * @param error The error code following the return of this function.
      * @returns Pointer to a NetworkAbstraction that contains the network of the type selected.
      */

@@ -1,19 +1,16 @@
 /***************************************************************************//**
 * @author   Ben Haubrich
 * @file     CommunicationProtocol.hpp
-* @details  \b Synopsis: \n Interface for communication that involves sending and receiving bytes of data.
+* @details  Interface for communication that involves sending and receiving bytes of data.
 * @ingroup  Abstractions
 *******************************************************************************/
 #ifndef __COMMUNICATION_PROTOCOL_HPP__
 #define __COMMUNICATION_PROTOCOL_HPP__
 
+//AbstractionLayer
+#include "EventQueue.hpp"
 //C++
 #include <memory>
-#include <functional>
-//AbstractionLayer
-#include "Types.hpp"
-#include "Error.hpp"
-#include "EventQueue.hpp"
 
 /**
  * @class CommunicationProtocol
@@ -48,6 +45,7 @@ class CommunicationProtocol : public EventQueue {
      * @brief Sends data.
      * @pre The amount of data to send is equal to the size of data. See std::string::resize()
      * @param[in] data The data to send.
+     * @param[in] timeout The time to wait to send the data.
      * @param[in] callback The callback to call when the data is sent.
      * @returns ErrorType::Success if the data was sent.
      * @returns ErrorType::Failure if the data was not sent.
@@ -56,7 +54,7 @@ class CommunicationProtocol : public EventQueue {
     virtual ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
     /**
      * @brief Receives data.
-     * @param[in] buffer The data to receive.
+     * @param[out] buffer The data to receive.
      * @param[in] timeout The timeout in milliseconds.
      * @returns ErrorType::Success if the data was received.
      * @returns ErrorType::Failure if the data was not received.
@@ -70,7 +68,8 @@ class CommunicationProtocol : public EventQueue {
     virtual ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) = 0;
     /**
      * @brief Receives data.
-     * @param[in] buffer The buffer to receive the data into.
+     * @param[out] buffer The buffer to receive the data into.
+     * @param[in] timeout The time to wait to receive the data.
      * @param[in] callback The callback to call when the data has been received.
      * @post The callback will be called when the data has been received. The amount of data received is equal to the size of the
      *       data if ErrorType::Success is returned. See std::string::size().

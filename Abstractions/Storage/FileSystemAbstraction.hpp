@@ -94,12 +94,25 @@ namespace FileSystemTypes {
 class FileSystemAbstraction {
 
     public:
+    /**
+     * @brief Constructor
+     * @param name The name of the partition the file system is on.
+     * @param implementation The implementation of the file system.
+     * @sa FileSystemTypes::Implementation
+     * @param storage The storage medium the file system is on.
+     */
     FileSystemAbstraction(const std::array<char, FileSystemTypes::_PartitionNameLength> &name, FileSystemTypes::Implementation implementation, StorageAbstraction &storage) : _implementation(implementation), _storage(storage) {
         _status.partitionName = name;
     }
+    /// @brief Default destructor
     virtual ~FileSystemAbstraction() = default;
 
+    /// @brief The tag for logging
     static constexpr char TAG[] = "FileSystem";
+
+    /**
+     * @brief Print the status of the file system
+     */
     void printStatus() {
         PLT_LOGI(TAG, "<FileSystem:%s> <Mounted:%s, Open Files:%u, Free (%%):%.1f> <Pie, Stairs, Line>",
         statusConst().partitionName.data(), statusConst().mounted ? "true" : "false", statusConst().openedFiles, statusConst().freeSpace);

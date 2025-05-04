@@ -64,6 +64,12 @@ template <class T, typename... Args> class Global {
         return *(self().get());
     }
 
+    /**
+     * @brief Check if the global has been initialized.
+     * @sa Init
+     * @returns true if the global has been initialized.
+     * @returns false otherwise.
+     */
     static bool IsInitialized() {
         return nullptr != self().get();
     }

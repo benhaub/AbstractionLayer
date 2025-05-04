@@ -22,6 +22,7 @@ class PwmAbstraction {
     ///@brief Destructor
     virtual ~PwmAbstraction() = default;
 
+    /// @brief The tag for logging
     static constexpr char TAG[] = "StandalonePwm";
 
     /**

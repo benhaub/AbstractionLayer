@@ -1,14 +1,13 @@
 /***************************************************************************//**
 * @author  Ben Haubrich
-* @file    HBridge.hpp
+* @file    HBridgeAbstraction.hpp
 * @details Abstraction for H-Bridge
 * @ingroup Abstractions
 *******************************************************************************/
-#ifndef __HBRIDGE_HPP__
-#define __HBRIDGE_HPP__
+#ifndef __HBRIDGE_ABSTRACTION_HPP__
+#define __HBRIDGE_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include "Error.hpp"
 #include "GptmPwmAbstraction.hpp"
 #include "PwmAbstraction.hpp"
 #include "GpioAbstraction.hpp"
@@ -55,8 +54,6 @@ class HBridgeAbstraction {
     /**
      * @brief Set the PWMs.
      * @param gptPwms The PWMs implemented by the general purpose timer.
-     * @returns ErrorType::Success if the PWMs were set
-     * @returns ErrorType::Failure otherwise
      */
     void setPwms(std::array<std::unique_ptr<GptmPwmAbstraction>, 2> &gptPwms) {
         _isDrivenByGptmPwm = true;
@@ -66,8 +63,6 @@ class HBridgeAbstraction {
     /**
      * @brief Set the PWMs.
      * @param pwms The PWMs implemented by a standalone driver.
-     * @returns ErrorType::Success if the PWMs were set
-     * @returns ErrorType::Failure otherwise
      */
     void setPwms(std::array<std::unique_ptr<PwmAbstraction>, 2> &pwms) {
         _isDrivenByStandalonePwm = true;
@@ -77,8 +72,6 @@ class HBridgeAbstraction {
     /**
      * @brief Set the GPIOs.
      * @param gpios The GPIOs used to drive the H-Bridge.
-     * @returns ErrorType::Success if the GPIOs were set
-     * @returns ErrorType::Failure otherwise
      */
     void setGpios(std::array<std::unique_ptr<GpioAbstraction>, 2> &gpios) {
         _isDrivenByGpio = true;
@@ -121,4 +114,4 @@ class HBridgeAbstraction {
     bool _isDrivenByGpio = false;
 };
 
-#endif //__HBRIDGE_HPP__
+#endif //__HBRIDGE_ABSTRACTION_HPP__

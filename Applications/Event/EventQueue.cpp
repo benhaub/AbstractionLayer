@@ -10,9 +10,9 @@ int EventQueue::_SemaphoreCount = 0;
 EventQueue::EventQueue() {
     _SemaphoreCount++;
     std::string semaphoreNumber = std::to_string(_SemaphoreCount);
-    assert(_binarySemaphore.max_size() == OperatingSystemConfig::MaxSemaphoreNameLength);
-    strncpy(_binarySemaphore.data(), "eventQSem", OperatingSystemConfig::MaxSemaphoreNameLength);
-    assert(strlen(_binarySemaphore.data()) + semaphoreNumber.length() < OperatingSystemConfig::MaxSemaphoreNameLength);
+    assert(_binarySemaphore.max_size() == OperatingSystemTypes::MaxSemaphoreNameLength);
+    strncpy(_binarySemaphore.data(), "eventQSem", OperatingSystemTypes::MaxSemaphoreNameLength);
+    assert(strlen(_binarySemaphore.data()) + semaphoreNumber.length() < OperatingSystemTypes::MaxSemaphoreNameLength);
     strncat(_binarySemaphore.data(), semaphoreNumber.c_str(), semaphoreNumber.length());
     ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _binarySemaphore);
     assert(ErrorType::Success == error);

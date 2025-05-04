@@ -36,6 +36,10 @@ namespace CryptographyTypes {
     */
     struct AlgorithmParameters {
         public:
+        AlgorithmParameters() = default;
+        virtual ~AlgorithmParameters() = default;
+
+        /// @brief The type of algorithm the paramters are for.
         virtual Algorithm algorithmType() const = 0;
     };
     /**
@@ -63,22 +67,33 @@ namespace CryptographyTypes {
     */
     struct AeadChaCha20Poly1305IetfParameters final : public AlgorithmParameters {
         public:
+        /**
+         * @brief Constructor
+         * @param associatedData The associated data
+         * @param nonce The nonce
+         * @param key The key
+         */
         AeadChaCha20Poly1305IetfParameters(const std::string &associatedData, uint64_t nonce, const std::string &key) :
         _associatedData(associatedData), _nonce(nonce), _key(key)
         {
 
         }
-        ~AeadChaCha20Poly1305IetfParameters() = default;
 
         Algorithm algorithmType() const override { return Algorithm::AeadChaCha20Poly1305Ietf; }
 
+        /// @brief Get the associated data as a constant reference
         const std::string &associatedData() const { return _associatedData; }
+        /// @brief Get the nonce as a constant reference
         uint64_t nonce() const { return _nonce; }
+        /// @brief Get the key as a constant reference
         const std::string &key() const { return _key; }
 
         private:
+        /// @brief The associated data
         const std::string &_associatedData;
+        /// @brief The nonce
         uint64_t _nonce;
+        /// @brief The key
         const std::string &_key;
     };
 
@@ -169,7 +184,8 @@ class CryptographyAbstraction {
     virtual ErrorType decrypt(const std::string &encryptedData, std::string &decryptedData, const CryptographyTypes::AlgorithmParameters &parameters) = 0;
     /**
      * @brief Produce a hash
-     * @param[in] algorithm The hash algorithm to use.
+     * @param[in] hashFunction The hash algorithm to use.
+     * @param[in] key The key to use for the hash
      * @param[in] data The data to hash
      * @param[out] hashedData The hashed data
      * @param[in] hashPart The part of the has to perform. Defaults to single hash.

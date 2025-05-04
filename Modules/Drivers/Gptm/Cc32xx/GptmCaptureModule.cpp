@@ -2,7 +2,7 @@
 #include "GptmCaptureModule.hpp"
 #include "OperatingSystemModule.hpp"
 
-static constexpr std::array<char, OperatingSystemConfig::MaxQueueNameLength> intervalQueueName = {"intervals"};
+static constexpr std::array<char, OperatingSystemTypes::MaxQueueNameLength> intervalQueueName = {"intervals"};
 
 ErrorType GptmCaptureModule::init() {
     assert(PeripheralNumber::Unknown != peripheralNumber());

@@ -15,6 +15,8 @@
 #include <cassert>
 #include <type_traits> //For making sure the LogicSignature type is compatible with the type you've set it to.
 
+/// @typedef LogicSignature
+/// @brief A unique identifier for command objects that processing objects can check for.
 using LogicSignature = uint32_t;
 
 /**

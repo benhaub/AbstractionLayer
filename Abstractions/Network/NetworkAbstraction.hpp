@@ -36,10 +36,10 @@ namespace NetworkTypes {
      * @brief The status of the network interface.
     */
     struct Status {
-        bool isUp;                           ///< True when the network is up and ready for use.
-        Technology technology;               ///< The technology of the network interface.
-        std::string manufacturerName;        ///< The manufacturer name of the network interface.
-        DecibelMilliWatts signalStrength;    ///< The signal strength of the network interface.
+        bool isUp;                       ///< True when the network is up and ready for use.
+        Technology technology;           ///< The technology of the network interface.
+        std::string manufacturerName;    ///< The manufacturer name of the network interface.
+        DecibelMilliWatts signalStrength;///< The signal strength of the network interface.
     };
 
     /// @brief Size of an IPv4 address string with tombstone
@@ -64,6 +64,8 @@ class NetworkAbstraction : public EventQueue {
 
     /// @brief Tag for logging
     static constexpr char TAG[] = "Network";
+
+    /// @brief Print the status of the network interface
     void printStatus() {
         PLT_LOGI(TAG, "<NetworkStatus> <Connected:%s, Signal Strength (dBm):%d> <Pie, Line>",
         statusConst().isUp ? "true" : "false", statusConst().signalStrength);
@@ -94,8 +96,9 @@ class NetworkAbstraction : public EventQueue {
     virtual ErrorType networkDown() = 0;
     /**
      * @brief Transmit a frame of data.
-     * @param frame The frame of data to transmit
-     * @param timeout The timeout in milliseconds to wait for the transmission to complete
+     * @param[in] frame The frame of data to transmit
+     * @param[in] socket The socket to transmit from
+     * @param[in] timeout The timeout in milliseconds to wait for the transmission to complete
      * @returns ErrorType::Success if the transmission was successful
      * @returns ErrorType::Failure if the transmission failed
      * @post NetworkTypes::Status::isUp will be set to false after this function returns ErrorType::Success
@@ -103,8 +106,10 @@ class NetworkAbstraction : public EventQueue {
     virtual ErrorType txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) = 0;
     /**
      * @sa txBlocking
-     * @param frame The frame to transmit.
-     * @param callback Function that is called when transmission is complete
+     * @param[in] frame The frame to transmit.
+     * @param[in] socket The socket to transmit from
+     * @param[in] timeout The time to wait to send the data.
+     * @param[in] callback Function that is called when transmission is complete
      * @code 
      * //Function member signature:
      * void callback(ErrorType error, const Bytes bytesWritten) { return ErrorType::Success; }
@@ -115,16 +120,19 @@ class NetworkAbstraction : public EventQueue {
     virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
     /**
      * @brief Receive a frame of data.
-     * @param frameBuffer The buffer to store the received frame data.
-     * @param timeout The timeout in milliseconds to wait for the transmission to complete
+     * @param[in] frameBuffer The buffer to store the received frame data.
+     * @param[in] socket  The socket to receive from
+     * @param[in] timeout The timeout in milliseconds to wait for the transmission to complete
      * @returns ErrorType::Success if the frame was successfully received
      * @returns ErrorType::Failure if the frame was not received
     */
     virtual ErrorType rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) = 0;
     /**
      * @sa rxBlocking
-     * @param frameBuffer The buffer to store the received frame data.
-     * @param callback Function that is called when the frame has been received
+     * @param[in] frameBuffer The buffer to store the received frame data.
+     * @param[in] timeout The time to wait to receive data.
+     * @param[in] socket The socket to receive from
+     * @param[in] callback Function that is called when the frame has been received
      * @code 
      * //Function member signature:
      * void callback(ErrorType error, std::shared_ptr<std::string> frameBuffer) { return ErrorType::Success; }

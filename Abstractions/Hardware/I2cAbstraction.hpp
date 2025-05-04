@@ -11,7 +11,11 @@
 //AbstractionLayer
 #include "IcCommunicationProtocol.hpp"
 
-namespace I2cConfig {
+/**
+ * @namespace I2cTypes
+ * @brief Types for the I2C driver.
+ */
+namespace I2cTypes {
     /**
      * @enum Mode
      * @details I2C mode
@@ -51,11 +55,14 @@ class I2cAbstraction : public IcCommunicationProtocol {
     /// @brief Destructor.
     virtual ~I2cAbstraction() = default;
 
+    /// @brief The tag for logging
     static constexpr char TAG[] = "I2c";
 
     /**
      * @brief Set the hardware configurations
+     * @param[in] peripheral The peripheral number for this I2c instance.
      * @param[in] mode The mode of the I2C.
+     * @param[in] speed The rate at which the I2C bus clock operates.
      * @param[in] sda The pin number for the SDA line.
      * @param[in] sdaPullUp Whether the SDA line should have a pull-up resistor.
      * @param[in] scl The pin number for the SCL line.
@@ -67,7 +74,7 @@ class I2cAbstraction : public IcCommunicationProtocol {
      *       It also makes cross-platform development easier since some platforms don't offer a config and having a function
      *       at least allows you to return NotSupported on NotAvailable in this case.
      */
-    virtual ErrorType setHardwareConfig(const PeripheralNumber peripharal, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullUp, const PinNumber scl, const bool sclPullUp) = 0;
+    virtual ErrorType setHardwareConfig(const PeripheralNumber peripheral, const I2cTypes::Mode mode, const I2cTypes::Speed speed, const PinNumber sda, const bool sdaPullUp, const PinNumber scl, const bool sclPullUp) = 0;
     /**
      * @brief enable or disable interrupts.
      * @param[in] arbitrationLost
@@ -82,31 +89,39 @@ class I2cAbstraction : public IcCommunicationProtocol {
     /**
      * @brief transmit data
      * @sa Fnd::CommunicationProtocol::send
+     * @param[in] data The data to transmit
      * @param[in] deviceAddress The address of the device you want to transmit to
      * @param[in] registerAddress The address of the register on the device that you want to write to.
+     * @param[in] timeout The time to wait to transmit the data.
     */
     virtual ErrorType txBlocking(const std::string &data, uint8_t deviceAddress, uint8_t registerAddress, const Milliseconds timeout) = 0;
     /**
      * @brief transmit data
      * @sa Fnd::CommunicationProtocol::sendNonBlocking
+     * @param[in] data The data to transmit
      * @param[in] deviceAddress The address of the device you want to transmit to
      * @param[in] registerAddress The address of the register on the device that you want to write to.
+     * @param[in] callback The function to call when the data has been transmitted.
     */
-    virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> data, uint8_t deviceAddress, uint8_t registerAddress, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback = nullptr) = 0;
+    virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> data, uint8_t deviceAddress, uint8_t registerAddress, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
     /**
      * @brief receive data
      * @sa Fnd::CommunicationProtocol::receive
+     * @param[out] buffer The received data.
      * @param[in] deviceAddress The address of the device you want to receive from to
      * @param[in] registerAddress The address of the register on the device that you read from.
+     * @param[in] timeout The time to wait to receive to the data.
     */
     virtual ErrorType rxBlocking(std::string &buffer, uint8_t deviceAddress, uint8_t registerAddress, const Milliseconds timeout) = 0;
     /**
      * @brief receive data
      * @sa Fnd::CommunicationProtocol::receiveNonBlocking
+     * @param[out] buffer The received data.
      * @param[in] deviceAddress The address of the device you want to receive from to
      * @param[in] registerAddress The address of the register on the device that you read from.
+     * @param[in] callback The callback to call when receiving has finished.
     */
-    virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, uint8_t deviceAddress, uint8_t registerAddress, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback = nullptr) = 0;
+    virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, uint8_t deviceAddress, uint8_t registerAddress, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) = 0;
 
     //If you are using the I2C peripheral through an IcCommunicationProtocol pointer then you will need to cast it to an I2C Abstraction or module first.
     ErrorType txBlocking(const std::string &data, const Milliseconds timeout) override { assert(false); return ErrorType::NotSupported; }
@@ -115,9 +130,9 @@ class I2cAbstraction : public IcCommunicationProtocol {
     ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override { assert(false); return ErrorType::NotSupported; }
 
     /// @brief The mode of the I2C.
-    I2cConfig::Mode _mode = I2cConfig::Mode::Unknown;
+    I2cTypes::Mode _mode = I2cTypes::Mode::Unknown;
     /// @brief The speed of the I2C.
-    I2cConfig::Speed _speed = I2cConfig::Speed::Unknown;
+    I2cTypes::Speed _speed = I2cTypes::Speed::Unknown;
     /// @brief Hardware peripheral number
     PeripheralNumber _peripheral = PeripheralNumber::Unknown;
     /// @brief The pin number for the SDA line.

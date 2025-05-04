@@ -325,6 +325,14 @@ class HttpServerAbstraction : public IpServerAbstraction {
 
 #pragma GCC diagnostic pop
 
+    /**
+     * @brief Search a raw http request for the specified header.
+     * @param[in] request The raw http request.
+     * @param[in] headerName The header to serach for
+     * @param[in] value The value of the header to match against.
+     * @returns ErrorType::Success if the http request contains the header.
+     * @returns ErrorType::Failure if the http request does not contain the header.
+     */
     ErrorType findHeaderValue(const std::string &request, const char headerName[], const char value[]) {
         const size_t theIndexThatTheHeaderStartsAt = request.find(headerName);
         const size_t theIndexThatTheHeaderEndsAt = request.find("\r\n", theIndexThatTheHeaderStartsAt);
@@ -341,6 +349,13 @@ class HttpServerAbstraction : public IpServerAbstraction {
         return ErrorType::Failure;
     }
 
+    /**
+     * @brief Convert a raw Http request to an AbstractionLayer htpp request.
+     * @sa HttpServerTypes::Request
+     * @param[in] buffer The raw data of the http request.
+     * @param[out] request The converted htpp request.
+     * @returns The http request.
+     */
     ErrorType toHttpRequest(const std::string &buffer, HttpServerTypes::Request &request) {
         size_t uriStartIndex, uriEndIndex = 0;
 
@@ -596,6 +611,12 @@ class HttpServerAbstraction : public IpServerAbstraction {
         }
     }
 
+    /**
+     * @brief Conver the version to a string
+     * @sa HttpServerTypes::Version
+     * @param[in] version The version to convert
+     * @returns The version as a string.
+     */
     const std::string toStringVersion(HttpServerTypes::Version version) {
         if (HttpServerTypes::Version::Http1_0 == version) {
             return std::string("HTTP/1.0");
@@ -614,6 +635,12 @@ class HttpServerAbstraction : public IpServerAbstraction {
         }
     }
 
+    /**
+     * @brief Convert a status code to a string
+     * @sa HttpServerTypes::StatusCode
+     * @param[in] statusCode The status code to convert
+     * @returns The status code as a string.
+     */
     const std::string toStringStatusCode(HttpServerTypes::StatusCode statusCode) {
         switch (statusCode) {
             case HttpServerTypes::StatusCode::Unknown:
@@ -715,6 +742,12 @@ class HttpServerAbstraction : public IpServerAbstraction {
         }
     }
 
+    /**
+     * @brief Conver a content type to a string
+     * @sa HttpServerTypes::Type
+     * @param[in] contentType
+     * @returns The content type as a string.
+     */
     const std::string toStringContentType(HttpServerTypes::Type contentType) {
         if (HttpServerTypes::Type::TextHtml == contentType) {
             return std::string("Content-Type: text/html");
@@ -751,6 +784,12 @@ class HttpServerAbstraction : public IpServerAbstraction {
         }
     }
 
+    /**
+     * @brief Convert an encoding to a string
+     * @sa HttpServerTypes::Encoding
+     * @param[in] encoding The encoding
+     * @returns The encoding as a string.
+     */
     const std::string toStringEncoding(const std::vector<HttpServerTypes::Encoding> encoding) {
         std::string encodings("Content-Encoding: ");
 
@@ -780,6 +819,12 @@ class HttpServerAbstraction : public IpServerAbstraction {
         return encodings;
     }
 
+    /**
+     * @brief Convert a content language to a string.
+     * @sa HttpServerTypes::Language
+     * @param[in] contentLanguage The content language.
+     * @returns The content language as a string.
+     */
     const std::string toStringContentLanguage(const std::vector<HttpServerTypes::Language> contentLanguage) {
         std::string contentLanguages("Content-Language: ");
 
@@ -901,6 +946,12 @@ class HttpServerAbstraction : public IpServerAbstraction {
         return contentLanguages;
     }
 
+    /**
+     * @brief Convert and http server type into a string
+     * @sa HttpServerTypes::Type
+     * @param[in] type The http server type
+     * @returns The http server type as a string
+     */
     const std::string toStringHttpServerType(const HttpServerTypes::Type type) {
         switch (type) {
             case HttpServerTypes::Type::TextHtml:
@@ -930,6 +981,11 @@ class HttpServerAbstraction : public IpServerAbstraction {
         }
     }
 
+    /**
+     * @brief Converts a numeric content length into a string.
+     * @param[in] length The content length
+     * @returns The content length as a string.
+     */
     const std::string toStringContentLength(const Bytes length) {
         return std::string("Content-Length: ").append(std::to_string(length));
     }

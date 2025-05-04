@@ -12,15 +12,7 @@
 #include "Error.hpp"
 
 /**
- * @namespace ProcessorTypes
- * @brief Types for the processor
- */
-namespace ProcessorTypes {
-    
-}
-
-/**
- * @class Processor
+ * @class ProcessorAbstraction
  * @brief Interface for register access to the processor
  */
 class ProcessorAbstraction {

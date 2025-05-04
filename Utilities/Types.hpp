@@ -50,10 +50,22 @@ struct DateTime {
     /// @brief Copy constructor
     constexpr DateTime(const DateTime &other) = default;
 
+    /**
+     * @brief Checks if two DateTime objects are equal
+     * @param other The DateTime object to compare to
+     * @return true if the DateTime objects are equal
+     * @return false if the DateTime objects are not equal
+     */
     bool operator == (const DateTime &other) const {
         return _year == other._year && _month == other._month && _day == other._day &&
                _hour == other._hour && _minute == other._minute && _second == other._second;
     }
+    /**
+     * @brief Checks if one Datetime has an earlier data than the other
+     * @param other The DateTime object to compare to
+     * @return true if this DateTime has an earlier date than the other
+     * @return false if this DateTime does not have an earlier date than the other
+     */
     bool operator < (const DateTime &other) const {
         if (_year != other._year) return _year < other._year;
         if (_month != other._month) return _month < other._month;
@@ -62,6 +74,12 @@ struct DateTime {
         if (_minute != other._minute) return _minute < other._minute;
         return _second < other._second;
     }
+    /**
+     * @brief Checks if one Datetime has a later date than the other
+     * @param other The DateTime object to compare to
+     * @return true if this DateTime has a later date than the other
+     * @return false if this DateTime does not have a later date than the other
+     */
     bool operator > (const DateTime &other) const {
         if (_year != other._year) return _year > other._year;
         if (_month != other._month) return _month > other._month;
@@ -70,12 +88,30 @@ struct DateTime {
         if (_minute != other._minute) return _minute > other._minute;
         return _second > other._second;
     }
+    /**
+     * @brief Checks if one Datetime has an earlier date than the other or if they have the same time
+     * @param other The DateTime object to compare to
+     * @return true if this DateTime has an earlier date than the other or is equal to it
+     * @return false if this DateTime does not have an earlier date than the other
+     */
     bool operator <= (const DateTime &other) const {
         return *this < other || *this == other;
     }
+    /**
+     * @brief Checks if one Datetime has a later date than the other or if the have the same time
+     * @param other The DateTime object to compare to
+     * @return true if this DateTime has a later date than the other or is equal to it
+     * @return false if this DateTime does not have a later date than the other
+     */
     bool operator >= (const DateTime &other) const {
         return *this > other || *this == other;
     }
+    /**
+     * @brief Checks if the two dates are the same time
+     * @param other The DateTime object to compare to
+     * @return true if the two dates are the same time
+     * @return false if the two dates are not the same time
+     */
     DateTime operator = (const DateTime &other) {
         _second = other._second;
         _minute = other._minute;

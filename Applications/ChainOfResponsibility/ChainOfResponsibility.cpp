@@ -5,8 +5,8 @@
 #include <cstring>
 
 ChainOfResponsibility::ChainOfResponsibility() {
-    assert(_binarySemaphore.max_size() == OperatingSystemConfig::MaxSemaphoreNameLength);
-    strncpy(_binarySemaphore.data(), "chainBinarySem", OperatingSystemConfig::MaxSemaphoreNameLength);
+    assert(_binarySemaphore.max_size() == OperatingSystemTypes::MaxSemaphoreNameLength);
+    strncpy(_binarySemaphore.data(), "chainBinarySem", OperatingSystemTypes::MaxSemaphoreNameLength);
 
     ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _binarySemaphore);
     assert(ErrorType::Success == error);

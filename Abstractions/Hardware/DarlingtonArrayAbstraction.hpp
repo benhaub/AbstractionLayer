@@ -1,14 +1,13 @@
 /***************************************************************************//**
 * @author  Ben Haubrich
-* @file    DarlingtonArray.hpp
+* @file    DarlingtonArrayAbstraction.hpp
 * @details Abstraction for Darlington Array
 * @ingroup Abstractions
 *******************************************************************************/
-#ifndef __DARLINTON_ARRAY_HPP__
-#define __DARLINTON_ARRAY_HPP__
+#ifndef __DARLINTON_ARRAY_ABSTRACTION_HPP__
+#define __DARLINTON_ARRAY_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include "Error.hpp"
 #include "GptmPwmAbstraction.hpp"
 #include "PwmAbstraction.hpp"
 #include "GpioAbstraction.hpp"
@@ -29,13 +28,18 @@ class DarlingtonArrayAbstraction {
     /// @brief Destructor
     virtual ~DarlingtonArrayAbstraction() = default;
 
+    /**
+     * @brief toggle a pin
+     * @param pinNumber The pin to toggle
+     * @param on true to turn the pin on, false to turn it off
+     * @returns ErrorType::Success if the pin was toggled
+     * @returns ErrorType::Failure otherwise
+     */
     virtual ErrorType togglePin(Count pinNumber, bool on) = 0;
 
     /**
      * @brief Set the PWMs.
      * @param gptPwms The PWMs implemented by the general purpose timer.
-     * @returns ErrorType::Success if the PWMs were set
-     * @returns ErrorType::Failure otherwise
      */
     void setPwms(std::array<std::unique_ptr<GptmPwmAbstraction>, _numberOfPins> &gptPwms) {
         _isDrivenByGptmPwm = true;
@@ -45,8 +49,6 @@ class DarlingtonArrayAbstraction {
     /**
      * @brief Set the PWMs.
      * @param pwms The PWMs implemented by a standalone driver.
-     * @returns ErrorType::Success if the PWMs were set
-     * @returns ErrorType::Failure otherwise
      */
     void setPwms(std::array<std::unique_ptr<PwmAbstraction>, _numberOfPins> &pwms) {
         _isDrivenByStandalonePwm = true;
@@ -56,8 +58,6 @@ class DarlingtonArrayAbstraction {
     /**
      * @brief Set the GPIOs.
      * @param gpios The GPIOs used to drive the H-Bridge.
-     * @returns ErrorType::Success if the GPIOs were set
-     * @returns ErrorType::Failure otherwise
      */
     void setGpios(std::array<std::unique_ptr<GpioAbstraction>, _numberOfPins> &gpios) {
         _isDrivenByGpio = true;
@@ -99,4 +99,4 @@ class DarlingtonArrayAbstraction {
     bool _isDrivenByGpio = false;
 };
 
-#endif // __DARLINTON_ARRAY_HPP__
+#endif // __DARLINTON_ARRAY_ABSTRACTION_HPP__

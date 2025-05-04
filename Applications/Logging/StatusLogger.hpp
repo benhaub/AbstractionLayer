@@ -1,7 +1,7 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
 * @file   StatusLogger.hpp
-* @details \b Synopsis: \n Periodic logging of all modules that offer a status
+* @details Periodic logging of all modules that offer a status
 * @ingroup Applications
 *******************************************************************************/
 #ifndef __STATUS_LOGGER_HPP__
@@ -22,7 +22,7 @@ namespace {
     /**
      * @brief Concept for compatible loggers. Any calls that prints must be a base of an Abstraction listed below.
      * @details The concepts headers is not available with all compilers so the check to make sure the abstraction
-     *          has a printStatus class can only be done on some compilers.
+     *          has a printStatus member function can only be done on some compilers.
      */
     template <typename Abstraction>
     concept CompatibleLoggers = requires(Abstraction abstraction) {
@@ -76,9 +76,13 @@ class StatusLogger {
      * @tparam Variable number of Abstraction types that can print a status.
      */
     template <typename... ListOfAbstractionsThatLog>
-    //How's that for a class name?
+    /**
+     * @class LoggerToggler
+     * @brief Toggle logging on or off
+     */
     class LoggerToggler {
         public:
+        /// @brief StatusLogger needs to be able to access the list of abstractions.
         friend StatusLogger;
 
         /**

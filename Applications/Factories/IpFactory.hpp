@@ -42,8 +42,9 @@ namespace IpFactory {
 
     /**
      * @brief This factory function creates an IpClientAbstraction that is compatible with the network interface selected
-     * @param technology Sometimes the internals of a client will be very different depending on the technology used. For example, Cellular
+     * @param[in] technology Sometimes the internals of a client will be very different depending on the technology used. For example, Cellular
      *        clients must communicate with the device using a serial interface like SPI, I2C, UART, USB, etc.
+     * @param[in] protocol The protocol that the client should use.
      * @sa NetworkTypes::Technology
      * @param error
      * @sa ErrorType
@@ -70,8 +71,8 @@ namespace IpFactory {
      * @brief This factory function creates an IpServerAbstraction that is compatible with the network interface selected
      * @param technology The network technology that this server will communicate on.
      * @sa NetworkTypes::Technology
-     * @param error
-     * @sa ErrorType
+     * @param[in] protocol The protocol that the server should use.
+     * @param error The error that occured while creating the server.
      * @attention While the IpServerAbstraction is useful for implementing this factory, it does not follow the L in SOLID for all derivations.
      *            The send and receive functions in the Http server use a different parameter type than the IpServerAbstraction
      *            so attempting to use an IpServerAbstraction as an HttpServer will not be possible. It's reccomended to wrap calls to the HttpServer

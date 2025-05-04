@@ -8,8 +8,6 @@
 #define __IC_COMM_FACTORY_HPP__
 
 //AbstractionLayer
-#include "Types.hpp"
-#include "Error.hpp"
 #include "SpiModule.hpp"
 #include "UartModule.hpp"
 #include "I2cModule.hpp"
@@ -21,8 +19,8 @@
 static constexpr char IcCommFactoryTag[] = "IcCommFactory";
 
 /**
- * @namespace NetworkFactoryTypes
- * @brief Contains types and constants used by the NetworkFactory.
+ * @namespace IcCommFactoryTypes
+ * @brief Contains types and constants used by the IcCommFactory.
  */
 namespace IcCommFactoryTypes {
 
@@ -31,48 +29,74 @@ namespace IcCommFactoryTypes {
      */
     struct FactoryParams {
         public:
+        /// @brief The type of device that these parameters are for
+        /// @return The deveice types
         virtual IcCommunicationProtocolTypes::IcDevice deviceType() const = 0;
     };
 
     /**
      * @struct UartParams
-     * @brief Contains the parameters used to configure the uart.
+     * @brief Contains the parameters used to configure the UART.
      */
     struct UartParams final : public FactoryParams {
         public:
         IcCommunicationProtocolTypes::IcDevice deviceType() const override { return IcCommunicationProtocolTypes::IcDevice::Uart; }
 
-        struct hardwareConfig {
-            UartTypes::Line line;
-            PinNumber tx;
-            PinNumber rx;
-            PinNumber rts;
-            PinNumber cts;
-            PeripheralNumber peripheralNumber;
-        } hardwareConfig;
-        struct driverConfig {
-            uint32_t baudRate;
-            uint8_t dataBits;
-            char parity;
-            uint8_t stopBits;
-            UartTypes::FlowControl flowControl;
-        } driverConfig;
-        struct firmwareConfig {
-            Bytes receiveBufferSize;
-            Bytes transmitBufferSize;
-            int8_t terminatingByte;
-        } firmwareConfig;
-        struct interruptConfig {
-            InterruptFlags interruptFlags;
-            InterruptCallback interruptCallback;
-        } interruptConfig;
+        /**
+         * @struct HardwareConfig
+         * @brief Contains the hardware configuration for the UART.
+         */
+        struct HardwareConfig {
+            UartTypes::Line line;               ///< The line to use for the uart
+            PinNumber tx;                       ///< The tx pin to use for the uart
+            PinNumber rx;                       ///< The rx pin to use for the uart
+            PinNumber rts;                      ///< The request to send pin to use for the uart
+            PinNumber cts;                      ///< The clear to send pin to use for the uart
+            PeripheralNumber peripheralNumber;  ///< The peripheral number to use for the uart
+        } hardwareConfig; ///< The hardware configuration parameters
+        /**
+         * @struct DriverConfig
+         * @brief Contains the driver configuration for the UART.
+         */
+        struct DriverConfig {
+            uint32_t baudRate;                   ///< The baud rate to use for the uart
+            uint8_t dataBits;                    ///< The data bits to use for the uart
+            char parity;                         ///< The parity to use for the uart
+            uint8_t stopBits;                    ///< The stop bits to use for the uart
+            UartTypes::FlowControl flowControl;  ///< The flow control to use for the uart
+        } driverConfig; ///< Teh driver configuration parameters.
+        /**
+         * @struct FirmwareConfig
+         * @brief Contains the firmware configuration for the UART.
+         */
+        struct FirmwareConfig {
+            Bytes receiveBufferSize;             ///< The receive buffer size to use for the uart
+            Bytes transmitBufferSize;            ///< The transmit buffer size to use for the uart
+            int8_t terminatingByte;              ///< The terminating byte to use for the uart
+        } firmwareConfig; ///< The firmware configuration parameters
+        /**
+         * @struct InterruptConfig
+         * @brief Contains the interrupt configuration for the UART.
+         */
+        struct InterruptConfig {
+            InterruptFlags interruptFlags;       ///< The interrupt flags to use for the uart
+            InterruptCallback interruptCallback; ///< The interrupt callback to use for the uart
+        } interruptConfig; ///< The interrupt configuration parameters.
     };
 
+    /**
+     * @struct SpiParams
+     * @brief Contains the parameters used to configure SPI.
+     */
     struct SpiParams final : public FactoryParams {
         public:
         IcCommunicationProtocolTypes::IcDevice deviceType() const override { return IcCommunicationProtocolTypes::IcDevice::Spi; }
     };
 
+    /**
+     * @struct I2cParams
+     * @brief Contains the parameters used to configure I2C.
+     */
     struct I2cParams final : public FactoryParams {
         public:
         IcCommunicationProtocolTypes::IcDevice deviceType() const override { return IcCommunicationProtocolTypes::IcDevice::I2c; }
@@ -81,6 +105,14 @@ namespace IcCommFactoryTypes {
 
 //Anonymous namespace.
 namespace {
+    /**
+     * @brief Configures the UART.
+     * @param uart The UART to configure.
+     * @param params The parameters to use for the UART.
+     * @returns ErrorType::Success on success
+     * @returns ErrorType::NotImplemented if the UART driver is not implemented
+     * @returns ErrorType::NotAvailable if UART is not available for this platform
+     */
     ErrorType UartConfigure(Uart &uart, const IcCommFactoryTypes::UartParams &params) {
         ErrorType error = uart.setHardwareConfig(
             params.hardwareConfig.tx, 
@@ -136,11 +168,25 @@ namespace {
         return error;
     }
 
+    /**
+     * @brief Configures the SPI.
+     * @param spi The SPI to configure.
+     * @returns ErrorType::Success on success
+     * @returns ErrorType::NotImplemented if the SPI driver is not implemented
+     * @returns ErrorType::NotAvailable if SPI is not available for this platform
+     */
     ErrorType SpiConfigure(Spi &spi) {
         ErrorType error = ErrorType::NotImplemented;
         return error;
     }
 
+    /**
+     * @brief Configures the I2C.
+     * @param i2c The I2C to configure.
+     * @returns ErrorType::Success on success
+     * @returns ErrorType::NotImplemented if the I2C driver is not implemented
+     * @returns ErrorType::NotAvailable if I2C is not available for this platform
+     */
     ErrorType I2cConfigure(I2c &i2c) {
         ErrorType error = ErrorType::NotImplemented;
         return error;
@@ -157,6 +203,8 @@ namespace IcCommFactory {
      * @brief Creates a IC device for the type selected.
      * @param device The IC device to use for communication.
      * @sa IcCommunicationProtocolTypes::IcDevice
+     * @param params The parameters to use for the IC device.
+     * @sa IcCommFactoryTypes::I2cParams
      * @param error The error code following the return of this function.
      * @returns Pointer to an IcCommunicationProtocol that contains the IC device of the type selected.
      */

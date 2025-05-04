@@ -1,7 +1,7 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
 * @file   Sm10001.hpp
-* @details \b Synopsis: \n Driver for the slide potentiometer by adafruit
+* @details Driver for the slide potentiometer by adafruit
 * @see https://www.adafruit.com/product/5466
 * @ingroup Applications
 *******************************************************************************/
@@ -28,6 +28,7 @@ class Sm10001 {
      * @param adc The ADC to use
      * @param motorInputA The pin number of the motor input A.
      * @param motorInputB The pin number of the motor input B.
+     * @param maxPotentiometerDrop The maximum voltage difference accross the potentiometer.
      * @post Ownership of the HBridge is transferred to the SM10001.
      * @post Ownership of the ADC is taken by this SM10001
      */
@@ -44,8 +45,6 @@ class Sm10001 {
         //Note that this only begins to calculate once the period falls below 1000.
         static_assert(1000 / _PwmPeriod <= 250, "Frequency is beyond max recommended in data sheet.");
     }
-    /// @brief Destructor
-    ~Sm10001() = default;
 
     /// @brief Number of input pins on the motor.
     static constexpr Count _MotorInputPins = 2;

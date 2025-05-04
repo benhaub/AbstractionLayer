@@ -64,6 +64,7 @@ class IpServerAbstraction : public CommunicationProtocol {
 
     /// @brief The tag for logging.
     static constexpr char TAG[] =  "IpServer";
+    /// @brief Print the status if the IP server.
     void printStatus() {
         PLT_LOGI(TAG, "<IpServerStatus> <Listening:%s, Active Connections:%u> <Pie, Line>",
             statusConst().listening ? "true" : "false", statusConst().activeConnections);
@@ -120,8 +121,9 @@ class IpServerAbstraction : public CommunicationProtocol {
     /**
      * @brief Sends data.
      * @param[in] data The data to send.
-     * @param[in] callback The callback to call when the data is sent.
+     * @param[in] timeout The time to wait for the data to be sent
      * @param[in] socket The socket to send the data to.
+     * @param[in] callback The callback to call when the data has been sent.
      * @returns ErrorType::Success if the data was sent.
      * @returns ErrorType::Failure if the data was not sent.
      * @post The callback will be called when the data has been sent. The bytes written is valid if and only if error is equal to ErrorType::Success.
@@ -141,8 +143,9 @@ class IpServerAbstraction : public CommunicationProtocol {
     /**
      * @brief Receives data.
      * @param[in] buffer The buffer to receive the data into.
-     * @param[in] callback The callback to call when the data has been received.
+     * @param[in] timeout The time to wait to receive the data.
      * @param[out] socket If negative, will contain the socket in which the data was received from. Otherwise it will be the socket in which data is explicitely received from.
+     * @param[in] callback The callback to call when the data has been received.
      * @returns ErrorType::Success if the data was received.
      * @returns ErrorType::Failure if the data was not received.
      * @returns ErrorType::Timeout if the timeout was reached.

@@ -23,6 +23,7 @@ class GptmAbstraction {
     ///@brief Destructor
     virtual ~GptmAbstraction() = default;
 
+    /// @brief The tag for logging
     static constexpr char TAG[] = "Gptm";
 
     /**

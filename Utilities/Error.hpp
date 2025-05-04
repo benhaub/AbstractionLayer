@@ -1,13 +1,14 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
 * @file   Error.hpp
-* @details \b Synopsis: \n Error types.
+* @details Error types.
 * @addtogroup Abstractions
 * Common interface for software components.
 * @addtogroup Applications
 * Cross-platform applications of the AbstractionLayer that utilize the modules.
 * @addtogroup Utilities
 * Software that is used internally by the AbstractionLayer.
+* @ingroup Utilities
 *******************************************************************************/
 
 #ifndef __ERROR_HPP__

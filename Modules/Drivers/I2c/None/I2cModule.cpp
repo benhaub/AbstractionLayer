@@ -6,7 +6,7 @@ ErrorType I2c::init() {
 ErrorType I2c::deinit() {
     return ErrorType::NotImplemented;
 }
-ErrorType I2c::setHardwareConfig(const PeripheralNumber peripheral, const I2cConfig::Mode mode, const I2cConfig::Speed speed, const PinNumber sda, const bool sdaPullup, const PinNumber scl, const bool sclPullup) {
+ErrorType I2c::setHardwareConfig(const PeripheralNumber peripheral, const I2cTypes::Mode mode, const I2cTypes::Speed speed, const PinNumber sda, const bool sdaPullup, const PinNumber scl, const bool sclPullup) {
     return ErrorType::NotImplemented;
 }
 ErrorType I2c::setInterruptConfig(const bool arbitrationLost, const bool nackDetected, const bool sclLowTimeout, const bool stopDetect, const bool receiveFifoOverflow, const bool transmitFifoOverflow) {
