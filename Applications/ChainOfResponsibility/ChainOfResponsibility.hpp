@@ -11,11 +11,9 @@
 #define __CHAIN_OF_RESPONSIBILITY_HPP__
 
 //AbstractionLayer
-#include "Error.hpp"
 #include "Global.hpp"
 #include "CommandObject.hpp"
 //C++
-#include <memory>
 #include <map>
 #include <vector>
 #include <array>
@@ -49,8 +47,6 @@ class ChainOfResponsibility : public Global<ChainOfResponsibility> {
     public:
     /// @brief Default constructor
     ChainOfResponsibility();
-    /// @brief Default destructor
-    virtual ~ChainOfResponsibility() = default;
 
     /**
      * @brief Adds a command object to the chain of responsibility

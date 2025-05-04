@@ -1,8 +1,7 @@
 /***************************************************************************//**
 * @author   Ben Haubrich
 * @file     RtcManager.hpp
-* @details  \b Synopsis: \n Manages updating, setting, and synchronizing clocks
-*           used by the Application
+* @details  Manages updating, setting, and synchronizing clocks used by the Application
 * @ingroup  Applications
 *******************************************************************************/
 #ifndef __RTC_MANAGER_HPP__
@@ -39,7 +38,14 @@ namespace RtcManagerTypes {
 class RtcManager final {
 
     public:
-    ///@brief Default constructor
+    /**
+     * @brief Constrcutor
+     * @details A read of the external RTC will be done to initailize member variables.
+     * @param[in] criteria The criteria to use for setting and synchronizing the RTCs
+     * @param[in] internalRtc The internal RTC to use
+     * @param[in] externalRtc The external RTC to use
+     * @post Ownership of the RTCs is transferred to the RtcManager
+     */
     RtcManager(const RtcManagerTypes::Criteria &criteria,
                           std::unique_ptr<RtcAbstraction> &internalRtc,
                           std::unique_ptr<RtcAbstraction> &externalRtc) :
@@ -49,8 +55,6 @@ class RtcManager final {
             _externalRtc->readDate(_lastExternalRtcTimeQueried);
         }
     }
-    ///@brief Default destructor
-    virtual ~RtcManager() = default;
 
     ///@brief Tag used for logging
     static constexpr char TAG[] = "RtcManager";
@@ -91,9 +95,13 @@ class RtcManager final {
     ErrorType externalRtcTime(const bool forceQuery, DateTime &dateTime);
 
     private:
+    /// @brief The internal RTC
     std::unique_ptr<RtcAbstraction> _internalRtc;
+    /// @brief The external RTC
     std::unique_ptr<RtcAbstraction> _externalRtc;
+    /// @brief The criteria to use for setting and synchronizing the RTCs
     RtcManagerTypes::Criteria _criteria = {0, 0};
+    /// @brief The last time that was queried from the external RTC
     DateTime _lastExternalRtcTimeQueried = DateTime();
 };
 

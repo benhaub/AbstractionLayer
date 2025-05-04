@@ -19,8 +19,6 @@ class PidController {
     public:
     /// @brief Constructor
     PidController() = default;
-    /// @brief Destructor
-    ~PidController() = default;
 
     /**
      * @brief Calculate the control variable
