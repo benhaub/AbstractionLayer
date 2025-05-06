@@ -36,7 +36,7 @@ class CommandObject {
     static constexpr LogicSignature _InvalidLogicSignature = __UINT32_MAX__;
 
     /// @brief Get a constant reference to the logic signature.
-    const LogicSignature &logicSignatureConst() const { return _logicSignature; }
+    const LogicSignature &logicSignature() const { return _logicSignature; }
 
     /**
      * @brief Get the next unique logic signature.
