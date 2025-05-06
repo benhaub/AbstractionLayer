@@ -150,7 +150,7 @@ namespace SignalsAndSlots {
         */
         template <std::size_t... IndexSequence>
         ErrorType _emit([[maybe_unused]] const std::tuple<Args...> params, [[maybe_unused]] const std::index_sequence<IndexSequence...>) const {
-            ErrorType returnError = ErrorType::Failure;
+            ErrorType error = ErrorType::Failure;
 
             for (const auto &slot : _slots) {
                 EventQueue &eventQueue = slot.first;
@@ -159,11 +159,11 @@ namespace SignalsAndSlots {
                 EventQueue::Event event = EventQueue::Event(std::bind(callback, std::get<IndexSequence>(params)...));
                 ErrorType addEventError = eventQueue.addEvent(event);
                 if (ErrorType::Success != addEventError) {
-                    returnError = addEventError;
+                    error = addEventError;
                 }
             }
 
-            return returnError;
+            return error;
         }
     };
 };
