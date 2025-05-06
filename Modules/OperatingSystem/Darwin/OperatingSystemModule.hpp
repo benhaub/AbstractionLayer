@@ -25,37 +25,37 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     ErrorType delay(const Milliseconds delay) override;
     ErrorType delay(const Microseconds delay) override;
     ErrorType startScheduler() override;
-    ErrorType createThread(const OperatingSystemConfig::Priority priority, const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) override;
-    ErrorType deleteThread(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) override;
-    ErrorType joinThread(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) override;
-    ErrorType threadId(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name, Id &thread) override;
+    ErrorType createThread(const OperatingSystemTypes::Priority priority, const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) override;
+    ErrorType deleteThread(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) override;
+    ErrorType joinThread(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) override;
+    ErrorType threadId(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name, Id &thread) override;
     ErrorType currentThreadId(Id &thread) const override;
-    ErrorType isDeleted(const std::array<char, OperatingSystemConfig::MaxThreadNameLength> &name) override;
-    ErrorType createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) override;
-    ErrorType deleteSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) override;
-    ErrorType waitSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name, const Milliseconds timeout) override;
-    ErrorType incrementSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) override;
-    ErrorType decrementSemaphore(const std::array<char, OperatingSystemConfig::MaxSemaphoreNameLength> &name) override;
+    ErrorType isDeleted(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) override;
+    ErrorType createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) override;
+    ErrorType deleteSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) override;
+    ErrorType waitSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name, const Milliseconds timeout) override;
+    ErrorType incrementSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) override;
+    ErrorType decrementSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) override;
     ErrorType createTimer(Id &timer, Milliseconds period, bool autoReload, std::function<void(void)> callback) override;
     ErrorType deleteTimer(const Id timer) override;
     ErrorType startTimer(Id timer, Milliseconds timeout) override;
     ErrorType stopTimer(Id timer, Milliseconds timeout) override;
-    ErrorType createQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, const Bytes size, const Count length) override;
-    ErrorType sendToQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) override;
-    ErrorType receiveFromQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) override;
-    ErrorType peekFromQueue(const std::array<char, OperatingSystemConfig::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) override;
+    ErrorType createQueue(const std::array<char, OperatingSystemTypes::MaxQueueNameLength> &name, const Bytes size, const Count length) override;
+    ErrorType sendToQueue(const std::array<char, OperatingSystemTypes::MaxQueueNameLength> &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) override;
+    ErrorType receiveFromQueue(const std::array<char, OperatingSystemTypes::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) override;
+    ErrorType peekFromQueue(const std::array<char, OperatingSystemTypes::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) override;
     ErrorType getSystemTime(UnixTime &currentSystemUnixTime) override;
     ErrorType getSystemTick(Ticks &currentSystemTicks) override;
     ErrorType ticksToMilliseconds(const Ticks ticks, Milliseconds &timeInMilliseconds) override;
     ErrorType millisecondsToTicks(const Milliseconds milli, Ticks &ticks) override;
     ErrorType getSoftwareVersion(std::string &softwareVersion) override;
-    ErrorType getResetReason(OperatingSystemConfig::ResetReason &resetReason) override;
+    ErrorType getResetReason(OperatingSystemTypes::ResetReason &resetReason) override;
     ErrorType reset() override;
     ErrorType setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) override;
     ErrorType idlePercentage(Percent &idlePercent) override;
-    ErrorType maxHeapSize(Bytes &size, const std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> &memoryRegionName) override;
-    ErrorType availableHeapSize(Bytes &size, const std::array<char, OperatingSystemConfig::MaxMemoryRegionNameLength> &memoryRegionName) override;
-    ErrorType memoryRegions(std::vector<OperatingSystemConfig::MemoryRegionInfo> &memoryRegions) override {
+    ErrorType maxHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) override;
+    ErrorType availableHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) override;
+    ErrorType memoryRegions(std::vector<OperatingSystemTypes::MemoryRegionInfo> &memoryRegions) override {
         memoryRegions.clear();
         return ErrorType::Success;
     }
@@ -63,23 +63,23 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     ErrorType disableAllInterrupts() override;
     ErrorType enableAllInterrupts() override;
 
-    int toPosixPriority(OperatingSystemConfig::Priority priority) {
+    int toPosixPriority(OperatingSystemTypes::Priority priority) {
         assert(sched_get_priority_max(SCHED_FIFO) / 2 > 4);
 
         switch (priority) {
-            case OperatingSystemConfig::Priority::Highest:
+            case OperatingSystemTypes::Priority::Highest:
                 return sched_get_priority_max(SCHED_FIFO) / 2;
                 break;
-            case OperatingSystemConfig::Priority::High:
+            case OperatingSystemTypes::Priority::High:
                 return (sched_get_priority_max(SCHED_FIFO) / 2) - 1;
                 break;
-            case OperatingSystemConfig::Priority::Normal:
+            case OperatingSystemTypes::Priority::Normal:
                 return (sched_get_priority_max(SCHED_FIFO) / 2) - 2;
                 break;
-            case OperatingSystemConfig::Priority::Low:
+            case OperatingSystemTypes::Priority::Low:
                 return (sched_get_priority_max(SCHED_FIFO) / 2) - 3;
                 break;
-            case OperatingSystemConfig::Priority::Lowest:
+            case OperatingSystemTypes::Priority::Lowest:
                 return (sched_get_priority_max(SCHED_FIFO) / 2) - 4;
                 break;
             default:
@@ -92,7 +92,7 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     private:
     struct Thread {
         pthread_t posixThreadId;
-        std::array<char, OperatingSystemConfig::MaxThreadNameLength> name;
+        std::array<char, OperatingSystemTypes::MaxThreadNameLength> name;
         Id threadId;
     };
 
@@ -108,8 +108,8 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     std::map<dispatch_source_t, Timer> timers;
     Id nextTimerId = 0;
 
-    std::map<std::array<char, OperatingSystemConfig::MaxThreadNameLength>, Thread> threads;
-    std::map<std::array<char, OperatingSystemConfig::MaxThreadNameLength>, sem_t *> semaphores;
+    std::map<std::array<char, OperatingSystemTypes::MaxThreadNameLength>, Thread> threads;
+    std::map<std::array<char, OperatingSystemTypes::MaxThreadNameLength>, sem_t *> semaphores;
 };
 
 #endif // __OPERATING_SYSTEM_HPP__
