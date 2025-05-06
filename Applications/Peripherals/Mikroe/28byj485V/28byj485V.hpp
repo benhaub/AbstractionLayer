@@ -29,8 +29,6 @@ class Mikroe28byj485V {
     Mikroe28byj485V(std::unique_ptr<DarlingtonArrayAbstraction<_NumberOfCoils>> &darlingtonArray) {
         _darlingtonArray = std::move(darlingtonArray);
     }
-    /// @brief  Destructor
-    ~Mikroe28byj485V() = default;
 
     /// @brief Tag for logging
     static constexpr char TAG[] = "28byj485V";

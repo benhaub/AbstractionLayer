@@ -56,7 +56,6 @@ namespace SignalsAndSlots {
             ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _binarySemaphore);
             assert(ErrorType::Success == error);
         }
-        ~Signal() = default;
 
         /**
          * @brief Observe a signal and call the callback when it is emitted
