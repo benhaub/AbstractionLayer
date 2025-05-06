@@ -31,16 +31,12 @@ class CommandObject {
      * @param signature The logic signature of this command object. Processing objects compare against this to see if they can process it.
      */
     CommandObject(LogicSignature signature) : _logicSignature(signature) { assert(_InvalidLogicSignature != signature); }
-    /// @brief Destructor.
-    virtual ~CommandObject() = default;
 
     /// @brief The invalid logic signature
     static constexpr LogicSignature _InvalidLogicSignature = __UINT32_MAX__;
 
     /// @brief Get a constant reference to the logic signature.
     const LogicSignature &logicSignatureConst() const { return _logicSignature; }
-    /// @brief Get a mutable reference to the logic signature.
-    LogicSignature &logicSignature() { return _logicSignature; }
 
     /**
      * @brief Get the next unique logic signature.
