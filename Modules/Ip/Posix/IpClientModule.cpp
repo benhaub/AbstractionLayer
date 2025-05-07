@@ -139,7 +139,13 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
 }
 
 ErrorType IpClient::disconnect() {
-    return ErrorType::NotImplemented;
+    if (_socket != -1) {
+        shutdown(_socket, 0);
+        close(_socket);
+        _socket = -1;
+    }
+
+    return ErrorType::Success;
 }
 
 ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds timeout) {
