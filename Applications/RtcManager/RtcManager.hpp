@@ -42,17 +42,20 @@ class RtcManager final {
      * @brief Constrcutor
      * @details A read of the external RTC will be done to initailize member variables.
      * @param[in] criteria The criteria to use for setting and synchronizing the RTCs
-     * @param[in] internalRtc The internal RTC to use
-     * @param[in] externalRtc The external RTC to use
-     * @post Ownership of the RTCs is transferred to the RtcManager
+     * @param[in] manageExternalRtc If true, the external RTC will be managed according to the specified criteria
+     * @param[in] manageInternalRtc If true, the internal RTC will be managed according to the specified criteria
+     * //TODO: The RTCs can be replaced by two bools that say whether it should be managed or not.
+     *         The manager can then create these pointers itself.
      */
-    RtcManager(const RtcManagerTypes::Criteria &criteria,
-                          std::unique_ptr<RtcAbstraction> &internalRtc,
-                          std::unique_ptr<RtcAbstraction> &externalRtc) :
-                          _internalRtc(std::move(internalRtc)), _externalRtc(std::move(externalRtc)), _criteria(criteria)
-    {
-        if (nullptr != _externalRtc.get()) {
+    RtcManager(const RtcManagerTypes::Criteria &criteria, const bool manageExternalRtc, const bool manageInternalRtc) : _criteria(criteria) {
+        if (manageExternalRtc) {
+            _externalRtc = std::make_unique<Rtc>();
+            assert(nullptr != _externalRtc);
             _externalRtc->readDate(_lastExternalRtcTimeQueried);
+        }
+        if (manageInternalRtc) {
+            _internalRtc = std::make_unique<Rtc>();
+            assert(nullptr != _internalRtc);
         }
     }
 
