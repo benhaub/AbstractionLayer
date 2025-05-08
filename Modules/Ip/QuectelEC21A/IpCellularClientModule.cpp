@@ -51,7 +51,7 @@ static int8_t ToQuectelAccessMode(const CellularConfig::AccessMode accessMode) {
     }
 }
 
-ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &socket, const Milliseconds timeout) {
+ErrorType IpCellularClient::connectTo(std::string_view hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &socket, const Milliseconds timeout) {
     bool doneConnecting = false;
     ErrorType error = ErrorType::Failure;
 
@@ -105,7 +105,7 @@ ErrorType IpCellularClient::connectTo(const std::string &hostname, const Port po
         openSocketCommand.append(std::to_string(Cellular::_IpContext));
         openSocketCommand.append(",").append(std::to_string(socket));
         openSocketCommand.append(",").append("\"").append(quectelProtocol).append("\"");
-        openSocketCommand.append(",").append("\"").append(hostname).append("\"");
+        openSocketCommand.append(",").append("\"").append(hostname.data()).append("\"");
         openSocketCommand.append(",").append(std::to_string(port));
         openSocketCommand.append(",").append(std::to_string(0));
         openSocketCommand.append(",").append(std::to_string(ToQuectelAccessMode(_cellNetworkInterface->accessModeConst())));

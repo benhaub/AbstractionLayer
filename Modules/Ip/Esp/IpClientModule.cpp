@@ -22,7 +22,7 @@
  * call fcntl and set O_NONBLOCK on the socket it would fail to connect every time so there
  * was quite a symphony of bugs there.
 */
-ErrorType IpClient::connectTo(const std::string &hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) {
+ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) {
     sock = -1;
     bool doneConnecting = false;
     ErrorType callbackError = ErrorType::Failure;
@@ -44,9 +44,9 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         uint8_t dns_server_ip[] = {8,8,8,8};
         IP4_ADDR(&ip_addr.u_addr.ip4, dns_server_ip[0], dns_server_ip[1], dns_server_ip[2], dns_server_ip[3]);
         dns_setserver(0, &ip_addr);
-        struct hostent *hent = gethostbyname(hostname.c_str());
+        struct hostent *hent = gethostbyname(hostname.data());
         if (NULL == hent) {
-            PLT_LOGE(TAG, "couldn't get address for %s", hostname.c_str());
+            PLT_LOGE(TAG, "couldn't get address for %s", hostname.data());
             callbackError = ErrorType::Failure;
             doneConnecting = true;
             _status.connected = false;
@@ -67,7 +67,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         }
 
         if (-1 == connect(_socket, (struct sockaddr *)&dest_ip, sizeof(dest_ip))) {
-            PLT_LOGE(TAG, "couldn't connect to %s (%s)", hostname.c_str(), inet_ntoa(*(struct in_addr *)hent->h_addr_list[0]));
+            PLT_LOGE(TAG, "couldn't connect to %s (%s)", hostname.data(), inet_ntoa(*(struct in_addr *)hent->h_addr_list[0]));
             close(_socket);
             callbackError = ErrorType::Failure;
             doneConnecting = true;

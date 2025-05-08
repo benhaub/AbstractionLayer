@@ -14,7 +14,7 @@
 #include <cstring>
 #include <limits>
 
-ErrorType IpClient::connectTo(const std::string &hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) {
+ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) {
     sock = -1;
     bool doneConnecting = false;
     ErrorType callbackError = ErrorType::Failure;
@@ -30,9 +30,9 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
             return callbackError;
         }
 
-        struct hostent *hent = gethostbyname(hostname.c_str());
+        struct hostent *hent = gethostbyname(hostname.data());
         if (NULL == hent) {
-            PLT_LOGW(TAG, "couldn't get address for %s", hostname.c_str());
+            PLT_LOGW(TAG, "couldn't get address for %s", hostname.data());
             callbackError = ErrorType::Failure;
             doneConnecting = true;
             _status.connected = false;
@@ -53,7 +53,7 @@ ErrorType IpClient::connectTo(const std::string &hostname, const Port port, cons
         }
 
         if (-1 == connect(_socket, (struct sockaddr *)&dest_ip, sizeof(dest_ip))) {
-            PLT_LOGW(TAG, "couldn't connect to %s (%s)", hostname.c_str(), inet_ntoa(*(struct in_addr *)hent->h_addr_list[0]));
+            PLT_LOGW(TAG, "couldn't connect to %s (%s)", hostname.data(), inet_ntoa(*(struct in_addr *)hent->h_addr_list[0]));
             close(_socket);
             callbackError = ErrorType::Failure;
             doneConnecting = true;

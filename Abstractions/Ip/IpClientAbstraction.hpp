@@ -87,7 +87,7 @@ class IpClientAbstraction : public CommunicationProtocol {
      * @returns Fnd::ErrorType::NotImplemented if not implemented
      * @returns Fnd::ErrorType::NotSupported if the network interface doesn't support the operation
     */
-    virtual ErrorType connectTo(const std::string &hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &socket, const Milliseconds timeout) = 0;
+    virtual ErrorType connectTo(std::string_view hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &socket, const Milliseconds timeout) = 0;
     /**
      * @brief Disconnect this client
      * @returns Fnd::ErrorType::Success on success
