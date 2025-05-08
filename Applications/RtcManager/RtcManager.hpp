@@ -94,6 +94,11 @@ class RtcManager final {
      */
     ErrorType externalRtcTime(const bool forceQuery, DateTime &dateTime);
 
+    /// @brief Get the internal RTC as a constant reference
+    const RtcAbstraction &internalRtc() const { assert(nullptr != _internalRtc.get()); return *_internalRtc; }
+    /// @brief Get the external RTC as a constant reference
+    const RtcAbstraction &externalRtc() const { assert(nullptr != _externalRtc.get()); return *_externalRtc; }
+
     private:
     /// @brief The internal RTC
     std::unique_ptr<RtcAbstraction> _internalRtc;

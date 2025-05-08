@@ -44,7 +44,12 @@ ErrorType RtcManager::submitInputTime(const DateTime &inputTime) {
 }
 
 ErrorType RtcManager::internalRtcTime(DateTime &dateTime) const {
-    return _internalRtc->readDate(dateTime);
+    if (nullptr != _internalRtc.get()) {
+        return _internalRtc->readDate(dateTime);
+    }
+    else {
+        return ErrorType::NoData;
+    }
 }
 
 ErrorType RtcManager::externalRtcTime(const bool forceQuery, DateTime &dateTime) {
@@ -53,6 +58,7 @@ ErrorType RtcManager::externalRtcTime(const bool forceQuery, DateTime &dateTime)
         if (ErrorType::Success == error) {
             _lastExternalRtcTimeQueried = dateTime;
         }
+
         return error;
     }
     else {
