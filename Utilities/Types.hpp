@@ -34,6 +34,12 @@ using UnixTime = uint32_t;
 ///@typedef Ticks
 ///CPU tick. Must use a system dependant conversion to get elapsed time in seconds.
 using Ticks = uint32_t;
+
+//Forward declarations for + operator overload in DateTime.
+struct DateTime;
+static constexpr UnixTime ToUnixTime(const DateTime &dt);
+static constexpr DateTime ToDateTime(const UnixTime &seconds);
+
 ///@struct DateTime
 ///@brief Date and time
 struct DateTime {
@@ -121,6 +127,16 @@ struct DateTime {
         _month = other._month;
         _year = other._year;
         return *this;
+    }
+    /**
+     * @brief Add two DateTime's together
+     * @param other The DateTime object to add with
+     * @returns The sum of the two DateTime objects
+     */
+    DateTime operator + (const DateTime &other) {
+        UnixTime unixTime = ToUnixTime(*this);
+        unixTime += ToUnixTime(other);
+        return ToDateTime(unixTime);
     }
 };
 ///@struct Time
@@ -233,13 +249,13 @@ using Ipv4Address = uint32_t;
 
 /**
  * @brief Converts a DateTime structure to a Unix time.
- * @param dt The DateTime structure to convert.
+ * @param[in] dt The DateTime structure to convert.
  * @return The Unix time equivalent of the DateTime.
  * @note Remember the datetime data should represent the time and date since January 1st, 1970. If you provide a datetime
  *       with the year 2025 you are asking for the date which is 2025 years since 1970.
  * @sa Adapted from Freescale Semiconductor fsl_snvs_hp.c
  */
-static constexpr UnixTime ToUnixTime(DateTime dt) {
+static constexpr UnixTime ToUnixTime(const DateTime &dt) {
     constexpr uint16_t daysInAYear = 365;
     constexpr uint32_t secondsInADay = 86400;
     constexpr uint16_t secondsInAnHour = 3600;
@@ -304,10 +320,10 @@ static constexpr UnixTime ToUnixTime(DateTime dt) {
 
 /**
  * @brief Convert a Unix time to a date time
- * @param seconds The unix time
+ * @param[in] seconds The unix time
  * @returns the DateTime which is the time and date passed since January 1st, 1970.
  */
-static constexpr DateTime ToDateTime(UnixTime seconds) {
+static constexpr DateTime ToDateTime(const UnixTime &seconds) {
     constexpr uint16_t daysInAYear = 365;
     constexpr uint32_t secondsInADay = 86400;
     constexpr uint16_t secondsInAnHour = 3600;
