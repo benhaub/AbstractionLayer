@@ -90,6 +90,7 @@ namespace SignalsAndSlots {
 
         /**
          * @brief Emit the signal and notify all the observers who have connected themselves to a slot.
+         * @details Interrupt safe.
          * @sa connect
          * @returns ErrorType::NoData if there are no observers
          * @returns ErrorType::PrerequisitesNotMet if eventQueue is nullptr

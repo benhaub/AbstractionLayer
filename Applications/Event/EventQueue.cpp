@@ -23,7 +23,7 @@ EventQueue::EventQueue() {
 }
 
 ErrorType EventQueue::addEventFromIsr(Event &event) {
-    if (events.size() >= _maxEvents) {
+    if (events.size() >= _MaxEvents) {
         return ErrorType::LimitReached;
     }
 
@@ -56,7 +56,7 @@ ErrorType EventQueue::addEvent(Event &event) {
         return ErrorType::Timeout;
     }
 
-    if (events.size() >= _maxEvents) {
+    if (events.size() >= _MaxEvents) {
         error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
         assert(ErrorType::Success == error);
         return ErrorType::LimitReached;

@@ -90,6 +90,7 @@ class EventQueue {
 
     /**
      * @brief Adds an event to the to the queue.
+     * @details Interrupt safe.
      * @param[in] event The event to add.
      * @post The event is added to a FIFO queue and will be executed when it reaches the first position in the queue and this thread
      *       is running.
@@ -103,7 +104,7 @@ class EventQueue {
 
     /// @brief Get the number of events available in the queue.
     /// @return The number of events available in the queue.
-    Count eventsAvailable() const { return _maxEvents - events.size(); }
+    Count eventsAvailable() const { return _MaxEvents - events.size(); }
 
     /**
      * @brief The main loop for the eventQueue which can be used to continually check for and run events.
@@ -125,7 +126,7 @@ class EventQueue {
 
     private:
     /// @brief The maximum number of events that can be queued.
-    static constexpr Count _maxEvents = 10;
+    static constexpr Count _MaxEvents = 10;
     /// @brief The timeout for semaphore operations.
     static constexpr Milliseconds _SemaphoreTimeout = 0;
     /// @brief the number of semaphores that have been created.
