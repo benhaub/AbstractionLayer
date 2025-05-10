@@ -37,7 +37,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/IntegratedCircuits/Darlington
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Processor/Esp)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Utilities)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Logging)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/ChainOfResponsibility)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/CommandQueue)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Event)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/SignalsAndSlots)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Factories)
