@@ -53,20 +53,12 @@ ErrorType EventQueue::addEvent(Event &event) {
         return addEventFromIsr(event);
     }
 
-    ErrorType error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout);
-    if (ErrorType::Success != error) {
-        return ErrorType::Timeout;
-    }
-
     if (events.size() >= _MaxEvents) {
-        error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
-        assert(ErrorType::Success == error);
         return ErrorType::LimitReached;
     }
 
     Id currentThreadId = 0;
     OperatingSystem::Instance().currentThreadId(currentThreadId);
-    assert(ErrorType::Success == error);
 
     //Optimization for when you add an event from the same thread that owns the event queue
     //Instead of pushing the event on the queue for the mainLoop to run, just run it right away.
@@ -90,10 +82,7 @@ ErrorType EventQueue::addEvent(Event &event) {
         }
     }
 
-    error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
-    assert(ErrorType::Success == error);
-
-    //Run the event outside of the sempahore protection so we don't block the event queue.
+    //Run the event outside of the critical section so we don't block the event queue.
     if (_ownerThreadId == currentThreadId) {
         return event.run();
     }
@@ -102,25 +91,22 @@ ErrorType EventQueue::addEvent(Event &event) {
 }
 
 ErrorType EventQueue::runNextEvent() {
-    ErrorType error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout);
-    if (ErrorType::Success != error) {
-        return ErrorType::Timeout;
+    ErrorType error = ErrorType::NoData;
+
+    const bool thereAreEventsReadyToRun = 0 != events.size();
+    if (thereAreEventsReadyToRun) {
+        const bool semaphoreWasAcquired = ErrorType::Success == (error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout));
+        if (semaphoreWasAcquired) {
+            Event event = events.front();
+            events.erase(events.begin());
+
+            error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
+            assert(ErrorType::Success == error);
+
+            //This needs to be run last, in case the event needs to add more events to the queue or run an event.
+            error = event.run();
+        }
     }
-
-    if (0 == events.size()) {
-        error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
-        assert(ErrorType::Success == error);
-        return ErrorType::NoData;
-    }
-
-    Event event = events.front();
-    events.erase(events.begin());
-
-    error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
-    assert(ErrorType::Success == error);
-
-    //This needs to be run last, in case the event needs to add more events to the queue or run an event.
-    error = event.run();
 
     return error;
 }
