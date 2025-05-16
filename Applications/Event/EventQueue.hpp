@@ -35,6 +35,8 @@ class EventQueue {
     //TODO: This should be handled instead of asserting. Delete the queue when the last event is removed.
     ~EventQueue() { assert(events.size() == 0); };
 
+    static constexpr char TAG[] = "EventQueue";
+
     /**
      * @class Event
      * @brief Runs the function and parameters passed to it by the constructor
@@ -128,7 +130,7 @@ class EventQueue {
     /// @brief The maximum number of events that can be queued.
     static constexpr Count _MaxEvents = 10;
     /// @brief The timeout for semaphore operations.
-    static constexpr Milliseconds _SemaphoreTimeout = 0;
+    static constexpr Milliseconds _SemaphoreTimeout = 1;
     /// @brief the number of semaphores that have been created.
     static int _SemaphoreCount;
     /// @brief The queue of events to run.

@@ -36,7 +36,9 @@ ErrorType EventQueue::addEventFromIsr(Event &event) {
             assert(false);
         }
     }
+
     events.push_back(event);
+
     if (ErrorType::Success != OperatingSystem::Instance().enableAllInterrupts()) {
         const bool isCriticalError = !(ErrorType::NotAvailable == error);
         if (isCriticalError) {
@@ -77,7 +79,9 @@ ErrorType EventQueue::addEvent(Event &event) {
                 assert(false);
             }
         }
+
         events.push_back(event);
+
         if (ErrorType::Success != OperatingSystem::Instance().enableAllInterrupts()) {
             const bool isCriticalError = !(ErrorType::NotAvailable == error);
             if (isCriticalError) {

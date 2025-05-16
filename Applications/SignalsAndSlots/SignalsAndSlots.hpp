@@ -25,6 +25,8 @@
  *     std::function<ErrorType(bool)> observerCallback = std::bind(&Foo::baz, &foo, std::placeholders::_1);
  *     //You pass in foo so that SignalsAndSlots knows what event queue to add the callback to
  *     bar.connect(&foo, observerCallback);
+ *     //Or if foo connects itself via constructor or member function
+ *     bar.connect(*this, std::bind(&Foo::baz, this, std::placeholders::_1));
  * 
  *     //The placeholder allows you to pass arguments to the callback function after the initial call to bind. 
  *     bar.emit(true);
