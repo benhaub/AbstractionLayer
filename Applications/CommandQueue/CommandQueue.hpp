@@ -33,7 +33,7 @@ namespace CommandQueueTypes {
     /// @brief The maximum amount of commands that can be in a queue at the same time
     static constexpr Count MaxCommandQueueSize = 4;
     /// @brief The maximum amount of time to wait for a semaphore
-    static constexpr Milliseconds SemaphoreTimeout = 0;
+    static constexpr Milliseconds SemaphoreTimeout = 1;
     /// @brief Tag for logging
     static constexpr char TAG[] = "CommandQueue";
 }
@@ -71,10 +71,11 @@ class CommandQueue {
      */
     CommandQueue() {
         if (0 == strlen(_BinarySemaphore.data())) {
-            constexpr std::array<char, 15> semaphoreName = {"chainBinarySem"};
-            static_assert(sizeof(semaphoreName) <= OperatingSystemTypes::MaxSemaphoreNameLength);
-            std::copy(semaphoreName.begin(), semaphoreName.end(), _BinarySemaphore.begin());
-
+            _SemaphoreCount++;
+            std::string semaphoreNumber = std::to_string(_SemaphoreCount);
+            strncpy(_BinarySemaphore.data(), "commandQSem", OperatingSystemTypes::MaxSemaphoreNameLength);
+            assert(strlen(_BinarySemaphore.data()) + semaphoreNumber.length() < OperatingSystemTypes::MaxSemaphoreNameLength);
+            strncat(_BinarySemaphore.data(), semaphoreNumber.c_str(), semaphoreNumber.length());
             ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _BinarySemaphore);
             assert(ErrorType::Success == error);
 
@@ -138,6 +139,8 @@ class CommandQueue {
     }
 
     private:
+    /// @brief Unique number to append to the semaphore name
+    inline static Count _SemaphoreCount = 0;
     /// @brief The queue of commands
     inline static std::vector<T> _Commands;
     /// @brief The status of the Queue of Responsibility
