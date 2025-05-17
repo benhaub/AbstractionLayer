@@ -106,6 +106,8 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
 
     std::map<std::array<char, OperatingSystemTypes::MaxThreadNameLength>, Thread> threads;
     std::map<std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength>, sem_t *> semaphores;
+
+    bool _interruptsDisabled = false;
 };
 
 #endif // __OPERATING_SYSTEM_HPP__

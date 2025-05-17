@@ -600,11 +600,21 @@ ErrorType OperatingSystem::uptime(Seconds &uptime) {
 }
 
 ErrorType OperatingSystem::disableAllInterrupts() {
-    return ErrorType::NotAvailable;
+    while (_interruptsDisabled) {
+        delay(Milliseconds(1));
+    }
+
+    _interruptsDisabled = true;
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::enableAllInterrupts() {
-    return ErrorType::NotAvailable;
+    while (!_interruptsDisabled) {
+        delay(Milliseconds(1));
+    }
+
+    _interruptsDisabled = false;
+    return ErrorType::Success;
 }
 
 void OperatingSystem::callTimerCallback(timer_t *const posixTimerId) {
