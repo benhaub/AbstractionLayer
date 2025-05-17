@@ -42,7 +42,6 @@ ErrorType Wifi::txNonBlocking(const std::shared_ptr<std::string> frame, const So
     return ErrorType::NotAvailable;
 }
 
-//TODO: Needs to look like POSIX so that NoData is returned properly
 ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
     ErrorType error = ErrorType::Failure;
     ssize_t bytesReceived = 0;
@@ -73,27 +72,26 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
     int ret;
     ret = select(socket + 1, &readfds, NULL, NULL, &timeoutval);
     if (ret < 0) {
+        frameBuffer.resize(0);
         return fromPlatformError(errno);
     }
     }
 
     if (FD_ISSET(socket, &readfds)) {
         if (-1 == (bytesReceived = recv(socket, frameBuffer.data(), frameBuffer.size(), 0))) {
+            frameBuffer.resize(0);
             error = fromPlatformError(errno);
         }
-        else if ((size_t)bytesReceived > frameBuffer.size()) {
+        else if (0 == bytesReceived) {
+            //recv returns 0 if the connection is closed.
+            frameBuffer.resize(0);
             error = ErrorType::PrerequisitesNotMet;
         }
         else {
             frameBuffer.resize(bytesReceived);
-            return ErrorType::Success;
+            error = ErrorType::Success;
         }
     }
-    else {
-        error = ErrorType::Timeout;
-    }
-
-    frameBuffer.resize(0);
 
     return error;
 }
