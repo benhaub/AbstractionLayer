@@ -16,10 +16,10 @@ EventQueue::EventQueue() {
     strncat(_binarySemaphore.data(), semaphoreNumber.c_str(), semaphoreNumber.length());
     ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _binarySemaphore);
     assert(ErrorType::Success == error);
-    error = OperatingSystem::Instance().currentThreadId(_ownerThreadId);
-    //If assert fails, the thread is not known to the OperatingSystem. It only knows about threads that it explicitely creates.
+
+    //If the optimizations are disabled, the thread is not known to the OperatingSystem. It only knows about threads that it explicitely creates.
     //e.g. You create an event queue in main.cpp. This thread is not known to the OperatingSystem.
-    assert(ErrorType::Success == error);
+    _addEventOptimizationsEnabled = (ErrorType::Success == OperatingSystem::Instance().currentThreadId(_ownerThreadId));
 }
 
 ErrorType EventQueue::addEventFromIsr(Event &event) {
@@ -60,9 +60,7 @@ ErrorType EventQueue::addEvent(Event &event) {
     Id currentThreadId = 0;
     OperatingSystem::Instance().currentThreadId(currentThreadId);
 
-    //Optimization for when you add an event from the same thread that owns the event queue
-    //Instead of pushing the event on the queue for the mainLoop to run, just run it right away.
-    if (_ownerThreadId != currentThreadId) {
+    if (_ownerThreadId != currentThreadId || !_addEventOptimizationsEnabled) {
         ErrorType error;
         //Guarentee that addEventFromIsr will not corrupt the queue when it tries to add to it.
         if (ErrorType::Success != (error = OperatingSystem::Instance().disableAllInterrupts())) {
@@ -83,7 +81,7 @@ ErrorType EventQueue::addEvent(Event &event) {
     }
 
     //Run the event outside of the critical section so we don't block the event queue.
-    if (_ownerThreadId == currentThreadId) {
+    if (_ownerThreadId == currentThreadId && _addEventOptimizationsEnabled) {
         return event.run();
     }
 

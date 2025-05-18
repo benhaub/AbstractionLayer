@@ -140,6 +140,12 @@ class EventQueue {
     std::array<char, 16> _binarySemaphore;
     /// @brief The thread id of the owner of the event queue. Used to determine if we can skip event queuing.
     Id _ownerThreadId;
+    /**
+     * @brief True when optimizations for addEvents to your own event queue are enabled.
+     * @details Optimization for when you add an event from the same thread that owns the event queue
+     *          Instead of pushing the event on the queue for the mainLoop to run, just run it right away.
+     */
+    bool _addEventOptimizationsEnabled = false;
 
     /**
      * @brief Interrupt safe version of addEvent
