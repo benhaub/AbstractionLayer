@@ -75,7 +75,6 @@ class EventQueue {
          * @endcode
         */
         Event(std::function<ErrorType()> eventCallback) : _eventCallback(eventCallback) {}
-        ~Event() = default;
 
         /**
          * @brief Calls the function member with the parameters that were passed to the constructor.
