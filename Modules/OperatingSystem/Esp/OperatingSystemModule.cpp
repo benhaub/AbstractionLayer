@@ -355,6 +355,9 @@ ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const Seconds timeZo
 }
 
 ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
+#if configUSE_IDLE_HOOK != 1
+#warning "configUSE_IDLE_HOOK is not enabled. Idle percentage will not be updated."
+#endif
     _status.idle = idlePercent;
     return ErrorType::Success;
 }
