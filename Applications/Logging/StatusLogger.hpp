@@ -48,12 +48,12 @@ class StatusLogger {
     /**
      * @brief Construct a new Status Logger object
      * @param interval Interval between logs
-     * @pre Make sure the timer stack is large enough to be able to print. Some tests have revealed the stack needs to be as large as 1.5kiB
      */
     StatusLogger(Seconds interval) {
-        if (ErrorType::Success == OperatingSystem::Instance().createTimer(_logTimer, interval*1000, true, std::bind(&StatusLogger::timerElapsed, this))) {
-            if (ErrorType::Success != OperatingSystem::Instance().startTimer(_logTimer, 0)) {
-                PLT_LOGW(TAG, "Failed to start timer for status logging");
+        ErrorType error = ErrorType::Failure;
+        if (ErrorType::Success == (error = OperatingSystem::Instance().createTimer(_logTimer, interval*1000, true, std::bind(&StatusLogger::timerElapsed, this)))) {
+            if (ErrorType::Success != (error = OperatingSystem::Instance().startTimer(_logTimer, 0))) {
+                PLT_LOGW(TAG, "Failed to start timer for status logging. <error:%u>", (uint32_t)error);
             }
 
             _interval = interval;
