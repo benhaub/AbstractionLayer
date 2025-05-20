@@ -39,7 +39,7 @@ ErrorType OperatingSystem::delay(const Milliseconds delay) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::delay(Microseconds delay) {
+ErrorType OperatingSystem::delay(const Microseconds delay) {
     if (configTICK_RATE_HZ <= 1000) {
         return ErrorType::NotSupported;
     }

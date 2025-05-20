@@ -20,7 +20,7 @@ ErrorType OperatingSystem::delay(const Milliseconds delay) {
 }
 
 
-ErrorType OperatingSystem::delay(Microseconds delay) {
+ErrorType OperatingSystem::delay(const Microseconds delay) {
     usleep(delay);
     return ErrorType::Success;
 }

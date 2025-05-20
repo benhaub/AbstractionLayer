@@ -20,13 +20,13 @@ void TimerCallback(TimerHandle_t timer);
 }
 #endif
 
-ErrorType OperatingSystem::delay(Milliseconds delay) {
+ErrorType OperatingSystem::delay(const Milliseconds delay) {
     const Milliseconds minimumDelayToBlock = delay * (1000 / configTICK_RATE_HZ);
     vTaskDelay(minimumDelayToBlock);
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::delay(Microseconds delay) {
+ErrorType OperatingSystem::delay(const Microseconds delay) {
     return ErrorType::NotImplemented;
 }
 

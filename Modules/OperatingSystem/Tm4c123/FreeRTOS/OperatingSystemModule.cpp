@@ -15,12 +15,12 @@ void TimerCallback(TimerHandle_t timer);
 }
 #endif
 
-ErrorType OperatingSystem::delay(Milliseconds delay) {
+ErrorType OperatingSystem::delay(const Milliseconds delay) {
     vTaskDelay(delay);
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::delay(Microseconds delay) {
+ErrorType OperatingSystem::delay(const Microseconds delay) {
     return ErrorType::NotImplemented;
 }
 

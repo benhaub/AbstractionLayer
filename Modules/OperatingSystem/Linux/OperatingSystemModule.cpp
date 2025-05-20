@@ -35,7 +35,7 @@ ErrorType OperatingSystem::delay(const Milliseconds delay) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::delay(Microseconds delay) {
+ErrorType OperatingSystem::delay(const Microseconds delay) {
     usleep(delay);
     return ErrorType::Success;
 }
