@@ -1,7 +1,7 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
 * @file   Log.hpp
-* @details \b Synopsis: \n Pretty printed logs. Much of this is borrowed from ESPs logging implementation
+* @details Pretty printed logs. Much of this is borrowed from ESPs logging implementation
 * @ingroup Applications
 *******************************************************************************/
 #ifndef __LOG_HPP__

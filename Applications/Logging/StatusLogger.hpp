@@ -143,7 +143,7 @@ class StatusLogger {
      * @brief Expand a tuple of vectors into a list of vectors and print all the Abstractions that log in each vector.
      * @tparam AbstractionsThatLog. A list of Abstractions that can print a status
      * @param abstractions Tuple of vectors of Abstractions that can print a status
-     * @details https://en.cppreference.com/w/cpp/utility/apply
+     * @details https://en.cppreference.com/w/cpp/utility/apply - Applies each element of the tuple to the function provided as an argument to it.
      */
     template<typename... AbstractionsThatLog>
     void expandToListOfVectors(std::tuple<AbstractionsThatLog...> &abstractions) {
