@@ -50,7 +50,7 @@ UnixTime NtpClient::currentTime(ErrorType &error, const Milliseconds timeout, co
     std::string packet(sizeof(NtpPacket), 0);
     packet[0] = static_cast<uint8_t>(ntpLeapIndicator) << 6 | static_cast<uint8_t>(ntpVersion) << 3 | static_cast<uint8_t>(ntpMode);
 
-    UnixTime unixTimeUtc;
+    UnixTime unixTimeUtc = 0;
     if (ErrorType::Success == (error = ipClient().sendBlocking(packet, timeout))) {
         std::string &buffer = packet;
         if (ErrorType::Success == (error = ipClient().receiveBlocking(buffer, timeout))) {
