@@ -44,8 +44,6 @@ class RtcManager final {
      * @param[in] criteria The criteria to use for setting and synchronizing the RTCs
      * @param[in] manageExternalRtc If true, the external RTC will be managed according to the specified criteria
      * @param[in] manageInternalRtc If true, the internal RTC will be managed according to the specified criteria
-     * //TODO: The RTCs can be replaced by two bools that say whether it should be managed or not.
-     *         The manager can then create these pointers itself.
      */
     RtcManager(const RtcManagerTypes::Criteria &criteria, const bool manageExternalRtc, const bool manageInternalRtc) : _criteria(criteria) {
         if (manageExternalRtc) {
@@ -77,7 +75,7 @@ class RtcManager final {
      * @returns ErrorType::PrerequistitesNotMet if the input time did not meet the criteria.
      * @returns ErrorType::Failure otherwise.
      */
-    ErrorType submitInputTime(const DateTime &inputTime);
+    ErrorType submitInputTime(const UnixTime &inputTime);
     /**
      * @brief Get the time from the internal RTC.
      * @param[out] dateTime The time from the internal RTC.

@@ -1,41 +1,46 @@
 //AbstractionLayer
 #include "RtcManager.hpp"
 #include "Math.hpp"
+#include "Log.hpp"
 
-ErrorType RtcManager::submitInputTime(const DateTime &inputTime) {
+ErrorType RtcManager::submitInputTime(const UnixTime &inputTime) {
     ErrorType error;
     DateTime internalTime;
     error = internalRtcTime(internalTime);
-    Seconds differenceBetweenInternalRtcAndInputTime;
-    const UnixTime inputUnixTime = ToUnixTime(inputTime);
-    const UnixTime internalUnixTime = ToUnixTime(internalTime);
-    if (inputTime <= internalTime) {
-        differenceBetweenInternalRtcAndInputTime = internalUnixTime - inputUnixTime;
-    }
-    else {
-        differenceBetweenInternalRtcAndInputTime = inputUnixTime - internalUnixTime;
-    }
+    if (ErrorType::Success == error) {
+        Seconds differenceBetweenInternalRtcAndInputTime;
+        const UnixTime internalUnixTime = ToUnixTime(internalTime);
 
-    if (differenceBetweenInternalRtcAndInputTime > _criteria.maxDifferenceBetweenInternalRtcAndInputTime) {
-        if (nullptr != _internalRtc.get()) {
-            error = _internalRtc->writeDate(inputTime);
+        if (inputTime <= internalUnixTime) {
+            differenceBetweenInternalRtcAndInputTime = internalUnixTime - inputTime;
         }
-    }
+        else {
+            differenceBetweenInternalRtcAndInputTime = inputTime - internalUnixTime;
+        }
 
-    const UnixTime externalUnixTime = ToUnixTime(_lastExternalRtcTimeQueried);
-    Seconds differenceBetweenInternalRtcAndExternalRtc;
-    if (internalUnixTime > externalUnixTime) {
-        differenceBetweenInternalRtcAndExternalRtc = internalUnixTime - externalUnixTime;
-    }
-    else {
-        differenceBetweenInternalRtcAndExternalRtc = externalUnixTime - internalUnixTime;
-    }
+        if (differenceBetweenInternalRtcAndInputTime > _criteria.maxDifferenceBetweenInternalRtcAndInputTime) {
+            if (nullptr != _internalRtc.get()) {
+                PLT_LOGI(TAG, "Writing time to internal RTC <time:%s>", ToDateTime(inputTime).toString().data());
+                error = _internalRtc->writeDate(ToDateTime(inputTime));
+            }
+        }
 
-    if (differenceBetweenInternalRtcAndExternalRtc > _criteria.maxDifferenceBetweenInternalAndExternalRtc) {
-        if (nullptr != _externalRtc.get()) {
-            error = _externalRtc->writeDate(inputTime);
-            if (ErrorType::Success == error) {
-                error = _externalRtc->readDate(_lastExternalRtcTimeQueried);
+        const UnixTime externalUnixTime = ToUnixTime(_lastExternalRtcTimeQueried);
+        Seconds differenceBetweenInternalRtcAndExternalRtc;
+        if (internalUnixTime > externalUnixTime) {
+            differenceBetweenInternalRtcAndExternalRtc = internalUnixTime - externalUnixTime;
+        }
+        else {
+            differenceBetweenInternalRtcAndExternalRtc = externalUnixTime - internalUnixTime;
+        }
+
+        if (differenceBetweenInternalRtcAndExternalRtc > _criteria.maxDifferenceBetweenInternalAndExternalRtc) {
+            if (nullptr != _externalRtc.get()) {
+                PLT_LOGI(TAG, "Writing time to external RTC <time:%s>", ToDateTime(inputTime).toString().data());
+                error = _externalRtc->writeDate(ToDateTime(inputTime));
+                if (ErrorType::Success == error) {
+                    error = _externalRtc->readDate(_lastExternalRtcTimeQueried);
+                }
             }
         }
     }

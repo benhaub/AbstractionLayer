@@ -58,6 +58,16 @@ struct DateTime {
     constexpr DateTime(const DateTime &other) = default;
 
     /**
+     * @brief Convert the DateTime to a string
+     * @return The DateTime as a string
+     */
+    std::array<char, 20> toString() const {
+        std::array<char, 20> string;
+        snprintf(string.data(), string.size(), "%04d-%02d-%02d %02d:%02d:%02d", _year, _month, _day, _hour, _minute, _second);
+        return string;
+    }
+
+    /**
      * @brief Checks if two DateTime objects are equal
      * @param other The DateTime object to compare to
      * @return true if the DateTime objects are equal
