@@ -48,6 +48,48 @@ namespace NetworkTypes {
     constexpr uint8_t MacAddressStringSize = 18;
     /// @brief Size of a MAC address byte array
     constexpr uint8_t MacAddressByteArraySize = 6;
+
+    /**
+     * @brief Convert data from network byte order to host byte order.
+     * @param[in] data The data to convert.
+     * @returns The data in host byte order.
+     */
+    template<typename T>
+    inline T NetworkToHostByteOrder(const T &data) {
+        const uint16_t i = 1;
+
+        //i is 0b00000001 in memory for big endian (network byte order)
+        //i is 0b10000000 in memory for little endian
+        //So reading as a byte, we'll either get 1 or 0.
+        const bool hostIsLittleEndian = (*((char *)&i));
+        if (hostIsLittleEndian) {
+            T swappedData = 0;
+            if (std::is_same<T, uint32_t>::value) {
+                swappedData |= (data & 0x000000FF) << 24;
+                swappedData |= (data & 0x0000FF00) << 8;
+                swappedData |= (data & 0x00FF0000) >> 8;
+                swappedData |= (data & 0xFF000000) >> 24;
+            }
+            else if (std::is_same<T, uint16_t>::value) {
+                swappedData |= (data & 0x00FF) << 8;
+                swappedData |= (data & 0xFF00) >> 8;
+            }
+
+            return swappedData;
+        }
+
+        return data;
+    }
+
+    /**
+     * @brief Convert data from host byte order to network byte order.
+     * @param[in] data The data to convert.
+     * @returns The data in network byte order.
+     */
+    template<typename T>
+    inline T HostToNetworkByteOrder(const T &data) {
+        return NetworkToHostByteOrder(data);
+    }
 }
 
 /**
