@@ -16,6 +16,7 @@
 #include <vector>
 #include <tuple>
 #include <functional>
+#include <cassert>
 
 /**
  * @class EventQueue

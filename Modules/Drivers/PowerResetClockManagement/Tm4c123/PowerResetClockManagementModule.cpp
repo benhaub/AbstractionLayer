@@ -2,7 +2,7 @@
 #include "PowerResetClockManagementModule.hpp"
 #include <Math.hpp>
 //C++
-#include <initializer_list>
+#include <cassert>
 
 ErrorType PowerResetClockManagement::init() {
     return ErrorType::NotImplemented;

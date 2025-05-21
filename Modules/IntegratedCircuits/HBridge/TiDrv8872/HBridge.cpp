@@ -1,4 +1,6 @@
 #include "HBridge.hpp"
+//C++
+#include <cassert>
 
 ErrorType HBridge::driveForward() {
     ErrorType error = ErrorType::Failure;

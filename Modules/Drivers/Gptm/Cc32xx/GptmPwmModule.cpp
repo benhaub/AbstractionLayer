@@ -1,4 +1,6 @@
 #include "GptmPwmModule.hpp"
+//C++
+#include <cassert>
 
 ErrorType GptmPwmModule::init() {
     assert(PeripheralNumber::Unknown != peripheralNumber());
