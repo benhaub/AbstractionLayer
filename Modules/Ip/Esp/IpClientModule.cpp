@@ -25,7 +25,7 @@
 ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) {
     sock = -1;
     bool doneConnecting = false;
-    ErrorType callbackError = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Success;
 
     auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
         disconnect();
@@ -38,7 +38,6 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
             return callbackError;
         }
 
-        //While I think I have the code to do the rest of this in Ipv6, I don't know the code to do the DNS stuff in Ipv6.
         ip_addr_t ip_addr;
         ip_addr.type = IPADDR_TYPE_V4;
         uint8_t dns_server_ip[] = {8,8,8,8};
@@ -135,7 +134,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
         sock = _socket;
         _status.connected = true;
         doneConnecting = true;
-        return ErrorType::Success;
+        return callbackError;
     };
 
     ErrorType error = ErrorType::Failure;

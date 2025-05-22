@@ -206,7 +206,12 @@ class NetworkAbstraction : public EventQueue {
 
     protected:
     /// @brief The current status of the network interface
-    NetworkTypes::Status _status;
+    NetworkTypes::Status _status = {
+        .isUp = false,
+        .technology = NetworkTypes::Technology::Unknown,
+        .manufacturerName = "",
+        .signalStrength = 0
+    };
 };
 
 #endif // __NETWORK_ABSTRACTION_HPP__

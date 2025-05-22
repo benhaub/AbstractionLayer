@@ -17,7 +17,7 @@
 ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) {
     sock = -1;
     bool doneConnecting = false;
-    ErrorType callbackError = ErrorType::Failure;
+    ErrorType callbackError = ErrorType::Success;
 
     auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
         disconnect();
@@ -121,7 +121,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
         sock = _socket;
         _status.connected = true;
         doneConnecting = true;
-        return ErrorType::Success;
+        return callbackError;
     };
 
     ErrorType error = ErrorType::Failure;
@@ -135,7 +135,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
         OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType IpClient::disconnect() {
