@@ -148,7 +148,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
         OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
-    return error;
+    return callbackError;
 }
 
 ErrorType IpClient::disconnect() {
