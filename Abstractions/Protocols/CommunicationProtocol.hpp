@@ -47,6 +47,23 @@ class CommunicationProtocol : public EventQueue {
      * @param[in] data The data to send.
      * @param[in] timeout The time to wait to send the data.
      * @param[in] callback The callback to call when the data is sent.
+     * @code{.cpp}
+     * //Lambda callback
+     * auto callback = [](const ErrorType error, const Bytes bytesWritten) -> void {
+     *     if (ErrorType::Success == error) {
+     *         // Data was sent
+     *     }
+     * };
+     * error = sendNonBlocking(data, timeout, callback);
+     * 
+     * //Member function callback
+     * void Foo::bar(const ErrorType error, const Bytes bytesWritten) {
+     *     if (ErrorType::Success == error) {
+     *         // Data was sent
+     *     }
+     * }
+     * error = sendNonBlocking(data, timeout, std::bind(&Foo::bar, this, std::placeholders::_1, std::placeholders::_2)); 
+     * @endcode
      * @returns ErrorType::Success if the data was sent.
      * @returns ErrorType::Failure if the data was not sent.
      * @post The callback will be called when the data has been sent. The bytes written is valid if and only if error is equal to ErrorType::Success.
@@ -71,6 +88,23 @@ class CommunicationProtocol : public EventQueue {
      * @param[out] buffer The buffer to receive the data into.
      * @param[in] timeout The time to wait to receive the data.
      * @param[in] callback The callback to call when the data has been received.
+     * @code{.cpp}
+     * //Lambda callback
+     * auto callback = [](const ErrorType error, std::shared_ptr<std::string> buffer) -> void {
+     *     if (ErrorType::Success == error) {
+     *         // Data was sent
+     *     }
+     * };
+     * error = sendNonBlocking(data, timeout, callback);
+     * 
+     * //Member function callback
+     * void Foo::bar(const ErrorType error, std::shared_ptr<std::string> buffer) {
+     *     if (ErrorType::Success == error) {
+     *         // Data was sent
+     *     }
+     * }
+     * error = sendNonBlocking(data, timeout, std::bind(&Foo::bar, this, std::placeholders::_1, std::placeholders::_2)); 
+     * @endcode
      * @post The callback will be called when the data has been received. The amount of data received is equal to the size of the
      *       data if ErrorType::Success is returned. See std::string::size().
     */

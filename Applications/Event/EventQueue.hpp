@@ -36,6 +36,7 @@ class EventQueue {
     //TODO: This should be handled instead of asserting. Delete the queue when the last event is removed.
     ~EventQueue() { assert(events.size() == 0); };
 
+    /// @brief Tag for logging.
     static constexpr char TAG[] = "EventQueue";
 
     /**

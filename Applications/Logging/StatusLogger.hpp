@@ -20,6 +20,7 @@
 
 namespace {
     /**
+     * @concept CompatibleLoggers
      * @brief Concept for compatible loggers. Any calls that prints must be a base of an Abstraction listed below.
      * @details The concepts headers is not available with all compilers so the check to make sure the abstraction
      *          has a printStatus member function can only be done on some compilers.

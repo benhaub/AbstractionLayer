@@ -84,6 +84,13 @@ class CommandQueue {
         }
     }
 
+    /**
+     * @brief Add a command to the queue.
+     * @param commandData The command data to be added to the queue.
+     * @returns ErrorType::Success if the command was added to the queue
+     * @returns ErrorType::Timeout if the semaphore times out
+     * @returns ErrorType::LimitReached if the queue is full
+     */
     ErrorType addToQueue() {
         ErrorType error = OperatingSystem::Instance().waitSemaphore(_BinarySemaphore, CommandQueueTypes::SemaphoreTimeout);
         if (ErrorType::Success != error) {
@@ -103,6 +110,13 @@ class CommandQueue {
         return ErrorType::Success;
     }
 
+    /**
+     * @brief Get the next command in the queue.
+     * @param commandData The command data to be returned.
+     * @returns ErrorType::Success if there is a command in the queue
+     * @returns ErrorType::NoData if there are no commands in the queue
+     * @returns Any errors returned by OperatingSystem::incrementSemaphore
+     */
     ErrorType getNextInQueue(T &commandData) {
         ErrorType error = OperatingSystem::Instance().waitSemaphore(_BinarySemaphore, CommandQueueTypes::SemaphoreTimeout);
 
@@ -124,6 +138,11 @@ class CommandQueue {
         return error;
     }
 
+    /**
+     * @brief Check if there are any commands in the queue.
+     * @returns ErrorType::Success if there are commands in the queue
+     * @returns ErrorType::Negative otherwise.
+     */
     ErrorType commandsInQueue() {
         return _Commands.empty() ? ErrorType::Negative : ErrorType::Success;
     }
