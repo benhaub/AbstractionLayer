@@ -11,6 +11,7 @@ OBJECT
 target_include_directories(RtcManager PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(RtcManager PRIVATE abstractionLayer)
+target_link_libraries(RtcManager PRIVATE Rtc)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE RtcManager)
 
 target_include_directories(RtcManager PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
