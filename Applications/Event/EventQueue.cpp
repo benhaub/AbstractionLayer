@@ -2,87 +2,35 @@
 #include "EventQueue.hpp"
 #include "OperatingSystemModule.hpp"
 #include "ProcessorModule.hpp"
+#include "Math.hpp"
 //C++
 #include <cstring>
 
-int EventQueue::_SemaphoreCount = 0;
-
 EventQueue::EventQueue() {
-    _SemaphoreCount++;
-    std::string semaphoreNumber = std::to_string(_SemaphoreCount);
-    assert(_binarySemaphore.max_size() == OperatingSystemTypes::MaxSemaphoreNameLength);
-    strncpy(_binarySemaphore.data(), "eventQSem", OperatingSystemTypes::MaxSemaphoreNameLength);
-    assert(strlen(_binarySemaphore.data()) + semaphoreNumber.length() < OperatingSystemTypes::MaxSemaphoreNameLength);
-    strncat(_binarySemaphore.data(), semaphoreNumber.c_str(), semaphoreNumber.length());
-    ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _binarySemaphore);
-    assert(ErrorType::Success == error);
-
     //If the optimizations are disabled, the thread is not known to the OperatingSystem. It only knows about threads that it explicitely creates.
     //e.g. You create an event queue in main.cpp. This thread is not known to the OperatingSystem.
     _addEventOptimizationsEnabled = (ErrorType::Success == OperatingSystem::Instance().currentThreadId(_ownerThreadId));
 }
 
-ErrorType EventQueue::addEventFromIsr(Event &event) {
-    if (events.size() >= _MaxEvents) {
-        return ErrorType::LimitReached;
-    }
-
-    //If we are preempted during push_back, then the higher priorty interrupt may also call push_back
-    //and corrupt the queue.
-    ErrorType error;
-    if (ErrorType::Success != (error = OperatingSystem::Instance().disableAllInterrupts())) {
-        const bool isCriticalError = !(ErrorType::NotAvailable == error);
-        if (isCriticalError) {
-            assert(false);
-        }
-    }
-
-    events.push_back(event);
-
-    if (ErrorType::Success != OperatingSystem::Instance().enableAllInterrupts()) {
-        const bool isCriticalError = !(ErrorType::NotAvailable == error);
-        if (isCriticalError) {
-            assert(false);
-        }
-    }
-    return ErrorType::Success;
-}
-
 ErrorType EventQueue::addEvent(Event &event) {
-    if (ErrorType::Success == Processor::Instance().isInterruptContext()) {
-        return addEventFromIsr(event);
-    }
-
-    if (events.size() >= _MaxEvents) {
-        return ErrorType::LimitReached;
-    }
-
     Id currentThreadId = 0;
     OperatingSystem::Instance().currentThreadId(currentThreadId);
 
-    if (_ownerThreadId != currentThreadId || !_addEventOptimizationsEnabled) {
-        ErrorType error;
-        //Guarentee that addEventFromIsr will not corrupt the queue when it tries to add to it.
-        if (ErrorType::Success != (error = OperatingSystem::Instance().disableAllInterrupts())) {
-            const bool isCriticalError = !(ErrorType::NotAvailable == error);
-            if (isCriticalError) {
-                assert(false);
-            }
-        }
-
-        events.push_back(event);
-
-        if (ErrorType::Success != OperatingSystem::Instance().enableAllInterrupts()) {
-            const bool isCriticalError = !(ErrorType::NotAvailable == error);
-            if (isCriticalError) {
-                assert(false);
-            }
-        }
-    }
-
-    //Run the event outside of the critical section so we don't block the event queue.
     if (_ownerThreadId == currentThreadId && _addEventOptimizationsEnabled) {
         return event.run();
+    }
+    else {
+        Count currentEventIndexTail = _currentEventIndexTail.load();
+        Count currentEventIndexHead = _currentEventIndexHead.load();
+        if (eventQueueNotFull(currentEventIndexTail, currentEventIndexHead)) {
+            //https://youtu.be/kPh8pod0-gk?list=PLc1ANd9mG2dwG-kovSjkjuWq8CpskvEye&t=1128
+            while (!(_currentEventIndexTail.compare_exchange_weak(currentEventIndexTail, (currentEventIndexTail + 1) % events.max_size())));
+        }
+        else {
+            return ErrorType::LimitReached;
+        }
+
+        events[(currentEventIndexTail + 1) % events.max_size()] = event;
     }
 
     return ErrorType::Success;
@@ -91,20 +39,25 @@ ErrorType EventQueue::addEvent(Event &event) {
 ErrorType EventQueue::runNextEvent() {
     ErrorType error = ErrorType::NoData;
 
-    const bool thereAreEventsReadyToRun = 0 != events.size();
-    if (thereAreEventsReadyToRun) {
-        const bool semaphoreWasAcquired = ErrorType::Success == (error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout));
-        if (semaphoreWasAcquired) {
-            Event event = events.front();
-            events.erase(events.begin());
-
-            error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
-            assert(ErrorType::Success == error);
-
-            //This needs to be run last, in case the event needs to add more events to the queue or run an event.
-            error = event.run();
-        }
+    Count currentEventIndexTail = _currentEventIndexTail.load();
+    Count currentEventIndexHead = _currentEventIndexHead.load();
+    if (eventsReadyToRun(currentEventIndexTail, currentEventIndexHead)) {
+        while (!(_currentEventIndexHead.compare_exchange_weak(currentEventIndexHead, (currentEventIndexHead + 1) % events.max_size())));
+        error = events[(currentEventIndexHead + 1) % events.max_size()].run();
     }
 
     return error;
+}
+
+/// @brief Get the number of events available in the queue.
+/// @return The number of events available in the queue.
+Count EventQueue::eventsAvailable() const {
+    Count currentEventIndexTail = _currentEventIndexTail.load();
+    Count currentEventIndexHead = _currentEventIndexHead.load();
+    return _MaxEvents - differenceBetween(currentEventIndexTail, currentEventIndexHead);
+}
+
+/// @brief True when the event queue is not full.
+constexpr bool EventQueue::eventQueueNotFull(const Count &currentEventIndexTail, const Count &currentEventIndexHead) const {
+    return differenceBetween(currentEventIndexTail, currentEventIndexHead) <= events.max_size();
 }

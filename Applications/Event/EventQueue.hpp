@@ -1,7 +1,7 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
 * @file   EventQueue.hpp
-* @details \b Synopsis: \n Synchronization for calling function members of the
+* @details Synchronization for calling function members of the
 * base class.
 * @see https://en.wikipedia.org/wiki/Reactor_pattern
 * @ingroup Applications
@@ -17,6 +17,7 @@
 #include <tuple>
 #include <functional>
 #include <cassert>
+#include <atomic>
 
 /**
  * @class EventQueue
@@ -34,7 +35,7 @@ class EventQueue {
     public:
     EventQueue();
     //TODO: This should be handled instead of asserting. Delete the queue when the last event is removed.
-    ~EventQueue() { assert(events.size() == 0); };
+    ~EventQueue() { assert(eventsAvailable() == _MaxEvents); };
 
     /// @brief Tag for logging.
     static constexpr char TAG[] = "EventQueue";
@@ -76,13 +77,18 @@ class EventQueue {
          * }
          * @endcode
         */
-        Event(std::function<ErrorType()> eventCallback) : _eventCallback(eventCallback) {}
+        Event(std::function<ErrorType()> eventCallback = nullptr) : _eventCallback(eventCallback) {}
 
         /**
          * @brief Calls the function member with the parameters that were passed to the constructor.
         */
         ErrorType run() {
-            return _eventCallback();
+            if (!_eventCallback) {
+                return ErrorType::InvalidParameter;
+            }
+            else { [[likely]]
+                return _eventCallback();
+            }
 
         }
 
@@ -93,21 +99,19 @@ class EventQueue {
 
     /**
      * @brief Adds an event to the to the queue.
-     * @details Interrupt safe.
+     * @details Interrupt and thread safe.
      * @param[in] event The event to add.
      * @post The event is added to a FIFO queue and will be executed when it reaches the first position in the queue and this thread
      *       is running.
-     * @post Ownership of the event is transferred to the queue if, and only if, ErrorType::Success is returned.
      * @returns ErrorType::Success if the event was added
      * @returns ErrorType::LimitReached if the maximum number of events has been reached.
-     * @returns ErrorType::Timeout if the semaphore could not be obtained in time
      * @returns the result of the event callback if the event is being added to from the same thread in which the event queue is run.
     */
     ErrorType addEvent(Event &event);
 
     /// @brief Get the number of events available in the queue.
     /// @return The number of events available in the queue.
-    Count eventsAvailable() const { return _MaxEvents - events.size(); }
+    Count eventsAvailable() const;
 
     /**
      * @brief The main loop for the eventQueue which can be used to continually check for and run events.
@@ -130,15 +134,12 @@ class EventQueue {
     private:
     /// @brief The maximum number of events that can be queued.
     static constexpr Count _MaxEvents = 10;
-    /// @brief The timeout for semaphore operations.
-    static constexpr Milliseconds _SemaphoreTimeout = 1;
-    /// @brief the number of semaphores that have been created.
-    static int _SemaphoreCount;
     /// @brief The queue of events to run.
-    std::vector<Event> events;
-    /// @brief The binary semaphore name for the next created semaphore.
-    /// @details. Did not use the constant defined in OperatingSystemConfig since I don't want to inlcude the header for it. There is an assert to enforce this size instead.
-    std::array<char, 16> _binarySemaphore;
+    std::array<Event, _MaxEvents> events;
+    /// @brief The index of the next event to run.
+    std::atomic<Count> _currentEventIndexHead = 0;
+    /// @brief The index of the last event to run.
+    std::atomic<Count> _currentEventIndexTail = 0;
     /// @brief The thread id of the owner of the event queue. Used to determine if we can skip event queuing.
     Id _ownerThreadId;
     /**
@@ -148,13 +149,12 @@ class EventQueue {
      */
     bool _addEventOptimizationsEnabled = false;
 
-    /**
-     * @brief Interrupt safe version of addEvent
-     * @sa addEvent
-     * @returns ErrorType::Success if the event was added
-     * @returns ErrorType::LimitReached if the queue is full
-     */
-    ErrorType addEventFromIsr(Event &event);
+    /// @brief True when there are events ready to run.
+    constexpr bool eventsReadyToRun(const Count &currentEventIndexTail, const Count &currentEventIndexHead) const {
+        return currentEventIndexHead != currentEventIndexTail;
+    }
+    /// @brief True when the event queue is not full.
+    constexpr bool eventQueueNotFull(const Count &currentEventIndexTail, const Count &currentEventIndexHead) const;
 };
 
 #endif //__EVENT_QUEUE_HPP__
