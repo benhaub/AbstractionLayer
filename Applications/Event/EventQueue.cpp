@@ -21,8 +21,7 @@ ErrorType EventQueue::addEvent(Event &event) {
     }
     else {
         Count currentEventIndexTail = _currentEventIndexTail.load();
-        Count currentEventIndexHead = _currentEventIndexHead.load();
-        if (eventQueueNotFull(currentEventIndexTail, currentEventIndexHead)) {
+        if (eventQueueNotFull(currentEventIndexTail, _currentEventIndexHead)) {
             //https://youtu.be/kPh8pod0-gk?list=PLc1ANd9mG2dwG-kovSjkjuWq8CpskvEye&t=1128
             while (!(_currentEventIndexTail.compare_exchange_weak(currentEventIndexTail, (currentEventIndexTail + 1) % events.max_size())));
         }
@@ -40,10 +39,9 @@ ErrorType EventQueue::runNextEvent() {
     ErrorType error = ErrorType::NoData;
 
     Count currentEventIndexTail = _currentEventIndexTail.load();
-    Count currentEventIndexHead = _currentEventIndexHead.load();
-    if (eventsReadyToRun(currentEventIndexTail, currentEventIndexHead)) {
-        while (!(_currentEventIndexHead.compare_exchange_weak(currentEventIndexHead, (currentEventIndexHead + 1) % events.max_size())));
-        error = events[(currentEventIndexHead + 1) % events.max_size()].run();
+    if (eventsReadyToRun(currentEventIndexTail, _currentEventIndexHead)) {
+        error = events[_currentEventIndexHead].run();
+        _currentEventIndexHead = (_currentEventIndexHead + 1) % events.max_size();
     }
 
     return error;
@@ -53,8 +51,7 @@ ErrorType EventQueue::runNextEvent() {
 /// @return The number of events available in the queue.
 Count EventQueue::eventsAvailable() const {
     Count currentEventIndexTail = _currentEventIndexTail.load();
-    Count currentEventIndexHead = _currentEventIndexHead.load();
-    return _MaxEvents - differenceBetween(currentEventIndexTail, currentEventIndexHead);
+    return _MaxEvents - differenceBetween(currentEventIndexTail, _currentEventIndexHead);
 }
 
 /// @brief True when the event queue is not full.

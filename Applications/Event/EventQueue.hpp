@@ -123,11 +123,10 @@ class EventQueue {
 
     protected: 
     /**
-     * @fn runNextEvent
      * @brief Runs the next event in the queue.
      * @returns ErrorType::NoData if the queue is empty.
-     * @returns ErrorType::Timeout if the semaphore could not be obtained in time
      * @returns The error code of the callback function pointed to by the Event.
+     * @note This function is not thread safe and should not be called from interrupt context.
     */
     ErrorType runNextEvent();
 
@@ -137,7 +136,7 @@ class EventQueue {
     /// @brief The queue of events to run.
     std::array<Event, _MaxEvents> events;
     /// @brief The index of the next event to run.
-    std::atomic<Count> _currentEventIndexHead = 0;
+    Count _currentEventIndexHead = 0;
     /// @brief The index of the last event to run.
     std::atomic<Count> _currentEventIndexTail = 0;
     /// @brief The thread id of the owner of the event queue. Used to determine if we can skip event queuing.
