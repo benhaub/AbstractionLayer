@@ -1,7 +1,7 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
 * @file   Math.hpp
-* @details \b Synopsis: \n Math functions
+* @details Math functions
 * @ingroup Utilities
 *******************************************************************************/
 #ifndef __MATH_HPP__
@@ -23,7 +23,7 @@
  * @return The new average
 */
 template<typename T>
-constexpr inline T runningAverage(T currentAverage, T newValue, Count numValues) {
+constexpr inline T runningAverage(const T &currentAverage, const T &newValue, const Count &numValues) {
     if (numValues > 2) {
         return (currentAverage * (numValues - 1) + newValue) / numValues;
     }
@@ -42,7 +42,7 @@ constexpr inline T runningAverage(T currentAverage, T newValue, Count numValues)
  * @return The absolute difference between the two values. If the expected larger value has overflowed then the overflowed value is added to the difference.
  */
 template<typename T>
-constexpr inline T differenceBetween(T expectedLargerValue, T expectedSmallerValue) {
+constexpr inline T differenceBetween(const T &expectedLargerValue, const T &expectedSmallerValue) {
     const T maxValue = std::numeric_limits<T>::max();
 
     if (expectedSmallerValue > expectedLargerValue) {
@@ -63,7 +63,7 @@ constexpr inline T differenceBetween(T expectedLargerValue, T expectedSmallerVal
  * @returns False otherwise
  */
 template<typename T>
-constexpr inline bool withinError(T value1, T value2, T error) {
+constexpr inline bool withinError(const T &value1, const T &value2, const T &error) {
     return std::abs(value1 - value2) <= error;
 }
 
