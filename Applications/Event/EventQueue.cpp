@@ -22,14 +22,15 @@ ErrorType EventQueue::addEvent(Event &event) {
     else {
         Count currentEventIndexTail = _currentEventIndexTail.load();
         if (eventQueueNotFull(currentEventIndexTail, _currentEventIndexHead)) {
+            _eventAddedToQueue.store(false);
             //https://youtu.be/kPh8pod0-gk?list=PLc1ANd9mG2dwG-kovSjkjuWq8CpskvEye&t=1128
             while (!(_currentEventIndexTail.compare_exchange_weak(currentEventIndexTail, (currentEventIndexTail + 1) % events.max_size())));
+            events[currentEventIndexTail % events.max_size()] = event;
+            _eventAddedToQueue.store(true);
         }
         else {
             return ErrorType::LimitReached;
         }
-
-        events[(currentEventIndexTail + 1) % events.max_size()] = event;
     }
 
     return ErrorType::Success;
@@ -38,8 +39,9 @@ ErrorType EventQueue::addEvent(Event &event) {
 ErrorType EventQueue::runNextEvent() {
     ErrorType error = ErrorType::NoData;
 
-    Count currentEventIndexTail = _currentEventIndexTail.load();
-    if (eventsReadyToRun(currentEventIndexTail, _currentEventIndexHead)) {
+    const Count currentEventIndexTail = _currentEventIndexTail.load();
+    const bool eventAddedToQueue = _eventAddedToQueue.load();
+    if (eventAddedToQueue && eventsReadyToRun(currentEventIndexTail, _currentEventIndexHead)) {
         error = events[_currentEventIndexHead].run();
         _currentEventIndexHead = (_currentEventIndexHead + 1) % events.max_size();
     }

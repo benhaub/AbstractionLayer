@@ -126,7 +126,8 @@ class EventQueue {
      * @brief Runs the next event in the queue.
      * @returns ErrorType::NoData if the queue is empty.
      * @returns The error code of the callback function pointed to by the Event.
-     * @note This function is not thread safe and should not be called from interrupt context.
+     * @note This function is not thread safe and should not be called from an interrupt context not only because it is not reentrant but also because
+     *       there is never a guarentee on whether the event will block or not.
     */
     ErrorType runNextEvent();
 
@@ -139,6 +140,8 @@ class EventQueue {
     Count _currentEventIndexHead = 0;
     /// @brief The index of the last event to run.
     std::atomic<Count> _currentEventIndexTail = 0;
+    /// @brief true when the event has been added to the queue.
+    std::atomic<bool> _eventAddedToQueue = false;
     /// @brief The thread id of the owner of the event queue. Used to determine if we can skip event queuing.
     Id _ownerThreadId;
     /**
