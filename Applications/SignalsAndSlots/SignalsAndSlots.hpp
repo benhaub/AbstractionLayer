@@ -100,7 +100,7 @@ namespace SignalsAndSlots {
          */
         ErrorType disconnect(std::function<ErrorType(Args...)> callback) {
             if (nullptr != callback.target()) {
-                auto itr = std::find_if(_slots, [&callback](const auto &observer) {
+                auto itr = find_if(_slots, [&callback](const auto &observer) {
                     return (nullptr != observer.target() && observer.second.target() == callback.target());
                 });
 
