@@ -25,7 +25,7 @@ ErrorType EventQueue::addEvent(Event &event) {
             _eventAddedToQueue.store(false);
             //https://youtu.be/kPh8pod0-gk?list=PLc1ANd9mG2dwG-kovSjkjuWq8CpskvEye&t=1128
             while (!(_currentEventIndexTail.compare_exchange_weak(currentEventIndexTail, (currentEventIndexTail + 1) % events.max_size())));
-            events[currentEventIndexTail % events.max_size()] = event;
+            events[currentEventIndexTail] = event;
             _eventAddedToQueue.store(true);
         }
         else {
