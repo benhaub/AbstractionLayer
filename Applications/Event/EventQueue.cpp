@@ -42,8 +42,14 @@ ErrorType EventQueue::runNextEvent() {
     const Count currentEventIndexTail = _currentEventIndexTail.load();
     const bool eventAddedToQueue = _eventAddedToQueue.load();
     if (eventAddedToQueue && eventsReadyToRun(currentEventIndexTail, _currentEventIndexHead)) {
-        error = events[_currentEventIndexHead].run();
+        //Copy the event so that the event callback doesn't block something else from adding an event until it has completed.
+        Event nextEventToRun = events[_currentEventIndexHead];
+        //_currentEventIndexHead is not atomic since it is not needed to insert anything into the queue. There is a chance that addEvent() could be trying
+        //to add to the queue while runNextEvent() is attempting to increment the head. addEvent() would see the queue as full and fail with LimitReached,
+        //missing the update by microseconds. However an atomic would not help (much) since we have to copy out of the queue before we increment anyway to prevent
+        //addEvent() from clobbering us before we run() the event so there is a pretty large window of time for addEvent to miss the update.
         _currentEventIndexHead = (_currentEventIndexHead + 1) % events.max_size();
+        nextEventToRun.run();
     }
 
     return error;
