@@ -10,10 +10,10 @@
 #define __SIGNALS_AND_SLOTS_HPP__
 
 //AbstractionLayer
-#include "OperatingSystemModule.hpp"
 #include "EventQueue.hpp"
+#include "Math.hpp"
 //C++
-#include <cstring> //For setting the semaphore name in the ctor.
+#include <atomic>
 
 /**
  * @namespace SignalsAndSlots
@@ -33,9 +33,6 @@
  * @endcode
  */
 namespace SignalsAndSlots {
-    /// @brief The number of semaphores that have been created for all signals. Used to generate unique names.
-    static int _SemaphoreCount = 0;
-
     /**
      * @class Signal
      * @brief Adds a new signal
@@ -44,23 +41,13 @@ namespace SignalsAndSlots {
     template <typename ...Args> class Signal {
 
         public:
-        /**
-         * @brief Constructor
-         * @tparam Args Optional arguments types that will be passed to observer callback functions
-         */
-        Signal() {
-            _SemaphoreCount++;
-            std::string semaphoreNumber = std::to_string(_SemaphoreCount);
-            assert(_binarySemaphore.max_size() == OperatingSystemTypes::MaxSemaphoreNameLength);
-            strncpy(_binarySemaphore.data(), "sigSlotSem", OperatingSystemTypes::MaxSemaphoreNameLength);
-            assert(strlen(_binarySemaphore.data()) + semaphoreNumber.length() < OperatingSystemTypes::MaxSemaphoreNameLength);
-            strncat(_binarySemaphore.data(), semaphoreNumber.c_str(), semaphoreNumber.length());
-            ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _binarySemaphore);
-            assert(ErrorType::Success == error);
-        }
 
+        Signal() {
+            _slots.fill(std::make_pair(nullptr, nullptr));
+        }
         /**
          * @brief Observe a signal and call the callback when it is emitted
+         * @details Interrupt and thread safe.
          * @param callback The observers callback
          * @param eventQueue The event queue to add the callback to
          * @sa emit
@@ -70,36 +57,33 @@ namespace SignalsAndSlots {
          * @returns ErrorType::Failure otherwise
          */
         ErrorType connect(EventQueue &eventQueue, std::function<ErrorType(Args...)> callback) {
-            if (_slots.size() == _MaxNumberOfObservers) {
-                return ErrorType::LimitReached;
+            for (auto &slot : _slots) {
+                if (slot.first == nullptr) {
+                    assert(_currentNumberOfObservers <= _MaxNumberOfObservers);
+                    Count currentNumberOfObservers = _currentNumberOfObservers.load();
+                    if (_currentNumberOfObservers.compare_exchange_strong(currentNumberOfObservers, currentNumberOfObservers + 1)) {
+                        slot = std::make_pair(&eventQueue, callback);
+                        return ErrorType::Success;
+                    }
+                    else {
+                        continue;
+                    }
+                }
             }
-            if (nullptr == callback) {
-                return ErrorType::InvalidParameter;
-            }
 
-            ErrorType error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout);
-            if (ErrorType::Success != error) {
-                return ErrorType::Timeout;
-            }
-
-            _slots.emplace_back(eventQueue, callback);
-
-            error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
-            assert(ErrorType::Success == error);
-
-            return ErrorType::Success;
+            return ErrorType::LimitReached;
         }
 
         /**
          * @brief Emit the signal and notify all the observers who have connected themselves to a slot.
-         * @details Interrupt safe.
+         * @details Interrupt and thread safe.
          * @sa connect
          * @returns ErrorType::NoData if there are no observers
          * @returns ErrorType::PrerequisitesNotMet if eventQueue is nullptr
          * @returns The errors described in SignalsAndSlots::Signal::_emit
         */
         ErrorType emit(const Args... args) {
-            if (0 == _slots.size()) {
+            if (0 == _currentNumberOfObservers) {
                 return ErrorType::NoData;
             }
 
@@ -108,44 +92,42 @@ namespace SignalsAndSlots {
 
         /**
          * @brief disconnect a callback from this signal
+         * @details Interrupt and thread safe.
          * @param callback The observers callback to disconnect
          * @returns ErrorType::Success if the disconnection was successful
          * @returns ErrorType::Timeout if the semaphore could not be obtained in time
          * @returns ErrorType::Failure otherwise
          */
         ErrorType disconnect(std::function<ErrorType(Args...)> callback) {
-            if (nullptr == callback.target()) {
-                return ErrorType::InvalidParameter;
-            }
+            if (nullptr != callback.target()) {
+                auto itr = std::find_if(_slots, [&callback](const auto &observer) {
+                    return (nullptr != observer.target() && observer.second.target() == callback.target());
+                });
 
-            ErrorType error = OperatingSystem::Instance().waitSemaphore(_binarySemaphore, _SemaphoreTimeout);
-            if (ErrorType::Success != error) {
-                return ErrorType::Timeout;
+                if (itr != _slots.end()) {
+                    assert(_currentNumberOfObservers > 0);
+                    //If _currentNumberOfObservers is equal to _MaxNumberOfObservers, and we are interrupted or pre-empted before we can decrement
+                    //_currentNumberOfOberservers, then anything that tries to connect() will still see the queue as full.
+                    //If it is any other the value, then connect() will just select the next available spot.
+                    itr = std::make_pair(nullptr, nullptr);
+                    _currentNumberOfObservers.fetch_sub(1);
+                }
             }
-
-            std::erase_if(_slots, [&callback](const auto &observer) {
-                return (nullptr != observer.target() && observer.second.target() == callback.target());
-            });
             
-            error = OperatingSystem::Instance().incrementSemaphore(_binarySemaphore);
-            assert(ErrorType::Success == error);
-
             return ErrorType::Success;
         }
 
         private:
         /// @brief The max number of callbacks that can be added to a slot for every signal
-        static constexpr Count _MaxNumberOfObservers = 64;
-        /// @brief The timeout for semaphore operations.
-        static constexpr Milliseconds _SemaphoreTimeout = 0;
-
+        static constexpr Count _MaxNumberOfObservers = 16;
+        /// @brief The current number of observers in the slots array.
+        std::atomic<Count> _currentNumberOfObservers = 0;
         /// @brief List of all observer callbacks
-        std::vector<std::pair<EventQueue &, std::function<ErrorType(Args...)>>> _slots;
-        /// @brief The semaphore used to synchronize access to _slots.
-        std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> _binarySemaphore;
+        std::array<std::pair<EventQueue *, std::function<ErrorType(Args...)>>, _MaxNumberOfObservers> _slots;
 
         /**
          * @brief Calls all of the observers with the callbacks they have registered using the connect() call
+         * @details Interrupt safe and thread safe.
          * @sa SignalsAndSlots::connect
          * @returns ErrorType::Success if all observers had their callbacks queued to their event queues successfully.
          * @returns Any error returned by EventQueue::addEvent if one or more events failed. Only the error code of the
@@ -156,13 +138,15 @@ namespace SignalsAndSlots {
             ErrorType error = ErrorType::Failure;
 
             for (const auto &slot : _slots) {
-                EventQueue &eventQueue = slot.first;
-                const std::function<ErrorType(Args...)> &callback = slot.second;
+                if (nullptr != slot.first && nullptr != slot.second) {
+                    EventQueue &eventQueue = *(slot.first);
+                    const std::function<ErrorType(Args...)> &callback = slot.second;
 
-                EventQueue::Event event = EventQueue::Event(std::bind(callback, std::get<IndexSequence>(params)...));
-                ErrorType addEventError = eventQueue.addEvent(event);
-                if (ErrorType::Success != addEventError) {
-                    error = addEventError;
+                    EventQueue::Event event = EventQueue::Event(std::bind(callback, std::get<IndexSequence>(params)...));
+                    ErrorType addEventError = eventQueue.addEvent(event);
+                    if (ErrorType::Success != addEventError) {
+                        error = addEventError;
+                    }
                 }
             }
 
