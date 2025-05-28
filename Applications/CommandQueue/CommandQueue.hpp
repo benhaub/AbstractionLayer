@@ -118,6 +118,16 @@ class CommandQueue {
         return _Status;
     }
 
+    /**
+     * @brief Check if there are commands in the queue to read.
+     * @returns True if there are commands ready to read in the queue
+     * @returns false otherwise
+     */
+    static bool CommandsInQueue() {
+        const Count currentCommandQueueIndexFirst = _CurrentCommandQueueIndexLast.load();
+        return (CommandsReady(currentCommandQueueIndexFirst, _CurrentCommandQueueIndexLast));
+    }
+
     private:
     /// @brief The index of the next command to receive
     inline static Count _CurrentCommandQueueIndexFirst = 0;
