@@ -1,26 +1,24 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
 * @file   CommandQueue.hpp
-* @details  Command queue that can be processed by a processing object.
+* @details Command queue for serializing a desired action with the accompanying data.
 * @ingroup Applications
 *******************************************************************************/
 #ifndef __COMMAND_OBJECT_HPP__
 #define __COMMAND_OBJECT_HPP__
 
 //AbstractionLayer
-#include "OperatingSystemModule.hpp"
+#include "Error.hpp"
+#include "Types.hpp"
+#include "Math.hpp"
 //C++
-#include <cstring>
-#include <type_traits> //For making sure the LogicSignature type is compatible with the type you've set it to.
+#include <atomic>
 
 /**
  * @namespace CommandQueueTypes
  * @brief Types for the Queue of Responsibility CommandQueue
  */
 namespace CommandQueueTypes {
-    /// @typedef LogicSignature
-    /// @brief A unique identifier for commands that processing objects can check for.
-    using LogicSignature = uint32_t;
 
     /**
      * @struct Status
