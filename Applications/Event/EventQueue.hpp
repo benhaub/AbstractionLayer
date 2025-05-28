@@ -34,8 +34,6 @@ class EventQueue {
     
     public:
     EventQueue();
-    //TODO: This should be handled instead of asserting. Delete the queue when the last event is removed.
-    ~EventQueue() { assert(eventsAvailable() == _MaxEvents); };
 
     /// @brief Tag for logging.
     static constexpr char TAG[] = "EventQueue";
@@ -134,12 +132,12 @@ class EventQueue {
     private:
     /// @brief The maximum number of events that can be queued.
     static constexpr Count _MaxEvents = 10;
-    /// @brief The queue of events to run.
-    std::array<Event, _MaxEvents> events;
+    /// @brief The ring buffer queue of events to run. 
+    std::array<Event, _MaxEvents> _events;
     /// @brief The index of the next event to run.
-    Count _currentEventIndexHead = 0;
+    Count _currentEventQueueIndexFirst = 0;
     /// @brief The index of the last event to run.
-    std::atomic<Count> _currentEventIndexTail = 0;
+    std::atomic<Count> _currentEventQueueIndexLast = 0;
     /// @brief true when the event has been added to the queue.
     std::atomic<bool> _eventAddedToQueue = false;
     /// @brief The thread id of the owner of the event queue. Used to determine if we can skip event queuing.
@@ -151,12 +149,31 @@ class EventQueue {
      */
     bool _addEventOptimizationsEnabled = false;
 
-    /// @brief True when there are events ready to run.
-    constexpr bool eventsReadyToRun(const Count &currentEventIndexTail, const Count &currentEventIndexHead) const {
-        return currentEventIndexHead != currentEventIndexTail;
-    }
-    /// @brief True when the event queue is not full.
-    constexpr bool eventQueueNotFull(const Count &currentEventIndexTail, const Count &currentEventIndexHead) const;
+    /**
+     * @brief The number of events queued that are ready to read
+     * @param[in] currentEventQueueIndexTail The tail of the event queue.
+     * @param[in] currentEventQueueIndexHead The head of the event queue.
+     * @returns The number of events that are ready to read.
+     */
+    Count eventsQueued(const Count &currentEventQueueIndexTail, const Count &currentEventQueueIndexHead);
+
+    /**
+     * @brief True when the event queue is not full 
+     * @param[in] currentEventQueueIndexTail The tail of the event queue.
+     * @param[in] currentEventQueueIndexHead The head of the event queue.
+     * @returns true if the event queue is not full
+     * @returns false otherwise.
+     */
+    bool eventQueueNotFull(const Count &currentEventQueueIndexTail, const Count &currentEventQueueIndexHead);
+
+    /**
+     * @brief True when there are events ready to read
+     * @param[in] currentEventQueueIndexTail The tail of the event queue.
+     * @param[in] currentEventQueueIndexHead The head of the event queue.
+     * @returns true if the event queue has events ready to read
+     * @returns false otherwise.
+     */
+    bool eventsReady(const Count &currentEventQueueIndexTail, const Count &currentEventQueueIndexHead);
 };
 
 #endif //__EVENT_QUEUE_HPP__

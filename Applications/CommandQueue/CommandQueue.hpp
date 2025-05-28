@@ -29,9 +29,7 @@ namespace CommandQueueTypes {
     };
 
     /// @brief The maximum amount of commands that can be in a queue at the same time
-    static constexpr Count MaxCommandQueueSize = 4;
-    /// @brief The maximum amount of time to wait for a semaphore
-    static constexpr Milliseconds SemaphoreTimeout = 1;
+    static constexpr Count MaxCommandQueueSize = 8;
     /// @brief Tag for logging
     static constexpr char TAG[] = "CommandQueue";
 }
@@ -39,7 +37,7 @@ namespace CommandQueueTypes {
 /**
  * @class CommandQueue
  * @brief  Create a command and add data to a queue for later processing.
- * @details Commands can be uniquely accessed by name and type.
+ * @details Command queue for serializing a desired action with the accompanying data.
  * @note In case you're not aware, the static members are static only for classes of the same type.
  * @tparam name The name of the command.
  * @tparam T The type of data that the command can store.
@@ -62,50 +60,32 @@ namespace CommandQueueTypes {
  */
 template<const char *name, typename T>
 class CommandQueue {
+
     public:
-    /**
-     * @brief Constructor.
-     * @details Initializes the binary semaphore for controlling concurrent access to the queue.
-     */
-    CommandQueue() {
-        if (0 == strlen(_BinarySemaphore.data())) {
-            _SemaphoreCount++;
-            std::string semaphoreNumber = std::to_string(_SemaphoreCount);
-            strncpy(_BinarySemaphore.data(), "commandQSem", OperatingSystemTypes::MaxSemaphoreNameLength);
-            assert(strlen(_BinarySemaphore.data()) + semaphoreNumber.length() < OperatingSystemTypes::MaxSemaphoreNameLength);
-            strncat(_BinarySemaphore.data(), semaphoreNumber.c_str(), semaphoreNumber.length());
-            ErrorType error = OperatingSystem::Instance().createSemaphore(1, 1, _BinarySemaphore);
-            assert(ErrorType::Success == error);
-
-            _Commands.reserve(CommandQueueTypes::MaxCommandQueueSize);
-            _Status.commandsQueued = 0;
-        }
-    }
-
     /**
      * @brief Add a command to the queue.
      * @param commandData The command data to be added to the queue.
      * @returns ErrorType::Success if the command was added to the queue
-     * @returns ErrorType::Timeout if the semaphore times out
      * @returns ErrorType::LimitReached if the queue is full
+     * @sa EventQueue::addEvent which has better inline documentation to explain the code.
      */
     ErrorType addToQueue() {
-        ErrorType error = OperatingSystem::Instance().waitSemaphore(_BinarySemaphore, CommandQueueTypes::SemaphoreTimeout);
-        if (ErrorType::Success != error) {
-            return ErrorType::Timeout;
+        ErrorType error = ErrorType::Failure;
+
+        Count currentCommandQueueIndexLast = _CurrentCommandQueueIndexLast.load();
+        _CommandAddedToQueue.store(false);
+        while (!(_CurrentCommandQueueIndexLast.compare_exchange_weak(currentCommandQueueIndexLast, (currentCommandQueueIndexLast + 1) % (_Commands.max_size() + 1))));
+        if (CommandQueueNotFull(currentCommandQueueIndexLast, _CurrentCommandQueueIndexFirst)) {
+            _Commands[currentCommandQueueIndexLast % _Commands.max_size()] = _data;
+            error = ErrorType::Success;
+        }
+        else {
+            error = ErrorType::LimitReached;
         }
 
-        if (_Commands.size() >= CommandQueueTypes::MaxCommandQueueSize) {
-            error = OperatingSystem::Instance().incrementSemaphore(_BinarySemaphore);
-            assert(ErrorType::Success == error);
-            return ErrorType::LimitReached;
-        }
+        _CommandAddedToQueue.store(true);
 
-        _Commands.push_back(_data);
-
-        error = OperatingSystem::Instance().incrementSemaphore(_BinarySemaphore);
-        assert(ErrorType::Success == error);
-        return ErrorType::Success;
+        return error;
     }
 
     /**
@@ -113,36 +93,19 @@ class CommandQueue {
      * @param commandData The command data to be returned.
      * @returns ErrorType::Success if there is a command in the queue
      * @returns ErrorType::NoData if there are no commands in the queue
-     * @returns Any errors returned by OperatingSystem::incrementSemaphore
+     * @sa EventQueue::runNextEvent which has better inline documentation to explain the code.
      */
     ErrorType getNextInQueue(T &commandData) {
-        ErrorType error = OperatingSystem::Instance().waitSemaphore(_BinarySemaphore, CommandQueueTypes::SemaphoreTimeout);
+        ErrorType error = ErrorType::NoData;
 
-        if (ErrorType::Success == error) {
-            if (ErrorType::Success == commandsInQueue()) {
-                commandData = _Commands.front();
-                _Commands.erase(_Commands.begin());
-
-                error =  ErrorType::Success;
-            }
-            else {
-                error = ErrorType::NoData;
-            }
-
-            ErrorType semaphoreError = OperatingSystem::Instance().incrementSemaphore(_BinarySemaphore);
-            assert(ErrorType::Success == semaphoreError);
+        const Count currentCommandQueueIndexFirst = _CurrentCommandQueueIndexLast.load();
+        const bool commandAddedToQueue = _CommandAddedToQueue.load();
+        if (commandAddedToQueue && CommandsReady(currentCommandQueueIndexFirst, _CurrentCommandQueueIndexLast)) {
+            commandData = _Commands[_CurrentCommandQueueIndexLast % _Commands.max_size()];
+            _CurrentCommandQueueIndexLast = (_CurrentCommandQueueIndexLast + 1) % (_Commands.max_size() + 1);
         }
 
         return error;
-    }
-
-    /**
-     * @brief Check if there are any commands in the queue.
-     * @returns ErrorType::Success if there are commands in the queue
-     * @returns ErrorType::Negative otherwise.
-     */
-    ErrorType commandsInQueue() {
-        return _Commands.empty() ? ErrorType::Negative : ErrorType::Success;
     }
 
     /// @brief Get a mutable reference to the data
@@ -156,16 +119,52 @@ class CommandQueue {
     }
 
     private:
-    /// @brief Unique number to append to the semaphore name
-    inline static Count _SemaphoreCount = 0;
-    /// @brief The queue of commands
-    inline static std::vector<T> _Commands;
+    /// @brief The index of the next command to receive
+    inline static Count _CurrentCommandQueueIndexFirst = 0;
+    /// @brief The index of the last command to receive
+    inline static std::atomic<Count> _CurrentCommandQueueIndexLast = 0;
+    /// @brief true when the event has been added to the queue.
+    inline static std::atomic<bool> _CommandAddedToQueue = false;
+    /// @brief The ring buffer queue of commands
+    inline static std::array<T, CommandQueueTypes::MaxCommandQueueSize> _Commands;
     /// @brief The status of the Queue of Responsibility
-    inline static CommandQueueTypes::Status _Status;
-    /// @brief The name of the semaphore
-    inline static std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> _BinarySemaphore = {0};
+    inline static CommandQueueTypes::Status _Status = {
+        0
+    };
     /// @brief The data stored in the command
     T _data;
+
+    /**
+     * @brief The number of commands queued that are ready to read
+     * @param[in] currentCommandQueueIndexFirst The tail of the command queue.
+     * @param[in] currentCommandQueueIndexHead The head of the command queue.
+     * @returns The number of commands that are ready to read.
+     */
+    static Count CommandsQueued(const Count &currentCommandQueueIndexFirst, const Count &currentCommandQueueIndexHead) {
+        return differenceBetween(currentCommandQueueIndexFirst, currentCommandQueueIndexHead, static_cast<Count>(_Commands.max_size()));
+    }
+
+    /**
+     * @brief True when the command queue is not full 
+     * @param[in] currentCommandQueueIndexFirst The tail of the command queue.
+     * @param[in] currentCommandQueueIndexHead The head of the command queue.
+     * @returns true if the command queue is not full
+     * @returns false otherwise.
+     */
+    static bool CommandQueueNotFull(const Count &currentCommandQueueIndexFirst, const Count &currentCommandQueueIndexHead) {
+        return CommandsQueued(currentCommandQueueIndexFirst, currentCommandQueueIndexHead) < _Commands.max_size();
+    }
+
+    /**
+     * @brief True when there are commands ready to read
+     * @param[in] currentCommandQueueIndexFirst The tail of the command queue.
+     * @param[in] currentCommandQueueIndexHead The head of the command queue.
+     * @returns true if the command queue has commands ready to read
+     * @returns false otherwise.
+     */
+    static bool CommandsReady(const Count &currentCommandQueueIndexFirst, const Count &currentCommandQueueIndexHead) {
+        return CommandsQueued(currentCommandQueueIndexFirst, currentCommandQueueIndexHead) > 0;
+    }
 };
 
 #endif // __COMMAND_OBJECT_HPP__

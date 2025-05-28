@@ -55,6 +55,25 @@ constexpr inline T differenceBetween(const T &expectedLargerValue, const T &expe
 }
 
 /**
+ * @brief Get the difference between expectedLargerValue and expectedSmallerValue (expectedLargerValue - expectedSmallerValue)
+ * @details Handles wrapping of the values.
+ * @param[in] expectedLargerValue The value that should be larger
+ * @param[in] expectedSmallerValue The value that should be smaller
+ * @param[in] maxValue The maximum value allowed.
+ * @return The absolute difference between the two values. If the expected larger value has overflowed then the overflowed value is added to the difference.
+ */
+template<typename T>
+constexpr inline T differenceBetween(const T &expectedLargerValue, const T &expectedSmallerValue, const T &maxValue) {
+    if (expectedSmallerValue > expectedLargerValue) {
+        //+1 because wrapping to zero counts as an increment (i.e. maxValue + 1 = 0)
+        return (maxValue - expectedLargerValue) + (expectedSmallerValue + 1);
+    }
+    else {
+        return expectedLargerValue - expectedSmallerValue;
+    }
+}
+
+/**
  * @brief Test if a value is within a the specified error
  * @param[in] value1 The first value to compare
  * @param[in] value2 The second value to compare
