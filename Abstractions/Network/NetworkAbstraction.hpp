@@ -64,7 +64,17 @@ namespace NetworkTypes {
         const bool hostIsLittleEndian = (*((char *)&i));
         if (hostIsLittleEndian) {
             T swappedData = 0;
-            if (std::is_same<T, uint32_t>::value) {
+            if (std::is_same<T, uint64_t>::value) {
+                swappedData |= (data & 0x00000000000000FFULL) << 56;
+                swappedData |= (data & 0x000000000000FF00ULL) << 40;
+                swappedData |= (data & 0x0000000000FF0000ULL) << 24;
+                swappedData |= (data & 0x00000000FF000000ULL) << 8;
+                swappedData |= (data & 0x000000FF00000000ULL) >> 8;
+                swappedData |= (data & 0x0000FF0000000000ULL) >> 24;
+                swappedData |= (data & 0x00FF000000000000ULL) >> 40;
+                swappedData |= (data & 0xFF00000000000000ULL) >> 56;
+            }
+            else if (std::is_same<T, uint32_t>::value) {
                 swappedData |= (data & 0x000000FF) << 24;
                 swappedData |= (data & 0x0000FF00) << 8;
                 swappedData |= (data & 0x00FF0000) >> 8;
