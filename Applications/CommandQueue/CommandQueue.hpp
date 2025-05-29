@@ -13,6 +13,7 @@
 #include "Math.hpp"
 //C++
 #include <atomic>
+#include <cassert>
 
 /**
  * @namespace CommandQueueTypes
@@ -73,17 +74,16 @@ class CommandQueue {
         ErrorType error = ErrorType::Failure;
 
         Count currentCommandQueueIndexLast = _CurrentCommandQueueIndexLast.load();
-        _CommandAddedToQueue.store(false);
-        while (!(_CurrentCommandQueueIndexLast.compare_exchange_weak(currentCommandQueueIndexLast, (currentCommandQueueIndexLast + 1) % (_Commands.max_size() + 1))));
-        if (CommandQueueNotFull(currentCommandQueueIndexLast, _CurrentCommandQueueIndexFirst)) {
-            _Commands[currentCommandQueueIndexLast % _Commands.max_size()] = _data;
+        while (!(_CurrentCommandQueueIndexLast.compare_exchange_weak(currentCommandQueueIndexLast, (currentCommandQueueIndexLast + 1) % _Commands.max_size())));
+        if (CommandQueueNotFull()) {
+            _Commands[currentCommandQueueIndexLast] = _data;
+            assert(_CommandsQueued < _Commands.max_size());
+            _CommandsQueued++;
             error = ErrorType::Success;
         }
         else {
             error = ErrorType::LimitReached;
         }
-
-        _CommandAddedToQueue.store(true);
 
         return error;
     }
@@ -98,11 +98,12 @@ class CommandQueue {
     ErrorType getNextInQueue(T &commandData) {
         ErrorType error = ErrorType::NoData;
 
-        const Count currentCommandQueueIndexFirst = _CurrentCommandQueueIndexLast.load();
-        const bool commandAddedToQueue = _CommandAddedToQueue.load();
-        if (commandAddedToQueue && CommandsReady(currentCommandQueueIndexFirst, _CurrentCommandQueueIndexLast)) {
-            commandData = _Commands[_CurrentCommandQueueIndexLast % _Commands.max_size()];
-            _CurrentCommandQueueIndexLast = (_CurrentCommandQueueIndexLast + 1) % (_Commands.max_size() + 1);
+        if (CommandsReady()) {
+            commandData = _Commands[_CurrentCommandQueueIndexFirst];
+            assert(_CommandsQueued > 0);
+            _CommandsQueued--;
+            _CurrentCommandQueueIndexFirst = (_CurrentCommandQueueIndexFirst + 1) % _Commands.max_size();
+            error = ErrorType::Success;
         }
 
         return error;
@@ -119,13 +120,21 @@ class CommandQueue {
     }
 
     /**
-     * @brief Check if there are commands in the queue to read.
-     * @returns True if there are commands ready to read in the queue
-     * @returns false otherwise
+     * @brief True when the command queue is not full 
+     * @returns true if the command queue is not full
+     * @returns false otherwise.
      */
-    static bool CommandsInQueue() {
-        const Count currentCommandQueueIndexFirst = _CurrentCommandQueueIndexLast.load();
-        return (CommandsReady(currentCommandQueueIndexFirst, _CurrentCommandQueueIndexLast));
+    static bool CommandQueueNotFull() {
+        return _CommandsQueued < _Commands.max_size();
+    }
+
+    /**
+     * @brief True when there are commands ready to read
+     * @returns true if the command queue has commands ready to read
+     * @returns false otherwise.
+     */
+    static bool CommandsReady() {
+        return _CommandsQueued > 0;
     }
 
     private:
@@ -133,8 +142,8 @@ class CommandQueue {
     inline static Count _CurrentCommandQueueIndexFirst = 0;
     /// @brief The index of the last command to receive
     inline static std::atomic<Count> _CurrentCommandQueueIndexLast = 0;
-    /// @brief true when the event has been added to the queue.
-    inline static std::atomic<bool> _CommandAddedToQueue = false;
+    /// @brief the running count of commands queued.
+    inline static Count _CommandsQueued = 0;
     /// @brief The ring buffer queue of commands
     inline static std::array<T, CommandQueueTypes::MaxCommandQueueSize> _Commands;
     /// @brief The status of the Queue of Responsibility
@@ -143,38 +152,6 @@ class CommandQueue {
     };
     /// @brief The data stored in the command
     T _data;
-
-    /**
-     * @brief The number of commands queued that are ready to read
-     * @param[in] currentCommandQueueIndexFirst The tail of the command queue.
-     * @param[in] currentCommandQueueIndexHead The head of the command queue.
-     * @returns The number of commands that are ready to read.
-     */
-    static Count CommandsQueued(const Count &currentCommandQueueIndexFirst, const Count &currentCommandQueueIndexHead) {
-        return differenceBetween(currentCommandQueueIndexFirst, currentCommandQueueIndexHead, static_cast<Count>(_Commands.max_size()));
-    }
-
-    /**
-     * @brief True when the command queue is not full 
-     * @param[in] currentCommandQueueIndexFirst The tail of the command queue.
-     * @param[in] currentCommandQueueIndexHead The head of the command queue.
-     * @returns true if the command queue is not full
-     * @returns false otherwise.
-     */
-    static bool CommandQueueNotFull(const Count &currentCommandQueueIndexFirst, const Count &currentCommandQueueIndexHead) {
-        return CommandsQueued(currentCommandQueueIndexFirst, currentCommandQueueIndexHead) < _Commands.max_size();
-    }
-
-    /**
-     * @brief True when there are commands ready to read
-     * @param[in] currentCommandQueueIndexFirst The tail of the command queue.
-     * @param[in] currentCommandQueueIndexHead The head of the command queue.
-     * @returns true if the command queue has commands ready to read
-     * @returns false otherwise.
-     */
-    static bool CommandsReady(const Count &currentCommandQueueIndexFirst, const Count &currentCommandQueueIndexHead) {
-        return CommandsQueued(currentCommandQueueIndexFirst, currentCommandQueueIndexHead) > 0;
-    }
 };
 
 #endif // __COMMAND_OBJECT_HPP__

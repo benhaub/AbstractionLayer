@@ -107,10 +107,6 @@ class EventQueue {
     */
     ErrorType addEvent(Event &event);
 
-    /// @brief Get the number of events available in the queue.
-    /// @return The number of events available in the queue.
-    Count eventsAvailable() const;
-
     /**
      * @brief The main loop for the eventQueue which can be used to continually check for and run events.
      * @sa runNextEvent
@@ -118,6 +114,24 @@ class EventQueue {
      * @returns The error codes of any functions called by runNextEvent.
     */
     virtual ErrorType mainLoop() { return runNextEvent(); }
+
+    /**
+     * @brief True when the event queue is not full 
+     * @param[in] currentEventQueueIndexTail The tail of the event queue.
+     * @param[in] currentEventQueueIndexHead The head of the event queue.
+     * @returns true if the event queue is not full
+     * @returns false otherwise.
+     */
+    bool eventQueueNotFull();
+
+    /**
+     * @brief True when there are events ready to read
+     * @param[in] currentEventQueueIndexTail The tail of the event queue.
+     * @param[in] currentEventQueueIndexHead The head of the event queue.
+     * @returns true if the event queue has events ready to read
+     * @returns false otherwise.
+     */
+    bool eventsReady();
 
     protected: 
     /**
@@ -138,8 +152,7 @@ class EventQueue {
     Count _currentEventQueueIndexFirst = 0;
     /// @brief The index of the last event to run.
     std::atomic<Count> _currentEventQueueIndexLast = 0;
-    /// @brief true when the event has been added to the queue.
-    std::atomic<bool> _eventAddedToQueue = false;
+    Count _eventsQueued = 0;
     /// @brief The thread id of the owner of the event queue. Used to determine if we can skip event queuing.
     Id _ownerThreadId;
     /**
@@ -148,32 +161,6 @@ class EventQueue {
      *          Instead of pushing the event on the queue for the mainLoop to run, just run it right away.
      */
     bool _addEventOptimizationsEnabled = false;
-
-    /**
-     * @brief The number of events queued that are ready to read
-     * @param[in] currentEventQueueIndexTail The tail of the event queue.
-     * @param[in] currentEventQueueIndexHead The head of the event queue.
-     * @returns The number of events that are ready to read.
-     */
-    Count eventsQueued(const Count &currentEventQueueIndexTail, const Count &currentEventQueueIndexHead);
-
-    /**
-     * @brief True when the event queue is not full 
-     * @param[in] currentEventQueueIndexTail The tail of the event queue.
-     * @param[in] currentEventQueueIndexHead The head of the event queue.
-     * @returns true if the event queue is not full
-     * @returns false otherwise.
-     */
-    bool eventQueueNotFull(const Count &currentEventQueueIndexTail, const Count &currentEventQueueIndexHead);
-
-    /**
-     * @brief True when there are events ready to read
-     * @param[in] currentEventQueueIndexTail The tail of the event queue.
-     * @param[in] currentEventQueueIndexHead The head of the event queue.
-     * @returns true if the event queue has events ready to read
-     * @returns false otherwise.
-     */
-    bool eventsReady(const Count &currentEventQueueIndexTail, const Count &currentEventQueueIndexHead);
 };
 
 #endif //__EVENT_QUEUE_HPP__
