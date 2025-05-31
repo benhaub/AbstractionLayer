@@ -56,9 +56,9 @@ ErrorType EventQueue::runNextEvent() {
 }
 
 bool EventQueue::eventQueueNotFull() {
-    return _eventsQueued < _events.max_size();
+    return _eventsQueued.load() < _events.max_size();
 }
 
 bool EventQueue::eventsReady() {
-    return _eventsQueued > 0;
+    return _eventsQueued.load() > 0;
 }

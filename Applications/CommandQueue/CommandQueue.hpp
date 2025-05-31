@@ -77,8 +77,7 @@ class CommandQueue {
         while (!(_CurrentCommandQueueIndexLast.compare_exchange_weak(currentCommandQueueIndexLast, (currentCommandQueueIndexLast + 1) % _Commands.max_size())));
         if (CommandQueueNotFull()) {
             _Commands[currentCommandQueueIndexLast] = _data;
-            assert(_CommandsQueued < _Commands.max_size());
-            _CommandsQueued++;
+            _CommandsQueued.fetch_add(1, std::memory_order_relaxed);
             error = ErrorType::Success;
         }
         else {
@@ -100,8 +99,7 @@ class CommandQueue {
 
         if (CommandsReady()) {
             commandData = _Commands[_CurrentCommandQueueIndexFirst];
-            assert(_CommandsQueued > 0);
-            _CommandsQueued--;
+            _CommandsQueued.fetch_sub(1, std::memory_order_relaxed);
             _CurrentCommandQueueIndexFirst = (_CurrentCommandQueueIndexFirst + 1) % _Commands.max_size();
             error = ErrorType::Success;
         }
@@ -125,7 +123,7 @@ class CommandQueue {
      * @returns false otherwise.
      */
     static bool CommandQueueNotFull() {
-        return _CommandsQueued < _Commands.max_size();
+        return _CommandsQueued.load() < _Commands.max_size();
     }
 
     /**
@@ -134,7 +132,7 @@ class CommandQueue {
      * @returns false otherwise.
      */
     static bool CommandsReady() {
-        return _CommandsQueued > 0;
+        return _CommandsQueued.load() > 0;
     }
 
     private:
@@ -142,8 +140,8 @@ class CommandQueue {
     inline static Count _CurrentCommandQueueIndexFirst = 0;
     /// @brief The index of the last command to receive
     inline static std::atomic<Count> _CurrentCommandQueueIndexLast = 0;
-    /// @brief the running count of commands queued.
-    inline static Count _CommandsQueued = 0;
+    /// @brief the current count of commands queued.
+    inline static std::atomic<Count> _CommandsQueued = 0;
     /// @brief The ring buffer queue of commands
     inline static std::array<T, CommandQueueTypes::MaxCommandQueueSize> _Commands;
     /// @brief The status of the Queue of Responsibility

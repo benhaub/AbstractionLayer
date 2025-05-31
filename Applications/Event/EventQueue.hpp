@@ -152,6 +152,7 @@ class EventQueue {
     Count _currentEventQueueIndexFirst = 0;
     /// @brief The index of the last event to run.
     std::atomic<Count> _currentEventQueueIndexLast = 0;
+    /// @brief The current number of of events queued.
     std::atomic<Count> _eventsQueued = 0;
     /// @brief The thread id of the owner of the event queue. Used to determine if we can skip event queuing.
     Id _ownerThreadId;
