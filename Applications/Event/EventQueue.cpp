@@ -28,6 +28,7 @@ ErrorType EventQueue::addEvent(Event &event) {
             //https://youtu.be/kPh8pod0-gk?list=PLc1ANd9mG2dwG-kovSjkjuWq8CpskvEye&t=1128
             //If the last index is the size of the array, then we know that what is stored in memory is now zero.
             _events[currentEventQueueIndexLast] = event;
+            //https://youtu.be/ZQFzMfHIxng?t=3888
             _eventsQueued.fetch_add(1, std::memory_order_relaxed);
             error = ErrorType::Success;
         }

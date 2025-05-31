@@ -59,9 +59,10 @@ namespace SignalsAndSlots {
         ErrorType connect(EventQueue &eventQueue, std::function<ErrorType(Args...)> callback) {
             for (auto &slot : _slots) {
                 if (slot.first == nullptr) {
-                    assert(_currentNumberOfObservers <= _MaxNumberOfObservers);
                     Count currentNumberOfObservers = _currentNumberOfObservers.load();
-                    if (_currentNumberOfObservers.compare_exchange_strong(currentNumberOfObservers, currentNumberOfObservers + 1)) {
+                    assert(currentNumberOfObservers <= _MaxNumberOfObservers);
+
+                    if (_currentNumberOfObservers.compare_exchange_weak(currentNumberOfObservers, currentNumberOfObservers + 1)) {
                         slot = std::make_pair(&eventQueue, callback);
                         return ErrorType::Success;
                     }
@@ -83,7 +84,7 @@ namespace SignalsAndSlots {
          * @returns The errors described in SignalsAndSlots::Signal::_emit
         */
         ErrorType emit(const Args... args) {
-            if (0 == _currentNumberOfObservers) {
+            if (0 == _currentNumberOfObservers.load()) {
                 return ErrorType::NoData;
             }
 
@@ -105,12 +106,12 @@ namespace SignalsAndSlots {
                 });
 
                 if (itr != _slots.end()) {
-                    assert(_currentNumberOfObservers > 0);
+                    assert(_currentNumberOfObservers.load() > 0);
                     //If _currentNumberOfObservers is equal to _MaxNumberOfObservers, and we are interrupted or pre-empted before we can decrement
                     //_currentNumberOfOberservers, then anything that tries to connect() will still see the queue as full.
                     //If it is any other the value, then connect() will just select the next available spot.
                     itr = std::make_pair(nullptr, nullptr);
-                    _currentNumberOfObservers.fetch_sub(1);
+                    _currentNumberOfObservers.fetch_sub(1, std::memory_order_relaxed);
                 }
             }
             
