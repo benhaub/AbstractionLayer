@@ -136,7 +136,7 @@ namespace SignalsAndSlots {
         */
         template <std::size_t... IndexSequence>
         ErrorType _emit([[maybe_unused]] const std::tuple<Args...> params, [[maybe_unused]] const std::index_sequence<IndexSequence...>) const {
-            ErrorType error = ErrorType::Failure;
+            ErrorType error = ErrorType::NoData;
 
             for (const auto &slot : _slots) {
                 if (nullptr != slot.first && nullptr != slot.second) {

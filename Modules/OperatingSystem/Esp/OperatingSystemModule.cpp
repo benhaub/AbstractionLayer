@@ -258,13 +258,15 @@ ErrorType OperatingSystem::deleteTimer(const Id timer) {
 }
 
 ErrorType OperatingSystem::startTimer(const Id timer, const Milliseconds timeout) {
-    auto itr = timers.begin();
-    while(itr != timers.end()) {
-        if (itr->second.id == timer) {
-            if (pdTRUE == xTimerStart(itr->first, pdMS_TO_TICKS(timeout))) {
-                return ErrorType::Success;
-            }
-        }
+    auto it = std::find_if(timers.begin(), timers.end(),
+        [timer](const auto& pair) { return pair.second.id == timer; });
+    
+    if (it == timers.end()) {
+        return ErrorType::NoData;
+    }
+
+    if (pdTRUE == xTimerStart(it->first, pdMS_TO_TICKS(timeout))) {
+        return ErrorType::Success;
     }
 
     return ErrorType::Failure;
