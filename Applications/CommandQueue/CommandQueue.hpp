@@ -88,7 +88,7 @@ class CommandQueue {
     }
 
     /**
-     * @brief Get the next command in the queue.
+     * @brief Return and remove the next command in the queue.
      * @param commandData The command data to be returned.
      * @returns ErrorType::Success if there is a command in the queue
      * @returns ErrorType::NoData if there are no commands in the queue
@@ -105,6 +105,24 @@ class CommandQueue {
         }
 
         return error;
+    }
+
+    /**
+     * @brief Return the next command in the queue without removing it
+     * @param error The error that occurred while peaking the next command.
+     * @returns The next command in th queue.
+     * @post The returned command is valid only if error is ErrorType::Success
+     * @post error == ErrorType::NoData if there are no commands in the queue to peak.
+     */
+    const T &peakNextInQueue(ErrorType &error) {
+        error = ErrorType::NoData;
+
+        if (CommandsReady()) {
+            error = ErrorType::Success;
+            return _Commands[_CurrentCommandQueueIndexFirst];
+        }
+
+        return _data;
     }
 
     /// @brief Get a mutable reference to the data
