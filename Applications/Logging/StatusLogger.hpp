@@ -54,10 +54,14 @@ class StatusLogger {
         ErrorType error = ErrorType::Failure;
         if (ErrorType::Success == (error = OperatingSystem::Instance().createTimer(_logTimer, interval*1000, true, std::bind(&StatusLogger::timerElapsed, this)))) {
             if (ErrorType::Success != (error = OperatingSystem::Instance().startTimer(_logTimer, 0))) {
-                PLT_LOGW(TAG, "Failed to start timer for status logging. <error:%u>", (uint32_t)error);
+                _interval = interval;
             }
-
-            _interval = interval;
+            else {
+                PLT_LOGW(TAG, "Failed to start timer for status logging. <error:%u>", (uint8_t)error);
+            }
+        }
+        else {
+            PLT_LOGW(TAG, "Failed to create timer for status logging. <error:%u>", (uint8_t)error);
         }
     }
     /**
