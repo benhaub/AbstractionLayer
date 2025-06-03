@@ -70,7 +70,9 @@ namespace {
 
         if (WifiTypes::Mode::AccessPointAndStation == params.mode) {
             error = wifi.setSsid(WifiTypes::Mode::AccessPoint, params.accessPointSsid);
-            error = wifi.setSsid(WifiTypes::Mode::Station, params.stationSsid);
+            if (ErrorType::Success == error) {
+                error = wifi.setSsid(WifiTypes::Mode::Station, params.stationSsid);
+            }
         }
         else if (WifiTypes::Mode::AccessPoint == params.mode) {
             error = wifi.setSsid(WifiTypes::Mode::AccessPoint, params.accessPointSsid);
@@ -95,7 +97,9 @@ namespace {
 
         if (WifiTypes::Mode::AccessPointAndStation == params.mode) {
             error = wifi.setPassword(WifiTypes::Mode::AccessPoint, params.accessPointPassword);
-            error = wifi.setPassword(WifiTypes::Mode::Station, params.stationPassword);
+            if (ErrorType::Success == error) {
+                error = wifi.setPassword(WifiTypes::Mode::Station, params.stationPassword);
+            }
         }
         else if (WifiTypes::Mode::AccessPoint == params.mode) {
             error = wifi.setPassword(WifiTypes::Mode::AccessPoint, params.accessPointPassword);
