@@ -10,6 +10,7 @@
 //AbstractionLayer
 #include "EventQueue.hpp"
 #include "Log.hpp"
+#include "Math.hpp"
 
 /**
  * @namespace NetworkTypes
