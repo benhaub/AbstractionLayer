@@ -86,4 +86,14 @@ constexpr inline bool withinError(const T &value1, const T &value2, const T &err
     return std::abs(value1 - value2) <= error;
 }
 
+/**
+ * @brief Convert a number of bytes to the number of bits
+ * @param[in] numberOfBytes The number of bytes to convert
+ * @returns The number of bits
+ */
+template<typename T>
+constexpr inline T ToBits(const T &numberOfBytes) {
+    return numberOfBytes * 8;
+}
+
 #endif // __MATH_HPP__
