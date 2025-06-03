@@ -31,7 +31,7 @@ class FileSystem final : public FileSystemAbstraction {
     ErrorType size(FileSystemTypes::File &file) override;
 
     private:
-    std::map<std::string, std::unique_ptr<std::fstream>> openFiles;
+    std::map<std::string, std::fstream> openFiles;
 
     std::ios_base::openmode toStdOpenMode(FileSystemTypes::OpenMode mode, ErrorType &error) {
         error = ErrorType::Success;
@@ -58,8 +58,7 @@ class FileSystem final : public FileSystemAbstraction {
     }
 
     inline bool isOpen(const FileSystemTypes::File &file) {
-        if (openFiles.contains(file.path) &&
-            nullptr != openFiles[file.path].get() && openFiles[file.path]->is_open()) {
+        if (openFiles.contains(file.path) && openFiles[file.path].is_open()) {
                 return true;
         }
 
