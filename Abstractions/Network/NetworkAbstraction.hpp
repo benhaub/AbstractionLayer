@@ -65,24 +65,24 @@ namespace NetworkTypes {
         if (hostIsLittleEndian) {
             T swappedData = 0;
             if (std::is_same<T, uint64_t>::value) {
-                swappedData |= (data & 0x00000000000000FFULL) << 56;
-                swappedData |= (data & 0x000000000000FF00ULL) << 40;
-                swappedData |= (data & 0x0000000000FF0000ULL) << 24;
-                swappedData |= (data & 0x00000000FF000000ULL) << 8;
-                swappedData |= (data & 0x000000FF00000000ULL) >> 8;
-                swappedData |= (data & 0x0000FF0000000000ULL) >> 24;
-                swappedData |= (data & 0x00FF000000000000ULL) >> 40;
-                swappedData |= (data & 0xFF00000000000000ULL) >> 56;
+                swappedData |= (data & 0x00000000000000FFULL) << ToBits(7);
+                swappedData |= (data & 0x000000000000FF00ULL) << ToBits(5);
+                swappedData |= (data & 0x0000000000FF0000ULL) << ToBits(3);
+                swappedData |= (data & 0x00000000FF000000ULL) << ToBits(1);
+                swappedData |= (data & 0x000000FF00000000ULL) >> ToBits(1);
+                swappedData |= (data & 0x0000FF0000000000ULL) >> ToBits(3);
+                swappedData |= (data & 0x00FF000000000000ULL) >> ToBits(5);
+                swappedData |= (data & 0xFF00000000000000ULL) >> ToBits(7);
             }
             else if (std::is_same<T, uint32_t>::value) {
-                swappedData |= (data & 0x000000FF) << 24;
-                swappedData |= (data & 0x0000FF00) << 8;
-                swappedData |= (data & 0x00FF0000) >> 8;
-                swappedData |= (data & 0xFF000000) >> 24;
+                swappedData |= (data & 0x000000FF) << ToBits(3);
+                swappedData |= (data & 0x0000FF00) << ToBits(1);
+                swappedData |= (data & 0x00FF0000) >> ToBits(1);
+                swappedData |= (data & 0xFF000000) >> ToBits(3);
             }
             else if (std::is_same<T, uint16_t>::value) {
-                swappedData |= (data & 0x00FF) << 8;
-                swappedData |= (data & 0xFF00) >> 8;
+                swappedData |= (data & 0x00FF) << ToBits(1);
+                swappedData |= (data & 0xFF00) >> ToBits(1);
             }
 
             return swappedData;
