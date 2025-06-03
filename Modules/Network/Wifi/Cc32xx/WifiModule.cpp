@@ -178,12 +178,8 @@ ErrorType Wifi::radioOff() {
 ErrorType Wifi::setSsid(WifiTypes::Mode mode, const std::string &ssid) {
     ErrorType error = ErrorType::Success;
 
-    if (mode != WifiTypes::Mode::AccessPoint) {
-        return ErrorType::NotSupported;
-    }
-
     _u16 result = 0;
-    if (mode == WifiTypes::Mode::AccessPoint) {
+    if (mode == WifiTypes::Mode::AccessPoint || mode == WifiTypes::Mode::AccessPointAndStation) {
         result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_SSID, ssid.size(), reinterpret_cast<const unsigned char *>(ssid.c_str()));
 
         if (0 == result) {
@@ -192,7 +188,7 @@ ErrorType Wifi::setSsid(WifiTypes::Mode mode, const std::string &ssid) {
 
         error = fromPlatformError(result);
     }
-    else if (mode == WifiTypes::Mode::Station) {
+    else if (mode == WifiTypes::Mode::Station || mode == WifiTypes::Mode::AccessPointAndStation) {
         _stationSsid = ssid;
     }
 
