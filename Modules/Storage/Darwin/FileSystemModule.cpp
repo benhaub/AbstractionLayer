@@ -90,8 +90,9 @@ ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenM
                     openFiles[path] = std::fstream();
                     openFiles[path].open(absolutePath, openMode);
                     if (openFiles[path].good()) {
+                        file.path.assign(path);
+                        
                         if (ErrorType::Success == (callbackError = size(file))) {
-                            file.path.assign(path);
                             file.isOpen = true;
                             file.openMode = mode;
                             file.filePointer = static_cast<FileOffset>(file.size);
