@@ -72,7 +72,7 @@ ErrorType Wifi::init() {
         return error;
     }
 
-    if (_mode == WifiTypes::Mode::AccessPointAndStation || _mode == WifiTypes::Mode::Station) {
+    if (_mode == WifiTypes::Mode::Station || _mode == WifiTypes::Mode::AccessPointAndStation) {
         ErrorType error;
         const SlWlanSecParams_t securityParameters = {
             .Type = toCc32xxSecurityType(_authMode, error),
@@ -80,7 +80,13 @@ ErrorType Wifi::init() {
             .KeyLen = static_cast<_u8>(_stationPassword.length())
         };
 
-        sl_WlanConnect(reinterpret_cast<_i8 *>(_stationSsid.data()), static_cast<_u8>(_stationSsid.length()), 0, &securityParameters, nullptr);
+        const _i16 result = sl_WlanConnect(reinterpret_cast<_i8 *>(_stationSsid.data()), static_cast<_u8>(_stationSsid.length()), 0, &securityParameters, nullptr);
+        if (0 != result) {
+            PLT_LOGW(WifiAbstraction::TAG, "Failed to connect to station <SSID:%s, error:%d>", _stationSsid.c_str(), result);
+        }
+        else {
+            PLT_LOGI(WifiAbstraction::TAG, "Connected <SSID:%s>", _stationSsid.c_str());
+        }
     }
 
     return networkUp();
@@ -90,27 +96,28 @@ ErrorType Wifi::init() {
 
 ErrorType Wifi::networkUp() {
     assert(WifiTypes::Mode::Unknown != _mode);
-    Seconds timeout = 30;
+    constexpr Seconds timeout = 60;
+    ErrorType error = ErrorType::NotSupported;
 
+    //Stations will connect in init(). Access points do not need to provision.
     if (_mode == WifiTypes::Mode::AccessPointAndStation) {
-        return ErrorType::NotSupported;
+        const uint8_t provisioningMode = toCc32xxProvisioningMode(_mode, error);
+
+        if (ErrorType::Success == error) {
+            constexpr char *smartConfigKey = nullptr;
+            signed short result;
+            constexpr uint32_t flags = 0;
+
+            result = sl_WlanProvisioning(provisioningMode, ROLE_AP, timeout, smartConfigKey, flags);
+            if (0 == result) {
+                _status.isUp = true;
+            }
+
+            return fromPlatformError(result);
+        }
     }
 
-    ErrorType error;
-    uint8_t role = toCc32xxRole(_mode, error);
-    if (ErrorType::Success != error) {
-        return error;
-    }
-
-    constexpr char *smartConfigKey = nullptr;
-    signed short result;
-    constexpr uint32_t flags = 0;
-    result = sl_WlanProvisioning(SL_WLAN_PROVISIONING_CMD_START_MODE_AP, role, timeout, smartConfigKey, flags);
-    if (0 == result) {
-        _status.isUp = true;
-    }
-
-    return fromPlatformError(result);
+    return error;
 }
 
 ErrorType Wifi::networkDown() {
@@ -149,16 +156,11 @@ ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::mainLoop() {
-    return runNextEvent();
-}
-
 ErrorType Wifi::radioOn() {
     //Will fail if you have not initialized something for the network processor to send data on (SPI or UART not initialized)
     const _i16 mode = sl_Start(NULL, NULL, NULL);
-    _mode = fromCc32xxRole(mode);
 
-    if (_mode != WifiTypes::Mode::Unknown) {
+    if (fromCc32xxRole(mode) != WifiTypes::Mode::Unknown) {
         return ErrorType::Success;
     }
     else {
@@ -272,8 +274,145 @@ void SimpleLinkFatalErrorEventHandler(SlDeviceFatal_t *slFatalErrorEvent) {
 void SimpleLinkSockEventHandler(SlSockEvent_t *pSock) {
     return;
 }
+
+//Handler is from the provisioning CCS example project.
 void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent) {
-    return;
+    switch(pWlanEvent->Id) {
+        case SL_WLAN_EVENT_CONNECT:
+            PLT_LOGI(WifiAbstraction::TAG, " [Event] STA connected to AP - BSSID:%.2x:%.2x:%.2x:%.2x:%.2x:%.2x, ",
+                pWlanEvent->Data.Connect.Bssid[0],
+                pWlanEvent->Data.Connect.Bssid[1],
+                pWlanEvent->Data.Connect.Bssid[2],
+                pWlanEvent->Data.Connect.Bssid[3],
+                pWlanEvent->Data.Connect.Bssid[4],
+                pWlanEvent->Data.Connect.Bssid[5]);
+
+            pWlanEvent->Data.Connect.SsidName[pWlanEvent->Data.Connect.SsidLen] = '\0';
+            PLT_LOGI(WifiAbstraction::TAG, "SSID:%s", pWlanEvent->Data.Connect.SsidName);
+            break;
+
+        case SL_WLAN_EVENT_DISCONNECT:
+            PLT_LOGI(WifiAbstraction::TAG, " [Event] STA disconnected from AP (Reason Code = %d)",
+                        pWlanEvent->Data.Disconnect.ReasonCode);
+            break;
+
+        case SL_WLAN_EVENT_STA_ADDED:
+            PLT_LOGI(WifiAbstraction::TAG, 
+                " [Event] New STA Added (MAC Address:"
+                " %.2x:%.2x:%.2x:%.2x:%.2x)",
+                pWlanEvent->Data.STAAdded.Mac[0],
+                pWlanEvent->Data.STAAdded.Mac[1],
+                pWlanEvent->Data.STAAdded.Mac[2],
+                pWlanEvent->Data.STAAdded.Mac[3],
+                pWlanEvent->Data.STAAdded.Mac[4],
+                pWlanEvent->Data.STAAdded.Mac[5]);
+            break;
+
+        case SL_WLAN_EVENT_STA_REMOVED:
+            PLT_LOGI(WifiAbstraction::TAG, 
+                " [Event] STA Removed (MAC Address: %.2x:%.2x:%.2x:%.2x:%.2x)",
+                pWlanEvent->Data.STAAdded.Mac[0],
+                pWlanEvent->Data.STAAdded.Mac[1],
+                pWlanEvent->Data.STAAdded.Mac[2],
+                pWlanEvent->Data.STAAdded.Mac[3],
+                pWlanEvent->Data.STAAdded.Mac[4],
+                pWlanEvent->Data.STAAdded.Mac[5]);
+            break;
+
+        case SL_WLAN_EVENT_PROVISIONING_PROFILE_ADDED:
+            PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile Added: SSID: %s",
+                    pWlanEvent->Data.ProvisioningProfileAdded.Ssid);
+            if(pWlanEvent->Data.ProvisioningProfileAdded.ReservedLen > 0) {
+                PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile Added: PrivateToken:%s",
+                        pWlanEvent->Data.ProvisioningProfileAdded.Reserved);
+            }
+            break;
+
+        case SL_WLAN_EVENT_PROVISIONING_STATUS: {
+            switch(pWlanEvent->Data.ProvisioningStatus.ProvisioningStatus) {
+                case SL_WLAN_PROVISIONING_GENERAL_ERROR:
+                case SL_WLAN_PROVISIONING_ERROR_ABORT:
+                case SL_WLAN_PROVISIONING_ERROR_ABORT_INVALID_PARAM:
+                case SL_WLAN_PROVISIONING_ERROR_ABORT_HTTP_SERVER_DISABLED:
+                case SL_WLAN_PROVISIONING_ERROR_ABORT_PROFILE_LIST_FULL:
+                case SL_WLAN_PROVISIONING_ERROR_ABORT_PROVISIONING_ALREADY_STARTED:
+                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Provisioning Error status=%d",
+                                pWlanEvent->Data.ProvisioningStatus.ProvisioningStatus);
+                    break;
+
+                case SL_WLAN_PROVISIONING_CONFIRMATION_STATUS_FAIL_NETWORK_NOT_FOUND:
+                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile confirmation failed: "
+                        "network not found");
+                    break;
+
+                case SL_WLAN_PROVISIONING_CONFIRMATION_STATUS_FAIL_CONNECTION_FAILED:
+                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile confirmation failed:"
+                        " Connection failed");
+                    break;
+
+                case
+                    SL_WLAN_PROVISIONING_CONFIRMATION_STATUS_CONNECTION_SUCCESS_IP_NOT_ACQUIRED:
+                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile confirmation failed:"
+                        " IP address not acquired");
+                    break;
+
+                case SL_WLAN_PROVISIONING_CONFIRMATION_STATUS_SUCCESS_FEEDBACK_FAILED:
+                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile Confirmation failed "
+                        "(Connection Success, feedback to Smartphone app failed)");
+                    break;
+
+                case SL_WLAN_PROVISIONING_CONFIRMATION_STATUS_SUCCESS:
+                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile Confirmation Success!");
+                    break;
+
+                case SL_WLAN_PROVISIONING_AUTO_STARTED:
+                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Auto-Provisioning Started");
+                    break;
+
+                case SL_WLAN_PROVISIONING_STOPPED:
+                    PLT_LOGI(WifiAbstraction::TAG, " Provisioning stopped <role:%d>", pWlanEvent->Data.ProvisioningStatus.Role);
+                    if(ROLE_STA == pWlanEvent->Data.ProvisioningStatus.Role) {
+                        PLT_LOGI(WifiAbstraction::TAG, "WLAN Status: %s",pWlanEvent->Data.ProvisioningStatus.WlanStatus);
+
+                        if(SL_WLAN_STATUS_CONNECTED == pWlanEvent->Data.ProvisioningStatus.WlanStatus) {
+                            PLT_LOGI(WifiAbstraction::TAG, "Connected to SSID: %s", pWlanEvent->Data.ProvisioningStatus.Ssid);
+                        }
+                    }
+                    break;
+
+                case SL_WLAN_PROVISIONING_SMART_CONFIG_SYNCED:
+                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Smart Config Synced!");
+                    break;
+
+                case SL_WLAN_PROVISIONING_SMART_CONFIG_SYNC_TIMEOUT:
+                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Smart Config Sync Timeout!");
+                    break;
+
+                case SL_WLAN_PROVISIONING_CONFIRMATION_WLAN_CONNECT:
+                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile confirmation: WLAN Connected!");
+                    break;
+
+                case SL_WLAN_PROVISIONING_CONFIRMATION_IP_ACQUIRED:
+                    PLT_LOGI(WifiAbstraction::TAG, "[Provisioning] Profile confirmation: IP Acquired!");
+                    break;
+
+                case SL_WLAN_PROVISIONING_EXTERNAL_CONFIGURATION_READY:
+                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] External configuration is ready! ");
+                    break;
+
+                default:
+                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Unknown Provisioning Status: %d",
+                        pWlanEvent->Data.ProvisioningStatus.ProvisioningStatus);
+                    break;
+            }
+
+            break;
+        }
+        default:
+            PLT_LOGI(WifiAbstraction::TAG, " [Event] - WlanEventHandler has received %d !!!!",
+            pWlanEvent->Id);
+            break;
+    }
 }
 void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent) {
     return;

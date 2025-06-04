@@ -174,7 +174,7 @@ namespace NetworkFactory {
             }
 
             if (ErrorType::Success == error || !isCriticalError) {
-                PLT_LOGI(NetworkFactoryTag, "Wifi network initialized <ssid (AP):%s, password (AP):%s, authMode (AP):%u, mode (AP):%u>",
+                PLT_LOGI(NetworkFactoryTag, "Wifi network initialized <ssid (AP):%s, password (AP):%s, authMode (AP):%u, mode:%u>",
                     wifi->accessPointSsid().c_str(), wifi->accessPointPassword().c_str(), (uint8_t)wifi->authMode(), (uint8_t)wifi->mode());
                 return wifi;
             }

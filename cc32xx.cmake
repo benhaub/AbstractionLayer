@@ -46,6 +46,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Peripherals/Adafruit/Sm1
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Peripherals/Mikroe/28byj485V)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/RtcManager)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/NtpClient)
+
 target_compile_definitions(${PROJECT_NAME}${EXECUTABLE_SUFFIX}
 PRIVATE
   SIMPLELINK_THREAD_NAME="simplelinkTask" 

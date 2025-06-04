@@ -25,8 +25,6 @@ class Wifi final : public WifiAbstraction {
     ErrorType getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) override;
     ErrorType getSignalStrength(DecibelMilliWatts &signalStrength) override;
 
-    ErrorType mainLoop() override;
-
     ErrorType radioOn() override;
     ErrorType radioOff() override;
     ErrorType setSsid(WifiTypes::Mode mode, const std::string &ssid) override;
@@ -54,6 +52,8 @@ class Wifi final : public WifiAbstraction {
 
         switch (mode) {
             case WifiTypes::Mode::Station:
+            //Start in station mode first. After provisioning, switch to AP.
+            case WifiTypes::Mode::AccessPointAndStation:
                 return ROLE_STA;
             case WifiTypes::Mode::AccessPoint:
                 return ROLE_AP;
@@ -103,6 +103,22 @@ class Wifi final : public WifiAbstraction {
             default:
                 error = ErrorType::InvalidParameter;
                 return SL_WLAN_SEC_TYPE_OPEN;
+        }
+    }
+
+    _u8 toCc32xxProvisioningMode(const WifiTypes::Mode &mode, ErrorType &error) {
+        error = ErrorType::Success;
+
+        switch (mode) {
+            case WifiTypes::Mode::AccessPoint:
+                return SL_WLAN_PROVISIONING_CMD_START_MODE_AP;
+            case WifiTypes::Mode::AccessPointAndStation:
+                return SL_WLAN_PROVISIONING_CMD_START_MODE_APSC;
+            case WifiTypes::Mode::Station:
+                return SL_WLAN_PROVISIONING_CMD_START_MODE_SC;
+            default:
+                error = ErrorType::InvalidParameter;
+                return SL_WLAN_PROVISIONING_CMD_START_MODE_APSC_EXTERNAL_CONFIGURATION;
         }
     }
 };
