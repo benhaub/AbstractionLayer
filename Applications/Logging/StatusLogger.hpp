@@ -53,7 +53,7 @@ class StatusLogger {
     StatusLogger(Seconds interval) {
         ErrorType error = ErrorType::Failure;
         if (ErrorType::Success == (error = OperatingSystem::Instance().createTimer(_logTimer, interval*1000, true, std::bind(&StatusLogger::timerElapsed, this)))) {
-            if (ErrorType::Success != (error = OperatingSystem::Instance().startTimer(_logTimer, 0))) {
+            if (ErrorType::Success == (error = OperatingSystem::Instance().startTimer(_logTimer, 0))) {
                 _interval = interval;
             }
             else {
