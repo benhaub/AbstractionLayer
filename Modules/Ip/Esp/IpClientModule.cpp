@@ -222,14 +222,14 @@ ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, con
 
         assert(nullptr != callback);
 
-        if (nullptr == data.get()) {
+        if (nullptr != data.get()) {
+            error = network().txBlocking(*data, _socket, timeout);
             callback(error, data->size());
-            return ErrorType::NoData;
         }
-
-        error = network().txBlocking(*data, _socket, timeout);
-
-        callback(error, data->size());
+        else {
+            error = ErrorType::NoData;
+            callback(error, 0);
+        }
 
         return error;
     };
