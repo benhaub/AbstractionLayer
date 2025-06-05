@@ -13,10 +13,8 @@
 #include "Error.hpp"
 #include "Types.hpp"
 //C++
-#include <vector>
-#include <tuple>
+#include <array>
 #include <functional>
-#include <cassert>
 #include <atomic>
 
 /**

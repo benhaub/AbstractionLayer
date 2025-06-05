@@ -10,6 +10,8 @@
 
 //AbstractionLayer
 #include "IcCommunicationProtocol.hpp"
+//C++
+#include <cassert>
 
 /**
  * @namespace I2cTypes

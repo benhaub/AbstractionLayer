@@ -11,9 +11,9 @@
 
 //AbstractionLayer
 #include "EventQueue.hpp"
-#include "Math.hpp"
 //C++
 #include <atomic>
+#include <cassert>
 
 /**
  * @namespace SignalsAndSlots

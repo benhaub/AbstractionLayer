@@ -9,6 +9,8 @@
 
 //AbstractionLayer
 #include "IcCommunicationProtocol.hpp"
+//C++
+#include <cassert>
 
 /**
  * @class RtcAbstraction

@@ -1,10 +1,6 @@
 //AbsractionLayer
 #include "EventQueue.hpp"
 #include "OperatingSystemModule.hpp"
-#include "ProcessorModule.hpp"
-#include "Math.hpp"
-//C++
-#include <cstring>
 
 EventQueue::EventQueue() {
     //If the optimizations are disabled, the thread is not known to the OperatingSystem. It only knows about threads that it explicitely creates.
