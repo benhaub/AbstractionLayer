@@ -207,49 +207,44 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
     ErrorType error = ErrorType::Timeout;
     ssize_t bytesReceived = 0;
 
+    Microseconds tvUsec = timeout * 1000;
+    struct timeval timeoutval;
+    if (tvUsec > std::numeric_limits<decltype(timeoutval.tv_usec)>::max()) {
+        PLT_LOGW(TAG, "Truncating microseconds because it is bigger than the type used by this platform.");
+        tvUsec = std::numeric_limits<decltype(timeoutval.tv_usec)>::max();
+    }
+    //There is some a limit on the amount of usec's that can be used for Darwin but the limit is not stated, so try to use seconds if possible
+    if (timeout >= 1000) {
+        timeoutval.tv_sec = timeout / 1000;
+        timeoutval.tv_usec = 0;
+    }
+    else {
+        timeoutval.tv_sec = 0;
+        timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
+    }
+
     fd_set readfds;
 
     FD_ZERO(&readfds);
     FD_SET(socket, &readfds);
 
-    //Wait for input from the socket until the timeout
-    Ticks startTime;
-    OperatingSystem::Instance().getSystemTime(startTime);
-    Ticks currentTime = startTime;
-    Ticks timeoutTicks;
-    OperatingSystem::Instance().millisecondsToTicks(timeout, timeoutTicks);
-    Ticks timeoutTime = currentTime + timeoutTicks;
-    //Handle rollover
-    Ticks rolloverCompensation = 0;
-    if (timeoutTime < currentTime) {
-        rolloverCompensation = std::numeric_limits<Ticks>::max() - currentTime + 1;
+    int ret;
+    ret = select(socket + 1, &readfds, NULL, NULL, &timeoutval);
+    if (ret < 0) {
+        error = fromPlatformError(errno);
     }
-
-    while (currentTime + rolloverCompensation <= timeoutTime + rolloverCompensation) {
-        int ret;
-        ret = select(socket + 1, &readfds, NULL, NULL, NULL);
-        if (ret < 0) {
-            frameBuffer.resize(0);
+    else if (FD_ISSET(socket, &readfds)) {
+        if (-1 == (bytesReceived = recv(socket, frameBuffer.data(), frameBuffer.size(), 0))) {
             error = fromPlatformError(errno);
         }
-        else if (FD_ISSET(socket, &readfds)) {
-            if (-1 == (bytesReceived = recv(socket, frameBuffer.data(), frameBuffer.size(), 0))) {
-                frameBuffer.resize(0);
-                error = fromPlatformError(errno);
-            }
-            else if (0 == bytesReceived) {
-                //recv returns 0 if the connection is closed.
-                frameBuffer.resize(0);
-                error = ErrorType::PrerequisitesNotMet;
-            }
-            else {
-                frameBuffer.resize(bytesReceived);
-                error = ErrorType::Success;
-                break;
-            }
+        else if (0 == bytesReceived) {
+            //recv returns 0 if the connection is closed.
+            error = ErrorType::PrerequisitesNotMet;
         }
-
-        OperatingSystem::Instance().getSystemTick(currentTime);
+        else {
+            frameBuffer.resize(bytesReceived);
+            error = ErrorType::Success;
+        }
     }
 
     return error;
