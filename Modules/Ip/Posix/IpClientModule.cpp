@@ -52,6 +52,17 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
             return callbackError;
         }
 
+        //If we get disconnected from the cloud, tell the OS not to signal us with SIGPIPE
+        int one = 1;
+        if (setsockopt(_socket, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0) {
+            PLT_LOGW(TAG, "couldn't set socket to not signal us with SIGPIPE");
+            close(_socket);
+            callbackError = ErrorType::Failure;
+            doneConnecting = true;
+            _status.connected = false;
+            return callbackError;
+        }
+
         if (-1 == connect(_socket, (struct sockaddr *)&dest_ip, sizeof(dest_ip))) {
             PLT_LOGW(TAG, "couldn't connect to %s (%s)", hostname.data(), inet_ntoa(*(struct in_addr *)hent->h_addr_list[0]));
             close(_socket);
