@@ -131,7 +131,7 @@ class CommandQueue {
     const T &dataConst() const { return _data; }
     /// @brief Get the status as a constant reference
     const CommandQueueTypes::Status &status() const {
-        _Status.commandsQueued = _Commands.size();
+        _Status.commandsQueued = _CommandsQueued.load();
         return _Status;
     }
 
