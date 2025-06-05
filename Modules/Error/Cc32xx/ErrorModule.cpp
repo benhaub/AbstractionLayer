@@ -16,7 +16,7 @@ ErrorType fromPlatformError(int32_t err) {
     if (err == Power_SOK || err == PWM_STATUS_SUCCESS || err == SL_FS_OK) {
         return ErrorType::Success;
     }
-    else if (err == Power_EFAIL || err == PWM_STATUS_ERROR) {
+    else if (err == SL_ERROR_NET_APP_DNS_ERROR || err == Power_EFAIL || err == PWM_STATUS_ERROR) {
         return ErrorType::Failure;
     }
     else if (err == Power_EINVALIDINPUT || err == Power_EINVALIDPOINTER || err == PWM_STATUS_UNDEFINEDCMD || err == PWM_STATUS_INVALID_DUTY ||
