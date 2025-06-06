@@ -145,9 +145,7 @@ namespace SignalsAndSlots {
 
                     EventQueue::Event event = EventQueue::Event(std::bind(callback, std::get<IndexSequence>(params)...));
                     ErrorType addEventError = eventQueue.addEvent(event);
-                    if (ErrorType::Success != addEventError) {
-                        error = addEventError;
-                    }
+                    error = addEventError;
                 }
             }
 
