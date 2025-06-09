@@ -10,15 +10,28 @@
 
 //AbstractionLayer
 #include "IpClientModule.hpp"
+#include "IpCellularClientModule.hpp"
 #include "IpServerModule.hpp"
+#include "IpCellularServerModule.hpp"
 #include "HttpServerModule.hpp"
 #include "Log.hpp"
 #include "NetworkFactory.hpp"
 //C++
 #include <cassert>
+#include <concepts>
 
 ///@brief The tag used for logging
 static constexpr char IpFactoryTag[] = "IpFactoryTag";
+
+/// @concept IpClientFactoryRequirements
+/// @brief A concept that checks if a type is derived from IpClientAbstraction
+template<typename T>
+concept IpClientFactoryRequirements = std::derived_from<T, IpClientAbstraction>;
+
+/// @concept IpServerFactoryRequirements
+/// @brief A concept that checks if a type is derived from IpServerAbstraction
+template<typename T>
+concept IpServerFactoryRequirements = std::derived_from<T, IpServerAbstraction>;
 
 /**
  * @namespace IpFactoryTypes
@@ -49,23 +62,21 @@ namespace IpFactory {
      * @param error
      * @sa ErrorType
      */
-    inline std::unique_ptr<IpClientAbstraction> ClientFactory(NetworkTypes::Technology technology, IpFactory::Protocol protocol, ErrorType &error) {
+    inline std::variant<IpClient, IpCellularClient> ClientFactory(NetworkTypes::Technology technology, IpFactory::Protocol protocol, ErrorType &error) {
+        static_assert(IpClientFactoryRequirements<IpClient> && IpClientFactoryRequirements<IpCellularClient>, "Variant types must be derived from IpClientAbstraction");
+
         switch (technology) {
-            case NetworkTypes::Technology::Wifi: {
-                auto client = std::make_unique<IpClient>();
-                return client;
-            }
+            case NetworkTypes::Technology::Wifi:
+                return std::variant<IpClient, IpCellularClient>(std::in_place_type<IpClient>);
             case NetworkTypes::Technology::Zigbee:
             case NetworkTypes::Technology::Ethernet:
             case NetworkTypes::Technology::Cellular:
+                return std::variant<IpClient, IpCellularClient>(std::in_place_type<IpCellularClient>);
             case NetworkTypes::Technology::Unknown:
-            default: {
-                error = ErrorType::NotSupported;
-                break;
-            }
+            default: [[unlikely]]
+                assert(false);
+                return std::variant<IpClient, IpCellularClient>(std::in_place_type<IpClient>);
         }
-
-        return std::unique_ptr<IpClientAbstraction>(nullptr);
     }
     /**
      * @brief This factory function creates an IpServerAbstraction that is compatible with the network interface selected
@@ -79,37 +90,34 @@ namespace IpFactory {
      *            in a function that dynamic_cast<>()'s the IpServerAbstraction to an HttpServer.
      * @sa https://en.wikipedia.org/wiki/SOLID
      */
-    inline std::unique_ptr<IpServerAbstraction> ServerFactory(NetworkTypes::Technology technology, IpFactory::Protocol protocol, ErrorType &error) {
-        std::unique_ptr<IpServerAbstraction> server;
+    inline std::variant<IpServer, IpCellularServer, HttpServer> ServerFactory(NetworkTypes::Technology technology, IpFactory::Protocol protocol, ErrorType &error) {
+        static_assert(IpServerFactoryRequirements<IpServer> && IpServerFactoryRequirements<IpCellularServer>, "Variant types must be derived from IpServerAbstraction");
 
         switch (technology) {
             case NetworkTypes::Technology::Wifi:
                 switch (protocol) {
                     case IpFactory::Protocol::TcpOrUdp:
-                        server = std::make_unique<IpServer>();
-                        return server;
+                        return std::variant<IpServer, IpCellularServer, HttpServer>(std::in_place_type<IpServer>);
                     case IpFactory::Protocol::Http:
-                        server = std::make_unique<HttpServer>();
-                        return server;
+                        return std::variant<IpServer, IpCellularServer, HttpServer>(std::in_place_type<HttpServer>);
                     case IpFactory::Protocol::Websocket:
                     case IpFactory::Protocol::Ftp:
                     case IpFactory::Protocol::Mqtt:
                     case IpFactory::Protocol::Modbus:
                     case IpFactory::Protocol::Unknown:
-                    default:
-                        error = ErrorType::NotSupported;
-                        break;
+                    default: [[unlikely]]
+                        assert(false);
+                        return std::variant<IpServer, IpCellularServer, HttpServer>(std::in_place_type<IpServer>);
                 }
             case NetworkTypes::Technology::Zigbee:
             case NetworkTypes::Technology::Ethernet:
             case NetworkTypes::Technology::Cellular:
+                return std::variant<IpServer, IpCellularServer, HttpServer>(std::in_place_type<IpCellularServer>);
             case NetworkTypes::Technology::Unknown:
-            default:
-                error = ErrorType::NotSupported;
-                break;
+            default: [[unlikely]]
+                assert(false);
+                return std::variant<IpServer, IpCellularServer, HttpServer>(std::in_place_type<IpServer>);
         }
-
-        return server;
     }
 }
 

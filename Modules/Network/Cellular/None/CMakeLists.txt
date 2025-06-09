@@ -8,11 +8,10 @@ OBJECT
   CellularModule.cpp
 )
 
-target_include_directories(NoneCellular INTERFACE ${CMAKE_CURRENT_LIST_DIR})
-target_include_directories(NoneCellular PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
-
-target_link_libraries(NoneCellular PRIVATE abstractionLayer)
+target_include_directories(Network INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(Network INTERFACE abstractionLayer)
 target_link_libraries(NoneCellular PRIVATE Network)
+
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE NoneCellular)
 
 target_compile_options(NoneCellular PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)

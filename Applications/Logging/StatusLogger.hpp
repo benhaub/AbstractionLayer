@@ -17,6 +17,7 @@
 #include "NetworkAbstraction.hpp"
 #include "FileSystemAbstraction.hpp"
 #include "StorageAbstraction.hpp"
+#include "CellularAbstraction.hpp"
 
 namespace {
     /**
@@ -28,6 +29,7 @@ namespace {
     template <typename Abstraction>
     concept CompatibleLoggers = requires(Abstraction abstraction) {
         std::is_base_of<IpClientAbstraction, Abstraction>::value ||
+        std::is_base_of<CellularAbstraction, Abstraction>::value ||
         std::is_base_of<IpServerAbstraction, Abstraction>::value ||
         std::is_base_of<NetworkAbstraction, Abstraction>::value ||
         std::is_base_of<OperatingSystemAbstraction, Abstraction>::value ||
@@ -119,7 +121,7 @@ class StatusLogger {
         std::tuple<std::vector<ListOfAbstractionsThatLog>...> _loggers;
     };
     /// @brief Used to toggle logging for an Abstraction
-    LoggerToggler<IpClientAbstraction *, IpServerAbstraction *, NetworkAbstraction *, FileSystemAbstraction *, OperatingSystemAbstraction *, StorageAbstraction *> _loggerToggler;
+    LoggerToggler<IpClientAbstraction *, IpServerAbstraction *, NetworkAbstraction *, CellularAbstraction *, FileSystemAbstraction *, OperatingSystemAbstraction *, StorageAbstraction *> _loggerToggler;
     /// @brief Emitted when the logging interval has elapsed
     SignalsAndSlots::Signal<> _intervalElapsed;
 

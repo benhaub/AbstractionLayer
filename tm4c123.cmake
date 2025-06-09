@@ -26,6 +26,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/OperatingSystem/Tm4c123/FreeR
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Network/Wifi/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Network/Cellular/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Ip/None)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Ip/NoneCellModem)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Logging/Tm4c123)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Storage/None)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Error/None)
