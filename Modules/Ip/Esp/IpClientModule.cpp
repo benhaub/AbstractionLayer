@@ -84,14 +84,16 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
                                 PLT_LOGE(TAG, "Error when getting socket error using getsockopt() %s", strerror(errno));
                                 callbackError = ErrorType::Failure;
                             }
-                            if (sockerr) {
+                            else if (sockerr) {
                                 PLT_LOGE(TAG, "Connection error %d", sockerr);
                                 callbackError = ErrorType::Failure;
                             }
+                            else {
+                                sock = _socket;
+                                callbackError = ErrorType::Success;
+                            }
                         }
 
-                        sock = _socket;
-                        callbackError = ErrorType::Success;
                     }
                 }
             }

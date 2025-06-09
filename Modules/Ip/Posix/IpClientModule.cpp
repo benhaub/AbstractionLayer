@@ -78,10 +78,12 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
                                 PLT_LOGW(TAG, "Connection error %d", sockerr);
                                 callbackError = ErrorType::Failure;
                             }
+                            else {
+                                sock = _socket;
+                                callbackError = ErrorType::Success;
+                            }
                         }
 
-                        sock = _socket;
-                        callbackError = ErrorType::Success;
                     }
                 }
             }
