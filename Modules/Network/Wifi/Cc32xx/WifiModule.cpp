@@ -3,6 +3,8 @@
 #include "OperatingSystemModule.hpp"
 #include "Log.hpp"
 #include "SpiModule.hpp"
+//TI
+#include "ti/drivers/net/wifi/slnetifwifi.h"
 
 Wifi::Wifi() : WifiAbstraction() {
     Spi spi;
