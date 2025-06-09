@@ -74,7 +74,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
                                 PLT_LOGW(TAG, "Error when getting socket error using getsockopt() %s", strerror(errno));
                                 callbackError = ErrorType::Failure;
                             }
-                            if (sockerr) {
+                            else if (sockerr) {
                                 PLT_LOGW(TAG, "Connection error %d", sockerr);
                                 callbackError = ErrorType::Failure;
                             }
