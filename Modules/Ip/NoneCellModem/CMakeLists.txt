@@ -13,6 +13,7 @@ target_include_directories(IpClient INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(IpClient INTERFACE abstractionLayer)
 target_link_libraries(NoneIpCellularClient PRIVATE IpClient)
+target_link_libraries(NoneIpCellularClient PRIVATE Network)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE NoneIpCellularClient)
 
 #Server
@@ -25,6 +26,7 @@ target_include_directories(IpServer INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(IpServer INTERFACE abstractionLayer)
 target_link_libraries(NoneIpCellularServer PRIVATE IpServer)
+target_link_libraries(NoneIpCellularServer PRIVATE Network)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE NoneIpCellularServer)
 
 target_compile_options(NoneIpCellularServer PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
