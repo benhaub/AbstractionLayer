@@ -16,14 +16,15 @@ ErrorType fromPlatformError(int32_t err) {
     if (err == Power_SOK || err == PWM_STATUS_SUCCESS || err == SL_FS_OK) {
         return ErrorType::Success;
     }
-    else if (err == SL_ERROR_NET_APP_DNS_ERROR || err == Power_EFAIL || err == PWM_STATUS_ERROR) {
+    else if (err == SL_ERROR_NET_APP_DNS_ERROR || err == SL_ERROR_NET_APP_DNS_QUERY_NO_RESPONSE || err == Power_EFAIL || err == PWM_STATUS_ERROR) {
         return ErrorType::Failure;
     }
     else if (err == Power_EINVALIDINPUT || err == Power_EINVALIDPOINTER || err == PWM_STATUS_UNDEFINEDCMD || err == PWM_STATUS_INVALID_DUTY ||
              err == SL_ERROR_FS_INVALID_HANDLE) {
         return ErrorType::InvalidParameter;
     }
-    else if (err == Power_ECHANGE_NOT_ALLOWED || err == Power_EBUSY || err == SL_RET_CODE_PROVISIONING_IN_PROGRESS || err == SL_RET_CODE_DEV_NOT_STARTED) {
+    else if (err == Power_ECHANGE_NOT_ALLOWED || err == Power_EBUSY || err == SL_RET_CODE_PROVISIONING_IN_PROGRESS || err == SL_RET_CODE_DEV_NOT_STARTED ||
+             err == SL_ERROR_NET_APP_DNS_NO_SERVER) {
         return ErrorType::PrerequisitesNotMet;
     }
     else if (err == SL_ERROR_ROLE_STA_ERR || err == SL_ERROR_ROLE_AP_ERR || err == SL_ERROR_ROLE_P2P_ERR || err == SL_ERROR_CALIB_FAIL || err == SL_ERROR_FS_CORRUPTED_ERR || err == SL_ERROR_FS_ALERT_ERR ||
@@ -36,7 +37,7 @@ ErrorType fromPlatformError(int32_t err) {
     else if (err == ENOSPC || err == SL_ERROR_BSD_ENOMEM) {
         return ErrorType::NoMemory;
     }
-    else if (err == EINVAL) {
+    else if (err == EINVAL || SL_ERROR_WLAN_PROVISIONING_ABORT_INVALID_PARAM) {
         return ErrorType::InvalidParameter;
     }
     else if (err == SL_ERROR_FS_FILE_ALREADY_EXISTS) {
@@ -44,6 +45,9 @@ ErrorType fromPlatformError(int32_t err) {
     }
     else if (err == SL_ERROR_FS_FILE_NOT_EXISTS) {
         return ErrorType::FileNotFound;
+    }
+    else if (SL_ERROR_BSD_EAGAIN) {
+        return ErrorType::Timeout;
     }
     else {
         PLT_LOGW("ErrnoError", "Got unhandled error code %d", err);

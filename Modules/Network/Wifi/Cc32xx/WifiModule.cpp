@@ -121,29 +121,86 @@ ErrorType Wifi::networkUp() {
 }
 
 ErrorType Wifi::networkDown() {
-    signed short result;
-    result = sl_WlanProvisioning(SL_WLAN_PROVISIONING_CMD_STOP, 0xFF, 0, NULL, 0x0);
-    if (0 == result) {
-        _status.isUp = false;
-    }
+    //Don't check for errors. We may not have connected to an access point.
+    sl_WlanDisconnect();
 
-    return fromPlatformError(result);
+    _status.isUp = false;
+
+    return ErrorType::Success;
 }
 
 ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) {
-    return ErrorType::NotImplemented;
+    Bytes sent = 0;
+    Bytes remaining = frame.size();
+
+    while (remaining > 0) {
+        ssize_t bytesWritten = SlNetIfWifi_send(socket, nullptr, &frame.at(sent), remaining, 0);
+        if (bytesWritten < 0) {
+            return fromPlatformError(errno);
+        }
+
+        sent += bytesWritten;
+        remaining -= bytesWritten;
+    }
+
+    return ErrorType::Success;
 }
 
 ErrorType Wifi::txNonBlocking(const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    return ErrorType::NotImplemented;
+    return ErrorType::NotAvailable;
 }
 
 ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
-    return ErrorType::NotImplemented;
+    ErrorType error = ErrorType::Timeout;
+    ssize_t bytesReceived = 0;
+
+    Microseconds tvUsec = timeout * 1000;
+    SlNetSock_Timeval_t timeval;
+#pragma GCC diagnostic push
+//Comparing integers of different signedness is the entire point of this code.
+#pragma GCC diagnostic ignored "-Wsign-compare"
+    if (tvUsec > std::numeric_limits<decltype(timeval.tv_usec)>::max()) {
+        PLT_LOGW(TAG, "Truncating microseconds because it is bigger than the type used by this platform.");
+        tvUsec = std::numeric_limits<decltype(timeval.tv_usec)>::max();
+    }
+#pragma GCC diagnostic pop
+    if (timeout >= 1000) {
+        timeval.tv_sec = timeout / 1000;
+        timeval.tv_usec = 0;
+    }
+    else {
+        timeval.tv_sec = 0;
+        timeval.tv_usec = static_cast<decltype(timeval.tv_usec)>(tvUsec);
+    }
+
+    SlNetSock_SdSet_t readSds;
+    SlNetSock_sdsClrAll(&readSds);
+    SlNetSock_sdsSet(socket, &readSds);
+
+    const int32_t ret = SlNetIfWifi_select(nullptr, socket+1, &readSds, nullptr, nullptr, &timeval);
+    if (ret < 0) {
+        return fromPlatformError(errno);
+    }
+
+    if (SlNetSock_sdsIsSet(socket, &readSds)) {
+        if ((bytesReceived = SlNetIfWifi_recv(socket, nullptr, frameBuffer.data(), frameBuffer.size(), 0)) < 0) {
+            error = fromPlatformError(errno);
+        }
+        else if (0 == bytesReceived) {
+            //recv returns 0 if the connection is closed.
+            error = ErrorType::PrerequisitesNotMet;
+        }
+        else {
+            frameBuffer.resize(bytesReceived);
+            error = ErrorType::Success;
+        }
+    }
+
+    return error;
 }
 
 ErrorType Wifi::rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) {
-    return ErrorType::NotImplemented;
+    return ErrorType::NotAvailable;
 }
 
 ErrorType Wifi::getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) {
@@ -279,7 +336,7 @@ void SimpleLinkSockEventHandler(SlSockEvent_t *pSock) {
 void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent) {
     switch(pWlanEvent->Id) {
         case SL_WLAN_EVENT_CONNECT:
-            PLT_LOGI(WifiAbstraction::TAG, " [Event] STA connected to AP - BSSID:%.2x:%.2x:%.2x:%.2x:%.2x:%.2x, ",
+            PLT_LOGI(WifiAbstraction::TAG, "STA connected to AP. <BSSID:%.2x:%.2x:%.2x:%.2x:%.2x:%.2x>,",
                 pWlanEvent->Data.Connect.Bssid[0],
                 pWlanEvent->Data.Connect.Bssid[1],
                 pWlanEvent->Data.Connect.Bssid[2],
@@ -292,14 +349,13 @@ void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent) {
             break;
 
         case SL_WLAN_EVENT_DISCONNECT:
-            PLT_LOGI(WifiAbstraction::TAG, " [Event] STA disconnected from AP (Reason Code = %d)",
+            PLT_LOGI(WifiAbstraction::TAG, "STA disconnected from AP. <Reason Code:%d>",
                         pWlanEvent->Data.Disconnect.ReasonCode);
             break;
 
         case SL_WLAN_EVENT_STA_ADDED:
             PLT_LOGI(WifiAbstraction::TAG, 
-                " [Event] New STA Added (MAC Address:"
-                " %.2x:%.2x:%.2x:%.2x:%.2x)",
+                "New STA Added. <MAC Address:%.2x:%.2x:%.2x:%.2x:%.2x>",
                 pWlanEvent->Data.STAAdded.Mac[0],
                 pWlanEvent->Data.STAAdded.Mac[1],
                 pWlanEvent->Data.STAAdded.Mac[2],
@@ -310,7 +366,7 @@ void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent) {
 
         case SL_WLAN_EVENT_STA_REMOVED:
             PLT_LOGI(WifiAbstraction::TAG, 
-                " [Event] STA Removed (MAC Address: %.2x:%.2x:%.2x:%.2x:%.2x)",
+                "STA Removed <MAC Address:%.2x:%.2x:%.2x:%.2x:%.2x>",
                 pWlanEvent->Data.STAAdded.Mac[0],
                 pWlanEvent->Data.STAAdded.Mac[1],
                 pWlanEvent->Data.STAAdded.Mac[2],
@@ -320,10 +376,10 @@ void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent) {
             break;
 
         case SL_WLAN_EVENT_PROVISIONING_PROFILE_ADDED:
-            PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile Added: SSID: %s",
+            PLT_LOGI(WifiAbstraction::TAG, "Profile Added <SSID:%s>",
                     pWlanEvent->Data.ProvisioningProfileAdded.Ssid);
             if(pWlanEvent->Data.ProvisioningProfileAdded.ReservedLen > 0) {
-                PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile Added: PrivateToken:%s",
+                PLT_LOGI(WifiAbstraction::TAG, "Profile Added <PrivateToken:%s>",
                         pWlanEvent->Data.ProvisioningProfileAdded.Reserved);
             }
             break;
@@ -336,72 +392,68 @@ void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent) {
                 case SL_WLAN_PROVISIONING_ERROR_ABORT_HTTP_SERVER_DISABLED:
                 case SL_WLAN_PROVISIONING_ERROR_ABORT_PROFILE_LIST_FULL:
                 case SL_WLAN_PROVISIONING_ERROR_ABORT_PROVISIONING_ALREADY_STARTED:
-                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Provisioning Error status=%d",
+                    PLT_LOGI(WifiAbstraction::TAG, "Provisioning Error <status=%d>",
                                 pWlanEvent->Data.ProvisioningStatus.ProvisioningStatus);
                     break;
 
                 case SL_WLAN_PROVISIONING_CONFIRMATION_STATUS_FAIL_NETWORK_NOT_FOUND:
-                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile confirmation failed: "
-                        "network not found");
+                    PLT_LOGW(WifiAbstraction::TAG, "Profile confirmation failed. network not found");
                     break;
 
                 case SL_WLAN_PROVISIONING_CONFIRMATION_STATUS_FAIL_CONNECTION_FAILED:
-                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile confirmation failed:"
-                        " Connection failed");
+                    PLT_LOGW(WifiAbstraction::TAG, "Profile confirmation failed. Connection failed");
                     break;
 
                 case
                     SL_WLAN_PROVISIONING_CONFIRMATION_STATUS_CONNECTION_SUCCESS_IP_NOT_ACQUIRED:
-                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile confirmation failed:"
-                        " IP address not acquired");
+                    PLT_LOGW(WifiAbstraction::TAG, "Profile confirmation failed. IP address not acquired");
                     break;
 
                 case SL_WLAN_PROVISIONING_CONFIRMATION_STATUS_SUCCESS_FEEDBACK_FAILED:
-                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile Confirmation failed "
-                        "(Connection Success, feedback to Smartphone app failed)");
+                    PLT_LOGW(WifiAbstraction::TAG, "Profile Confirmation failed (Connection Success, feedback to Smartphone app failed).");
                     break;
 
                 case SL_WLAN_PROVISIONING_CONFIRMATION_STATUS_SUCCESS:
-                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile Confirmation Success!");
+                    PLT_LOGI(WifiAbstraction::TAG, "Profile Confirmation Success!");
                     break;
 
                 case SL_WLAN_PROVISIONING_AUTO_STARTED:
-                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Auto-Provisioning Started");
+                    PLT_LOGI(WifiAbstraction::TAG, "Auto-Provisioning Started");
                     break;
 
                 case SL_WLAN_PROVISIONING_STOPPED:
-                    PLT_LOGI(WifiAbstraction::TAG, " Provisioning stopped <role:%d>", pWlanEvent->Data.ProvisioningStatus.Role);
+                    PLT_LOGI(WifiAbstraction::TAG, "Provisioning stopped <role:%d>", pWlanEvent->Data.ProvisioningStatus.Role);
                     if(ROLE_STA == pWlanEvent->Data.ProvisioningStatus.Role) {
-                        PLT_LOGI(WifiAbstraction::TAG, "WLAN Status: %s",pWlanEvent->Data.ProvisioningStatus.WlanStatus);
+                        PLT_LOGI(WifiAbstraction::TAG, "WLAN <Status:%s>",pWlanEvent->Data.ProvisioningStatus.WlanStatus);
 
                         if(SL_WLAN_STATUS_CONNECTED == pWlanEvent->Data.ProvisioningStatus.WlanStatus) {
-                            PLT_LOGI(WifiAbstraction::TAG, "Connected to SSID: %s", pWlanEvent->Data.ProvisioningStatus.Ssid);
+                            PLT_LOGI(WifiAbstraction::TAG, "Connected <SSID:%s>", pWlanEvent->Data.ProvisioningStatus.Ssid);
                         }
                     }
                     break;
 
                 case SL_WLAN_PROVISIONING_SMART_CONFIG_SYNCED:
-                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Smart Config Synced!");
+                    PLT_LOGI(WifiAbstraction::TAG, "Smart Config Synced!");
                     break;
 
                 case SL_WLAN_PROVISIONING_SMART_CONFIG_SYNC_TIMEOUT:
-                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Smart Config Sync Timeout!");
+                    PLT_LOGW(WifiAbstraction::TAG, "Smart Config Sync Timeout!");
                     break;
 
                 case SL_WLAN_PROVISIONING_CONFIRMATION_WLAN_CONNECT:
-                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Profile confirmation: WLAN Connected!");
+                    PLT_LOGI(WifiAbstraction::TAG, "Profile confirmation: WLAN Connected!");
                     break;
 
                 case SL_WLAN_PROVISIONING_CONFIRMATION_IP_ACQUIRED:
-                    PLT_LOGI(WifiAbstraction::TAG, "[Provisioning] Profile confirmation: IP Acquired!");
+                    PLT_LOGI(WifiAbstraction::TAG, "Profile confirmation: IP Acquired!");
                     break;
 
                 case SL_WLAN_PROVISIONING_EXTERNAL_CONFIGURATION_READY:
-                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] External configuration is ready! ");
+                    PLT_LOGI(WifiAbstraction::TAG, "External configuration is ready! ");
                     break;
 
                 default:
-                    PLT_LOGI(WifiAbstraction::TAG, " [Provisioning] Unknown Provisioning Status: %d",
+                    PLT_LOGW(WifiAbstraction::TAG, "Unknown Provisioning <Status:%d>",
                         pWlanEvent->Data.ProvisioningStatus.ProvisioningStatus);
                     break;
             }
@@ -409,7 +461,7 @@ void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent) {
             break;
         }
         default:
-            PLT_LOGI(WifiAbstraction::TAG, " [Event] - WlanEventHandler has received %d !!!!",
+            PLT_LOGE(WifiAbstraction::TAG, "WlanEventHandler has received %d !!!!",
             pWlanEvent->Id);
             break;
     }
