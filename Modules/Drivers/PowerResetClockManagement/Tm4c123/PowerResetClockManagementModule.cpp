@@ -69,7 +69,7 @@ uint32_t PowerResetClockManagement::toTm4c123SysCtlClockFrequency(const Hertz fr
 }
 
 uint32_t PowerResetClockManagement::toTm4c123SysCtlExternalClockFrequency(const Hertz externalCrystalFrequency, const bool usePll) {
-    const float tolerance = 0.01f;
+    constexpr float tolerance = 0.01f;
     if (!usePll) {
         if (withinError(static_cast<float>(externalCrystalFrequency), 4E6f, tolerance)) {
             return SYSCTL_XTAL_4MHZ;

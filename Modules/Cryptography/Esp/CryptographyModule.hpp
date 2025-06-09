@@ -1,7 +1,6 @@
 #ifndef __CRYPTOGRAPHY_MODULE_HPP__
 #define __CRYPTOGRAPHY_MODULE_HPP__
 
-//Foundation
 #include "CryptographyAbstraction.hpp"
 
 class Cryptography final : public CryptographyAbstraction {
