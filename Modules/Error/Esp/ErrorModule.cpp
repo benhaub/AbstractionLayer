@@ -36,6 +36,7 @@ ErrorType fromPlatformError(int32_t err) {
         case ESP_ERR_NVS_INVALID_LENGTH:
         case ESP_ERR_NVS_PART_NOT_FOUND:
         case EBADF:
+        case EINVAL:
             return ErrorType::InvalidParameter;
         case ESP_ERR_NVS_NOT_FOUND:
             return ErrorType::FileNotFound;
