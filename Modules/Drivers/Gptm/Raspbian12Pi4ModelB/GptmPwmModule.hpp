@@ -6,7 +6,7 @@
 class GptmPwmModule final : public GptmPwmAbstraction {
 
     public:
-    GptmPwmModule() : GptmPwmAbstraction() {}
+    GptmPwmModule();
 
     ErrorType init() override;
     ErrorType deinit() override;
