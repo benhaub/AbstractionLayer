@@ -61,23 +61,21 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     ErrorType enableAllInterrupts() override;
 
     int toPosixPriority(OperatingSystemTypes::Priority priority) {
-        assert(sched_get_priority_max(SCHED_FIFO) / 2 > 4);
-
         switch (priority) {
             case OperatingSystemTypes::Priority::Highest:
-                return sched_get_priority_max(SCHED_FIFO) / 2;
+                return sched_get_priority_max(SCHED_FIFO);
                 break;
             case OperatingSystemTypes::Priority::High:
-                return (sched_get_priority_max(SCHED_FIFO) / 2) - 1;
+                return (sched_get_priority_max(SCHED_FIFO) * 0.8f);
                 break;
             case OperatingSystemTypes::Priority::Normal:
-                return (sched_get_priority_max(SCHED_FIFO) / 2) - 2;
+                return (sched_get_priority_max(SCHED_FIFO) * 0.6f);
                 break;
             case OperatingSystemTypes::Priority::Low:
-                return (sched_get_priority_max(SCHED_FIFO) / 2) - 3;
+                return (sched_get_priority_max(SCHED_FIFO) * 0.4f);
                 break;
             case OperatingSystemTypes::Priority::Lowest:
-                return (sched_get_priority_max(SCHED_FIFO) / 2) - 4;
+                return (sched_get_priority_max(SCHED_FIFO) * 0.2f);
                 break;
             default:
                 assert(false);

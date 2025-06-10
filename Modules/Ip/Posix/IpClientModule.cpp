@@ -83,9 +83,20 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
                                 callbackError = ErrorType::Success;
                             }
                         }
-
+                    }
+                    else {
+                        PLT_LOGW(TAG, "Failed to connect: %s", strerror(errno));
+                        callbackError = fromPlatformError(errno);
                     }
                 }
+                else {
+                    PLT_LOGW(TAG, "Failed to create socket: %s", strerror(errno));
+                    callbackError = fromPlatformError(errno);
+                }
+            }
+            else {
+                PLT_LOGI(TAG, "Failed to get host by name: %s", strerror(errno));
+                callbackError = fromPlatformError(errno);
             }
         }
         else {

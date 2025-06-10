@@ -69,19 +69,17 @@ class OperatingSystem final: public OperatingSystemAbstraction, public Global<Op
     void callTimerCallback(TimerHandle_t timer);
 
     size_t toCc32xxPriority(OperatingSystemTypes::Priority priority) {
-        static_assert(configMAX_PRIORITIES >= 5);
-
         switch (priority) {
             case OperatingSystemTypes::Priority::Highest:
                 return configMAX_PRIORITIES - 1;
             case OperatingSystemTypes::Priority::High:
-                return configMAX_PRIORITIES - 2;
+                return configMAX_PRIORITIES * 0.8f;
             case OperatingSystemTypes::Priority::Normal:
-                return configMAX_PRIORITIES - 3;
+                return configMAX_PRIORITIES * 0.6f;
             case OperatingSystemTypes::Priority::Low:
-                return configMAX_PRIORITIES - 4;
+                return configMAX_PRIORITIES * 0.4f;
             case OperatingSystemTypes::Priority::Lowest:
-                return configMAX_PRIORITIES - 5;
+                return configMAX_PRIORITIES * 0.2f;
             default:
                 assert(false);
         }

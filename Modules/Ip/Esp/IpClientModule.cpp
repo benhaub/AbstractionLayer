@@ -30,13 +30,22 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
     auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
         disconnect();
 
-        if (version == IpClientTypes::Version::IPv4) {
+       if (version == IpClientTypes::Version::IPv4) {
             ip_addr_t ip_addr;
             ip_addr.type = IPADDR_TYPE_V4;
-            uint8_t dns_server_ip[] = {8,8,8,8};
-            IP4_ADDR(&ip_addr.u_addr.ip4, dns_server_ip[0], dns_server_ip[1], dns_server_ip[2], dns_server_ip[3]);
+            
+            uint8_t google_dns_server_ip[] = {8,8,8,8};
+            IP4_ADDR(&ip_addr.u_addr.ip4, google_dns_server_ip[0], google_dns_server_ip[1], google_dns_server_ip[2], google_dns_server_ip[3]);
             dns_setserver(0, &ip_addr);
             struct hostent *hent = gethostbyname(hostname.data());
+            
+            if (NULL == hent) {
+                uint8_t cloudflare_dns_server_ip[] = {1,1,1,1};
+                IP4_ADDR(&ip_addr.u_addr.ip4, cloudflare_dns_server_ip[0], cloudflare_dns_server_ip[1], cloudflare_dns_server_ip[2], cloudflare_dns_server_ip[3]);
+                dns_setserver(0, &ip_addr);
+                hent = gethostbyname(hostname.data());
+            }
+
             if (NULL != hent) {
                 struct in_addr **addr_list = (struct in_addr **)hent->h_addr_list;
                 struct sockaddr_in dest_ip;
@@ -93,9 +102,20 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
                                 callbackError = ErrorType::Success;
                             }
                         }
-
-                    }
+                   }
+                   else {
+                        PLT_LOGW(TAG, "Failed to connect: %s", strerror(errno));
+                        callbackError = fromPlatformError(errno);
+                   }
                 }
+                else {
+                    PLT_LOGW(TAG, "Failed to create socket: %s", strerror(errno));
+                    callbackError = fromPlatformError(errno);
+                }
+            }
+            else {
+                PLT_LOGW(TAG, "Failed to get host by name: %s", strerror(errno));
+                callbackError = fromPlatformError(errno);
             }
         }
         else {
