@@ -10,7 +10,12 @@
 //Modules
 #include "LoggerModule.hpp"
 
-#if CONFIG_LOG_COLORS
+//Use the menuconfig to enable/disable colors
+#ifndef __XTENSA__
+#define CONFIG_LOG_COLORS
+#endif
+
+#ifdef CONFIG_LOG_COLORS
 #define LOG_COLOR_BLACK   "30"
 #define LOG_COLOR_RED     "31"
 #define LOG_COLOR_GREEN   "32"
@@ -53,7 +58,7 @@
  * @param letter The letter that represents the type of the log (warning, info, debug, etc.)
  * @param format The format of the log. Format is a printf-style format
  */
-#define LOG_FORMAT(letter, format)  LOG_COLOR_ ## letter #letter " %s: " format LOG_RESET_COLOR "\n"
+#define LOG_FORMAT(letter, format)  LOG_COLOR_## letter #letter " %s: " format LOG_RESET_COLOR "\n"
 
 /**
  * @def PLT_LOG_LEVEL
