@@ -194,6 +194,7 @@ ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenM
                     callbackError = Spiffs::open(path, mode, file, spiffsFile);
                     if (ErrorType::Success == callbackError) {
                         spiffsFiles[file.path] = spiffsFile;
+                        _status.openedFiles = spiffsFiles.size();
                     }
                 }
                 break;
@@ -229,7 +230,10 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
                 break;
             case FileSystemTypes::Implementation::Spiffs:
                 callbackError = Spiffs::close(file, spiffsFiles[file.path]);
-                spiffsFiles.erase(file.path);
+                if (callbackError == ErrorType::Success) {
+                    spiffsFiles.erase(file.path);
+                    _status.openedFiles = spiffsFiles.size();
+                }
                 break;
             default:
                 callbackError = ErrorType::NotSupported;

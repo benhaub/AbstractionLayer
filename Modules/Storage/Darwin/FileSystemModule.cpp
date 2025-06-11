@@ -108,6 +108,7 @@ ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenM
             }
             else {
                 callbackError = ErrorType::Success;
+                _status.openedFiles = openFiles.size();
             }
         }
 
@@ -139,6 +140,7 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
                 file.openMode = FileSystemTypes::OpenMode::Unknown;
                 file.isOpen = false;
                 openFiles.erase(file.path);
+                _status.openedFiles = openFiles.size();
             }
         }
 
