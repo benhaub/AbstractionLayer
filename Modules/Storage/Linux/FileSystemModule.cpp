@@ -10,7 +10,7 @@
 ErrorType FileSystem::mount() {
     const bool fileSystemHasNotBeenMounted = !_status.mounted;
     if (fileSystemHasNotBeenMounted) {
-        _mountPrefix.assign(_storage.rootPrefixConst() + "/");
+        _mountPrefix.assign(_storage.rootPrefix() + "/");
         _mountPrefix.append(std::string(_status.partitionName.data(), strlen(_status.partitionName.data())));
         mkdir(_mountPrefix.c_str(), S_IRWXU); 
         _status.mounted = true;
@@ -29,7 +29,7 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto maxStorageQueryCallback = [&]() -> ErrorType {
-        std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefixConst());
+        std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefix());
         size = spaceInfo.capacity;
         maxStorageQueryDone = true;
         return callbackError;
@@ -53,7 +53,7 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto availableStorageQueryCallback = [&]() -> ErrorType {
-        std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefixConst());
+        std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefix());
         size = spaceInfo.available;
         availableStorageQueryDone = true;
         return callbackError;
@@ -82,11 +82,11 @@ ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenM
     assert(path.size() > 0);
 
     auto openCallback = [&]() -> ErrorType {
-        if (_storage.statusConst().isInitialized) {
+        if (_storage.status().isInitialized) {
             if (!isOpen(file)) {
                 std::ios_base::openmode openMode = toStdOpenMode(mode, callbackError);
                 if (ErrorType::Success == callbackError) {
-                    std::string absolutePath(mountPrefixConst());
+                    std::string absolutePath(mountPrefix());
                     absolutePath.append(path);
                     openFiles[path] = std::fstream();
                     openFiles[path].open(absolutePath, openMode);
@@ -170,7 +170,7 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
 
     auto removeCallback = [&]() -> ErrorType {
         if (ErrorType::Success == (callbackError = close(file))) {
-            const std::string absolutePath = mountPrefixConst() + file.path;
+            const std::string absolutePath = mountPrefix() + file.path;
             if (0 == std::remove(absolutePath.c_str())) {
                 callbackError = ErrorType::Success;
             }

@@ -97,8 +97,8 @@ class OperatingSystemAbstraction {
     /// @brief Print that status of the operating system
     void printStatus() {
         PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time (s):%d> <Line, Line, Omit>",
-        statusConst().threadCount, statusConst().idle, statusConst().upTime);
-        for (const auto &memoryRegion : statusConst().memoryRegion) {
+        status().threadCount, status().idle, status().upTime);
+        for (const auto &memoryRegion : status().memoryRegion) {
             PLT_LOGI(TAG, "<Memory Region:%s> <Free (%%):%.1f> <Line>",
             memoryRegion.name.data(), memoryRegion.free);
         }
@@ -423,7 +423,7 @@ class OperatingSystemAbstraction {
      * @brief Get the status of the operatings system as a const reference.
      * @returns The status of the operating system.
     */
-    const OperatingSystemTypes::Status &statusConst() {
+    const OperatingSystemTypes::Status &status() {
         idlePercentage(_status.idle);
         uptime(_status.upTime);
         if (_status.memoryRegion.empty()) {

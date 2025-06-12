@@ -67,7 +67,7 @@ class IpServerAbstraction : public CommunicationProtocol {
     /// @brief Print the status if the IP server.
     void printStatus() {
         PLT_LOGI(TAG, "<IpServerStatus> <Listening:%s, Active Connections:%u> <Pie, Line>",
-            statusConst().listening ? "true" : "false", statusConst().activeConnections);
+            status().listening ? "true" : "false", status().activeConnections);
     }
 
     /**
@@ -175,7 +175,7 @@ class IpServerAbstraction : public CommunicationProtocol {
     ///@param[in] network The network abstraction to set
     ErrorType setNetwork(NetworkAbstraction &network) { _network = &network; return ErrorType::Success; }
     ///@brief Get a constant reference to the status of the server
-    const IpServerTypes::ServerStatus &statusConst() {
+    const IpServerTypes::ServerStatus &status() {
         _status.activeConnections = _connectedSockets.size();
         return _status;
     }

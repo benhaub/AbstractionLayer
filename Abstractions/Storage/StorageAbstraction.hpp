@@ -83,7 +83,7 @@ class StorageAbstraction : public EventQueue {
     /// @brief Get the storage medium
     StorageTypes::Medium medium() const { return _medium; }
     /// @brief The prefix of storage where filesystems will be mounted as a constant reference.
-    const std::string &rootPrefixConst() const { return _rootPrefix; }
+    const std::string &rootPrefix() const { return _rootPrefix; }
 
     private:
     /// @brief The storage medium.
