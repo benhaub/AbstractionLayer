@@ -149,14 +149,9 @@ ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, con
         ErrorType error = ErrorType::Failure;
 
         assert(nullptr != callback);
-
-        if (nullptr == data.get()) {
-            callback(error, data->size());
-            return ErrorType::NoData;
-        }
+        assert(nullptr != data.get())
 
         error = network().txBlocking(*data, _socket, timeout);
-
         callback(error, data->size());
 
         return error;
@@ -170,13 +165,10 @@ ErrorType IpClient::receiveNonBlocking(std::shared_ptr<std::string> buffer, cons
     auto rx = [&, callback, buffer]() -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
-        if (nullptr == buffer.get()) {
-            return ErrorType::NoData;
-        }
+        assert(nullptr != callback);
+        assert(nullptr != buffer.get())
 
         error = network().rxBlocking(*buffer, _socket, timeout);
-
-        assert(nullptr != callback);
         callback(error, buffer);
 
         return error;

@@ -135,6 +135,8 @@ ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const 
     Bytes sent = 0;
     Bytes remaining = frame.size();
 
+    assert(remaining > 0);
+
     while (remaining > 0) {
         ssize_t bytesWritten = SlNetIfWifi_send(socket, nullptr, &frame.at(sent), remaining, 0);
         if (bytesWritten < 0) {
