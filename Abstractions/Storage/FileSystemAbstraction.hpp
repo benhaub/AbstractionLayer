@@ -115,7 +115,7 @@ class FileSystemAbstraction {
      */
     void printStatus() {
         PLT_LOGI(TAG, "<FileSystem:%s> <Mounted:%s, Open Files:%u, Free (%%):%.1f> <Pie, Stairs, Line>",
-        statusConst().partitionName.data(), statusConst().mounted ? "true" : "false", statusConst().openedFiles, statusConst().freeSpace);
+        status().partitionName.data(), status().mounted ? "true" : "false", status().openedFiles, status().freeSpace);
     }
 
     /**
@@ -246,11 +246,11 @@ class FileSystemAbstraction {
     virtual ErrorType size(FileSystemTypes::File &file) = 0;
 
     /// @brief Get the mount prefix as a constant reference
-    const std::string &mountPrefixConst() const { return _mountPrefix; }
+    const std::string &mountPrefix() const { return _mountPrefix; }
     /// @brief Get the name of the file system as a constant reference
-    const char &nameConst() const { return _status.partitionName[0]; }
+    const char &name() const { return _status.partitionName[0]; }
     /// @brief Get the status of the file system as a constant reference
-    const FileSystemTypes::Status &statusConst() {
+    const FileSystemTypes::Status &status() {
         //Bytes is a uint32_t so on systems with more than 4GiB of storage, this will overflow.
         //which is why you might see percentages greater than 100%. Bytes is used a lot in the abstraction layer
         //and since the primary goal of it is to develop applications for embedded systems it's not going to be that

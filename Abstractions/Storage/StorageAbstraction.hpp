@@ -62,7 +62,7 @@ class StorageAbstraction : public EventQueue {
     /// @brief Print the status of the storage
     void printStatus() {
         PLT_LOGI(TAG, "<StorageStatus> <Initialized:%s> <Pie>",
-            statusConst().isInitialized ? "true" : "false");
+            status().isInitialized ? "true" : "false");
     }
 
     /**
@@ -79,7 +79,7 @@ class StorageAbstraction : public EventQueue {
     virtual ErrorType deinit() = 0;
 
     /// @brief Get the status of the storage as a constant reference
-    const StorageTypes::Status &statusConst() { return _status; }
+    const StorageTypes::Status &status() { return _status; }
     /// @brief Get the storage medium
     StorageTypes::Medium medium() const { return _medium; }
     /// @brief The prefix of storage where filesystems will be mounted as a constant reference.
