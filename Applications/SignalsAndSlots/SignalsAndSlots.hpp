@@ -88,6 +88,8 @@ namespace SignalsAndSlots {
                 return ErrorType::NoData;
             }
 
+            //std::index_sequence_for<T...> takes a template parameter pack T...
+            //It generates an std::index_sequence<0, 1, 2, ..., N-1>, where N is the number of types in the pack T...
             return _emit(std::forward_as_tuple(args...), std::index_sequence_for<Args...>());
         }
 
@@ -143,6 +145,7 @@ namespace SignalsAndSlots {
                     EventQueue &eventQueue = *(slot.first);
                     const std::function<ErrorType(Args...)> &callback = slot.second;
 
+                    //The pack is IndexSequence, so the expansion is std::get<0>(params), std::get<1>(params), etc.
                     EventQueue::Event event = EventQueue::Event(std::bind(callback, std::get<IndexSequence>(params)...));
                     ErrorType addEventError = eventQueue.addEvent(event);
                     error = addEventError;
