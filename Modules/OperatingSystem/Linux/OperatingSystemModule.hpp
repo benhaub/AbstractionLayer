@@ -11,12 +11,14 @@
 #include <cassert>
 #include <ctime>
 #include <map>
+#include <chrono>
 
 class OperatingSystem final : public OperatingSystemAbstraction, public Global<OperatingSystem> {
 
     public:
     OperatingSystem() : OperatingSystemAbstraction(), Global<OperatingSystem>() {
         memoryRegions(_status.memoryRegion);
+        _startTime = std::chrono::steady_clock::now();
     }
 
     ErrorType delay(const Milliseconds delay) override;
@@ -106,6 +108,8 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     std::map<std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength>, sem_t *> semaphores;
 
     bool _interruptsDisabled = false;
+
+    std::chrono::steady_clock::time_point _startTime;
 };
 
 #endif // __OPERATING_SYSTEM_HPP__

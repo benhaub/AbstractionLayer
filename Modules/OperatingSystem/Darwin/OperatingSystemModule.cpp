@@ -476,36 +476,9 @@ ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::array<char,
 }
 
 ErrorType OperatingSystem::uptime(Seconds &uptime) {
-    ErrorType error = ErrorType::Failure;
-
-    pid_t processId = getpid();
-
-    //ps will print the elapsed time in the format of HH:MM:SS. awk will convert this to a single number of seconds.
-    const std::array<char, 128> convertHHMMSSToSeconds = {"awk -F: \'{ if (NF == 2) print $1 * 60 + $2; else if (NF == 3) print $1 * 3600 + $2 * 60 + $3 }\'"};
-    std::array<char, 64 + sizeof(convertHHMMSSToSeconds)> command = {"ps -p %u -o etime | tail -1 | tr -d \" \""};
-    snprintf(command.data(), command.max_size(), "ps -p %u -o etime | tail -1 | tr -d \" \" | %s", processId, convertHHMMSSToSeconds.data());
-    std::array<char, 16> elapsedTime;
-
-    FILE* pipe = popen(command.data(), "r");
-    if (nullptr != pipe) {
-        size_t bytesRead = fread(elapsedTime.data(), sizeof(uint8_t), elapsedTime.max_size(), pipe);
-        if (feof(pipe) || bytesRead == elapsedTime.max_size()) {
-            error = ErrorType::Success;
-            for (int i = elapsedTime.max_size()-1; i >= 0; i--) {
-                if (elapsedTime[i] == '\n') {
-                    elapsedTime[i] = '\0';
-                }
-            }
-        }
-        else if (ferror(pipe)) {
-            pclose(pipe);
-            error = ErrorType::Failure;
-        }
-    }
-
-    uptime = std::strtoul(elapsedTime.data(), nullptr, 10);
-
-    return error;
+    const auto duration = std::chrono::steady_clock::now() - _startTime;
+    uptime = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::disableAllInterrupts() {
