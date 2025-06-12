@@ -22,16 +22,24 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
     ErrorType callbackError = ErrorType::Failure;
 
     auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
+        // Ensure any existing connection is properly closed
         disconnect();
         signal(SIGPIPE, SIG_IGN);
 
         if (version == IpClientTypes::Version::IPv4) {
-            struct hostent *hent = gethostbyname(hostname.data());
-            if (NULL != hent) {
-                struct in_addr **addr_list = (struct in_addr **)hent->h_addr_list;
+            struct addrinfo hints, *res;
+            memset(&hints, 0, sizeof(hints));
+            hints.ai_family = AF_INET;
+            hints.ai_socktype = toPosixSocktype(protocol);
+            
+            std::array<char, sizeof(port) * 3> portString;
+            snprintf(portString.data(), portString.size(), "%u", port);
+
+            const int status = getaddrinfo(hostname.data(), portString.data(), &hints, &res);
+            if (0 == status) {
+                struct sockaddr_in *ipv4 = (struct sockaddr_in *)res->ai_addr;
                 struct sockaddr_in dest_ip;
-                dest_ip.sin_addr.s_addr = addr_list[0]->s_addr;
-                dest_ip.sin_family = toPosixFamily(version);
+                memcpy(&dest_ip, ipv4, sizeof(dest_ip));
                 dest_ip.sin_port = htons(port);
 
                 if (-1 != (_socket = socket(toPosixFamily(version), toPosixSocktype(protocol), IPPROTO_IP))) {
@@ -93,10 +101,12 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
                     PLT_LOGW(TAG, "Failed to create socket: %s", strerror(errno));
                     callbackError = fromPlatformError(errno);
                 }
+
+                freeaddrinfo(res);
             }
             else {
-                PLT_LOGI(TAG, "Failed to get host by name: %s", strerror(errno));
-                callbackError = fromPlatformError(errno);
+                PLT_LOGW(TAG, "Failed to get address info: %s", gai_strerror(status));
+                callbackError = ErrorType::PrerequisitesNotMet;
             }
         }
         else {
