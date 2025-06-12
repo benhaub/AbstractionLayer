@@ -153,6 +153,7 @@ namespace NetworkFactory {
             assert(nullptr != wifi.get());
             assert(params.technology() == NetworkTypes::Technology::Wifi);
 
+            //TODO: Could this function go in the WifiAbstraction?
             error = WifiConfigure(*(wifi.get()), static_cast<const NetworkFactoryTypes::WifiParams &>(params));
             if (ErrorType::Success != error) {
                 const bool isCriticalError = !(ErrorType::NotAvailable == error);
