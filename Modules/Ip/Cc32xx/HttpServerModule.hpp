@@ -3,6 +3,7 @@
 
 //AbstractionLayer
 #include "HttpServerAbstraction.hpp"
+#include "IpServerModule.hpp"
 #include "OperatingSystemModule.hpp"
 //TI Drivers
 #include "ti/drivers/net/wifi/simplelink.h"
@@ -15,7 +16,7 @@ static constexpr std::array<char, OperatingSystemTypes::MaxQueueNameLength> Simp
 //on this implementation using the lower level Host Driver API.
 class HttpServer final : public HttpServerAbstraction {
     public:
-    HttpServer() : HttpServerAbstraction() {
+    HttpServer(IpServerAbstraction &ipServer) : HttpServerAbstraction(ipServer) {
         OperatingSystem::Instance().createQueue(SimpleLinkEventQueue, sizeof(SlNetAppRequest_t), 10);
     }
 
@@ -29,6 +30,8 @@ class HttpServer final : public HttpServerAbstraction {
     ErrorType receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpServerTypes::Request> buffer)> callback) override;
 
     private:
+    IpServer _ipServer;
+
     ErrorType toHttpRequest(const SlNetAppRequest_t &netAppRequest, HttpServerTypes::Request &request);
     HttpServerTypes::Version fromStringVersion(const std::string version) {
         if (std::string::npos != version.find("1.0")) {

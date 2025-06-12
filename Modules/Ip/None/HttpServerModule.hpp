@@ -7,7 +7,7 @@
 class HttpServer final : public HttpServerAbstraction {
 
     public:
-    HttpServer() : HttpServerAbstraction() {}
+    HttpServer(IpServerAbstraction &ipServer) : HttpServerAbstraction(ipServer) {}
 
     ErrorType listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) override;
     ErrorType acceptConnection(Socket &socket, const Milliseconds timeout) override;

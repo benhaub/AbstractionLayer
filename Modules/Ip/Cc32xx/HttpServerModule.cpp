@@ -5,7 +5,6 @@
 
 ErrorType HttpServer::listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) {
     //The ROM includes an HTTP server that is already listening
-    _status.listening = true;
     return ErrorType::NotAvailable;
 }
 
@@ -82,7 +81,7 @@ ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpServerTypes::Res
     };
 
     EventQueue::Event event = EventQueue::Event(std::bind(tx, data, socket, timeout));
-    return network().addEvent(event);
+    return _ipServer.network().addEvent(event);
 }
 
 ErrorType HttpServer::receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpServerTypes::Request> buffer)> callback) {

@@ -267,21 +267,47 @@ namespace HttpServerTypes {
  * @sa For other examples of this, see I2cAbstraction which adds device address and register address to the parameter list and IpServerAbstraction which adds sockets.
  * https://en.wikipedia.org/wiki/Decorator_pattern
  */
-class HttpServerAbstraction : public IpServerAbstraction {
+class HttpServerAbstraction {
 
     public:
-    HttpServerAbstraction() : IpServerAbstraction() {}
+
+    /// @brief Constructor
+    HttpServerAbstraction(IpServerAbstraction &ipServer) : _ipServer(&ipServer) {}
+    /// @brief Destructor
     virtual ~HttpServerAbstraction() = default;
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Woverloaded-virtual"
+    /// @brief Tag for logging
+    static constexpr char TAG[] = "HttpServer";
 
-    //Http servers take and and return responses and requests. If using an IpServerPointer, try casting to an HttpServer
-    ErrorType sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) override { return ErrorType::NotSupported; }
-    ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override { return ErrorType::NotSupported; }
-    ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket) override { return ErrorType::NotSupported; }
-    ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) override { return ErrorType::NotSupported; }
+    void printStatus() {
+        _ipServer->printStatus();
+    }
 
+    /**
+     * @brief Listen for connections on a port
+     * @param[in] protocol The protocol to use for the connection
+     * @sa IpServerTypes::Protocol
+     * @param[in] version The version to use for the connection
+     * @param[in] port The port to listen to
+     * @sa IpServerTypes::Version
+    */
+    virtual ErrorType listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) = 0;
+    /**
+     * @brief Accept a connection from a client connecting to the socket given
+     * @param[out] socket The socket that the connection was accepted on
+     * @param[in] timeout The time to wait to accept a connection.
+     * @returns ErrorType::Success on success
+     * @returns ErrorType::LimitReached if the maximum number of connections has been accepted
+     * @returns ErrorType::Timeout if no connections were accepted within the given timeout.
+     * @returns ErrorType::Failure otherwise
+    */
+    virtual ErrorType acceptConnection(Socket &socket, const Milliseconds timeout) = 0;
+    /**
+     * @brief Close the connection
+     * @param[in] socket The socket to close
+     * @returns ErrorType::Success on success
+    */
+    virtual ErrorType closeConnection(const Socket socket) = 0;
     /**
      * @brief Send a response
      * @param[in] response The response to send
@@ -323,7 +349,8 @@ class HttpServerAbstraction : public IpServerAbstraction {
      */
     virtual ErrorType receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpServerTypes::Request> buffer)> callback) = 0;
 
-#pragma GCC diagnostic pop
+    /// @brief The Ip server to perform lower level network communications on.
+    IpServerAbstraction *_ipServer;
 
     /**
      * @brief Search a raw http request for the specified header.

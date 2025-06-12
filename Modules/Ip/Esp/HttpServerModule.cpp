@@ -3,8 +3,6 @@
 #include "Log.hpp"
 
 ErrorType HttpServer::listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) {
-    _ipServer->setNetwork(this->network());
-
     return _ipServer->listenTo(protocol, version, port);
 }
 

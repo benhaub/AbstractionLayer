@@ -14,6 +14,7 @@
 
 #include "IpClientAbstraction.hpp"
 #include "IpServerAbstraction.hpp"
+#include "HttpServerAbstraction.hpp"
 #include "NetworkAbstraction.hpp"
 #include "FileSystemAbstraction.hpp"
 #include "StorageAbstraction.hpp"
@@ -31,6 +32,7 @@ namespace {
         std::is_base_of<IpClientAbstraction, Abstraction>::value ||
         std::is_base_of<CellularAbstraction, Abstraction>::value ||
         std::is_base_of<IpServerAbstraction, Abstraction>::value ||
+        std::is_base_of<HttpServerAbstraction, Abstraction>::value ||
         std::is_base_of<NetworkAbstraction, Abstraction>::value ||
         std::is_base_of<OperatingSystemAbstraction, Abstraction>::value ||
         std::is_base_of<FileSystemAbstraction, Abstraction>::value ||
@@ -121,7 +123,7 @@ class StatusLogger {
         std::tuple<std::vector<ListOfAbstractionsThatLog>...> _loggers;
     };
     /// @brief Used to toggle logging for an Abstraction
-    LoggerToggler<IpClientAbstraction *, IpServerAbstraction *, NetworkAbstraction *, CellularAbstraction *, FileSystemAbstraction *, OperatingSystemAbstraction *, StorageAbstraction *> _loggerToggler;
+    LoggerToggler<IpClientAbstraction *, IpServerAbstraction *, HttpServerAbstraction *, NetworkAbstraction *, CellularAbstraction *, FileSystemAbstraction *, OperatingSystemAbstraction *, StorageAbstraction *> _loggerToggler;
     /// @brief Emitted when the logging interval has elapsed
     SignalsAndSlots::Signal<> _intervalElapsed;
 

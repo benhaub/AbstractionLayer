@@ -9,7 +9,7 @@ OBJECT
 )
 
 target_include_directories(Logging INTERFACE ${CMAKE_CURRENT_LIST_DIR})
-target_include_directories(Cc32xxLogger PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
+target_include_directories(Logging INTERFACE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
 
 target_link_libraries(Cc32xxLogger PRIVATE abstractionLayer)
 target_link_libraries(Cc32xxLogger PRIVATE Logging)
