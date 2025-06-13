@@ -173,7 +173,7 @@ class IpServerAbstraction : public CommunicationProtocol {
     const NetworkAbstraction &networkConst() const { assert(nullptr != _network); return *_network; }
     ///@brief Set the network abstraction
     ///@param[in] network The network abstraction to set
-    ErrorType setNetwork(NetworkAbstraction &network) { _network = &network; return ErrorType::Success; }
+    void setNetwork(NetworkAbstraction &network) { _network = &network; }
     ///@brief Get a constant reference to the status of the server
     const IpServerTypes::ServerStatus &status() {
         _status.activeConnections = _connectedSockets.size();
