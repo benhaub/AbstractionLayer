@@ -37,7 +37,7 @@ ErrorType fromPlatformError(int32_t err) {
     else if (err == ENOSPC || err == SL_ERROR_BSD_ENOMEM) {
         return ErrorType::NoMemory;
     }
-    else if (err == EINVAL || err == SL_ERROR_WLAN_PROVISIONING_ABORT_INVALID_PARAM) {
+    else if (err == EINVAL || SL_ERROR_WLAN_PROVISIONING_ABORT_INVALID_PARAM) {
         return ErrorType::InvalidParameter;
     }
     else if (err == SL_ERROR_FS_FILE_ALREADY_EXISTS) {

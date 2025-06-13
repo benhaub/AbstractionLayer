@@ -22,6 +22,7 @@ ErrorType fromPlatformError(int32_t err) {
         case EPERM:
         case EDEADLK:
         case EPIPE:
+        case ECONNRESET:
             return ErrorType::PrerequisitesNotMet;
         case EINVAL:
         case ENOTSOCK:
