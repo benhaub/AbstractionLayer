@@ -27,7 +27,8 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
         signal(SIGPIPE, SIG_IGN);
 
         if (version == IpClientTypes::Version::IPv4) {
-            struct addrinfo hints, *res;
+            struct addrinfo hints;
+            struct addrinfo *res = nullptr;
             memset(&hints, 0, sizeof(hints));
             hints.ai_family = AF_INET;
             hints.ai_socktype = toPosixSocktype(protocol);
@@ -101,13 +102,13 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
                     PLT_LOGW(TAG, "Failed to create socket: %s", strerror(errno));
                     callbackError = fromPlatformError(errno);
                 }
-
-                freeaddrinfo(res);
             }
             else {
                 PLT_LOGW(TAG, "Failed to get address info: %s", gai_strerror(status));
                 callbackError = ErrorType::PrerequisitesNotMet;
             }
+
+            freeaddrinfo(res);
         }
         else {
             callbackError = ErrorType::NotSupported;
