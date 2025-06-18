@@ -45,7 +45,7 @@ ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpServerTypes::Res
     constexpr Bytes headerSize = 512;
     std::shared_ptr<std::string> frame = std::make_shared<std::string>(headerSize + data->messageBody.size(), 0);
 
-    Bytes initialCapacity = frame->capacity();
+    const Bytes initialCapacity = frame->capacity();
     toHttpResponse(*data, *frame);
 
     if (initialCapacity > frame->capacity()) {
