@@ -38,51 +38,41 @@ ErrorType IpServer::listenTo(const IpServerTypes::Protocol protocol, const IpSer
 
         assert(snprintf(portString, sizeof(portString), "%u", port) > 0);
 
-        if (0 != getaddrinfo(nullptr, portString, &hints, &servinfo)) {
-            callbackError = fromPlatformError(errno);
-            doneListening = true;
-            return callbackError;
-        }
+        if (0 == getaddrinfo(nullptr, portString, &hints, &servinfo)) {
+            for (p = servinfo; p != nullptr; p = p->ai_next) {
+                if (-1 != (sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol))) {
+                    int enable = 1;
+                    if (-1 != setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable))) {
+                        if (-1 != bind(sock, p->ai_addr, p->ai_addrlen)) {
+                            //For more connections, create another instance of this class.
+                            if (0 == listen(sock, 1)) {
+                                //Socket is still invalid. The socket we just had is only for listening for connections.
+                                //The socket we get from accept can be used to send and receive which is the one we want
+                                //to return to the user.
+                                _listenerSocket = sock;
+                                _protocol = protocol;
+                                _version = version;
+                                _port = port;
+                                callbackError = ErrorType::Success;
+                                doneListening = true;
+                                _status.listening = true;
+                                return callbackError;
+                            }
+                        }
+                    }
 
-        for (p = servinfo; p != nullptr; p = p->ai_next) {
-            if (-1 == (sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol))) {
-                continue;
+                    close(sock);
+                    callbackError = fromPlatformError(errno);
+                    continue;
+                }
             }
-            
-            int enable = 1;
-            if (-1 == setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable))) {
-                callbackError = fromPlatformError(errno);
-                doneListening = true;
-                return callbackError;
-            }
 
-            if (-1 == bind(sock, p->ai_addr, p->ai_addrlen)) {
-                close(sock);
-                continue;
-            }
-
-            break;
+            freeaddrinfo(servinfo);
         }
 
-        //For more connections, create another instance of this class.
-        if (0 == listen(sock, 1)) {
-            //Socket is still invalid. The socket we just had is only for listening for connections.
-            //The socket we get from accept can be used to send and receive which is the one we want
-            //to return to the user.
-            _listenerSocket = sock;
-            _protocol = protocol;
-            _version = version;
-            _port = port;
-            callbackError = ErrorType::Success;
-        }
-        else {
-            callbackError = fromPlatformError(errno);
-        }
-
-        ErrorType::Success == callbackError ? _status.listening = true : _status.listening = false;
+        _status.listening = false;
         doneListening = true;
-        freeaddrinfo(servinfo);
-
+        callbackError = fromPlatformError(errno);
         return callbackError;
     };
 
@@ -270,6 +260,8 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
 }
 
 ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+    assert(nullptr != callback);
+
     auto tx = [&, callback](const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
 

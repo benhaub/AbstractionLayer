@@ -73,7 +73,7 @@ ErrorType IpServer::listenTo(const IpServerTypes::Protocol protocol, const IpSer
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(listenCallback));
+    EventQueue::Event event = EventQueue::Event(listenCallback);
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -147,7 +147,7 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(acceptCallback));
+    EventQueue::Event event = EventQueue::Event(acceptCallback);
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -209,7 +209,7 @@ ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds tim
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(tx));
+    EventQueue::Event event = EventQueue::Event(tx);
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -244,7 +244,7 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(rx));
+    EventQueue::Event event = EventQueue::Event(rx);
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -295,6 +295,6 @@ ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, cons
         return error;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(receiveCallback));
+    EventQueue::Event event = EventQueue::Event(receiveCallback);
     return network().addEvent(event);
 }
