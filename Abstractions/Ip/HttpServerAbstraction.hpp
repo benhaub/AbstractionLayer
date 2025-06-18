@@ -624,18 +624,10 @@ class HttpServerAbstraction {
             request.headers.contentLength = 0;
         }
 
-        const Bytes currentCapacity = request.messageBody.capacity();
-        const bool messageBodySizeNeedsToIncrease = currentCapacity < request.headers.contentLength;
         request.messageBody.reserve(request.headers.contentLength);
-        const bool messageBodySizeWasNotIncreased = currentCapacity < request.messageBody.capacity();
-        if (messageBodySizeNeedsToIncrease && messageBodySizeWasNotIncreased) {
-            request.messageBody.resize(0);
-            return ErrorType::NoMemory;
-        }
-        else {
-            request.messageBody = buffer.substr(buffer.size() - request.headers.contentLength, request.headers.contentLength);
-            return ErrorType::Success;
-        }
+
+        request.messageBody = buffer.substr(buffer.size() - request.headers.contentLength, request.headers.contentLength);
+        return ErrorType::Success;
     }
 
     /**
@@ -1072,7 +1064,6 @@ class HttpServerAbstraction {
         }
 
         buffer.append("Connection: close\r\n");
-        buffer.append("Server: AutomaticPetFeeder\r\n");
         buffer.append("\r\n");
         buffer.append(response.messageBody);
 
