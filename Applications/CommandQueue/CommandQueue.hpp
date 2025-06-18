@@ -58,6 +58,7 @@ namespace CommandQueueTypes {
  * Command1::DataType commandData;
  * ErrorType error = commandQueue.getNextInQueue(commandData);
  * @endcode 
+ * @sa EventQueue which has better inline documentation to explain the code.
  */
 template<const char *name, typename T>
 class CommandQueue {
@@ -65,19 +66,21 @@ class CommandQueue {
     public:
     /**
      * @brief Add a command to the queue.
+     * @details Interrupt and thread safe.
      * @param commandData The command data to be added to the queue.
      * @returns ErrorType::Success if the command was added to the queue
      * @returns ErrorType::LimitReached if the queue is full
-     * @sa EventQueue::addEvent which has better inline documentation to explain the code.
      */
     ErrorType addToQueue() {
         ErrorType error = ErrorType::Failure;
 
-        Count currentCommandQueueIndexLast = _CurrentCommandQueueIndexLast.load();
-        while (!(_CurrentCommandQueueIndexLast.compare_exchange_weak(currentCommandQueueIndexLast, (currentCommandQueueIndexLast + 1) % _Commands.max_size())));
-        if (CommandQueueNotFull()) {
+        if (addCommandIfNotFull()) {
+            Count currentCommandQueueIndexLast = _CurrentCommandQueueIndexLast.load();
+
+            while (!(_CurrentCommandQueueIndexLast.compare_exchange_weak(currentCommandQueueIndexLast, (currentCommandQueueIndexLast + 1) % _Commands.max_size())));
+
             _Commands[currentCommandQueueIndexLast] = _data;
-            _CommandsQueued.fetch_add(1, std::memory_order_relaxed);
+            _CommandsReady = true;
             error = ErrorType::Success;
         }
         else {
@@ -89,19 +92,25 @@ class CommandQueue {
 
     /**
      * @brief Return and remove the next command in the queue.
+     * @details Interrupt and thread safe.
      * @param commandData The command data to be returned.
      * @returns ErrorType::Success if there is a command in the queue
      * @returns ErrorType::NoData if there are no commands in the queue
-     * @sa EventQueue::runNextEvent which has better inline documentation to explain the code.
      */
     ErrorType getNextInQueue(T &commandData) {
         ErrorType error = ErrorType::NoData;
 
-        if (CommandsReady()) {
-            commandData = _Commands[_CurrentCommandQueueIndexFirst];
-            _CommandsQueued.fetch_sub(1, std::memory_order_relaxed);
-            _CurrentCommandQueueIndexFirst = (_CurrentCommandQueueIndexFirst + 1) % _Commands.max_size();
-            error = ErrorType::Success;
+        if (_CommandsReady) {
+            Count currentCommandQueueIndexFirst = _CurrentCommandQueueIndexFirst.load();
+
+            while ((_CommandsReady = (currentCommandQueueIndexFirst != _CurrentCommandQueueIndexLast.load())) && !(_CurrentCommandQueueIndexFirst.compare_exchange_weak(currentCommandQueueIndexFirst, (currentCommandQueueIndexFirst + 1) % _Commands.max_size())));
+
+            if (_CommandsReady) {
+                commandData = _Commands[currentCommandQueueIndexFirst];
+                _CommandsClaimed.fetch_sub(1, std::memory_order_relaxed);
+
+                error = ErrorType::Success;
+            }
         }
 
         return error;
@@ -115,14 +124,25 @@ class CommandQueue {
      * @post error == ErrorType::NoData if there are no commands in the queue to peak.
      */
     const T &peakNextInQueue(ErrorType &error) {
-        error = ErrorType::NoData;
-
-        if (CommandsReady()) {
+        const Count currentCommandQueueIndexFirst = _CurrentCommandQueueIndexFirst.load();
+        if (currentCommandQueueIndexFirst != _CurrentCommandQueueIndexLast.load()) {
             error = ErrorType::Success;
-            return _Commands[_CurrentCommandQueueIndexFirst];
+            return _Commands[currentCommandQueueIndexFirst];
         }
 
         return _data;
+    }
+
+    /**
+     * @brief Check if there are commands ready.
+     * @details Yes, it's true that either of these atomics could changed immediately after this call. The point of this function is to just try to save
+     *          the caller the burden of any processing that might be incurred if there are commands in the queue. At the end of the day, if there isn't
+     *          a command in the queue when getNextInQueue() is called, you will receive ErrorType::NoData.
+     * @returns true if there are commands in the queue
+     * @returns false otherwise.
+     */
+    bool commandsReady() {
+        return _CurrentCommandQueueIndexFirst.load() != _CurrentCommandQueueIndexLast.load();
     }
 
     /// @brief Get a mutable reference to the data
@@ -131,35 +151,17 @@ class CommandQueue {
     const T &dataConst() const { return _data; }
     /// @brief Get the status as a constant reference
     const CommandQueueTypes::Status &status() const {
-        _Status.commandsQueued = _CommandsQueued.load();
+        _Status.commandsQueued = _CommandsClaimed.load();
         return _Status;
-    }
-
-    /**
-     * @brief True when the command queue is not full 
-     * @returns true if the command queue is not full
-     * @returns false otherwise.
-     */
-    static bool CommandQueueNotFull() {
-        return _CommandsQueued.load() < _Commands.max_size();
-    }
-
-    /**
-     * @brief True when there are commands ready to read
-     * @returns true if the command queue has commands ready to read
-     * @returns false otherwise.
-     */
-    static bool CommandsReady() {
-        return _CommandsQueued.load() > 0;
     }
 
     private:
     /// @brief The index of the next command to receive
-    inline static Count _CurrentCommandQueueIndexFirst = 0;
+    inline static std::atomic<Count> _CurrentCommandQueueIndexFirst = 0;
     /// @brief The index of the last command to receive
     inline static std::atomic<Count> _CurrentCommandQueueIndexLast = 0;
-    /// @brief the current count of commands queued.
-    inline static std::atomic<Count> _CommandsQueued = 0;
+    /// @brief the current count of commands claimed, but not saved to the queue.
+    inline static std::atomic<Count> _CommandsClaimed = 0;
     /// @brief The ring buffer queue of commands
     inline static std::array<T, CommandQueueTypes::MaxCommandQueueSize> _Commands;
     /// @brief The status of the Queue of Responsibility
@@ -168,6 +170,19 @@ class CommandQueue {
     };
     /// @brief The data stored in the command
     T _data;
+    inline static bool _CommandsReady = false;
+
+    bool addCommandIfNotFull() {
+        //The only other thing that can happen to _eventsClaimed in the time after we load it is that it could be decremented by runNextEvent() so if we pass
+        //this guard we will not overflow the queue.
+        const Count commandsClaimed = _CommandsClaimed.load();
+        if (commandsClaimed < _Commands.max_size()) {
+            _CommandsClaimed.fetch_add(1, std::memory_order_relaxed);
+            return true;
+        }
+
+        return false;
+    }
 };
 
 #endif // __COMMAND_OBJECT_HPP__
