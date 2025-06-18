@@ -73,19 +73,33 @@ class EventQueue {
          * }
          * @endcode
         */
-        Event(std::function<ErrorType()> eventCallback = nullptr) : _eventCallback(eventCallback) {}
+        Event(std::function<ErrorType()> eventCallback = nullptr) {
+            _eventCallback = eventCallback;
+        }
 
         /**
          * @brief Calls the function member with the parameters that were passed to the constructor.
+         * @post The eventCallback is set to nullptr and is invalidated. It can not be called again.
         */
         ErrorType run() {
-            if (!_eventCallback) {
+            if (eventCallbackValid()) { 
+                const ErrorType error = _eventCallback();
+                _eventCallback = nullptr;
+                return error;
+            }
+            else { [[unlikely]]
                 return ErrorType::InvalidParameter;
             }
-            else { [[likely]]
-                return _eventCallback();
-            }
 
+        }
+
+        bool eventCallbackValid() {
+            if (_eventCallback) {
+                return true;
+            }
+            else {
+                return false;
+            }
         }
 
         private:
@@ -114,22 +128,11 @@ class EventQueue {
     virtual ErrorType mainLoop() { return runNextEvent(); }
 
     /**
-     * @brief True when the event queue is not full 
-     * @param[in] currentEventQueueIndexTail The tail of the event queue.
-     * @param[in] currentEventQueueIndexHead The head of the event queue.
-     * @returns true if the event queue is not full
-     * @returns false otherwise.
+     * @brief If the event queue is not full, atomically increments the number of events queued.
+     * @returns true if the event was added to the queue.
+     * @returns false if the event queue is full.
      */
-    bool eventQueueNotFull();
-
-    /**
-     * @brief True when there are events ready to read
-     * @param[in] currentEventQueueIndexTail The tail of the event queue.
-     * @param[in] currentEventQueueIndexHead The head of the event queue.
-     * @returns true if the event queue has events ready to read
-     * @returns false otherwise.
-     */
-    bool eventsReady();
+    bool addEventIfNotFull();
 
     protected: 
     /**
@@ -150,10 +153,12 @@ class EventQueue {
     Count _currentEventQueueIndexFirst = 0;
     /// @brief The index of the last event to run.
     std::atomic<Count> _currentEventQueueIndexLast = 0;
-    /// @brief The current number of of events queued.
-    std::atomic<Count> _eventsQueued = 0;
+    /// @brief The current number of of events claimed, but not saved to the queue.
+    std::atomic<Count> _eventsClaimed = 0;
     /// @brief The thread id of the owner of the event queue. Used to determine if we can skip event queuing.
     Id _ownerThreadId;
+    /// @brief True when there are events ready to read
+    bool _eventsReady = false;
     /**
      * @brief True when optimizations for addEvents to your own event queue are enabled.
      * @details Optimization for when you add an event from the same thread that owns the event queue
