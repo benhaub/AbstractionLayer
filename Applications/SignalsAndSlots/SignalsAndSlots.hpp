@@ -59,10 +59,12 @@ namespace SignalsAndSlots {
         ErrorType connect(EventQueue &eventQueue, std::function<ErrorType(Args...)> callback) {
             for (auto &slot : _slots) {
                 if (slot.first == nullptr) {
+                    //The only other thing that can happen to _currentNumberOfObservers in the time after we load it is that it could be decremented by
+                    //disconnect() so if we pass this guard we will not overflow the maximum allowed number of observers.
                     Count currentNumberOfObservers = _currentNumberOfObservers.load();
                     assert(currentNumberOfObservers <= _MaxNumberOfObservers);
 
-                    if (_currentNumberOfObservers.compare_exchange_weak(currentNumberOfObservers, currentNumberOfObservers + 1)) {
+                    if (_currentNumberOfObservers.fetch_add(1, std::memory_order_relaxed)) {
                         slot = std::make_pair(&eventQueue, callback);
                         return ErrorType::Success;
                     }
@@ -84,7 +86,7 @@ namespace SignalsAndSlots {
          * @returns The errors described in SignalsAndSlots::Signal::_emit
         */
         ErrorType emit(const Args... args) {
-            if (0 == _currentNumberOfObservers.load()) {
+            if (0 == _currentNumberOfObservers.load(std::memory_order_relaxed)) {
                 return ErrorType::NoData;
             }
 
@@ -108,7 +110,8 @@ namespace SignalsAndSlots {
                 });
 
                 if (itr != _slots.end()) {
-                    assert(_currentNumberOfObservers.load() > 0);
+                    const Count currentNumberOfObservers = _currentNumberOfObservers.load(std::memory_order_relaxed);
+                    assert(currentNumberOfObservers > 0);
                     //If _currentNumberOfObservers is equal to _MaxNumberOfObservers, and we are interrupted or pre-empted before we can decrement
                     //_currentNumberOfOberservers, then anything that tries to connect() will still see the queue as full.
                     //If it is any other the value, then connect() will just select the next available spot.
