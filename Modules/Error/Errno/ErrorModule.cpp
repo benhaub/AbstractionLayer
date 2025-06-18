@@ -38,6 +38,7 @@ ErrorType fromPlatformError(int32_t err) {
             return ErrorType::NoData;
         case EAGAIN:
         case EOVERFLOW:
+        case EADDRINUSE:
             return ErrorType::LimitReached;
         default:
             PLT_LOGW("ErrnoError", "Got unhandled error code %d", err);
