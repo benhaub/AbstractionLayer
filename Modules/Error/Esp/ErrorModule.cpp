@@ -7,16 +7,21 @@
 #include "esp_wifi.h" //For wifi error codes.
 #include "nvs.h"     //For NVS error codes.
 #include <cerrno>
+#include "lwip/netdb.h"
 
 ErrorType fromPlatformError(int32_t err) {
 
     switch (err) {
         case ESP_FAIL:
+        case EAI_FAIL:
+        case ECONNABORTED:
+        case HOST_NOT_FOUND:
             return ErrorType::Failure;
         case ESP_OK:
             return ErrorType::Success;
         case ESP_ERR_NO_MEM:
         case ESP_ERR_NVS_NOT_ENOUGH_SPACE:
+        case EAI_MEMORY:
             return ErrorType::NoMemory;
         case ESP_ERR_TIMEOUT:
             return ErrorType::Timeout;

@@ -114,8 +114,8 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
                 }
             }
             else {
-                PLT_LOGW(TAG, "Failed to get host by name: %s", strerror(errno));
-                callbackError = fromPlatformError(errno);
+                PLT_LOGW(TAG, "Failed to get host by name: %d", h_errno);
+                callbackError = fromPlatformError(h_errno);
             }
         }
         else {
