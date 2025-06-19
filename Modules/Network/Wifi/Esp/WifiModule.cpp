@@ -192,7 +192,6 @@ ErrorType Wifi::networkUp() {
 
 ErrorType Wifi::networkDown() {
     ErrorType error = fromPlatformError(esp_wifi_disconnect());
-    _ipAddress.clear();
     _status.isUp = false;
     return error;
 }

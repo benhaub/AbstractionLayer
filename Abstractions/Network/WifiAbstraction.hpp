@@ -169,8 +169,6 @@ class WifiAbstraction : public NetworkAbstraction {
     const uint8_t &maxConnections() const { return _maxConnections; }
     /// @brief Get the authentication mode as a constant reference
     const WifiTypes::AuthMode &authMode() const { return _authMode; }
-    /// @brief Get the ip address as a constant reference
-    const std::string &ipAddress() const { return _ipAddress; }
 
     protected:
     /// @brief The current wifi mode
@@ -183,8 +181,6 @@ class WifiAbstraction : public NetworkAbstraction {
     std::string _stationSsid;
     /// @brief The current station password
     std::string _stationPassword;
-    /// @brief The current ip address
-    std::string _ipAddress;
     /// @brief The current channel
     uint8_t _channel = 0;
     /// @brief The current limit on the number of connections
