@@ -369,7 +369,7 @@ extern "C" {
 
 static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData) {
     //This is here just to inform you of what arg is.
-    __attribute__((unused)) Wifi *self = reinterpret_cast<Wifi *>(arg);
+    Wifi *self = reinterpret_cast<Wifi *>(arg);
 
     if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_AP_START) {
         xEventGroupSetBits(wifiEventGroup, wifiApStartedBit);
