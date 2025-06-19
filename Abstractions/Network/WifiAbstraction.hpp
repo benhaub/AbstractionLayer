@@ -127,6 +127,32 @@ class WifiAbstraction : public NetworkAbstraction {
      */
     virtual ErrorType setAuthMode(WifiTypes::AuthMode authMode) = 0;
 
+    ErrorType updateWifiCredentials(WifiTypes::Mode mode, std::string_view ssid, std::string_view password) {
+        ErrorType error = ErrorType::Failure;
+
+        error = networkDown();
+
+        if (ErrorType::Success == error) {
+            if (mode == WifiTypes::Mode::AccessPoint) {
+                _accessPointSsid = ssid;
+                _accessPointPassword = password;
+            }
+            else if (mode == WifiTypes::Mode::Station) {
+                _stationSsid = ssid;
+                _stationPassword = password;
+            }
+            else {
+                error = ErrorType::InvalidParameter;
+            }
+
+            if (ErrorType::Success == error) {
+                error = networkUp();
+            }
+        }
+
+        return error;
+    }
+
     /// @brief  Get the mode as a constant reference
     const WifiTypes::Mode &mode() const { return _mode; }
     /// @brief Get the SSID for the access point as a constant reference

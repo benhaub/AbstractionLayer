@@ -18,9 +18,9 @@ extern "C" {
 static void WifiEventHandler(void *eventHandleArg, esp_event_base_t event_base, int32_t event_id, void *event_data);
 //Global so that the handler can access it. Otherwise would have to make it a public data member.
 static EventGroupHandle_t wifiEventGroup;
-//Only wait for the AP to connect.
+//Access point started event.
 constexpr unsigned int wifiApStartedBit = BIT0;
-//Only wait for the Station to connect.
+//Station started event.
 constexpr unsigned int wifiStaStartedBit = BIT1;
 //Wait for both to connect
 constexpr unsigned int wifiApAndStaStartedBit = BIT2;
@@ -29,6 +29,7 @@ constexpr unsigned int wifiApAndStaStartedBit = BIT2;
 #endif
 
 //Based off https://github.com/espressif/esp-idf/blob/c5865270b50529cd32353f588d8a917d89f3dba4/examples/wifi/softap_sta/main/softap_sta.c
+//networkUp() is not called because it's functionality is implemented in the event handler.
 ErrorType Wifi::init() {
     esp_err_t err;
     ErrorType error;
@@ -103,7 +104,7 @@ ErrorType Wifi::init() {
     }
 
     constexpr Milliseconds timeout = 10000;
-    PLT_LOGI(TAG, "Waiting at most %us for interface to come up", timeout / 1000);
+    PLT_LOGI(TAG, "Waiting at most %us for wifi to be ready", timeout / 1000);
     EventBits_t bits = xEventGroupWaitBits(wifiEventGroup,
                                           eventBitsToWaitFor,
                                           pdFALSE,
@@ -111,15 +112,17 @@ ErrorType Wifi::init() {
                                           pdMS_TO_TICKS(timeout));
 
     if (bits & eventBitsToWaitFor) {
-        _status.isUp = true;
         return ErrorType::Success;
-    } else {
+    }
+    else {
         return ErrorType::Timeout;
     }
 }
 
 ErrorType Wifi::initAccessPoint() {
-    esp_netif_create_default_wifi_ap();
+    if (NULL == esp_netif_get_handle_from_ifkey("WIFI_AP_DEF")) {
+        esp_netif_create_default_wifi_ap();
+    }
 
     wifi_config_t wifiAccessPointConfig;
     memset(&wifiAccessPointConfig, 0, sizeof(wifi_config_t));
@@ -140,7 +143,13 @@ ErrorType Wifi::initAccessPoint() {
     return ErrorType::Success;
 }
 ErrorType Wifi::initStation() {
-    esp_netif_create_default_wifi_sta();
+    if (NULL == esp_netif_get_handle_from_ifkey("WIFI_STA_DEF")) {
+        esp_netif_create_default_wifi_sta();
+    }
+    else {
+        //Not a typo, stations connect to access points.
+        PLT_LOGI(TAG, "Reconnecting to access point <ssid:%s, password:%s>", stationSsid().c_str(), stationPassword().c_str());
+    }
 
     wifi_config_t wifiStationConfig;
     memset(&wifiStationConfig, 0, sizeof(wifi_config_t));
@@ -158,10 +167,23 @@ ErrorType Wifi::initStation() {
 }
 
 ErrorType Wifi::networkUp() {
-    esp_err_t err;
+    if (WifiTypes::Mode::AccessPointAndStation == mode()) {
+        initAccessPoint();
+        initStation();
+    }
+    else if (WifiTypes::Mode::AccessPoint == mode()) {
+        initAccessPoint();
+    }
+    else if (WifiTypes::Mode::Station == mode()) {
+        initStation();
+    }
 
-    err = esp_wifi_connect();
-    if (ESP_OK != err) {
+    esp_err_t err = esp_wifi_connect();
+    if (ESP_OK == err) {
+        _status.isUp = true;
+    }
+    else {
+        PLT_LOGW(TAG, "Failed to bring up wifi network <Error:%s>", esp_err_to_name(err));
         return fromPlatformError(err);
     }
 
@@ -365,9 +387,12 @@ static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t even
         wifi_event_ap_stadisconnected_t *event = (wifi_event_ap_stadisconnected_t *) eventData;
         PLT_LOGI(Wifi::TAG, "Station " MACSTR " left, AID=%d",
                  MAC2STR(event->mac), event->aid);
+
+        const_cast<NetworkTypes::Status &>(self->status()).isUp = false;
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_CONNECTED) {
         PLT_LOGI(Wifi::TAG, "Station connected");
+        const_cast<NetworkTypes::Status &>(self->status()).isUp = true;
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
