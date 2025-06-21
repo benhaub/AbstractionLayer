@@ -74,61 +74,72 @@ ErrorType Wifi::init() {
         return error;
     }
 
-    if (_mode == WifiTypes::Mode::Station || _mode == WifiTypes::Mode::AccessPointAndStation) {
-        ErrorType error;
-        const SlWlanSecParams_t securityParameters = {
-            .Type = toCc32xxSecurityType(_authMode, error),
-            .Key = reinterpret_cast<_i8 *>(_stationPassword.data()),
-            .KeyLen = static_cast<_u8>(_stationPassword.length())
-        };
-
-        const _i16 result = sl_WlanConnect(reinterpret_cast<_i8 *>(_stationSsid.data()), static_cast<_u8>(_stationSsid.length()), 0, &securityParameters, nullptr);
-        if (0 != result) {
-            PLT_LOGW(WifiAbstraction::TAG, "Failed to connect to station <SSID:%s, error:%d>", _stationSsid.c_str(), result);
-        }
-        else {
-            PLT_LOGI(WifiAbstraction::TAG, "Connected <SSID:%s>", _stationSsid.c_str());
-        }
-    }
-
     return networkUp();
-
-    return error;
 }
 
 ErrorType Wifi::networkUp() {
     assert(WifiTypes::Mode::Unknown != _mode);
-    constexpr Seconds timeout = 60;
+    constexpr Seconds timeout = 60*5;
     ErrorType error = ErrorType::NotSupported;
 
-    //Stations will connect in init(). Access points do not need to provision.
-    if (_mode == WifiTypes::Mode::AccessPointAndStation) {
-        const uint8_t provisioningMode = toCc32xxProvisioningMode(_mode, error);
+    const SlWlanSecParams_t securityParameters = {
+        .Type = toCc32xxSecurityType(_authMode, error),
+        .Key = reinterpret_cast<_i8 *>(_stationPassword.data()),
+        .KeyLen = static_cast<_u8>(_stationPassword.length())
+    };
 
-        if (ErrorType::Success == error) {
-            constexpr char *smartConfigKey = nullptr;
-            signed short result;
-            constexpr uint32_t flags = 0;
+    if (_mode == WifiTypes::Mode::Station || _mode == WifiTypes::Mode::AccessPointAndStation) {
+        const _i16 result = sl_WlanConnect(reinterpret_cast<_i8 *>(_stationSsid.data()), static_cast<_u8>(_stationSsid.length()), 0, &securityParameters, nullptr);
 
-            result = sl_WlanProvisioning(provisioningMode, ROLE_AP, timeout, smartConfigKey, flags);
-            if (0 == result) {
-                _status.isUp = true;
+        if (0 == result) {
+            PLT_LOGI(WifiAbstraction::TAG, "Connected <SSID:%s>", _stationSsid.c_str());
+
+            sl_WlanProfileDel(0);
+
+            constexpr SlWlanSecParamsExt_t * notUsingEnterpriseSecurity = nullptr;
+            constexpr _u8 *notUsingBssid = nullptr;
+            constexpr _u32 maxProfilePriority = 15;
+            constexpr _u32 optionsAreNotSupported = 0;
+
+            _i16 result = sl_WlanProfileAdd(reinterpret_cast<_i8 *>(_stationSsid.data()),
+                                    _stationSsid.length(),
+                                    notUsingBssid,
+                                    &securityParameters,
+                                    notUsingEnterpriseSecurity,
+                                    maxProfilePriority,
+                                    optionsAreNotSupported);
+
+            if (result < 0) {
+                PLT_LOGW(WifiAbstraction::TAG, "Failed to add profile <SSID:%s, error:%u>", _stationSsid.c_str(), result);
             }
 
-            return fromPlatformError(result);
+            error = fromPlatformError(result);
+        }
+        else {
+            PLT_LOGW(WifiAbstraction::TAG, "Failed to connect to station <SSID:%s, error:%d>", _stationSsid.c_str(), result);
+
+            _status.isUp = false;
+            return fromPlatformError(sl_WlanProvisioning(SL_WLAN_PROVISIONING_CMD_START_MODE_AP, ROLE_STA, timeout, nullptr, 0));
         }
     }
 
-    return error;
+    _status.isUp = ErrorType::Success == error;
+
+    return error;    
 }
 
 ErrorType Wifi::networkDown() {
+    ErrorType error = ErrorType::Failure;
+
     //Don't check for errors. We may not have connected to an access point.
     sl_WlanDisconnect();
 
-    _status.isUp = false;
+    error = fromPlatformError(sl_WlanProvisioning(SL_WLAN_PROVISIONING_CMD_STOP, 0xFF, 0, nullptr, 0));
+    if (error == ErrorType::Success) {
+        _status.isUp = false;
+    }
 
-    return ErrorType::Success;
+    return error;
 }
 
 ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) {

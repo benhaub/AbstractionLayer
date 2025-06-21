@@ -52,7 +52,6 @@ class Wifi final : public WifiAbstraction {
 
         switch (mode) {
             case WifiTypes::Mode::Station:
-            //Start in station mode first. After provisioning, switch to AP.
             case WifiTypes::Mode::AccessPointAndStation:
                 return ROLE_STA;
             case WifiTypes::Mode::AccessPoint:
@@ -112,13 +111,13 @@ class Wifi final : public WifiAbstraction {
         switch (mode) {
             case WifiTypes::Mode::AccessPoint:
                 return SL_WLAN_PROVISIONING_CMD_START_MODE_AP;
-            case WifiTypes::Mode::AccessPointAndStation:
-                return SL_WLAN_PROVISIONING_CMD_START_MODE_APSC;
             case WifiTypes::Mode::Station:
                 return SL_WLAN_PROVISIONING_CMD_START_MODE_SC;
+            case WifiTypes::Mode::AccessPointAndStation:
+                return SL_WLAN_PROVISIONING_CMD_START_MODE_APSC_EXTERNAL_CONFIGURATION;
             default:
                 error = ErrorType::InvalidParameter;
-                return SL_WLAN_PROVISIONING_CMD_START_MODE_APSC_EXTERNAL_CONFIGURATION;
+                return SL_WLAN_PROVISIONING_CMD_STOP;
         }
     }
 };
