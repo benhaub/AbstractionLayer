@@ -66,23 +66,24 @@ namespace IpFactory {
      * @param error
      * @sa ErrorType
      */
-    inline ClientFactoryVariant ClientFactory(NetworkTypes::Technology technology, ErrorType &error) {
-#if _GLIBCXX_CONCEPTS || _LIBCPP_STD_VER >= 20
-        static_assert(IpClientFactoryRequirements<IpClient> && IpClientFactoryRequirements<IpCellularClient>, "Variant types must be derived from IpClientAbstraction");
-#endif
+    inline ErrorType ClientFactory(NetworkTypes::Technology technology, ClientFactoryVariant &client) {
+        ErrorType error = ErrorType::Success;
 
         switch (technology) {
             case NetworkTypes::Technology::Wifi:
-                return ClientFactoryVariant(std::in_place_type<IpClient>);
             case NetworkTypes::Technology::Zigbee:
             case NetworkTypes::Technology::Ethernet:
+                client.emplace<IpClient>();
+                break;
             case NetworkTypes::Technology::Cellular:
-                return ClientFactoryVariant(std::in_place_type<IpCellularClient>);
+                client.emplace<IpCellularClient>();
+                break;
             case NetworkTypes::Technology::Unknown:
             default: [[unlikely]]
-                assert(false);
-                return ClientFactoryVariant(std::in_place_type<IpClient>);
+                return ErrorType::NotSupported;
         }
+
+        return error;
     }
     /**
      * @brief This factory function creates an IpServerAbstraction that is compatible with the network interface selected
@@ -95,23 +96,24 @@ namespace IpFactory {
      *            in a function that dynamic_cast<>()'s the IpServerAbstraction to an HttpServer.
      * @sa https://en.wikipedia.org/wiki/SOLID
      */
-    inline ServerFactoryVariant ServerFactory(NetworkTypes::Technology technology, ErrorType &error) {
-#if _GLIBCXX_CONCEPTS || _LIBCPP_STD_VER >= 20
-        static_assert(IpServerFactoryRequirements<IpServer> && IpServerFactoryRequirements<IpCellularServer>, "Variant types must be derived from IpServerAbstraction");
-#endif
+    inline ErrorType ServerFactory(NetworkTypes::Technology technology, ServerFactoryVariant &server) {
+        ErrorType error = ErrorType::Success;
 
         switch (technology) {
             case NetworkTypes::Technology::Wifi:
             case NetworkTypes::Technology::Ethernet:
-                return ServerFactoryVariant(std::in_place_type<IpServer>);
-            case NetworkTypes::Technology::Cellular:
-                return ServerFactoryVariant(std::in_place_type<IpCellularServer>);
             case NetworkTypes::Technology::Zigbee:
+                server.emplace<IpServer>();
+                break;
+            case NetworkTypes::Technology::Cellular:
+                server.emplace<IpCellularServer>();
+                break;
             case NetworkTypes::Technology::Unknown:
             default: [[unlikely]]
-                assert(false);
-                return ServerFactoryVariant(std::in_place_type<IpServer>);
+                error = ErrorType::NotSupported;
         }
+
+        return error;
     }
 }
 

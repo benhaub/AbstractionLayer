@@ -49,20 +49,27 @@ namespace WifiTypes {
         Wpa3,          ///< WPA3
         WpaPmk         ///< WPA PMK
     };
+
+    /**
+     * @struct WifiParams
+     * @brief Contains the parameters used to configure the wifi.
+     */
+    struct WifiParams final : public NetworkTypes::ConfigurationParameters {
+        /// @brief The technology type these parameters are meant for
+        NetworkTypes::Technology technology() const override { return NetworkTypes::Technology::Wifi; }
+
+        char accessPointSsid[32];     ///< The SSID of the access point (Connecting to this device)
+        char accessPointPassword[64]; ///< The password of the access point
+        char stationSsid[32];         ///< The SSID of the station (Wifi that this device connects to)
+        char stationPassword[64];     ///< The password of the station
+        WifiTypes::AuthMode authMode; ///< Password authentication
+        WifiTypes::Mode mode;         ///< Station, access point, or both
+    };
 }
 
 /**
  * @class WifiAbstraction
  * @brief Interface for communication over the wifi.
- * @code
- * //Initialization should be done in this order
- * Wifi wifi; //Call anything that is necessary to allow config to be set
- * wifi.setMode();
- * wifi.setAuthMode();
- * wifi.setSsid();
- * wifi.setPassword();
- * wifi.init(); //Turn on the radio, bring up the network. Network is ready to use.
- * @endcode
 */
 class WifiAbstraction : public NetworkAbstraction {
     public:
@@ -126,6 +133,73 @@ class WifiAbstraction : public NetworkAbstraction {
      * @post No changes take effect until either initialization is complete or wifi is reinitialized
      */
     virtual ErrorType setAuthMode(WifiTypes::AuthMode authMode) = 0;
+
+    ErrorType configure(const NetworkTypes::ConfigurationParameters &parameters) override {
+        assert(parameters.technology() == NetworkTypes::Technology::Wifi);
+        ErrorType error = ErrorType::Success;
+
+        const auto &params = static_cast<const WifiTypes::WifiParams &>(parameters);
+
+        if (WifiTypes::Mode::AccessPointAndStation == params.mode) {
+            error = setSsid(WifiTypes::Mode::AccessPoint, params.accessPointSsid);
+            if (ErrorType::Success == error) {
+                error = setSsid(WifiTypes::Mode::Station, params.stationSsid);
+            }
+        }
+        else if (WifiTypes::Mode::AccessPoint == params.mode) {
+            error = setSsid(WifiTypes::Mode::AccessPoint, params.accessPointSsid);
+        }
+        else if (WifiTypes::Mode::Station == params.mode) {
+            error = setSsid(WifiTypes::Mode::Station, params.stationSsid);
+        }
+        if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
+            PLT_LOGW(TAG, "Setting wifi SSID is not allowed on this platform <error:%u>", (uint8_t)error);
+        }
+        else if (ErrorType::Success != error) {
+            PLT_LOGE(TAG, "Failed to set ssid <error:%u>", (uint8_t)error);
+        }
+
+        error = setAuthMode(params.authMode);
+        if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
+            PLT_LOGW(TAG, "Setting authorization modes is not allowed on this platform <error:%u>", (uint8_t)error);
+        }
+        else if (ErrorType::Success != error) {
+            PLT_LOGE(TAG, "Failed to set atuhorization mode <error:%u>", (uint8_t)error);
+        }
+
+        if (WifiTypes::Mode::AccessPointAndStation == params.mode) {
+            error = setPassword(WifiTypes::Mode::AccessPoint, params.accessPointPassword);
+            if (ErrorType::Success == error) {
+                error = setPassword(WifiTypes::Mode::Station, params.stationPassword);
+            }
+        }
+        else if (WifiTypes::Mode::AccessPoint == params.mode) {
+            error = setPassword(WifiTypes::Mode::AccessPoint, params.accessPointPassword);
+        }
+        else if (WifiTypes::Mode::Station == params.mode) {
+            error = setPassword(WifiTypes::Mode::Station, params.stationPassword);
+        }
+        if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
+            PLT_LOGW(TAG, "Setting wifi password is not allowed on this platform <error:%u>", (uint8_t)error);
+        }
+        else if (ErrorType::Success != error) {
+            PLT_LOGE(TAG, "Failed to set password <error:%u>", (uint8_t)error);
+        }
+
+        error = setMode(params.mode);
+        if (ErrorType::Success != error) {
+            const bool isCriticalErrror = !((ErrorType::NotImplemented == error) || (ErrorType::NotAvailable == error));
+            if (isCriticalErrror) {
+                PLT_LOGE(TAG, "Failed to set wifi mode <error:%u>", (uint8_t)error);
+                return error;
+            }
+            else {
+                PLT_LOGW(TAG, "Setting wifi modes is not allowed on this platform <error:%u>", (uint8_t)error);
+            }
+        }
+
+        return error;
+    }
 
     ErrorType updateWifiCredentials(WifiTypes::Mode mode, std::string_view ssid, std::string_view password) {
         ErrorType error = ErrorType::Failure;

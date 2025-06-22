@@ -101,6 +101,16 @@ namespace NetworkTypes {
     inline T HostToNetworkByteOrder(const T &data) {
         return NetworkToHostByteOrder(data);
     }
+
+    /**
+     * @struct ConfigurationParameters 
+     * @brief Contains the parameters used to configure the network.
+     */
+    struct ConfigurationParameters {
+        public:
+        /// @brief The technology type these parameters are meant for
+        virtual NetworkTypes::Technology technology() const = 0;
+    };
 }
 
 /**
@@ -125,7 +135,14 @@ class NetworkAbstraction : public EventQueue {
     }
 
     /**
+     * @brief Configure the network before initializing
+     * @param[in] params The parameters to configure with
+     * @sa ConfigurationParameters
+     */
+    virtual ErrorType configure(const NetworkTypes::ConfigurationParameters &parameters) = 0;
+    /**
     * @brief Initialize the interface.
+    * @pre Call configure first.
     * @returns ErrorType::Success if the network interface was initialized and ready for clients to connect.
     * @returns ErrorType::Timeout if the the interface could not be initialized in time.
     * @returns ErrorType::Failure otherwise

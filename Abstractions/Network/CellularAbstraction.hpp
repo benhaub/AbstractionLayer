@@ -123,6 +123,10 @@ class CellularAbstraction : public NetworkAbstraction {
      */
     ErrorType setIcDevice(IcCommunicationProtocol &ic) { _ic = &ic; return ErrorType::Success; }
 
+    ErrorType configure(const NetworkTypes::ConfigurationParameters &parameters) override {
+        return ErrorType::NotImplemented;
+    }
+
     protected:
     /// @brief The Access Point Name (APN).
     std::string _accessPointName = std::string();
