@@ -19,6 +19,7 @@
 //C++
 #include <cassert>
 #include <variant>
+#include <optional>
 
 ///@brief The tag used for logging
 static constexpr char IpFactoryTag[] = "IpFactoryTag";
@@ -63,20 +64,22 @@ namespace IpFactory {
      * @param[in] technology Sometimes the internals of a client will be very different depending on the technology used. For example, Cellular
      *        clients must communicate with the device using a serial interface like SPI, I2C, UART, USB, etc.
      * @sa NetworkTypes::Technology
-     * @param error
-     * @sa ErrorType
+     * @param[out] client The client that the factory outputs
+     * @returns ErrorType::Success if a client could be created.
+     * @returns ErrorType::NotSupported If the client can't be created on this platform
+     * @post If return value is not ErrorType::Success, client.has_value() is false
      */
-    inline ErrorType ClientFactory(NetworkTypes::Technology technology, ClientFactoryVariant &client) {
+    inline ErrorType ClientFactory(NetworkTypes::Technology technology, std::optional<ClientFactoryVariant> &client) {
         ErrorType error = ErrorType::Success;
 
         switch (technology) {
             case NetworkTypes::Technology::Wifi:
             case NetworkTypes::Technology::Zigbee:
             case NetworkTypes::Technology::Ethernet:
-                client.emplace<IpClient>();
+                client.emplace(std::in_place_type_t<IpClient>());
                 break;
             case NetworkTypes::Technology::Cellular:
-                client.emplace<IpCellularClient>();
+                client.emplace(std::in_place_type_t<IpCellularClient>());
                 break;
             case NetworkTypes::Technology::Unknown:
             default: [[unlikely]]
@@ -87,26 +90,24 @@ namespace IpFactory {
     }
     /**
      * @brief This factory function creates an IpServerAbstraction that is compatible with the network interface selected
-     * @param technology The network technology that this server will communicate on.
+     * @param[in] technology The network technology that this server will communicate on.
      * @sa NetworkTypes::Technology
-     * @param error The error that occured while creating the server.
-     * @attention While the IpServerAbstraction is useful for implementing this factory, it does not follow the L in SOLID for all derivations.
-     *            The send and receive functions in the Http server use a different parameter type than the IpServerAbstraction
-     *            so attempting to use an IpServerAbstraction as an HttpServer will not be possible. It's reccomended to wrap calls to the HttpServer
-     *            in a function that dynamic_cast<>()'s the IpServerAbstraction to an HttpServer.
-     * @sa https://en.wikipedia.org/wiki/SOLID
+     * @param[out] server The server that the factory outputs.
+     * @returns ErrorType::Success if a server could be created.
+     * @returns ErrorType::NotSupported If the server can't be created on this platform
+     * @post If return value is not ErrorType::Success, server.has_value() is false
      */
-    inline ErrorType ServerFactory(NetworkTypes::Technology technology, ServerFactoryVariant &server) {
+    inline ErrorType ServerFactory(NetworkTypes::Technology technology, std::optional<ServerFactoryVariant> &server) {
         ErrorType error = ErrorType::Success;
 
         switch (technology) {
             case NetworkTypes::Technology::Wifi:
             case NetworkTypes::Technology::Ethernet:
             case NetworkTypes::Technology::Zigbee:
-                server.emplace<IpServer>();
+                server.emplace(std::in_place_type_t<IpServer>());
                 break;
             case NetworkTypes::Technology::Cellular:
-                server.emplace<IpCellularServer>();
+                server.emplace(std::in_place_type_t<IpCellularServer>());
                 break;
             case NetworkTypes::Technology::Unknown:
             default: [[unlikely]]

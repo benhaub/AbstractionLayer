@@ -19,6 +19,7 @@
 //C++
 #include <cassert>
 #include <variant>
+#include <optional>
 
 /**
  * @namespace NetworkFactoryTypes
@@ -49,22 +50,22 @@ namespace NetworkFactory {
      * @brief Creates a network interface for the type selected.
      * @details The output network is passed by referecen as a parameter because the atomics in EventQueue delete
      *          the move assignment.
-     * @param technology The technology to use for the network interface.
+     * @param[in] technology The technology to use for the network interface.
      * @sa NetworkTypes::Technology
-     * @param network An empty ne
+     * @param[out] network The network that is output by the factory
      * @returns Pointer to a NetworkAbstraction that contains the network of the type selected.
      */
-    inline ErrorType Factory(NetworkTypes::Technology technology, NetworkFactoryTypes::NetworkFactoryVariant& network) {
+    inline ErrorType Factory(NetworkTypes::Technology technology, std::optional<NetworkFactoryTypes::NetworkFactoryVariant> &network) {
         ErrorType error = ErrorType::Success;
 
         switch (technology) {
             case NetworkTypes::Technology::Wifi:
-                network.emplace<Wifi>();
+                network.emplace(std::in_place_type_t<Wifi>());
                 break;
             case NetworkTypes::Technology::Zigbee:
             case NetworkTypes::Technology::Ethernet:
             case NetworkTypes::Technology::Cellular:
-                network.emplace<Cellular>();
+                network.emplace(std::in_place_type_t<Cellular>());
                 break;
             default: [[unlikely]]
                 error =  ErrorType::NotSupported;
