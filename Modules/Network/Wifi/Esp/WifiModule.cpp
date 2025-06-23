@@ -309,6 +309,8 @@ ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
     signalStrength = DecibelMilliWatts(signalStrengthRssi);
  
     _status.signalStrength = signalStrength;
+
+    return ErrorType::Success;
 }
 
 ErrorType Wifi::mainLoop() {
