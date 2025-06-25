@@ -337,30 +337,19 @@ ErrorType OperatingSystem::millisecondsToTicks(const Milliseconds milli, Ticks &
 }
 
 ErrorType OperatingSystem::getSoftwareVersion(std::string &softwareVersion) {
-    std::string softwareVersionStringRaw(32, 0);
-    
     constexpr char command[] = "sh -c \"git describe --tag\"";
     ErrorType error = ErrorType::Failure;
     
     FILE* pipe = popen(command, "r");
     if (nullptr != pipe) {
-        if (nullptr != fgets(softwareVersionStringRaw.data(), softwareVersionStringRaw.capacity(), pipe)) {
+        if (nullptr != fgets(softwareVersion.data(), softwareVersion.size(), pipe)) {
             error = ErrorType::Success;
         }
         else {
-            softwareVersionStringRaw.clear();
-            pclose(pipe);
             error = ErrorType::Failure;
         }
-    }
 
-    for (unsigned int i = 0; i < softwareVersionStringRaw.size() && softwareVersionStringRaw.at(i) != '-'; i++) {
-        if (softwareVersionStringRaw.at(i) == '.') {
-            softwareVersion.push_back('.');
-            continue;
-        }
-
-        softwareVersion.push_back(softwareVersionStringRaw.at(i));
+        pclose(pipe);
     }
 
     return error;

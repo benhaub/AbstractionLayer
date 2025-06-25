@@ -44,14 +44,15 @@ namespace OperatingSystemTypes {
      * @brief The reason the processor was reset.
     */
     enum class ResetReason : uint8_t {
-        Unknown,     //!< Reset reason can not be determined
-        PowerOn,     //!< Reset due to power-on event
-        ExternalPin, //!< Reset by external pin (not applicable for ESP32)
-        Software,    //!< Software reset via esp_restart
-        Exception,   //!< Software reset due to exception/panic
-        Watchdog,    //!< Reset (software or hardware) due to interrupt watchdog
-        DeepSleep,   //!< Reset after exiting deep sleep mode
-        BrownOut,    //!< Brownout reset (software or hardware)
+        Unknown,     ///< Reset reason can not be determined
+        PowerOn,     ///< Reset due to power-on event
+        ExternalPin, ///< Reset by external pin
+        Software,    ///< Deliberate software reset
+        Exception,   ///< Software reset due to exception/panic
+        Watchdog,    ///< Reset (software or hardware) due to interrupt watchdog
+        DeepSleep,   ///< Reset after exiting deep sleep mode
+        BrownOut,    ///< Brownout reset (software or hardware)
+        Update       ///< Reset due to completion of an update
     };
 
     /**
@@ -454,6 +455,40 @@ class OperatingSystemAbstraction {
         }
 
         return _status;
+    }
+
+    /**
+     * @brief Convert a software version string to a byte array
+     * @param[in] softwareVersionString The software version string to convert
+     * @param[out] softwareVersionByteArray The byte array to store the converted software version
+     * @param[out] versionSize The size of the version string
+     * @returns ErrorType::Success if the software version string was converted to a byte array
+     * @returns ErrorType::Failure otherwise
+     * @post Non-digit characters are discarded. The array represents a.b.c.d as {a, b, c, d}
+     */
+    template <size_t size>
+    ErrorType softwareVersionStringToByteArray(std::string_view softwareVersionString, std::array<uint8_t, size> &softwareVersionByteArray, Bytes &versionSize) {
+        std::fill(softwareVersionByteArray.begin(), softwareVersionByteArray.end(), 0);
+        auto itr = softwareVersionString.begin();
+
+        char currentlyReadingVersion = 'a';
+        while(itr != softwareVersionString.end()) {
+            if(*itr == '.') {
+                itr++;
+                currentlyReadingVersion++;
+                continue;
+            }
+
+            assert(static_cast<Bytes>(currentlyReadingVersion - 'a') < size);
+
+            softwareVersionByteArray[currentlyReadingVersion - 'a'] *= 10;
+            const char digit = {*itr};
+            softwareVersionByteArray[currentlyReadingVersion - 'a'] += strtoul(&digit, nullptr, 10);
+
+            itr++;
+        }
+
+        return ErrorType::Success;
     }
 
     protected:
