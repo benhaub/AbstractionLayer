@@ -11,6 +11,9 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <string_view>
+#include <array>
+#include <algorithm>
 
 namespace Algorithm {
     /**
@@ -20,7 +23,7 @@ namespace Algorithm {
      * @return std::vector<std::string> The vector of strings
      * @author https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
      */
-    std::vector<std::string> split(std::string& s, const char delimiter[]) {
+    inline std::vector<std::string> Split(std::string& s, const char delimiter[]) {
         std::vector<std::string> tokens;
         size_t pos = 0;
         std::string token;
@@ -32,6 +35,45 @@ namespace Algorithm {
         tokens.push_back(s);
 
         return tokens;
+    }
+
+    /**
+     * @concept StringLike
+     * @brief Concept for a string-like type
+     * @tparam T The type to check
+     * @returns True if the type is string-like, false otherwise
+     */
+    template<typename T>
+    concept StringLike = requires(T t) {
+        { t.data() } -> std::convertible_to<const char*>;
+        { t.size() } -> std::convertible_to<size_t>;
+        { t.begin() } -> std::contiguous_iterator;
+        { t.end() } -> std::contiguous_iterator;
+    };
+
+    /**
+     * @brief Compile-time string concatenation function
+     * @param strings The strings to concatenate
+     * @return std::array<char, total_size + 1> The concatenated string
+     * @code{.cpp}
+     * constexpr auto ConcatString = ConcatenateStrings<String1.size(), String2.size(), String3.size()>(
+     *     String1, String2, String3
+     * );
+     * @endcode
+     */
+    template<StringLike... Args>
+    inline constexpr auto ConcatenateStrings(Args... strings) {
+        constexpr size_t totalSize = (strings.size() + ...);
+        std::array<char, totalSize + 1> result = {};
+
+        size_t pos = 0;
+        ((std::copy_if(strings.begin(), strings.end(), result.begin() + pos, 
+                       [](char c) { return c != '\0'; }), 
+          pos += std::count_if(strings.begin(), strings.end(), [](char c) { return c != '\0'; })), ...);
+        
+        result[pos] = '\0';
+        
+        return result;
     }
 }
 
