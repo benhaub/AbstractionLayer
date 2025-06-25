@@ -14,6 +14,7 @@
 //C++
 #include <functional>
 #include <string>
+#include <algorithm>
 
 /**
  * @namespace OperatingSystemTypes
