@@ -45,10 +45,14 @@ namespace Algorithm {
      */
     template<typename T>
     concept StringLike = requires(T t) {
+#if _GLIBCXX_CONCEPTS || _LIBCPP_STD_VER >= 20
         { t.data() } -> std::convertible_to<const char*>;
         { t.size() } -> std::convertible_to<size_t>;
         { t.begin() } -> std::contiguous_iterator;
         { t.end() } -> std::contiguous_iterator;
+#else
+        { true };
+#endif
     };
 
     /**
