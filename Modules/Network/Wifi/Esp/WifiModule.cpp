@@ -299,11 +299,8 @@ ErrorType Wifi::getMacAddress(std::array<char, NetworkTypes::MacAddressStringSiz
 
 ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
     int signalStrengthRssi;
-    //Not only does it not really make sense to want to know the signal strength if you aren't connected to anything,
-    //but you also can't get the signal strength while wifi is not initizialized or ESP will crash.
-    if (_status.isUp) {
-        esp_wifi_sta_get_rssi(&signalStrengthRssi);
-    }
+
+    esp_wifi_sta_get_rssi(&signalStrengthRssi);
 
     signalStrength = DecibelMilliWatts(signalStrengthRssi);
  

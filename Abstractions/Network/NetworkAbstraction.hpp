@@ -228,7 +228,12 @@ class NetworkAbstraction : public EventQueue {
 
     /// @brief The current status of the network interface as a const reference.
     const NetworkTypes::Status &status() {
-        getSignalStrength(_status.signalStrength);
+        //Not only does it not really make sense to want to know the signal strength if you aren't connected to anything,
+        //but some platforms will not allow this and may event crash if you ask for the status before the network is initialized.
+        if (_status.isUp) {
+            getSignalStrength(_status.signalStrength);
+        }
+
         return _status;
     }
 
