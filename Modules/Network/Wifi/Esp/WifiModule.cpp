@@ -373,12 +373,14 @@ static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t even
         wifi_event_ap_stadisconnected_t *event = (wifi_event_ap_stadisconnected_t *) eventData;
         PLT_LOGI(Wifi::TAG, "Station " MACSTR " left, AID=%d",
                  MAC2STR(event->mac), event->aid);
-
-        const_cast<NetworkTypes::Status &>(self->status()).isUp = false;
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_CONNECTED) {
         PLT_LOGI(Wifi::TAG, "Station connected");
         const_cast<NetworkTypes::Status &>(self->status()).isUp = true;
+    }
+    else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_DISCONNECTED) {
+        PLT_LOGI(Wifi::TAG, "Station disconnected");
+        const_cast<NetworkTypes::Status &>(self->status()).isUp = false;
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
