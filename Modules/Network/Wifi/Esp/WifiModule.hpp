@@ -74,9 +74,6 @@ class Wifi final : public WifiAbstraction {
 
     ErrorType setStationSsid(const std::string &ssid);
     ErrorType setAccessPointSsid(const std::string &ssid);
-
-    //If the connection to the access point is lost, attempt to reconnect. Otherwise do nothing.
-    ErrorType checkAndAttemptReconnectToAcessPoint();
 };
 
 #endif // __WIFI_MODULE_HPP__

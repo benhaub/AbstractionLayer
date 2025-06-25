@@ -213,7 +213,6 @@ ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const 
     while (remaining > 0) {
         ssize_t bytesWritten = send(socket, &frame.at(sent), remaining, 0);
         if (bytesWritten < 0) {
-            checkAndAttemptReconnectToAcessPoint();
             return fromPlatformError(errno);
         }
 
@@ -270,10 +269,6 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
             frameBuffer.resize(bytesReceived);
             error = ErrorType::Success;
         }
-    }
-
-    if (ErrorType::Success != error) {
-        checkAndAttemptReconnectToAcessPoint();
     }
 
     return error;
@@ -353,16 +348,6 @@ ErrorType Wifi::setPassword(WifiTypes::Mode mode, const std::string &password) {
     }
 
     return error;
-}
-
-ErrorType Wifi::checkAndAttemptReconnectToAcessPoint() {
-    wifi_ap_record_t ap_info;
-    if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_ERR_WIFI_NOT_CONNECT) {
-        networkDown();
-        return networkUp();
-    }
-
-    return ErrorType::Success;
 }
 
 #ifdef __cplusplus
