@@ -30,13 +30,6 @@ namespace NetworkFactoryTypes {
     ///@brief The tag used for logging
     static constexpr char Tag[] = "NetworkFactory";
 
-    #if _GLIBCXX_CONCEPTS || _LIBCPP_STD_VER >= 20
-    /// @concept NetworkFactoryRequirements
-    /// @brief A concept that checks if a type is derived from NetworkAbstraction
-    template<typename T>
-    concept NetworkFactoryRequirements = std::derived_from<T, NetworkAbstraction>;
-    #endif
-
     using NetworkFactoryVariant = std::variant<Wifi, Cellular>;
 }
 

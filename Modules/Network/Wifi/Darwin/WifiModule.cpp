@@ -109,7 +109,7 @@ ErrorType Wifi::getMacAddress(std::array<char, NetworkTypes::MacAddressStringSiz
         const size_t bytesRead = fread(macAddress.data(), sizeof(uint8_t), macAddress.max_size(), pipe);
         if (feof(pipe) || bytesRead == macAddress.max_size()) {
             error = ErrorType::Success;
-            for (size_t i = 0; i < macAddress.size(); i++) {
+            for (size_t i = 0; i < bytesRead; i++) {
                 if (macAddress.at(i) == '\n') {
                     macAddress.at(i) = '\0';
                 }
@@ -137,7 +137,7 @@ ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
         const size_t bytesRead = fread(signalNoiseRatioString.data(), sizeof(uint8_t), signalNoiseRatioString.max_size(), pipe);
         if (feof(pipe) || bytesRead == signalNoiseRatioString.max_size()) {
             error = ErrorType::Success;
-            for (size_t i = 0; i < signalNoiseRatioString.size(); i++) {
+            for (size_t i = 0; i < bytesRead; i++) {
                 if (signalNoiseRatioString.at(i) == '\n') {
                     signalNoiseRatioString.at(i) = '\0';
                 }

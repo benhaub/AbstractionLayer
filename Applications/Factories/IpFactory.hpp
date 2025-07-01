@@ -13,9 +13,6 @@
 #include "IpCellularClientModule.hpp"
 #include "IpServerModule.hpp"
 #include "IpCellularServerModule.hpp"
-#include "HttpServerModule.hpp"
-#include "Log.hpp"
-#include "NetworkFactory.hpp"
 //C++
 #include <cassert>
 #include <variant>
@@ -23,18 +20,6 @@
 
 ///@brief The tag used for logging
 static constexpr char IpFactoryTag[] = "IpFactoryTag";
-
-#if _GLIBCXX_CONCEPTS || _LIBCPP_STD_VER >= 20
-/// @concept IpClientFactoryRequirements
-/// @brief A concept that checks if a type is derived from IpClientAbstraction
-template<typename T>
-concept IpClientFactoryRequirements = std::derived_from<T, IpClientAbstraction>;
-
-/// @concept IpServerFactoryRequirements
-/// @brief A concept that checks if a type is derived from IpServerAbstraction
-template<typename T>
-concept IpServerFactoryRequirements = std::derived_from<T, IpServerAbstraction>;
-#endif
 
 /**
  * @namespace IpFactoryTypes
