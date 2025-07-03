@@ -63,7 +63,7 @@ struct DateTime {
      */
     std::array<char, 20> toString() const {
         std::array<char, 20> string;
-        snprintf(string.data(), string.size(), "%04d-%02d-%02d %02d:%02d:%02d", _year, _month, _day, _hour, _minute, _second);
+        snprintf(string.data(), string.size(), "%u-%u-%u %u:%u:%u", _year, _month, _day, _hour, _minute, _second);
         return string;
     }
 
