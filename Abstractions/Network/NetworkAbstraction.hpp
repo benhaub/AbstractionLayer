@@ -130,8 +130,9 @@ class NetworkAbstraction : public EventQueue {
 
     /// @brief Print the status of the network interface
     void printStatus() {
+        status();
         PLT_LOGI(TAG, "<NetworkStatus> <Connected:%s, Signal Strength (dBm):%d> <Pie, Line>",
-        status().isUp ? "true" : "false", status().signalStrength);
+        status(false).isUp ? "true" : "false", status(false).signalStrength);
     }
 
     /**
@@ -227,11 +228,13 @@ class NetworkAbstraction : public EventQueue {
     virtual ErrorType getSignalStrength(DecibelMilliWatts &signalStrength) = 0;
 
     /// @brief The current status of the network interface as a const reference.
-    const NetworkTypes::Status &status() {
-        //Not only does it not really make sense to want to know the signal strength if you aren't connected to anything,
-        //but some platforms will not allow this and may event crash if you ask for the status before the network is initialized.
-        if (_status.isUp) {
-            getSignalStrength(_status.signalStrength);
+    const NetworkTypes::Status &status(const bool updateStatus = true) {
+        if (updateStatus) {
+            //Not only does it not really make sense to want to know the signal strength if you aren't connected to anything,
+            //but some platforms will not allow this and may event crash if you ask for the status before the network is initialized.
+            if (_status.isUp) {
+                getSignalStrength(_status.signalStrength);
+            }
         }
 
         return _status;
