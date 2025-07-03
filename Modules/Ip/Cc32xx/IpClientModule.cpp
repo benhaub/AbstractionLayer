@@ -145,7 +145,7 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
 }
 
 ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    auto tx = [&, callback, data]() -> ErrorType {
+    auto tx = [&, callback, data, timeout]() -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         assert(nullptr != callback);
@@ -162,7 +162,7 @@ ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, con
 }
 
 ErrorType IpClient::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
-    auto rx = [&, callback, buffer]() -> ErrorType {
+    auto rx = [&, callback, buffer, timeout]() -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         assert(nullptr != callback);
