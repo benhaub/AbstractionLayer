@@ -8,7 +8,7 @@ ErrorType NtpClient::connectToServer(const NtpClientTypes::NtpServerHostName hos
 
     ErrorType error = ErrorType::Success;
     ErrorType connectError = ErrorType::Success;
-    connectError = ipClient().connectTo(NtpClientTypes::ntpServerHostNameToCharArray(hostname, error).data(), port, IpClientTypes::Protocol::Udp, IpClientTypes::Version::IPv4, socket, timeout);
+    connectError = ipClient().connectTo(NtpClientTypes::ntpServerHostNameToCharArray(hostname, error).data(), port, IpTypes::Protocol::Udp, IpTypes::Version::IPv4, socket, timeout);
 
     if (ErrorType::Success != error) {
         return error;

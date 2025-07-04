@@ -3,7 +3,7 @@
 #include "NetworkAbstraction.hpp"
 #include "Log.hpp"
 
-ErrorType HttpServer::listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) {
+ErrorType HttpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port) {
     //The ROM includes an HTTP server that is already listening
     return ErrorType::NotAvailable;
 }
@@ -16,12 +16,12 @@ ErrorType HttpServer::closeConnection(const Socket socket) {
     return ErrorType::NotAvailable;
 }
 
-ErrorType HttpServer::sendBlocking(const HttpServerTypes::Response &response, const Milliseconds timeout, const Socket socket) {
+ErrorType HttpServer::sendBlocking(const HttpTypes::Response &response, const Milliseconds timeout, const Socket socket) {
     return ErrorType::NotImplemented;
 }
 
 //TODO: Not thread safe.
-ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const Milliseconds timeout, Socket &socket) {
+ErrorType HttpServer::receiveBlocking(HttpTypes::Request &request, const Milliseconds timeout, Socket &socket) {
     ErrorType error = ErrorType::Failure;
     SlNetAppRequest_t netAppRequest;
     error = OperatingSystem::Instance().receiveFromQueue(SimpleLinkEventQueue, &netAppRequest, timeout, false);
@@ -43,8 +43,8 @@ ErrorType HttpServer::receiveBlocking(HttpServerTypes::Request &request, const M
     return error;
 }
 
-ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpServerTypes::Response> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    auto tx = [&, callback](const std::shared_ptr<HttpServerTypes::Response> response, const Socket socket, const Milliseconds timeout) -> ErrorType {
+ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpTypes::Response> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+    auto tx = [&, callback](const std::shared_ptr<HttpTypes::Response> response, const Socket socket, const Milliseconds timeout) -> ErrorType {
         ErrorType error = ErrorType::Failure;
         assert(nullptr != callback);
 
@@ -84,11 +84,11 @@ ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpServerTypes::Res
     return _ipServer.network().addEvent(event);
 }
 
-ErrorType HttpServer::receiveNonBlocking(std::shared_ptr<HttpServerTypes::Request> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpServerTypes::Request> buffer)> callback) {
+ErrorType HttpServer::receiveNonBlocking(std::shared_ptr<HttpTypes::Request> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpTypes::Request> buffer)> callback) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType HttpServer::toHttpRequest(const SlNetAppRequest_t &netAppRequest, HttpServerTypes::Request &request) {
+ErrorType HttpServer::toHttpRequest(const SlNetAppRequest_t &netAppRequest, HttpTypes::Request &request) {
     //The request has been converted to a TLV structure by the ROM HTTP server.
     //Pg. 177, Network Processor User Guide.
     uint8_t *requestMetaData = netAppRequest.requestData.pMetadata;
@@ -190,7 +190,7 @@ ErrorType HttpServer::toHttpRequest(const SlNetAppRequest_t &netAppRequest, Http
 
 //We are using the same TLV structure as we used when receiving the request. We are following the suggested response outlined
 //on Pg. 181 of the Network Processor User Guide.
-ErrorType HttpServer::toSlNetAppResponse(const HttpServerTypes::Response &response, std::string &slNetAppResponse) {
+ErrorType HttpServer::toSlNetAppResponse(const HttpTypes::Response &response, std::string &slNetAppResponse) {
 
     slNetAppResponse.resize(0);
 

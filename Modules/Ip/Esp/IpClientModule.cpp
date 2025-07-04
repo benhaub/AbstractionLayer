@@ -22,7 +22,7 @@
  * call fcntl and set O_NONBLOCK on the socket it would fail to connect every time so there
  * was quite a symphony of bugs there.
 */
-ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) {
+ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &sock, const Milliseconds timeout) {
     sock = -1;
     bool doneConnecting = false;
     ErrorType callbackError = ErrorType::Failure;
@@ -30,7 +30,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
     auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
         disconnect();
 
-       if (version == IpClientTypes::Version::IPv4) {
+       if (version == IpTypes::Version::IPv4) {
             ip_addr_t ip_addr;
             ip_addr.type = IPADDR_TYPE_V4;
             

@@ -11,7 +11,7 @@ class IpServer final : public IpServerAbstraction {
     public:
     IpServer() : IpServerAbstraction() {}
 
-    ErrorType listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) override;
+    ErrorType listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port) override;
     ErrorType acceptConnection(Socket &socket, const Milliseconds timeout) override;
     ErrorType closeConnection(const Socket socket) override;
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) override;
@@ -20,22 +20,22 @@ class IpServer final : public IpServerAbstraction {
     ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) override;
 
     private:
-    inline int toPosixFamily(IpServerTypes::Version version) const {
+    inline int toPosixFamily(IpTypes::Version version) const {
         switch (version) {
-            case IpServerTypes::Version::IPv4:
+            case IpTypes::Version::IPv4:
                 return AF_INET;
-            case IpServerTypes::Version::IPv6:
+            case IpTypes::Version::IPv6:
                 return AF_INET6;
             default:
                 return AF_UNSPEC;
         }
     }
 
-    inline int toPosixSocktype(IpServerTypes::Protocol protocol) const {
+    inline int toPosixSocktype(IpTypes::Protocol protocol) const {
         switch (protocol) {
-            case IpServerTypes::Protocol::Tcp:
+            case IpTypes::Protocol::Tcp:
                 return SOCK_STREAM;
-            case IpServerTypes::Protocol::Udp:
+            case IpTypes::Protocol::Udp:
                 return SOCK_DGRAM;
             default:
                 return SOCK_RAW;

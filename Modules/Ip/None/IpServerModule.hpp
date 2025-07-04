@@ -8,7 +8,7 @@ class IpServer final : public IpServerAbstraction {
     public:
     IpServer() : IpServerAbstraction() {};
 
-    ErrorType listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) override;
+    ErrorType listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port) override;
     ErrorType acceptConnection(Socket &socket, const Milliseconds timeout) override;
     ErrorType closeConnection(const Socket socket) override;
 

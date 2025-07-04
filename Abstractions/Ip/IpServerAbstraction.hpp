@@ -10,40 +10,21 @@
 //AbstractionLayer
 #include "CommunicationProtocol.hpp"
 #include "Log.hpp"
+#include "IpTypes.hpp"
 
 /**
- * @namespace IpServerTypes
+ * @namespace IpTypes
  * @brief Types related to the Internet Protocol server.
  */
 namespace IpServerTypes {
 
     /**
-     * @struct ServerStatus
+     * @struct Status
      * @brief Server status
     */
-    struct ServerStatus {
+    struct Status {
         bool listening;          ///< True when the server is listening for connections.
         Count activeConnections; ///< The number of simultaneous active connections.
-    };
-
-    /**
-     * @enum Version
-     * @brief The version to use for the IP connection
-    */
-    enum class Version : uint8_t {
-        Unknown = 0, ///< Unknown
-        IPv4,        ///< Internet Protocol Version 4
-        IPv6         ///< Internet Protocol Version 6
-    };
-
-    /**
-     * @enum Protocol
-     * @brief The protocol to use for the IP connection
-    */
-    enum class Protocol : uint8_t {
-        Unknown = 0, ///< Unknown
-        Tcp,         ///< Transmission Control Protocol
-        Udp          ///< User Datagram Protocol
     };
 }
 
@@ -73,12 +54,12 @@ class IpServerAbstraction : public CommunicationProtocol {
     /**
      * @brief Listen for connections on a port
      * @param[in] protocol The protocol to use for the connection
-     * @sa IpServerTypes::Protocol
+     * @sa IpTypes::Protocol
      * @param[in] version The version to use for the connection
      * @param[in] port The port to listen to
-     * @sa IpServerTypes::Version
+     * @sa IpTypes::Version
     */
-    virtual ErrorType listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) = 0;
+    virtual ErrorType listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port) = 0;
     /**
      * @brief Accept a connection from a client connecting to the socket given
      * @param[out] socket The socket that the connection was accepted on
@@ -156,13 +137,13 @@ class IpServerAbstraction : public CommunicationProtocol {
 #pragma GCC diagnostic pop
 
     ///@brief Get a mutable reference to the protocol
-    IpServerTypes::Protocol &protocol() { return _protocol; }
+    IpTypes::Protocol &protocol() { return _protocol; }
     ///@brief Get a constant reference to the protocol
-    const IpServerTypes::Protocol &protocolConst() const { return _protocol; }
+    const IpTypes::Protocol &protocolConst() const { return _protocol; }
     ///@brief Get a mutable reference to the version
-    IpServerTypes::Version &version() { return _version; }
+    IpTypes::Version &version() { return _version; }
     ///@brief Get a constant reference to the version
-    const IpServerTypes::Version &versionConst() const { return _version; }
+    const IpTypes::Version &versionConst() const { return _version; }
     ///@brief Get a mutable reference to the port
     Port &port() { return _port; }
     ///@brief Get a constant reference to the port
@@ -175,7 +156,7 @@ class IpServerAbstraction : public CommunicationProtocol {
     ///@param[in] network The network abstraction to set
     void setNetwork(NetworkAbstraction &network) { _network = &network; }
     ///@brief Get a constant reference to the status of the server
-    const IpServerTypes::ServerStatus &status() {
+    const IpServerTypes::Status &status() {
         _status.activeConnections = _connectedSockets.size();
         return _status;
     }
@@ -184,13 +165,13 @@ class IpServerAbstraction : public CommunicationProtocol {
     /// @brief The socket on which we listen for new connections
     Socket _listenerSocket = -1;
     /// @brief The protocol
-    IpServerTypes::Protocol _protocol = IpServerTypes::Protocol::Unknown;
+    IpTypes::Protocol _protocol = IpTypes::Protocol::Unknown;
     /// @brief The IP version
-    IpServerTypes::Version _version = IpServerTypes::Version::Unknown;
+    IpTypes::Version _version = IpTypes::Version::Unknown;
     /// @brief The port
     Port _port = 0;
     /// @brief The status of the server
-    IpServerTypes::ServerStatus _status;
+    IpServerTypes::Status _status;
     /// @brief list of all the sockets we have accepted connection for
     std::vector<Socket> _connectedSockets;
 

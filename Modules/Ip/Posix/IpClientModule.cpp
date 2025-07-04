@@ -16,7 +16,7 @@
 #include <cstring>
 #include <limits>
 
-ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) {
+ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &sock, const Milliseconds timeout) {
     sock = -1;
     bool doneConnecting = false;
     ErrorType callbackError = ErrorType::Failure;
@@ -26,7 +26,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
         disconnect();
         signal(SIGPIPE, SIG_IGN);
 
-        if (version == IpClientTypes::Version::IPv4) {
+        if (version == IpTypes::Version::IPv4) {
             struct addrinfo hints;
             struct addrinfo *res = nullptr;
             memset(&hints, 0, sizeof(hints));

@@ -17,29 +17,29 @@ class IpClient final : public IpClientAbstraction {
     public:
     IpClient() : IpClientAbstraction() {};
 
-    ErrorType connectTo(std::string_view hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) override;
+    ErrorType connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &sock, const Milliseconds timeout) override;
     ErrorType disconnect() override;
     ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
     ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) override;
     ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) override;
 
-    int toPosixFamily(IpClientTypes::Version version) {
+    int toPosixFamily(IpTypes::Version version) {
         switch (version) {
-            case IpClientTypes::Version::IPv4:
+            case IpTypes::Version::IPv4:
                 return AF_INET;
-            case IpClientTypes::Version::IPv6:
+            case IpTypes::Version::IPv6:
                 return AF_INET6;
             default:
                 return AF_UNSPEC;
         }
     }
 
-    int toPosixSocktype(IpClientTypes::Protocol protocol) {
+    int toPosixSocktype(IpTypes::Protocol protocol) {
         switch (protocol) {
-            case IpClientTypes::Protocol::Tcp:
+            case IpTypes::Protocol::Tcp:
                 return SOCK_STREAM;
-            case IpClientTypes::Protocol::Udp:
+            case IpTypes::Protocol::Udp:
                 return SOCK_DGRAM;
             default:
                 return SOCK_RAW;

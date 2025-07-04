@@ -4,7 +4,7 @@
 
 #define IP_CELLULAR_CLIENT_DEBUG 0
 
-ErrorType IpCellularClient::connectTo(std::string_view hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &socket, const Milliseconds timeout) {
+ErrorType IpCellularClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &socket, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 

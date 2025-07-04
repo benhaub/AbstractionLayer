@@ -3,7 +3,7 @@
 #include "NetworkAbstraction.hpp"
 #include "OperatingSystemModule.hpp"
 
-ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &sock, const Milliseconds timeout) {
+ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &sock, const Milliseconds timeout) {
     sock = -1;
     bool doneConnecting = false;
     ErrorType callbackError = ErrorType::Failure;
@@ -11,7 +11,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
     auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
         disconnect();
 
-        if (version != IpClientTypes::Version::IPv4) {
+        if (version != IpTypes::Version::IPv4) {
             PLT_LOGE(TAG, "only IPv4 is supported");
             callbackError = ErrorType::NotSupported;
             doneConnecting = true;

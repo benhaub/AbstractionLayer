@@ -1,7 +1,7 @@
 //AbstractionLayer
 #include "IpServerModule.hpp"
 
-ErrorType IpServer::listenTo(const IpServerTypes::Protocol protocol, const IpServerTypes::Version version, const Port port) {
+ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port) {
     return ErrorType::NotImplemented;
 }
 ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout) {

@@ -15,7 +15,7 @@ class IpCellularClient final : public IpClientAbstraction {
     public:
     IpCellularClient() : IpClientAbstraction() {}
 
-    ErrorType connectTo(std::string_view hostname, const Port port, const IpClientTypes::Protocol protocol, const IpClientTypes::Version version, Socket &socket, const Milliseconds timeout) override;
+    ErrorType connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &socket, const Milliseconds timeout) override;
     ErrorType disconnect() override;
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) override;
     ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
