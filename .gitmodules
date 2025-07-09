@@ -1,0 +1,9 @@
+[submodule "Modules/Processor/Cc32xx/CMSIS_6"]
+	path = Modules/Processor/Cc32xx/CMSIS_6
+	url = https://github.com/ARM-software/CMSIS_6.git
+[submodule "Modules/Processor/Tm4c123/CMSIS_6"]
+	path = Modules/Processor/Tm4c123/CMSIS_6
+	url = https://github.com/ARM-software/CMSIS_6.git
+[submodule "Modules/Ip/Posix/mbedtls"]
+	path = Modules/Ip/Posix/mbedtls
+	url = https://github.com/Mbed-TLS/mbedtls.git

@@ -1,0 +1,3 @@
+Modules/**/*libsodium*
+.DS_Store
+Doxygen/html/**

@@ -1,0 +1,253 @@
+/***************************************************************************//**
+* @author   Ben Haubrich
+* @file     NetworkAbstraction.hpp
+* @details  \b Synopsis: \n Interface for communication over the network.
+* @ingroup Abstractions
+*******************************************************************************/
+#ifndef __NETWORK_ABSTRACTION_HPP__
+#define __NETWORK_ABSTRACTION_HPP__
+
+//AbstractionLayer
+#include "EventQueue.hpp"
+#include "Log.hpp"
+#include "Math.hpp"
+
+/**
+ * @namespace NetworkTypes
+ * @brief Namespace for types related to the network interface.
+ */
+namespace NetworkTypes {
+    
+    /**
+     * @enum Technology
+     * @brief The technology of the network interface.
+     * @note If you google wifi, 3g, or 4g, It will say they are all wireless communication technologies.
+     *       That's where the name comes from.
+    */
+    enum class Technology {
+        Unknown = 0, ///< Unknown
+        Wifi,        ///< Wi-Fi
+        Zigbee,      ///< ZigBee
+        Ethernet,    ///< Ethernet
+        Cellular,    ///< Cellular
+    };
+
+    /**
+     * @struct Status
+     * @brief The status of the network interface.
+    */
+    struct Status {
+        bool isUp;                       ///< True when the network is up and ready for use.
+        Technology technology;           ///< The technology of the network interface.
+        std::string manufacturerName;    ///< The manufacturer name of the network interface.
+        DecibelMilliWatts signalStrength;///< The signal strength of the network interface.
+    };
+
+    /// @brief Size of an IPv4 address string with tombstone
+    constexpr uint8_t Ipv4AddressStringSize = 18;
+    /// @brief Size of a MAC address string with tombstone
+    constexpr uint8_t MacAddressStringSize = 18;
+    /// @brief Size of a MAC address byte array
+    constexpr uint8_t MacAddressByteArraySize = 6;
+
+    /**
+     * @brief Convert data from network byte order to host byte order.
+     * @param[in] data The data to convert.
+     * @returns The data in host byte order.
+     */
+    template<typename T>
+    inline T NetworkToHostByteOrder(const T &data) {
+        const uint16_t i = 1;
+
+        //i is 0b00000001 in memory for big endian (network byte order)
+        //i is 0b10000000 in memory for little endian
+        //So reading as a byte, we'll either get 1 or 0.
+        const bool hostIsLittleEndian = (*((char *)&i));
+        if (hostIsLittleEndian) {
+            T swappedData = 0;
+            if (std::is_same<T, uint64_t>::value) {
+                swappedData |= (data & 0x00000000000000FFULL) << ToBits(7);
+                swappedData |= (data & 0x000000000000FF00ULL) << ToBits(5);
+                swappedData |= (data & 0x0000000000FF0000ULL) << ToBits(3);
+                swappedData |= (data & 0x00000000FF000000ULL) << ToBits(1);
+                swappedData |= (data & 0x000000FF00000000ULL) >> ToBits(1);
+                swappedData |= (data & 0x0000FF0000000000ULL) >> ToBits(3);
+                swappedData |= (data & 0x00FF000000000000ULL) >> ToBits(5);
+                swappedData |= (data & 0xFF00000000000000ULL) >> ToBits(7);
+            }
+            else if (std::is_same<T, uint32_t>::value) {
+                swappedData |= (data & 0x000000FF) << ToBits(3);
+                swappedData |= (data & 0x0000FF00) << ToBits(1);
+                swappedData |= (data & 0x00FF0000) >> ToBits(1);
+                swappedData |= (data & 0xFF000000) >> ToBits(3);
+            }
+            else if (std::is_same<T, uint16_t>::value) {
+                swappedData |= (data & 0x00FF) << ToBits(1);
+                swappedData |= (data & 0xFF00) >> ToBits(1);
+            }
+
+            return swappedData;
+        }
+
+        return data;
+    }
+
+    /**
+     * @brief Convert data from host byte order to network byte order.
+     * @param[in] data The data to convert.
+     * @returns The data in network byte order.
+     */
+    template<typename T>
+    inline T HostToNetworkByteOrder(const T &data) {
+        return NetworkToHostByteOrder(data);
+    }
+
+    /**
+     * @struct ConfigurationParameters 
+     * @brief Contains the parameters used to configure the network.
+     */
+    struct ConfigurationParameters {
+        public:
+        /// @brief The technology type these parameters are meant for
+        virtual NetworkTypes::Technology technology() const = 0;
+    };
+}
+
+/**
+ * @class NetworkAbstraction
+ * @brief Interface for communication over the network.
+*/
+class NetworkAbstraction : public EventQueue {
+
+    public:
+    /// @brief Default constructor
+    NetworkAbstraction() = default;
+    /// @brief Default destructor
+    virtual ~NetworkAbstraction() = default;
+
+    /// @brief Tag for logging
+    static constexpr char TAG[] = "Network";
+
+    /// @brief Print the status of the network interface
+    void printStatus() {
+        status();
+        PLT_LOGI(TAG, "<NetworkStatus> <Connected:%s, Signal Strength (dBm):%d> <Pie, Line>",
+        status(false).isUp ? "true" : "false", status(false).signalStrength);
+    }
+
+    /**
+     * @brief Configure the network before initializing
+     * @param[in] params The parameters to configure with
+     * @sa ConfigurationParameters
+     */
+    virtual ErrorType configure(const NetworkTypes::ConfigurationParameters &parameters) = 0;
+    /**
+    * @brief Initialize the interface.
+    * @pre Call configure first.
+    * @returns ErrorType::Success if the network interface was initialized and ready for clients to connect.
+    * @returns ErrorType::Timeout if the the interface could not be initialized in time.
+    * @returns ErrorType::Failure otherwise
+    * @post May block for up to a maximum of 10 seconds to bring the interface up.
+    * @post Network can be used to connect after this function returns ErrorType::Success.
+    * @post Will init with a default setting if network parameters are not set prior to this call.
+    * @post NetworkTypes::Status::isUp will be set to true after this function returns ErrorType::Success
+    */
+    virtual ErrorType init() = 0;
+    /**
+     * @brief Bring up the network interface so that it is ready for use (e.g. IP connections)
+     * @returns ErrorType::Success if the network interface was brought up successfully
+     * @returns ErrorType::Failure if the network interface could not be brought up
+    */
+    virtual ErrorType networkUp() = 0;
+    /**
+     * @brief Bring down the network interface.
+     * @returns ErrorType::Success if the network interface was brought down successfully
+     * @returns ErrorType::Failure if the network interface could not be brought down
+    */
+    virtual ErrorType networkDown() = 0;
+    /**
+     * @brief Transmit a frame of data.
+     * @param[in] frame The frame of data to transmit
+     * @param[in] socket The socket to transmit from
+     * @param[in] timeout The timeout in milliseconds to wait for the transmission to complete
+     * @returns ErrorType::Success if the transmission was successful
+     * @returns ErrorType::Failure if the transmission failed
+     * @post NetworkTypes::Status::isUp will be set to false after this function returns ErrorType::Success
+    */
+    virtual ErrorType txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) = 0;
+    /**
+     * @sa txBlocking
+     * @param[in] frame The frame to transmit.
+     * @param[in] socket The socket to transmit from
+     * @param[in] timeout The time to wait to send the data.
+     * @param[in] callback Function that is called when transmission is complete
+     * @code 
+     * //Function member signature:
+     * void callback(ErrorType error, const Bytes bytesWritten) { return ErrorType::Success; }
+     * //lambda signature:
+     * auto callback = [](const ErrorType error, const Bytes bytesWritten) { return ErrorType::Success; }
+     * @endcode
+    */
+    virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
+    /**
+     * @brief Receive a frame of data.
+     * @param[in] frameBuffer The buffer to store the received frame data.
+     * @param[in] socket  The socket to receive from
+     * @param[in] timeout The timeout in milliseconds to wait for the transmission to complete
+     * @returns ErrorType::Success if the frame was successfully received
+     * @returns ErrorType::Failure if the frame was not received
+    */
+    virtual ErrorType rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) = 0;
+    /**
+     * @sa rxBlocking
+     * @param[in] frameBuffer The buffer to store the received frame data.
+     * @param[in] timeout The time to wait to receive data.
+     * @param[in] socket The socket to receive from
+     * @param[in] callback Function that is called when the frame has been received
+     * @code 
+     * //Function member signature:
+     * void callback(ErrorType error, std::shared_ptr<std::string> frameBuffer) { return ErrorType::Success; }
+     * //lambda signature:
+     * auto callback = [](const ErrorType error, std::shared_ptr<std::string> frameBuffer) { return ErrorType::Success; }
+     * @endcode
+    */
+    virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) = 0;
+    /**
+     * @brief Get the MAC address of this network interface.
+     * @param[out] macAddress The MAC address of this network interface.
+     * @returns ErrorType::Success if the MAC address was successfully retrieved
+     * @returns ErrorType::Failure if the MAC address was not successfully retrieved
+    */
+    virtual ErrorType getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) = 0;
+    /**
+    * @brief Get the signal strength of the network interface.
+    * @param[out] signalStrength The signal strength of the network interface.
+    * @returns ErrorType::Success if the signal strength was successfully retrieved
+    * @returns ErrorType::Failure if the signal strength was not successfully retrieved
+    */
+    virtual ErrorType getSignalStrength(DecibelMilliWatts &signalStrength) = 0;
+
+    /// @brief The current status of the network interface as a const reference.
+    const NetworkTypes::Status &status(const bool updateStatus = true) {
+        if (updateStatus) {
+            //Not only does it not really make sense to want to know the signal strength if you aren't connected to anything,
+            //but some platforms will not allow this and may event crash if you ask for the status before the network is initialized.
+            if (_status.isUp) {
+                getSignalStrength(_status.signalStrength);
+            }
+        }
+
+        return _status;
+    }
+
+    protected:
+    /// @brief The current status of the network interface
+    NetworkTypes::Status _status = {
+        .isUp = false,
+        .technology = NetworkTypes::Technology::Unknown,
+        .manufacturerName = "",
+        .signalStrength = 0
+    };
+};
+
+#endif // __NETWORK_ABSTRACTION_HPP__
