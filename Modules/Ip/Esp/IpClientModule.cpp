@@ -27,7 +27,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
     bool doneConnecting = false;
     ErrorType callbackError = ErrorType::Failure;
 
-    auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
+    auto connectCb = [&]() -> ErrorType {
         disconnect();
 
        if (version == IpTypes::Version::IPv4) {
@@ -128,7 +128,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
     };
 
     ErrorType error = ErrorType::Failure;
-    EventQueue::Event event = EventQueue::Event(std::bind(connectCb, timeout));
+    EventQueue::Event event = EventQueue::Event(std::bind(connectCb));
     if (ErrorType::Success != (error = network().addEvent(event))) {
         return error;
     }

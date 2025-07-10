@@ -21,22 +21,19 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
     bool doneConnecting = false;
     ErrorType callbackError = ErrorType::Failure;
 
-    auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
+    auto connectCb = [&]() -> ErrorType {
         // Ensure any existing connection is properly closed
         disconnect();
         signal(SIGPIPE, SIG_IGN);
 
         if (version == IpTypes::Version::IPv4) {
             struct addrinfo hints;
-            struct addrinfo *res = nullptr;
+            struct addrinfo *res;
             memset(&hints, 0, sizeof(hints));
-            hints.ai_family = AF_INET;
+            hints.ai_family = toPosixFamily(version);
             hints.ai_socktype = toPosixSocktype(protocol);
-            
-            std::array<char, sizeof(port) * 3> portString;
-            snprintf(portString.data(), portString.size(), "%u", port);
 
-            const int status = getaddrinfo(hostname.data(), portString.data(), &hints, &res);
+            const int status = getaddrinfo(hostname.data(), std::to_string(port).c_str(), &hints, &res);
             if (0 == status) {
                 struct sockaddr_in *ipv4 = (struct sockaddr_in *)res->ai_addr;
                 struct sockaddr_in dest_ip;
@@ -69,7 +66,6 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
                         int res = select(_socket+1, NULL, &fdset, NULL, &timeoutval);
                         if (res < 0) {
                             PLT_LOGW(TAG, "Error during connection: select for socket to be writable %s", strerror(errno));
-                            callbackError = ErrorType::Failure;
                         }
                         else if (res == 0) {
                             PLT_LOGW(TAG, "Connection timeout: select for socket to be writable %s", strerror(errno));
@@ -81,11 +77,9 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
 
                             if (getsockopt(_socket, SOL_SOCKET, SO_ERROR, (void*)(&sockerr), &len) < 0) {
                                 PLT_LOGW(TAG, "Error when getting socket error using getsockopt() %s", strerror(errno));
-                                callbackError = ErrorType::Failure;
                             }
                             else if (sockerr) {
                                 PLT_LOGW(TAG, "Connection error %d", sockerr);
-                                callbackError = ErrorType::Failure;
                             }
                             else {
                                 sock = _socket;
@@ -102,13 +96,13 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
                     PLT_LOGW(TAG, "Failed to create socket: %s", strerror(errno));
                     callbackError = fromPlatformError(errno);
                 }
+
+                freeaddrinfo(res);
             }
             else {
                 PLT_LOGW(TAG, "Failed to get address info: %s", gai_strerror(status));
                 callbackError = ErrorType::PrerequisitesNotMet;
             }
-
-            freeaddrinfo(res);
         }
         else {
             callbackError = ErrorType::NotSupported;
@@ -120,7 +114,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
     };
 
     ErrorType error = ErrorType::Failure;
-    EventQueue::Event event = EventQueue::Event(std::bind(connectCb, timeout));
+    EventQueue::Event event = EventQueue::Event(std::bind(connectCb));
     if (ErrorType::Success != (error = network().addEvent(event))) {
         PLT_LOGW(TAG, "Could not add connection event to network");
         return error;

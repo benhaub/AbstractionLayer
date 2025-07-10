@@ -3,6 +3,11 @@
 
 //AbstractionLayer
 #include "HttpClientAbstraction.hpp"
+//MbedTLS
+#include "mbedtls/ssl.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/net_sockets.h"
 
 class HttpsClient final : public HttpClientAbstraction {
 
@@ -15,6 +20,15 @@ class HttpsClient final : public HttpClientAbstraction {
     ErrorType receiveBlocking(HttpTypes::Response &response, const Milliseconds timeout) override;
     ErrorType sendNonBlocking(const std::shared_ptr<HttpTypes::Request> request, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
     ErrorType receiveNonBlocking(std::shared_ptr<HttpTypes::Response> response, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<HttpTypes::Request> buffer)> callback) override;
+
+    private:
+    bool _isSslSession = false;
+    mbedtls_ssl_context _ssl;
+    mbedtls_entropy_context _entropy;
+    mbedtls_ctr_drbg_context _ctrDrbg;
+    mbedtls_ssl_config _conf;
+    mbedtls_x509_crt _cacert;
+    mbedtls_net_context _serverFd;
 };
 
 #endif // __HTTP_CLIENT_MODULE_HPP__

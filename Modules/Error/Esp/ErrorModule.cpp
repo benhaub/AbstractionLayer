@@ -6,6 +6,7 @@
 #include "esp_check.h"
 #include "esp_wifi.h" //For wifi error codes.
 #include "nvs.h"     //For NVS error codes.
+#include "mbedtls/net_sockets.h"
 #include <cerrno>
 #include "lwip/netdb.h"
 
@@ -42,6 +43,7 @@ ErrorType fromPlatformError(int32_t err) {
         case ESP_ERR_NVS_PART_NOT_FOUND:
         case EBADF:
         case EINVAL:
+        case MBEDTLS_ERR_NET_UNKNOWN_HOST:
             return ErrorType::InvalidParameter;
         case ESP_ERR_NVS_NOT_FOUND:
             return ErrorType::FileNotFound;
