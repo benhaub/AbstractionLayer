@@ -13,6 +13,9 @@ class HttpsClient final : public HttpClientAbstraction {
 
     public:
     HttpsClient(IpClientAbstraction &ipClient) : HttpClientAbstraction(ipClient) {}
+    ~HttpsClient() {
+        freeSslContexts();
+    }
 
     ErrorType connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &socket, const Milliseconds timeout) override;
     ErrorType disconnect() override;
@@ -22,13 +25,22 @@ class HttpsClient final : public HttpClientAbstraction {
     ErrorType receiveNonBlocking(std::shared_ptr<HttpTypes::Response> response, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<HttpTypes::Request> buffer)> callback) override;
 
     private:
-    bool _isSslSession = false;
+    bool _connected = false;
     mbedtls_ssl_context _ssl;
     mbedtls_entropy_context _entropy;
     mbedtls_ctr_drbg_context _ctrDrbg;
     mbedtls_ssl_config _conf;
     mbedtls_x509_crt _cacert;
     mbedtls_net_context _serverFd;
+
+    void freeSslContexts() {
+        mbedtls_ssl_free(&_ssl);
+        mbedtls_entropy_free(&_entropy);
+        mbedtls_ctr_drbg_free(&_ctrDrbg);
+        mbedtls_ssl_config_free(&_conf);
+        mbedtls_x509_crt_free(&_cacert);
+        mbedtls_net_free(&_serverFd);
+    }
 };
 
 #endif // __HTTP_CLIENT_MODULE_HPP__

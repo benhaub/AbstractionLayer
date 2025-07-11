@@ -28,7 +28,7 @@ source .venv/bin/activate
 pip install -r scripts/basic.requirements.txt
 mkdir -p mbedtls_Build
 cd mbedtls_Build
-cmake -DENABLE_TESTING=OFF -DENABLE_PROGRAMS=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=OFF -DUSE_STATIC_MBEDTLS_LIBRARY=ON -DCMAKE_BUILD_TYPE=Release -DMBEDTLS_FS_IO=ON ..
+cmake -DENABLE_TESTING=OFF -DENABLE_PROGRAMS=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=OFF -DUSE_STATIC_MBEDTLS_LIBRARY=ON -DCMAKE_BUILD_TYPE=Release ..
 cmake --build .
 deactivate
 ")

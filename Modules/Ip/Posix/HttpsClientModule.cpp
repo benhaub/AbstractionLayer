@@ -9,7 +9,7 @@
 #if defined(__linux__)
 #define CA_CERT "/etc/ssl/certs/ca-certificates.crt"
 #elif defined(__APPLE__)
-#define CA_CERT "/System/Library/Keychains/SystemRootCertificates.keychain"
+#define CA_CERT "/private/etc/ssl/cert.pem"
 #else
 #error "Unsupported platform for CA_CERT" 
 #endif
@@ -21,6 +21,8 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
     bool doneConnecting = false;
 
     auto connectCb = [&]() -> ErrorType {
+        disconnect();
+
         if (PSA_SUCCESS == psa_crypto_init()) {
             mbedtls_ctr_drbg_init(&_ctrDrbg);
             mbedtls_entropy_init(&_entropy);
@@ -59,7 +61,6 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
                                     const uint32_t flags = mbedtls_ssl_get_verify_result(&_ssl);
                                     if (0 == flags) {
                                         callbackError = ErrorType::Success;
-                                        _isSslSession = true;
                                     }
                                 }
                             }
@@ -69,6 +70,7 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
             }
         }
 
+        callbackError == ErrorType::Success ? _connected = true : _connected = false;
         doneConnecting = true;
         return callbackError;
     };
@@ -88,29 +90,39 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
 
 ErrorType HttpsClient::disconnect() {
     assert(nullptr != _ipClient);
-    ErrorType callbackError = ErrorType::Failure;
-    bool doneDisconnecting = false;
 
-    auto disconnectCb = [&]() -> ErrorType {
-        if (0 == mbedtls_ssl_close_notify(&_ssl)) {
-            callbackError = ErrorType::Success;
+    if (_connected) {
+        ErrorType callbackError = ErrorType::Failure;
+        bool doneDisconnecting = false;
+
+        auto disconnectCb = [&]() -> ErrorType {
+            if (0 == mbedtls_ssl_close_notify(&_ssl)) {
+                callbackError = ErrorType::Success;
+            }
+
+            mbedtls_ssl_session_reset(&_ssl);
+            freeSslContexts();
+
+            _connected = false;
+            doneDisconnecting = true;
+            return callbackError;
+        };
+
+        ErrorType error = ErrorType::Failure;
+        EventQueue::Event event = EventQueue::Event(std::bind(disconnectCb));
+        if (ErrorType::Success != (error = _ipClient->network().addEvent(event))) {
+            return error;
         }
 
-        doneDisconnecting = true;
+        while (!doneDisconnecting) {
+            OperatingSystem::Instance().delay(Milliseconds(1));
+        }
+
         return callbackError;
-    };
-
-    ErrorType error = ErrorType::Failure;
-    EventQueue::Event event = EventQueue::Event(std::bind(disconnectCb));
-    if (ErrorType::Success != (error = _ipClient->network().addEvent(event))) {
-        return error;
     }
-
-    while (!doneDisconnecting) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+    else {
+        return ErrorType::Success;
     }
-
-    return callbackError;
 }
 
 ErrorType HttpsClient::sendBlocking(const HttpTypes::Request &request, const Milliseconds timeout) {
@@ -188,6 +200,22 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
         auto networkReceiveFunction = [&](std::string &buffer, const Milliseconds timeout) -> ErrorType {
             int ret = mbedtls_ssl_read(&_ssl, reinterpret_cast<uint8_t *>(&buffer[0]), buffer.size());
             if (ret < 0) {
+                if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+                    // Need more data or write buffer full - retry
+                    buffer.resize(0);
+                    return ErrorType::Success; // Indicate we need to retry
+                }
+                if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
+                    // Server closed connection gracefully - this is normal
+                    buffer.resize(0);
+                    return ErrorType::Success;
+                }
+                if (ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET) {
+                    // Server sent new session ticket - continue operation
+                    buffer.resize(0);
+                    return ErrorType::Success; // Indicate we need to retry
+                }
+
                 PLT_LOGW(TAG, "mbedtls_ssl_read failed to read response headers <error:-0x%x>", -ret);
                 return ErrorType::Failure;
             }
@@ -207,6 +235,18 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
                 ret = mbedtls_ssl_read(&_ssl, reinterpret_cast<uint8_t *>(&response.messageBody[read]), response.messageBody.size() - read);
 
                 if (ret < 0) {
+                    if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+                        // Need more data or write buffer full - continue loop
+                        continue;
+                    }
+                    if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
+                        // Server closed connection gracefully - this is normal
+                        break;
+                    }
+                    if (ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET) {
+                        // Server sent new session ticket - continue operation
+                        continue;
+                    }
                     PLT_LOGW(TAG, "mbedtls_ssl_read failed <error:-0x%x>", -ret);
                     callbackError = ErrorType::Failure;
                 }
