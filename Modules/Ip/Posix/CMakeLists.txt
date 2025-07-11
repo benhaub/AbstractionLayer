@@ -56,7 +56,6 @@ find_package(MbedTLS)
 target_link_libraries(PosixIpClient
 PUBLIC
   MbedTLS::mbedtls
-  MbedTLS::tfpsacrypto
   MbedTLS::mbedx509
 )
 
