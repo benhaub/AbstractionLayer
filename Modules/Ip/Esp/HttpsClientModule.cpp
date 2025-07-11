@@ -41,12 +41,16 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
                                 if (0 == mbedtls_net_connect(&_serverFd, hostname.data(), std::to_string(port).c_str(), MBEDTLS_NET_PROTO_TCP)) {
                                     mbedtls_ssl_set_bio(&_ssl, &_serverFd, mbedtls_net_send, mbedtls_net_recv, NULL);
 
-                                    if ((0 == mbedtls_ssl_handshake(&_ssl))) {
-                                        const int flags = mbedtls_ssl_get_verify_result(&_ssl);
-                                        if (0 == flags) {
-                                            callbackError = ErrorType::Success;
+                                    int ret;
+                                    while ((ret = mbedtls_ssl_handshake(&_ssl)) != 0) {
+                                        if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
+                                            PLT_LOGW(TAG, "mbedtls_ssl_handshake returned -0x%x", -ret);
+                                            doneConnecting = true;
+                                            return callbackError;
                                         }
                                     }
+
+                                    callbackError = ErrorType::Success;
                                 }
                             }
                         }
@@ -128,13 +132,20 @@ ErrorType HttpsClient::sendBlocking(const HttpTypes::Request &request, const Mil
                             ret == MBEDTLS_ERR_SSL_WANT_WRITE ||
                             ret == MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS ||
                             ret == MBEDTLS_ERR_SSL_CRYPTO_IN_PROGRESS);
-
+ 
             noFatalErrorsOccured = ret > 0;
-            frameNotFullyWritten = (frame.size() - written > 0);
-                                
+
             if (noFatalErrorsOccured) {
                 written += ret;
             }
+            else if (ret == 0) {
+                PLT_LOGW(TAG, "mbedtls_ssl_write sent 0 bytes <frameSize:%u, written:%u>", frame.size(), written);
+            }
+            else {
+                PLT_LOGW(TAG, "mbedtls_ssl_write failed <error:-0x%x>", -ret);
+            }
+
+            frameNotFullyWritten = (frame.size() - written > 0);
 
         } while (needToTryAgain || (noFatalErrorsOccured && frameNotFullyWritten));
 
@@ -171,7 +182,7 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
                 return ErrorType::Failure;
             }
             else {
-                read = ret;
+                buffer.resize(ret);
                 return ErrorType::Success;
             }
         };
@@ -201,7 +212,6 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
             response.messageBody.resize(read);
         }
 
-        response.messageBody.resize(read);
         doneReceiving = true;
         return callbackError;
     };

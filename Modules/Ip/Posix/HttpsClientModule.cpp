@@ -142,13 +142,20 @@ ErrorType HttpsClient::sendBlocking(const HttpTypes::Request &request, const Mil
                             ret == MBEDTLS_ERR_SSL_WANT_WRITE ||
                             ret == MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS ||
                             ret == MBEDTLS_ERR_SSL_CRYPTO_IN_PROGRESS);
-
-            noFatalErrorsOccured = ret > 0;
-            frameNotFullyWritten = (frame.size() - written > 0);
                                 
+            noFatalErrorsOccured = ret > 0;
+
             if (noFatalErrorsOccured) {
                 written += ret;
             }
+            else if (ret == 0) {
+                PLT_LOGW(TAG, "mbedtls_ssl_write sent 0 bytes <frameSize:%u, written:%u>", frame.size(), written);
+            }
+            else {
+                PLT_LOGW(TAG, "mbedtls_ssl_write failed <error:-0x%x>", -ret);
+            }
+
+            frameNotFullyWritten = (frame.size() - written > 0);
 
         } while (needToTryAgain || (noFatalErrorsOccured && frameNotFullyWritten));
 
@@ -185,7 +192,7 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
                 return ErrorType::Failure;
             }
             else {
-                read = ret;
+                buffer.resize(ret);
                 return ErrorType::Success;
             }
         };

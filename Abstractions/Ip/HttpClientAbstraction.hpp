@@ -100,6 +100,7 @@ class HttpClientAbstraction {
      * @brief Read the response headers from a reply to an http request.
      * @param[out] reponse The response headers from the reply
      * @param[out] buffer If any of the body was read while obtaining the response headers it will be stored in this buffer
+     *             and buffer.size() will be the number of bytes of the message body that was read.
      * @param[in] timeout The time to wait to receive data.
      * @param[in] networkReceiveFunction The function to call to receive data. If nullptr, IpClient::receiveBlocking will be used.
      * @returns ErrorType::Success if the response headers were read
