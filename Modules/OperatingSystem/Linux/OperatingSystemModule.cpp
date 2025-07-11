@@ -172,7 +172,7 @@ ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial,
     //The internal name is the name with a leading / to make it a valid semaphore name on POSIX systems.
     //For all other purposes inside this operating system abstraction, the name should be used directly.
     std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> internalName = {'/'};
-    strncat(internalName.data(), name.data(), OperatingSystemTypes::MaxSemaphoreNameLength - 1);
+    strncat(internalName.data(), name.data(), OperatingSystemTypes::MaxSemaphoreNameLength);
 
     if (internalName.size() > NAME_MAX-4) {
         return ErrorType::InvalidParameter;
@@ -193,7 +193,7 @@ ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial,
 
 ErrorType OperatingSystem::deleteSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
     std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> internalName = {'/'};
-    strncat(internalName.data(), name.data(), OperatingSystemTypes::MaxSemaphoreNameLength - 1);
+    strncat(internalName.data(), name.data(), OperatingSystemTypes::MaxSemaphoreNameLength);
 
     if (0 != sem_unlink(internalName.data())) {
         return fromPlatformError(errno);
@@ -239,7 +239,7 @@ ErrorType OperatingSystem::incrementSemaphore(const std::array<char, OperatingSy
     }
 
     std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> internalName = {'/'};
-    strncat(internalName.data(), name.data(), OperatingSystemTypes::MaxSemaphoreNameLength - 1);
+    strncat(internalName.data(), name.data(), OperatingSystemTypes::MaxSemaphoreNameLength);
 
     if (0 != sem_post(semaphores[name])) {
         return fromPlatformError(errno);
