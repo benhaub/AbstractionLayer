@@ -129,6 +129,12 @@ namespace HttpTypes {
         Type contentType;               ///< Content-Type:
         Connection connection;          ///< Connection:
         Bytes contentLength;            ///< Content-Length
+
+        Headers() : userAgent(""), host(""), referer(""), contentType(Type::Unknown), connection(Connection::Unknown), contentLength(0) {
+            language = std::vector<Language>(0, Language::Unknown);
+            accept = std::vector<Type>(0, Type::Unknown);
+            encoding = std::vector<Encoding>(0, Encoding::Unknown);
+        }
     };
 
     /**
@@ -151,6 +157,10 @@ namespace HttpTypes {
         Method method;   ///< Method
         std::string uri; ///< Universal Resource Identifier
         Version version; ///< Http protocol version
+
+        RequestLine() : method(Method::Unknown), version(Version::Unknown) {
+            uri = "";
+        }
     };
 
     /**
@@ -162,6 +172,8 @@ namespace HttpTypes {
         Headers headers;             ///< Headers
         CustomHeaders customHeaders; ///< Custom Headers
         std::string messageBody;     ///< Message body
+
+        Request() : requestLine(RequestLine()), headers(Headers()), customHeaders(CustomHeaders()), messageBody("") {}
     };
 
     /**
@@ -291,6 +303,8 @@ namespace HttpTypes {
 
     /**
      * @brief Convert a raw Http request to an AbstractionLayer http request.
+     * @details This function could be called iteratively to read the request headers as you receive them, but would not be as optimal
+     *          as receivng all of them first and then calling this function.
      * @sa HttpTypes::Request
      * @param[in] buffer The raw data of the http request.
      * @param[out] request The converted htpp request.
@@ -537,9 +551,6 @@ namespace HttpTypes {
             request.headers.contentLength = 0;
         }
 
-        request.messageBody.reserve(request.headers.contentLength);
-
-        request.messageBody = buffer.substr(buffer.size() - request.headers.contentLength, request.headers.contentLength);
         return ErrorType::Success;
     }
 

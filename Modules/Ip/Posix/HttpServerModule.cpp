@@ -19,22 +19,16 @@ ErrorType HttpServer::sendBlocking(const HttpTypes::Response &response, const Mi
 }
 
 ErrorType HttpServer::receiveBlocking(HttpTypes::Request &request, const Milliseconds timeout, Socket &socket) {
-    constexpr Bytes maxBufferSize = 1448;
-    std::string buffer(maxBufferSize, 0);
+    assert(nullptr != _ipServer);
+    assert(request.messageBody.size() > 0);
     ErrorType error = ErrorType::Failure;
+    std::string &buffer = request.messageBody;
 
-    error = _ipServer->receiveBlocking(buffer, timeout, socket);
-
-    if (ErrorType::Success == error && buffer.size() > 0) {
-        if (ErrorType::Success == toHttpRequest(buffer, request)) {
-            while (request.messageBody.size() < request.headers.contentLength) {
-                buffer.resize(std::min(maxBufferSize, request.headers.contentLength - static_cast<Bytes>(request.messageBody.size())), 0);
-                error = _ipServer->receiveBlocking(buffer, timeout, socket);
-                if (ErrorType::Success == error && buffer.size() > 0) {
-                    request.messageBody.append(buffer);
-                }
-            }
-        }
+    if (0 == request.headers.contentLength) {
+        error = readRequestHeaders(request, timeout, socket);
+    }
+    else {
+        error = _ipServer->receiveBlocking(buffer, timeout, socket);
     }
 
     return error;

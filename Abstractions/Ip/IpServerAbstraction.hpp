@@ -8,9 +8,9 @@
 #define __IP_SERVER_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include "CommunicationProtocol.hpp"
 #include "Log.hpp"
 #include "IpTypes.hpp"
+#include "EventQueue.hpp"
 
 /**
  * @namespace IpTypes
@@ -35,11 +35,11 @@ class NetworkAbstraction;
  * @brief Creates a server on any network
  * @note You should use the network to handle communication by placing events on it's queue.
  */
-class IpServerAbstraction : public CommunicationProtocol {
+class IpServerAbstraction : public EventQueue {
 
     public:
     /// @brief Constructor
-    IpServerAbstraction() : CommunicationProtocol() { _status.listening = false; }
+    IpServerAbstraction() : EventQueue() {}
     /// @brief Destructor
     virtual ~IpServerAbstraction() = default;
 
@@ -76,17 +76,6 @@ class IpServerAbstraction : public CommunicationProtocol {
      * @returns Fnd::ErrorType::Success on success
     */
     virtual ErrorType closeConnection(const Socket socket) = 0;
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Woverloaded-virtual"
-
-    //Try casting to an IpServerAbstraction or IpServerModule if you are calling using a CommunicationProtocol pointer.
-    ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) override { return ErrorType::NotSupported; }
-    ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override { return ErrorType::NotSupported; }
-    ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) override { return ErrorType::NotSupported; }
-    ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override { return ErrorType::NotSupported; }
-
-    //Send and receive functions include a socket since multiple sockets may be returned by accepting multiple connections.
 
     /**
      * @brief Sends data.
@@ -134,8 +123,6 @@ class IpServerAbstraction : public CommunicationProtocol {
     */
     virtual ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) = 0;
 
-#pragma GCC diagnostic pop
-
     ///@brief Get a mutable reference to the protocol
     IpTypes::Protocol &protocol() { return _protocol; }
     ///@brief Get a constant reference to the protocol
@@ -171,7 +158,10 @@ class IpServerAbstraction : public CommunicationProtocol {
     /// @brief The port
     Port _port = 0;
     /// @brief The status of the server
-    IpServerTypes::Status _status;
+    IpServerTypes::Status _status = {
+        false,
+        0
+    };
     /// @brief list of all the sockets we have accepted connection for
     std::vector<Socket> _connectedSockets;
 

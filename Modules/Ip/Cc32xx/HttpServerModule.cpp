@@ -20,7 +20,6 @@ ErrorType HttpServer::sendBlocking(const HttpTypes::Response &response, const Mi
     return ErrorType::NotImplemented;
 }
 
-//TODO: Not thread safe.
 ErrorType HttpServer::receiveBlocking(HttpTypes::Request &request, const Milliseconds timeout, Socket &socket) {
     ErrorType error = ErrorType::Failure;
     SlNetAppRequest_t netAppRequest;
