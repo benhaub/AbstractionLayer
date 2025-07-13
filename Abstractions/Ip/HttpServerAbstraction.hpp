@@ -97,6 +97,98 @@ class HttpServerAbstraction {
      */
     virtual ErrorType receiveNonBlocking(std::shared_ptr<HttpTypes::Request> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpTypes::Request> buffer)> callback) = 0;
 
+    /**
+     * @brief Read the request headers from a request to an http server.
+     * @pre The size of the messaage body will determine how much data is read at once. If any of the message body is read while storing setting
+     *      the contents of HttpTypes::Request, the part read will be saved to the message body.
+     * @param[out] request The request headers from the request
+     * @param[in] timeout The time to wait to receive data.
+     * @param[out] sock The socket from which the data was received.
+     * @param[in] networkReceiveFunction The function to call to receive data. If nullptr, IpClient::receiveBlocking will be used.
+     * @returns ErrorType::Success if the response headers were read
+     * @returns Any errors returned by IpClient::receiveBlocking
+     * @code
+     *   ErrorType error;
+     *   HttpTypes::Request request;
+     *   constexpr Bytes maxBufferSize = 512;
+     *   request.messageBody.resize(maxBufferSize);
+     *   std::string messageBody(maxBufferSize, 0);
+     *   messageBody.resize(0);
+     *   Milliseconds timeout = 1;
+
+     *   Socket socketReceivedFrom = -1;
+
+     *   error = httpServer().receiveBlocking(request, timeout, socketReceivedFrom);
+     *   messageBody.append(request.messageBody);
+
+     *   while (messageBody.size() < request.headers.contentLength && ErrorType::Success == error) {
+     *       request.messageBody.resize(maxBufferSize);
+
+     *       error = httpServer().receiveBlocking(request, timeout, socketReceivedFrom);
+
+     *       if (ErrorType::Success == error) {
+     *           messageBody.append(request.messageBody);
+     *       }
+     *   }
+     *   request.messageBody.swap(messageBody);
+     * @endcode
+     */
+    ErrorType readRequestHeaders(HttpTypes::Request &request, const Milliseconds timeout, Socket &sock, std::function<ErrorType(std::string &buffer, const Milliseconds timeout)> networkReceiveFunction = nullptr) {
+        std::string &buffer = request.messageBody;
+        const Bytes bufferSize = buffer.size();
+        assert(bufferSize > 1 && "Buffer size must be greater than 1 in order to detect the end of the request headers");
+
+        auto receive = [&](std::string &buffer) -> ErrorType {
+            ErrorType error = ErrorType::Failure;
+
+            if (nullptr == networkReceiveFunction) {
+                error = _ipServer->receiveBlocking(buffer, timeout, sock);
+            }
+            else {
+                error = networkReceiveFunction(buffer, timeout);
+            }
+
+            return error;
+        };
+
+        ErrorType error = receive(buffer);
+
+        if (ErrorType::Success == error) {
+            constexpr char endOfRequestHeaders[] = "\r\n\r\n";
+
+            size_t requestBodyBegin = buffer.find(endOfRequestHeaders);
+            const bool theBufferWasNotLargeEnoughToReadTheHeaderInOneGo = std::string::npos == requestBodyBegin;
+            if (theBufferWasNotLargeEnoughToReadTheHeaderInOneGo) {
+                //Extra buffer to store the request header fragments.
+                std::string requestBuffer = buffer;
+
+                do {
+                    buffer.resize(bufferSize);
+                    error = receive(buffer);
+
+                    if (ErrorType::Success == error) {
+                        requestBuffer.append(buffer);
+                        requestBodyBegin = requestBuffer.find(endOfRequestHeaders);
+                    }
+
+                    
+                } while (ErrorType::Success == error && std::string::npos == requestBodyBegin);
+
+                if (ErrorType::Success == error) {
+                    buffer.swap(requestBuffer);
+                }
+            }
+
+            if (std::string::npos != requestBodyBegin) {
+                //If any of the body was read while extracting the request headers, remove everything except the message body.
+                error = toHttpRequest(buffer, request);
+                buffer.erase(0, requestBodyBegin + sizeof(endOfRequestHeaders)-1);
+            }
+        }
+
+        return error;
+    }
+
     protected:
     /// @brief The Ip server to perform lower level network communications on.
     IpServerAbstraction *_ipServer;

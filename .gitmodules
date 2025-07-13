@@ -6,4 +6,5 @@
 	url = https://github.com/ARM-software/CMSIS_6.git
 [submodule "Modules/Ip/Posix/mbedtls"]
 	path = Modules/Ip/Posix/mbedtls
-	url = https://github.com/Mbed-TLS/mbedtls.git
+  url = https://github.com/Mbed-TLS/mbedtls.git
+  ignore = untracked
