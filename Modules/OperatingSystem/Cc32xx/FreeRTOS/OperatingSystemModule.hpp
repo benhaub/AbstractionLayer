@@ -20,7 +20,6 @@ class OperatingSystem final: public OperatingSystemAbstraction, public Global<Op
     public:
     OperatingSystem() : OperatingSystemAbstraction(), Global<OperatingSystem>() {
         static_assert(1 == configUSE_TIMERS);
-        static_assert(1 == configUSE_IDLE_HOOK);
         memoryRegions(_status.memoryRegion);
         savedInterruptContexts.reserve(2);
     }
