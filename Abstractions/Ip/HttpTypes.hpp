@@ -130,10 +130,24 @@ namespace HttpTypes {
         Connection connection;          ///< Connection:
         Bytes contentLength;            ///< Content-Length
 
-        Headers() : userAgent(""), host(""), referer(""), contentType(Type::Unknown), connection(Connection::Unknown), contentLength(0) {
-            language = std::vector<Language>(0, Language::Unknown);
-            accept = std::vector<Type>(0, Type::Unknown);
-            encoding = std::vector<Encoding>(0, Encoding::Unknown);
+        /// @brief Constructor
+        Headers() {
+            reset();
+        }
+
+        /**
+         * @brief Reset the headers to their initial state
+         */
+        void reset() {
+            userAgent.clear();
+            host.clear();
+            referer.clear();
+            language.clear();
+            accept.clear();
+            encoding.clear();
+            contentType = Type::Unknown;
+            connection = Connection::Unknown;
+            contentLength = 0;
         }
     };
 
@@ -144,8 +158,18 @@ namespace HttpTypes {
     struct CustomHeaders {
         std::array<std::string, 10> headers; ///< Array for the custom headers
 
+        /// @brief Constructor
         CustomHeaders() {
-            headers.fill("");
+            reset();
+        }
+
+        /**
+         * @brief Reset the custom headers to their initial state
+         */
+        void reset() {
+            for (auto &header : headers) {
+                header.clear();
+            }
         }
     };
 
@@ -158,8 +182,18 @@ namespace HttpTypes {
         std::string uri; ///< Universal Resource Identifier
         Version version; ///< Http protocol version
 
-        RequestLine() : method(Method::Unknown), version(Version::Unknown) {
-            uri = "";
+        /// @brief Constructor
+        RequestLine() {
+            reset();
+        }
+
+        /**
+         * @brief Reset the request line to its initial state
+         */
+        void reset() {
+            method = Method::Unknown;
+            uri.clear();
+            version = Version::Unknown;
         }
     };
 
@@ -173,7 +207,22 @@ namespace HttpTypes {
         CustomHeaders customHeaders; ///< Custom Headers
         std::string messageBody;     ///< Message body
 
-        Request() : requestLine(RequestLine()), headers(Headers()), customHeaders(CustomHeaders()), messageBody("") {}
+        /// @brief Constructor
+        Request() {
+            reset();
+        }
+
+        /**
+         * @brief Reset the request to its initial state
+         * @details sending and receiving use the state of the request to determine if they should attempt to parse the headers or not.
+         *          Use this function to reset the request so that it will be parsed again.
+         */
+        void reset() {
+            requestLine.reset();
+            headers.reset();
+            customHeaders.reset();
+            messageBody.clear();
+        }
     };
 
     /**
@@ -238,7 +287,18 @@ namespace HttpTypes {
         Version version;       ///< Http protocol version
         StatusCode statusCode; ///< Status code
 
-        StatusLine() : version(Version::Unknown), statusCode(StatusCode::Unknown) {}
+        /// @brief Constructor
+        StatusLine() {
+            reset();
+        }
+
+        /**
+         * @brief Reset the status line to its initial state
+         */
+        void reset() {
+            version = Version::Unknown;
+            statusCode = StatusCode::Unknown;
+        }
     };
 
     /**
@@ -248,6 +308,19 @@ namespace HttpTypes {
     struct ResponseHeaders {
         std::array<char, 64> server; ///< Server name
         std::array<char, 32> date;   ///< Date.
+
+        /// @brief Constructor
+        ResponseHeaders() {
+            reset();
+        }
+
+        /**
+         * @brief Reset the response headers to their initial state
+         */
+        void reset() {
+            server.fill(0);
+            date.fill(0);
+        }
     };
 
     /**
@@ -260,9 +333,19 @@ namespace HttpTypes {
         Bytes contentLength;                   ///< Content-Length:
         std::vector<Language> contentLanguage; ///< Content-Language:
 
-        RepresentationHeaders() : contentType(Type::Unknown), contentLength(0) {
-            contentEncoding = std::vector<Encoding>(0, Encoding::Unknown);
-            contentLanguage = std::vector<Language>(0, Language::Unknown);
+        /// @brief Constructor
+        RepresentationHeaders() {
+            reset();
+        }
+
+        /**
+         * @brief Reset the representation headers to their initial state
+         */
+        void reset() {
+            contentType = Type::Unknown;
+            contentEncoding.clear();
+            contentLength = 0;
+            contentLanguage.clear();
         }
     };
 
@@ -275,6 +358,23 @@ namespace HttpTypes {
         ResponseHeaders responseHeaders;             ///< Response headers
         RepresentationHeaders representationHeaders; ///< Representation headers
         std::string messageBody;                     ///< Message body
+
+        /// @brief Constructor
+        Response() {
+            reset();
+        }
+
+        /**
+         * @brief Reset the response to its initial state
+         * @details sending and receiving use the state of the response to determine if they should attempt to parse the headers or not.
+         *          Use this function to reset the response so that it will be parsed again.
+         */
+        void reset() {
+            statusLine.reset();
+            responseHeaders.reset();
+            representationHeaders.reset();
+            messageBody.clear();
+        }
     };
 
     /**
