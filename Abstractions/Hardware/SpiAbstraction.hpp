@@ -12,12 +12,13 @@
 
 /**
  * @namespace SpiTypes
- * @brief Spi configuration types
-*/
+ * @brief Contains types and constants used by the SpiAbstraction.
+ */
 namespace SpiTypes {
+
     /**
      * @struct SpiParams
-     * @brief Contains the parameters used to configure the SPI.
+     * @brief Contains the parameters used to configure SPI.
      */
     struct SpiParams final : public IcCommunicationProtocolTypes::ConfigurationParameters {
         IcCommunicationProtocolTypes::IcDevice deviceType() const override { return IcCommunicationProtocolTypes::IcDevice::Spi; }
@@ -44,7 +45,7 @@ class SpiAbstraction : public IcCommunicationProtocol {
     const SpiTypes::SpiParams &spiParams() const { return _spiParams; }
 
     private:
-    /// @brief The UART parameters.
+    /// @brief The SPI parameters.
     SpiTypes::SpiParams _spiParams;
 };
 
