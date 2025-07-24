@@ -15,13 +15,10 @@
 /**
  * @class RtcAbstraction
  * @brief Abstraction layer for RTC communication.
- * @note All member functions can return any of ErrorType::NotImplemented, ErrorType::NotSupported or ErrorType::NotAvailable.
  */
 class RtcAbstraction {
 
     public:
-    /// @brief Constructor.
-    RtcAbstraction() = default;
     /// @brief Destructor.
     virtual ~RtcAbstraction() = default;
 
@@ -90,13 +87,12 @@ class RtcAbstraction {
      */
     IcCommunicationProtocol &ic() { assert(nullptr != _ic); return *_ic; }
 
-    /// @brief Set the network abstraction that this client communicates on.
-    /// @param ic The network abstraction to use.
+    /// @brief Set the IC device that this client communicates on.
+    /// @param ic The IC device to use.
     ErrorType setIcDevice(IcCommunicationProtocol &ic) { _ic = &ic; return ErrorType::Success; }
 
     protected:
     /// @brief The Integrated circuit device that is being used to communicate with the RTC.
-    /// @note Not a unique_ptr because the RTC does not have exclusive ownersip of the _ic device.
     IcCommunicationProtocol *_ic = nullptr;
 };
 
