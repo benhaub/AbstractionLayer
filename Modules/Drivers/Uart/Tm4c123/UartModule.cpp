@@ -8,16 +8,16 @@
 ErrorType Uart::init() {
     ErrorType error = ErrorType::PrerequisitesNotMet;
 
-    if (PeripheralNumber::Unknown != peripheralNumber()) {
-        const uint32_t tm4c123UartSysCtlPeripheralNumber = toTm4c123SysCtlPeripheralNumber(peripheralNumber(), error);
+    if (PeripheralNumber::Unknown != uartParams().hardwareConfig.peripheralNumber) {
+        const uint32_t tm4c123UartSysCtlPeripheralNumber = toTm4c123SysCtlPeripheralNumber(uartParams().hardwareConfig.peripheralNumber, error);
         if (ErrorType::Success == error) {
             SysCtlPeripheralEnable(tm4c123UartSysCtlPeripheralNumber);
             while(!SysCtlPeripheralReady(tm4c123UartSysCtlPeripheralNumber));
-            Register tm4c123UartBaseRegister = toTm4c123PeripheralBaseRegister(peripheralNumber(), error);
+            Register tm4c123UartBaseRegister = toTm4c123PeripheralBaseRegister(uartParams().hardwareConfig.peripheralNumber, error);
             if (ErrorType::Success == error) {
-                UARTConfigSetExpClk(reinterpret_cast<uint32_t>(tm4c123UartBaseRegister), SysCtlClockGet(), baudRate(), toTm4c123UartConfigBits(dataBits(), stopBits(), parity(), error));
+                UARTConfigSetExpClk(reinterpret_cast<uint32_t>(tm4c123UartBaseRegister), SysCtlClockGet(), uartParams().driverConfig.baudRate, toTm4c123UartConfigBits(uartParams().driverConfig.dataBits, uartParams().driverConfig.stopBits, uartParams().driverConfig.parity, error));
                 if (ErrorType::Success == error) {
-                    UARTFlowControlSet(reinterpret_cast<uint32_t>(tm4c123UartBaseRegister), toTm4c123UartFlowControl(flowControl(), error));
+                    UARTFlowControlSet(reinterpret_cast<uint32_t>(tm4c123UartBaseRegister), toTm4c123UartFlowControl(uartParams().driverConfig.flowControl, error));
                 }
             }
         }
@@ -30,9 +30,9 @@ ErrorType Uart::deinit() {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Uart::txBlocking(const std::string &data, const Milliseconds timeout) {
+ErrorType Uart::txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
     ErrorType error;
-    const Register tm4c123UartBaseRegister = toTm4c123PeripheralBaseRegister(peripheralNumber(), error);
+    const Register tm4c123UartBaseRegister = toTm4c123PeripheralBaseRegister(uartParams().hardwareConfig.peripheralNumber, error);
     if (ErrorType::Success == error) {
         for (const char &c : data) {
             UARTCharPut(reinterpret_cast<uint32_t>(tm4c123UartBaseRegister), c);
@@ -41,51 +41,20 @@ ErrorType Uart::txBlocking(const std::string &data, const Milliseconds timeout) 
     return error;
 }
 
-ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout) {
+ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Uart::txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+ErrorType Uart::txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Uart::rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
+ErrorType Uart::rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
     return ErrorType::NotImplemented;
 }
 
 ErrorType Uart::flushRxBuffer() {
     return ErrorType::NotImplemented;
-}
-
-ErrorType Uart::setHardwareConfig(PinNumber txNumber, PinNumber rxNumber, PinNumber rtsNumber, PinNumber ctsNumber, PeripheralNumber peripheralNumber) {
-   txNumber = txNumber;
-   rxNumber = rxNumber;
-   rtsNumber = rtsNumber;
-   ctsNumber = ctsNumber;
-   peripheralNumber = peripheralNumber;
-   return ErrorType::Success;
-}
-
-ErrorType Uart::setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartTypes::FlowControl flowControl) {
-    _baudRate = baudRate;
-    _dataBits = dataBits;
-    _parity = parity;
-    _stopBits = stopBits;
-    _flowControl = flowControl;
-    return ErrorType::Success;
-}
-
-ErrorType Uart::setFirmwareConfig(Bytes receiveBufferSize, Bytes transmitBufferSize, int8_t terminatingByte) {
-    _receiveBufferSize = receiveBufferSize;
-    _transmitBufferSize = transmitBufferSize;
-    _terminatingByte = terminatingByte;
-    return ErrorType::Success;
-}
-
-ErrorType Uart::setInterruptConfig(InterruptFlags interruptFlags, InterruptCallback interruptCallback) {
-    _interruptFlags = interruptFlags;
-    _interruptCallback = interruptCallback;
-    return ErrorType::Success;
 }
 
 uint32_t Uart::toTm4c123SysCtlPeripheralNumber(PeripheralNumber peripheralNumber, ErrorType &error) {

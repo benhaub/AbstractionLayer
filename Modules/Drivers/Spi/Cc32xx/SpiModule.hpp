@@ -9,15 +9,11 @@ class Spi : public SpiAbstraction {
 
     ErrorType init() override;
     ErrorType deinit() override;
-    ErrorType txBlocking(const std::string &data, const Milliseconds timeout) override;
-    ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
-    ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout) override;
-    ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
+    ErrorType txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
+    ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
     ErrorType flushRxBuffer() override;
-
-    ErrorType setHardwareConfig() override;
-    ErrorType setDriverConfig() override;
-    ErrorType setFirmwareConfig() override;
 };
 
 #endif // __SPI_MODULE_HPP__

@@ -41,6 +41,59 @@ namespace I2cTypes {
         HighSpeed = 3400000,  ///< High speed (3.4 Mbps)
         UltraFast = 5000000,  ///< Ultra-fast speed (5 Mbps)
     };
+
+    /**
+     * @struct I2cParams
+     * @brief Contains the parameters used to configure I2C.
+     */
+    struct I2cParams final : public IcCommunicationProtocolTypes::ConfigurationParameters {
+        IcCommunicationProtocolTypes::IcDevice deviceType() const override { return IcCommunicationProtocolTypes::IcDevice::I2c; }
+
+        /**
+         * @struct HardwareConfig
+         * @brief Contains the hardware configuration parameters for the I2C.
+         */
+        struct HardwareConfig {
+            PeripheralNumber peripheral; ///< The hardware peripheral number
+            I2cTypes::Mode mode; ///< The mode of the I2C.
+            I2cTypes::Speed speed; ///< The speed of the I2C.
+            PinNumber sda; ///< The pin number for the SDA line.
+            bool sdaPullup; ///< Whether the SDA line should have a pull-up resistor.
+            PinNumber scl; ///< The pin number for the SCL line.
+            bool sclPullup; ///< Whether the SCL line should have a pull-up resistor.
+        } hardwareConfig; ///< The hardware configuration parameters.
+
+        /**
+         * @struct InterruptConfig
+         * @brief Contains the interrupt configuration parameters for the I2C.
+         */
+        struct InterruptConfig {
+            bool arbitrationLost; ///< Whether the arbitration was lost.
+            bool nackDetected; ///< Whether the target did not acknowledge the transfer.
+            bool sclLowTimeout; ///< Whether the controller has lost clock synchronization with another controller because the SCL line was held low longer than the configured timeout.
+            bool stopDetect; ///< Whether the controller has finished sending data. The stop bit is sent and this interrupt is activated.
+            bool receiveFifoOverflow; ///< Whether the receive FIFO has reached a threshold.
+            bool transmitFifoOverflow; ///< Whether the transmit FIFO has reached a threshold.
+        } interruptConfig; ///< The interrupt configuration parameters.
+
+        /// @brief Constructor.
+        I2cParams() : IcCommunicationProtocolTypes::ConfigurationParameters() {
+            hardwareConfig.mode = I2cTypes::Mode::Unknown;
+            hardwareConfig.speed = I2cTypes::Speed::Unknown;
+            hardwareConfig.peripheral = PeripheralNumber::Unknown;
+            hardwareConfig.sda = -1;
+            hardwareConfig.sdaPullup = false;
+            hardwareConfig.scl = -1;
+            hardwareConfig.sclPullup = false;
+
+            interruptConfig.arbitrationLost = false;
+            interruptConfig.nackDetected = false;
+            interruptConfig.sclLowTimeout = false;
+            interruptConfig.stopDetect = false;
+            interruptConfig.receiveFifoOverflow = false;
+            interruptConfig.transmitFifoOverflow = false;
+        }
+    };
 }
 
 /**
@@ -51,6 +104,7 @@ namespace I2cTypes {
  * @note All member functions can return any of ErrorType::NotImplemented, ErrorType::NotSupported or ErrorType::NotAvailable.
  */
 class I2cAbstraction : public IcCommunicationProtocol {
+
     public:
     /// @brief Constructor.
     I2cAbstraction() : IcCommunicationProtocol() {}
@@ -60,91 +114,17 @@ class I2cAbstraction : public IcCommunicationProtocol {
     /// @brief The tag for logging
     static constexpr char TAG[] = "I2c";
 
-    /**
-     * @brief Set the hardware configurations
-     * @param[in] peripheral The peripheral number for this I2c instance.
-     * @param[in] mode The mode of the I2C.
-     * @param[in] speed The rate at which the I2C bus clock operates.
-     * @param[in] sda The pin number for the SDA line.
-     * @param[in] sdaPullUp Whether the SDA line should have a pull-up resistor.
-     * @param[in] scl The pin number for the SCL line.
-     * @param[in] sclPullUp Whether the SCL line should have a pull-up resistor.
-     * @returns ErrorType::Success if the hardware configurations were set successfully.
-     * @returns ErrorType::Failure otherwise.
-     * @note The reason the config is not part of the constructor parameter list is because of convenience.
-     *       It's a little verbose to have sub-class constructors contain the same parameter list as the parent.
-     *       It also makes cross-platform development easier since some platforms don't offer a config and having a function
-     *       at least allows you to return NotSupported on NotAvailable in this case.
-     */
-    virtual ErrorType setHardwareConfig(const PeripheralNumber peripheral, const I2cTypes::Mode mode, const I2cTypes::Speed speed, const PinNumber sda, const bool sdaPullUp, const PinNumber scl, const bool sclPullUp) = 0;
-    /**
-     * @brief enable or disable interrupts.
-     * @param[in] arbitrationLost
-     * @param[in] nackDetected The transfer was not completed because the target did not acknowledge
-     * @param[in] sclLowTimeout The controller has lost clock synchronization with another controller because the SCL line was held low longer than the configured timeout
-     * @sa user manual Pg.10, Sect. 3.1.7
-     * @param[in] stopDetect When the controller has finished sending data. The stop bit is sent and this interrupt is activated.
-     * @param[in] receiveFifoOverflow Can be enabled for controller or transmit mode to fire when the receive FIFO has reached a threshold.
-     * @param[in] transmitFifoOverflow Can be enabled for controller or transmitter mode to fire when the transmit FIFO has reached a threshold.
-     */
-    virtual ErrorType setInterruptConfig(const bool arbitrationLost, const bool nackDetected, const bool sclLowTimeout, const bool stopDetect, const bool receiveFifoOverflow, const bool transmitFifoOverflow) = 0;
-    /**
-     * @brief transmit data
-     * @sa Fnd::CommunicationProtocol::send
-     * @param[in] data The data to transmit
-     * @param[in] deviceAddress The address of the device you want to transmit to
-     * @param[in] registerAddress The address of the register on the device that you want to write to.
-     * @param[in] timeout The time to wait to transmit the data.
-    */
-    virtual ErrorType txBlocking(const std::string &data, uint8_t deviceAddress, uint8_t registerAddress, const Milliseconds timeout) = 0;
-    /**
-     * @brief transmit data
-     * @sa Fnd::CommunicationProtocol::sendNonBlocking
-     * @param[in] data The data to transmit
-     * @param[in] deviceAddress The address of the device you want to transmit to
-     * @param[in] registerAddress The address of the register on the device that you want to write to.
-     * @param[in] callback The function to call when the data has been transmitted.
-    */
-    virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> data, uint8_t deviceAddress, uint8_t registerAddress, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
-    /**
-     * @brief receive data
-     * @sa Fnd::CommunicationProtocol::receive
-     * @param[out] buffer The received data.
-     * @param[in] deviceAddress The address of the device you want to receive from to
-     * @param[in] registerAddress The address of the register on the device that you read from.
-     * @param[in] timeout The time to wait to receive to the data.
-    */
-    virtual ErrorType rxBlocking(std::string &buffer, uint8_t deviceAddress, uint8_t registerAddress, const Milliseconds timeout) = 0;
-    /**
-     * @brief receive data
-     * @sa Fnd::CommunicationProtocol::receiveNonBlocking
-     * @param[out] buffer The received data.
-     * @param[in] deviceAddress The address of the device you want to receive from to
-     * @param[in] registerAddress The address of the register on the device that you read from.
-     * @param[in] callback The callback to call when receiving has finished.
-    */
-    virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, uint8_t deviceAddress, uint8_t registerAddress, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) = 0;
+    ErrorType configure(const IcCommunicationProtocolTypes::ConfigurationParameters &params) override {
+        _i2cParams = static_cast<const I2cTypes::I2cParams &>(params);
 
-    //If you are using the I2C peripheral through an IcCommunicationProtocol pointer then you will need to cast it to an I2C Abstraction or module first.
-    ErrorType txBlocking(const std::string &data, const Milliseconds timeout) override { assert(false); return ErrorType::NotSupported; }
-    ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override { assert(false); return ErrorType::NotSupported; }
-    ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout) override { assert(false); return ErrorType::NotSupported; }
-    ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override { assert(false); return ErrorType::NotSupported; }
+        return ErrorType::NotImplemented;
+    }
 
-    /// @brief The mode of the I2C.
-    I2cTypes::Mode _mode = I2cTypes::Mode::Unknown;
-    /// @brief The speed of the I2C.
-    I2cTypes::Speed _speed = I2cTypes::Speed::Unknown;
-    /// @brief Hardware peripheral number
-    PeripheralNumber _peripheral = PeripheralNumber::Unknown;
-    /// @brief The pin number for the SDA line.
-    PinNumber _sda = -1;
-    /// @brief Whether the SDA line should have a pull-up resistor.
-    bool _sdaPullup = false;
-    /// @brief The pin number for the SCL line.
-    PinNumber _scl = false;
-    /// @brief Whether the SCL line should have a pull-up resistor.
-    bool _sclPullup = -1;
+    const I2cTypes::I2cParams &i2cParams() const { return _i2cParams; }
+
+    private:
+    /// @brief The I2C parameters.
+    I2cTypes::I2cParams _i2cParams;
 };
 
 #endif //__I2C_ABSTRACTION_HPP__

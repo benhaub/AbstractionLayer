@@ -11,6 +11,7 @@
 #include "EventQueue.hpp"
 //C++
 #include <memory>
+#include <optional>
 
 namespace IcCommunicationProtocolTypes {
     /**
@@ -25,6 +26,30 @@ namespace IcCommunicationProtocolTypes {
         Ethernet,    ///< Ethernet peripheral
         Usb,         ///< USB peripheral
     };
+
+    /**
+     * @struct ConfigurationParameters
+     * @brief Parameters to configure an IC device
+     */
+    struct ConfigurationParameters {
+        /**
+         * @brief The type of device that these parameters are for
+         * @return The deveice types
+         */
+        virtual IcDevice deviceType() const = 0;
+    };
+
+    /**
+     * @struct AdditionalCommunicationParameters
+     * @brief Additional parameters for communication with an IC deviceA
+     * @details Fill in if known
+     */
+    struct AdditionalCommunicationParameters {
+        /// @brief The I2C device address
+        std::optional<uint8_t> i2cDeviceAddress;
+        /// @brief The register address
+        std::optional<uint8_t> i2cRegisterAddress;
+    };
 }
 
 /**
@@ -38,6 +63,14 @@ class IcCommunicationProtocol : public EventQueue {
     IcCommunicationProtocol() : EventQueue() {}
     ///@brief destructor
     virtual ~IcCommunicationProtocol() = default;
+
+    /**
+     * @brief Configure the IC device
+     * @param[in] params The parameters to use for the IC device
+     * @returns ErrorType::Success if the device was configured successfully
+     * @returns ErrorType::Failure otherwise
+     */
+    virtual ErrorType configure(const IcCommunicationProtocolTypes::ConfigurationParameters &params) = 0;
 
     /**
      * @brief Initialize the IC device
@@ -57,22 +90,22 @@ class IcCommunicationProtocol : public EventQueue {
      * @brief transmit data
      * @sa Fnd::CommunicationProtocol::sendBlocking
     */
-    virtual ErrorType txBlocking(const std::string &data, const Milliseconds timeout) = 0;
+    virtual ErrorType txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) = 0;
     /**
      * @brief transmit data
      * @sa Fnd::CommunicationProtocol::sendNonBlocking
     */
-    virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
+    virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
     /**
      * @brief receive data
      * @sa Fnd::CommunicationProtocol::receiveBlocking
     */
-    virtual ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout) = 0;
+    virtual ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) = 0;
     /**
      * @brief receive data
      * @sa Fnd::CommunicationProtocol::receiveNonBlocking
     */
-    virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) = 0;
+    virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) = 0;
     /**
      * @brief flush the receive buffer
     */

@@ -8,12 +8,33 @@
 ErrorType Uart::init() {
     ErrorType error;
 
-    //Did you call all of the config functions?
-    assert(PeripheralNumber::Unknown != peripheralNumber());
+    uart_port_t uartPort = toEspPeripheralNumber(uartParams().hardwareConfig.peripheralNumber, error);
+    if (ErrorType::Success == error) {
+        if (ESP_OK == uart_set_pin(uartPort, uartParams().hardwareConfig.tx, uartParams().hardwareConfig.rx, uartParams().hardwareConfig.rts, uartParams().hardwareConfig.cts)) {
+            uart_config_t uartConfig;
+            uartConfig.baud_rate = uartParams().driverConfig.baudRate;
+            uartConfig.rx_flow_ctrl_thresh = 0;
+            uartConfig.source_clk = UART_SCLK_DEFAULT;
 
-    error = fromPlatformError(uart_driver_install(toEspPeripheralNumber(this->peripheralNumber(), error), receiveBufferSize(), transmitBufferSize(), 0, nullptr, 0));
-    if (ErrorType::Success != error) {
-        return error;
+            uartConfig.data_bits = toEspWordLength(uartParams().driverConfig.dataBits, error);
+            if (ErrorType::Success == error) {
+                uartConfig.parity = toEspUartParity(uartParams().driverConfig.parity, error);
+
+                if (ErrorType::Success == error) {
+                    uartConfig.stop_bits = toEspStopBits(uartParams().driverConfig.stopBits, error);
+
+                    if (ErrorType::Success == error) {
+                        uartConfig.flow_ctrl = toEspFlowControl(uartParams().driverConfig.flowControl, error);
+
+                        if (ErrorType::Success == error) {
+                            if (ESP_OK == uart_param_config(toEspPeripheralNumber(uartParams().hardwareConfig.peripheralNumber, error), &uartConfig)) {
+                                error = fromPlatformError(uart_driver_install(toEspPeripheralNumber(uartParams().hardwareConfig.peripheralNumber, error), uartParams().firmwareConfig.receiveBufferSize, uartParams().firmwareConfig.transmitBufferSize, 0, nullptr, 0));
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     return error;
@@ -21,36 +42,34 @@ ErrorType Uart::init() {
 
 ErrorType Uart::deinit() {
     ErrorType error;
-    return fromPlatformError(uart_driver_delete(toEspPeripheralNumber(this->peripheralNumber(), error)));
+    return fromPlatformError(uart_driver_delete(toEspPeripheralNumber(uartParams().hardwareConfig.peripheralNumber, error)));
 }
 
-ErrorType Uart::txBlocking(const std::string &data, Milliseconds timeout) {
+ErrorType Uart::txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
     ErrorType error;
+    const PeripheralNumber peripheralNumber = uartParams().hardwareConfig.peripheralNumber;
 
-    if (-1 != uart_write_bytes(toEspPeripheralNumber(this->peripheralNumber(), error), data.data(), data.size())) {
+    if (-1 != uart_write_bytes(toEspPeripheralNumber(peripheralNumber, error), data.data(), data.size())) {
         return ErrorType::Success;
     }
 
     return ErrorType::Failure;
 }
 
-ErrorType Uart::txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    return ErrorType::NotImplemented;
-}
-
 //Supports both a terminating byte read and a total byte read.
-ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout) {
+ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
     ErrorType error;
     esp_err_t result;
     constexpr Bytes toReadAtOnce = 16;
     Bytes readInThisFrame = 0;
     std::string readBuffer(toReadAtOnce, '\0');
+    const PeripheralNumber peripheralNumber = uartParams().hardwareConfig.peripheralNumber;
 
-    if (terminatingByte() >= 0) {
+    if (uartParams().firmwareConfig.terminatingByte >= 0) {
         buffer.resize(0);
     }
     else {
-        uart_port_t uartNumber = toEspPeripheralNumber(this->peripheralNumber(), error);
+        uart_port_t uartNumber = toEspPeripheralNumber(peripheralNumber, error);
         if (ErrorType::Success != error) {
             return error;
         }
@@ -68,7 +87,7 @@ ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout) {
     bool bufferHasRoom = readInThisFrame < buffer.capacity();
 
     while (bufferHasRoom) {
-        uart_port_t uartNumber = toEspPeripheralNumber(this->peripheralNumber(), error);
+        uart_port_t uartNumber = toEspPeripheralNumber(peripheralNumber, error);
         if (ErrorType::Success != error) {
             return error;
         }
@@ -82,8 +101,8 @@ ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout) {
 
         buffer.append(readBuffer);
 
-        if (terminatingByte() >= 0) {
-            const size_t indexOfTerminatingByte = buffer.find(static_cast<char>(terminatingByte()), readInThisFrame - readBuffer.capacity());
+        if (uartParams().firmwareConfig.terminatingByte >= 0) {
+            const size_t indexOfTerminatingByte = buffer.find(static_cast<char>(uartParams().firmwareConfig.terminatingByte), readInThisFrame - readBuffer.capacity());
             const bool terminatingByteFound = std::string::npos != indexOfTerminatingByte;
 
             if (terminatingByteFound) {
@@ -98,12 +117,16 @@ ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout) {
     return ErrorType::Failure;
 }
 
-ErrorType Uart::rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
-    auto rx = [this, callback](std::shared_ptr<std::string> buffer, Bytes size) -> ErrorType {
+ErrorType Uart::txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+    return ErrorType::NotImplemented;
+}
+
+ErrorType Uart::rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
+    auto rx = [&, callback](std::shared_ptr<std::string> buffer, Bytes size) -> ErrorType {
         ErrorType error = ErrorType::Failure;
         const Milliseconds timeout = 1000;
 
-        error = rxBlocking(*(buffer.get()), timeout);
+        error = rxBlocking(*(buffer.get()), timeout, params);
 
         if (nullptr != callback) {
             callback(error, buffer);
@@ -118,8 +141,9 @@ ErrorType Uart::rxNonBlocking(std::shared_ptr<std::string> buffer, const Millise
 
 ErrorType Uart::flushRxBuffer() {
     ErrorType error;
+    const PeripheralNumber peripheralNumber = uartParams().hardwareConfig.peripheralNumber;
 
-    esp_err_t err = uart_flush_input(toEspPeripheralNumber(this->peripheralNumber(), error));
+    esp_err_t err = uart_flush_input(toEspPeripheralNumber(peripheralNumber, error));
 
     if (ErrorType::Success != error) {
         return error;
@@ -127,80 +151,4 @@ ErrorType Uart::flushRxBuffer() {
     else {
         return fromPlatformError(err);
     }
-}
-
-ErrorType Uart::setHardwareConfig(int32_t txNumber, int32_t rxNumber, int32_t rtsNumber, int32_t ctsNumber, PeripheralNumber peripheralNumber) {
-    ErrorType error;
-    _txNumber = txNumber;
-    _rxNumber = rxNumber;
-    _rtsNumber = rtsNumber;
-    _ctsNumber = ctsNumber;
-    _peripheralNumber = peripheralNumber;
-
-    uart_port_t uartPort = toEspPeripheralNumber(peripheralNumber, error);
-    
-    if (error != ErrorType::Success) {
-        return ErrorType::InvalidParameter;
-    }
-
-    if (ESP_OK != uart_set_pin(uartPort, txNumber, rxNumber, rtsNumber, ctsNumber)) {
-        return ErrorType::InvalidParameter;
-    }
-
-    return ErrorType::Success;
-}
-
-ErrorType Uart::setDriverConfig(uint32_t baudRate, uint8_t dataBits, char parity, uint8_t stopBits, UartTypes::FlowControl flowControl) {
-    _baudRate = baudRate;
-    _dataBits = dataBits;
-    _parity = parity;
-    _stopBits = stopBits;
-    _flowControl = flowControl;
-
-    uart_config_t uartConfig;
-    ErrorType error;
-
-    uartConfig.baud_rate = baudRate;
-    uartConfig.rx_flow_ctrl_thresh = 0;
-    uartConfig.source_clk = UART_SCLK_DEFAULT;
-
-    uartConfig.data_bits = toEspWordLength(dataBits, error);
-    if (ErrorType::Success != error) {
-        return error;
-    }
-    uartConfig.parity = toEspUartParity(parity, error);
-    if (ErrorType::Success != error) {
-        return error;
-    }
-    uartConfig.stop_bits = toEspStopBits(stopBits, error);
-    if (ErrorType::Success != error) {
-        return error;
-    }
-    uartConfig.flow_ctrl = toEspFlowControl(flowControl, error);
-    if (ErrorType::Success != error) {
-        return error;
-    }
-
-    if (ESP_OK != uart_param_config(toEspPeripheralNumber(peripheralNumber(), error), &uartConfig)) {
-        return ErrorType::InvalidParameter;
-    }
-
-    return ErrorType::Success;
-}
-
-ErrorType Uart::setFirmwareConfig(Bytes receiveBufferSize, Bytes transmitBufferSize, int8_t terminatingByte) {
-    _receiveBufferSize = receiveBufferSize;
-    _transmitBufferSize = transmitBufferSize;
-    _terminatingByte = terminatingByte;
-
-    return ErrorType::Success;
-}
-
-//Interrupts are enabled internally by uart_driver_install. It uses some weird macros to set thresholds and I'm not going to touch it.
-//All interrupts are enabled by default, we will use the flags to evaluate just the ones that are set.
-ErrorType Uart::setInterruptConfig(InterruptFlags interruptFlags, InterruptCallback interruptCallback) {
-    _interruptFlags = interruptFlags;
-    _interruptCallback = interruptCallback;
-
-    return ErrorType::Success;
 }

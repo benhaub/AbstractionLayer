@@ -11,6 +11,20 @@
 #include "IcCommunicationProtocol.hpp"
 
 /**
+ * @namespace SpiTypes
+ * @brief Spi configuration types
+*/
+namespace SpiTypes {
+    /**
+     * @struct SpiParams
+     * @brief Contains the parameters used to configure the SPI.
+     */
+    struct SpiParams final : public IcCommunicationProtocolTypes::ConfigurationParameters {
+        IcCommunicationProtocolTypes::IcDevice deviceType() const override { return IcCommunicationProtocolTypes::IcDevice::Spi; }
+    };
+}
+
+/**
  * @class SpiAbstraction
  * @brief Abstraction layer for Serial Peripheral Interface
 */
@@ -22,24 +36,16 @@ class SpiAbstraction : public IcCommunicationProtocol {
     ///@brief Destructor
     virtual ~SpiAbstraction() = default;
 
-    /**
-     * @brief Set the hardware configuration for SPI
-     * @return ErrorType::Success if the configuration was set successfully
-     * @returns ErrorType::Failure otherwise
-     */
-    virtual ErrorType setHardwareConfig() = 0;
-    /**
-     * @brief Set the driver configuration for SPI
-     * @return ErrorType::Success if the configuration was set successfully
-     * @returns ErrorType::Failure otherwise
-     */
-    virtual ErrorType setDriverConfig() = 0;
-    /**
-     * @brief Set the firmware configuration for SPI
-     * @return ErrorType::Success if the configuration was set successfully
-     * @returns ErrorType::Failure otherwise
-     */
-    virtual ErrorType setFirmwareConfig() = 0;
+    ErrorType configure(const IcCommunicationProtocolTypes::ConfigurationParameters &params) override {
+        _spiParams = static_cast<const SpiTypes::SpiParams &>(params);
+        return ErrorType::Success;
+    }
+
+    const SpiTypes::SpiParams &spiParams() const { return _spiParams; }
+
+    private:
+    /// @brief The UART parameters.
+    SpiTypes::SpiParams _spiParams;
 };
 
 #endif //__GPTM_TIMER_ABSTRACTION_HPP__
