@@ -6,11 +6,12 @@
 #define I2C_ESP_MODULE_DEBUG 1
 
 ErrorType I2c::init() {
+    ErrorType error = ErrorType::PrerequisitesNotMet;
     //You have to configure before initializing
     const bool configurationWasSet = (I2cTypes::Mode::Unknown != i2cParams().hardwareConfig.mode) && (I2cTypes::Speed::Unknown != i2cParams().hardwareConfig.speed) && (PeripheralNumber::Unknown != i2cParams().hardwareConfig.peripheral);
     if (configurationWasSet) {
         i2c_config_t conf;
-        ErrorType error = ErrorType::Failure;
+        error = ErrorType::Failure;
         const I2cTypes::Mode mode = i2cParams().hardwareConfig.mode;
         const I2cTypes::Speed speed = i2cParams().hardwareConfig.speed;
         const PeripheralNumber peripheral = i2cParams().hardwareConfig.peripheral;
@@ -49,9 +50,9 @@ ErrorType I2c::init() {
                 }
             }
         }
-
-        return error;
     }
+
+    return error;
 }
 
 ErrorType I2c::deinit() {
