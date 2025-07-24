@@ -1,7 +1,7 @@
 /***************************************************************************//**
-* @author   Ben Haubrich
-* @file     CellularAbstraction.hpp
-* @details  \b Synopsis: \n Interface for communication over the network.
+* @author  Ben Haubrich
+* @file    CellularAbstraction.hpp
+* @details Interface for communication over the network.
 * @ingroup Abstractions
 *******************************************************************************/
 #ifndef __CELLULAR_ABSTRACTION_HPP__
@@ -9,12 +9,13 @@
 
 #include "NetworkAbstraction.hpp"
 #include "IcCommunicationProtocol.hpp"
+#include "GpioAbstraction.hpp"
 
 /**
- * @namespace CellularConfig
+ * @namespace CellularTypes
  * @brief Configuration and types for the cellular network
  */
-namespace CellularConfig {
+namespace CellularTypes {
 
     /**
      * @enum RadioAccessTechnology
@@ -42,6 +43,31 @@ namespace CellularConfig {
         Buffer,      ///< Buffer. Commands and responses are sent using AT commands.
         DirectPush   ///< Direct push. Commands are sent using an AT command and responses are sent over pure uart
     };
+
+    /**
+     * @struct CellularParams
+     * @brief Contains the parameters used to configure the cellular device.
+     */
+    struct CellularParams final : public NetworkTypes::ConfigurationParameters {
+        /// @brief The technology type these parameters are meant for
+        NetworkTypes::Technology technology() const override { return NetworkTypes::Technology::Cellular; }
+
+        std::array<char, 64> apn;                                   ///< The APN to use for the cellular device
+        CellularTypes::RadioAccessTechnology radioAccessTechnology; ///< The radio access technology to use for the cellular device
+        CellularTypes::AccessMode accessMode;                       ///< The access mode to use for the cellular device
+        IcCommunicationProtocolTypes::IcDevice icDevice;            ///< The IC device to use to communicate with the cellular modem. Do not set if not needed.
+        PinNumber resetPin;                                         ///< The reset pin to use for the cellular device. Do not set if not needed.
+        Register resetPinAddress;                                   ///< The address of the reset pin to use for the cellular device. Do not set if not needed.
+
+        CellularParams() : NetworkTypes::ConfigurationParameters() {
+            apn.fill(0);
+            radioAccessTechnology = CellularTypes::RadioAccessTechnology::Unknown;
+            accessMode = CellularTypes::AccessMode::Unknown;
+            icDevice = IcCommunicationProtocolTypes::IcDevice::Unknown;
+            resetPin = -1;
+            resetPinAddress = nullptr;
+        }
+    };
 }
 
 /**
@@ -67,77 +93,21 @@ class CellularAbstraction : public NetworkAbstraction {
      * @returns The error type.
     */
     virtual ErrorType reset() = 0;
-    /**
-     * @brief Get the APN.
-     * @returns The APN as a mutable reference.
-    */
-    std::string &accessPointName() { return _accessPointName; }
-    /**
-     * @brief Get the APN.
-     * @returns The APN as a constant reference.
-    */
-    const std::string &accessPointNameConst() const { return _accessPointName; }
-    /**
-     * @brief Get the reset pin.
-     * @returns The reset pin as a mutable reference.
-    */
-    PinNumber &resetPin() { return _resetPin; }
-    /**
-     * @brief Get the reset pin.
-     * @returns The reset pin as a constant reference.
-    */
-    const PinNumber &resetPinConst() const { return _resetPin; }
-    /**
-     * @brief ic
-     * @returns The IC device used to communicate with the RTC as a const reference
-     */
-    const IcCommunicationProtocol &icConst() const { assert(nullptr != _ic); return *_ic; }
-    /**
-     * @brief ic
-     * @returns The IC device used to communicate with the RTC as a mutable reference
-     */
-    IcCommunicationProtocol &ic() { assert(nullptr != _ic); return *_ic; }
-    /**
-     * @brief Get the radio access technology.
-     * @returns The radio access technology as a mutable reference.
-    */
-    CellularConfig::RadioAccessTechnology &radioAccessTechnology() { return _radioAccessTechnology; }
-    /**
-     * @brief Get the radio access technology.
-     * @returns The radio access technology as a constant reference.
-    */
-    const CellularConfig::RadioAccessTechnology &radioAccessTechnologyConst() const { return _radioAccessTechnology; }
-    /**
-     * @brief Get the access mode.
-     * @returns The access mode as a mutable reference.
-    */
-    CellularConfig::AccessMode &accessMode() { return _accessMode; }
-    /**
-     * @brief Get the access mode.
-     * @returns The access mode as a constant reference.
-    */
-    const CellularConfig::AccessMode &accessModeConst() const { return _accessMode; }
-    /**
-     * @brief Set the IC device used to communicate with the network device.
-     * @param ic The IC device to use.
-     */
-    ErrorType setIcDevice(IcCommunicationProtocol &ic) { _ic = &ic; return ErrorType::Success; }
 
     ErrorType configure(const NetworkTypes::ConfigurationParameters &parameters) override {
-        return ErrorType::NotImplemented;
+        assert(parameters.technology() == NetworkTypes::Technology::Cellular);
+
+        _cellularParams = static_cast<const CellularTypes::CellularParams &>(parameters);
+
+        return ErrorType::Success;
     }
 
-    protected:
-    /// @brief The Access Point Name (APN).
-    std::string _accessPointName = std::string();
-    /// @brief The pin number for the reset pin.
-    PinNumber _resetPin = -1;
-    /// @brief The IC peripheral used to communicate with the network device.
-    IcCommunicationProtocol *_ic;
-    /// @brief The radio access technology.
-    CellularConfig::RadioAccessTechnology _radioAccessTechnology = CellularConfig::RadioAccessTechnology::Unknown;
-    /// @brief The access mode.
-    CellularConfig::AccessMode _accessMode = CellularConfig::AccessMode::Unknown;
+    /// @brief Get the cellular parameters as a constant reference
+    const CellularTypes::CellularParams &cellularParams() const { return _cellularParams; }
+
+    private:
+    // @brief The cellular parameters.
+    CellularTypes::CellularParams _cellularParams;
 };
 
 #endif // __CELLULAR_ABSTRACTION_HPP__

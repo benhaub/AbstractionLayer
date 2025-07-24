@@ -120,8 +120,6 @@ namespace NetworkTypes {
 class NetworkAbstraction : public EventQueue {
 
     public:
-    /// @brief Default constructor
-    NetworkAbstraction() = default;
     /// @brief Default destructor
     virtual ~NetworkAbstraction() = default;
 

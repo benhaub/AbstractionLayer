@@ -15,7 +15,6 @@
 #include "CellularModule.hpp"
 #include "Log.hpp"
 //C++
-#include <cassert>
 #include <variant>
 #include <optional>
 

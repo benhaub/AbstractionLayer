@@ -30,7 +30,6 @@ namespace {
     template <typename Abstraction>
     concept CompatibleLoggers = requires(Abstraction abstraction) {
         std::is_base_of<IpClientAbstraction, Abstraction>::value ||
-        std::is_base_of<CellularAbstraction, Abstraction>::value ||
         std::is_base_of<IpServerAbstraction, Abstraction>::value ||
         std::is_base_of<HttpServerAbstraction, Abstraction>::value ||
         std::is_base_of<NetworkAbstraction, Abstraction>::value ||

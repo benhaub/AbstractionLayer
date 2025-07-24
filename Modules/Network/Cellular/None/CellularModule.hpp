@@ -1,9 +1,3 @@
-/***************************************************************************//**
-* @author   Ben Haubrich
-* @file     CellularModule.hpp
-* @details  Cellular for Quectel EC21A and ESP
-* @ingroup  NoneModules
-*******************************************************************************/
 #ifndef __CELLULAR_MODULE_HPP__
 #define __CELLULAR_MODULE_HPP__
 
@@ -26,8 +20,6 @@ class Cellular final : public CellularAbstraction {
     ErrorType rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) override;
     ErrorType getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) override;
     ErrorType getSignalStrength(DecibelMilliWatts &signalStrength) override;
-
-    ErrorType mainLoop() override;
 
     ErrorType reset() override;
 };
