@@ -38,10 +38,12 @@ ErrorType Logger::logBuffer(const LogType logType, const char *tag, const char *
 
     for (size_t i = 0, j = 0; i < length; i++) {
         printf("%02x ", buffer[i]);
+
         if ((i + 1) % 8 == 0) {
             printf(" ");
         }
-        if ((i + 1) % 16 == 0) {
+
+        if ((i + 1) % 16 == 0 || i == length - 1) {
             printf("| ");
 
             for (; j <= i; j++) {
@@ -52,6 +54,7 @@ ErrorType Logger::logBuffer(const LogType logType, const char *tag, const char *
                     printf(".");
                 }
             }
+
             printf("\n");
         }
     }
