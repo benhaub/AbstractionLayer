@@ -226,16 +226,18 @@ using PinNumber = int32_t;
  * @details This is an enum because PeripheralNumber do not change at runtime and should be set statically.
 */
 enum class PeripheralNumber : uint8_t {
-    Zero = 0, ///< Peripheral number 0.
-    One,      ///< Peripheral number 1.
-    Two,      ///< Peripheral number 2.
-    Three,    ///< Peripheral number 3.
-    Four,     ///< Peripheral number 4.
-    Five,     ///< Peripheral number 5.
-    Six,      ///< Peripheral number 6.
-    Seven,    ///< Peripheral number 7.
-    Eight,    ///< Peripheral number 8.
-    Unknown   ///< Unknown and invalid peripheral number.
+    Zero = 0,         ///< Peripheral number 0.
+    One,              ///< Peripheral number 1.
+    Two,              ///< Peripheral number 2.
+    Three,            ///< Peripheral number 3.
+    Four,             ///< Peripheral number 4.
+    Five,             ///< Peripheral number 5.
+    Six,              ///< Peripheral number 6.
+    Seven,            ///< Peripheral number 7.
+    Eight,            ///< Peripheral number 8.
+    CuUsbSerial10,    ///< cu.usbserial-10
+    TtyCuUsbSerial10, ///< tty.usbserial-10
+    Unknown           ///< Unknown and invalid peripheral number.
 };
 ///@typedef Register
 ///Hardware register address
