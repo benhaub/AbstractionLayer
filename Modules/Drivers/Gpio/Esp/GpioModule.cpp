@@ -10,7 +10,7 @@ ErrorType Gpio::init() {
     return fromPlatformError(gpio_config(&_gpioConfig));
 }
 
-ErrorType Gpio::setHardwareConfig(const uint32_t *basePeripheralRegister, const PinNumber pinNumber, const GpioTypes::PinDirection direction, const GpioTypes::InterruptMode interruptMode, const bool pullUpEnable, const bool pullDownEnable) {
+ErrorType Gpio::setHardwareConfig(const Register basePeripheralRegister, const PinNumber pinNumber, const GpioTypes::PinDirection direction, const GpioTypes::InterruptMode interruptMode, const bool pullUpEnable, const bool pullDownEnable) {
     switch (interruptMode) {
         case GpioTypes::InterruptMode::Disabled:
             _gpioConfig.intr_type = GPIO_INTR_DISABLE;

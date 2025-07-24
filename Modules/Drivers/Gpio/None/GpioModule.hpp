@@ -12,7 +12,7 @@ class Gpio final : public GpioAbstraction {
     Gpio() : GpioAbstraction() {}
 
     ErrorType init() override;
-    ErrorType setHardwareConfig(const uint32_t *basePeripheralRegister, const PinNumber pinNumber, const GpioTypes::PinDirection direction, const GpioTypes::InterruptMode interruptMode, const bool pullUpEnable, const bool pullDownEnable) override;
+    ErrorType setHardwareConfig(const Register basePeripheralRegister, const PinNumber pinNumber, const GpioTypes::PinDirection direction, const GpioTypes::InterruptMode interruptMode, const bool pullUpEnable, const bool pullDownEnable) override;
     ErrorType pinWrite(const GpioTypes::LogicLevel &logicLevel) override;
     ErrorType pinRead(GpioTypes::LogicLevel &logicLevel) override;
 };

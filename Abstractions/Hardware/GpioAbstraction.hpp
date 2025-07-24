@@ -87,7 +87,7 @@ class GpioAbstraction {
      * @returns ErrorType::Invalid parameter if any of the parameters are invalid.
      * @returns ErrorType::NotImplemented if configuring the gpio pin is not implemented.
     */
-    virtual ErrorType setHardwareConfig(const uint32_t *basePeripheralRegister, const PinNumber pinNumber, const GpioTypes::PinDirection direction, const GpioTypes::InterruptMode interruptMode, const bool pullUpEnable, const bool pullDownEnable) = 0;
+    virtual ErrorType setHardwareConfig(const Register basePeripheralRegister, const PinNumber pinNumber, const GpioTypes::PinDirection direction, const GpioTypes::InterruptMode interruptMode, const bool pullUpEnable, const bool pullDownEnable) = 0;
     /**
      * @brief write to the pin and set it's logic level.
      * @param logicLevel The logic level to write to the pin.
