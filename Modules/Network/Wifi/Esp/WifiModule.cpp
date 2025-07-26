@@ -204,7 +204,7 @@ ErrorType Wifi::radioOff() {
     return fromPlatformError(esp_wifi_stop());
 }
 
-ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) {
+ErrorType Wifi::transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) {
     Bytes sent = 0;
     Bytes remaining = frame.size();
 
@@ -223,11 +223,7 @@ ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const 
     return ErrorType::Success;
 }
 
-ErrorType Wifi::txNonBlocking(const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callbackr) {
-    return ErrorType::NotAvailable;
-}
-
-ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
+ErrorType Wifi::receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
     ErrorType error = ErrorType::Timeout;
     ssize_t bytesReceived = 0;
 
@@ -274,15 +270,11 @@ ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const 
     return error;
 }
 
-ErrorType Wifi::rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) {
-    return ErrorType::NotAvailable;
-}
-
 ErrorType Wifi::getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) {
     uint8_t macAddressByteArray[6];
     esp_err_t err;
 
-    err = esp_read_mac(macAddressByteArray, ESP_MAC_WIFI_STA);
+    err = esp_efuse_mac_get_default(macAddressByteArray);
     if (ESP_OK != err) {
         return fromPlatformError(err);
     }

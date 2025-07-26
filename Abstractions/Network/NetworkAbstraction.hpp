@@ -172,21 +172,7 @@ class NetworkAbstraction : public EventQueue {
      * @returns ErrorType::Failure if the transmission failed
      * @post NetworkTypes::Status::isUp will be set to false after this function returns ErrorType::Success
     */
-    virtual ErrorType txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) = 0;
-    /**
-     * @sa txBlocking
-     * @param[in] frame The frame to transmit.
-     * @param[in] socket The socket to transmit from
-     * @param[in] timeout The time to wait to send the data.
-     * @param[in] callback Function that is called when transmission is complete
-     * @code 
-     * //Function member signature:
-     * void callback(ErrorType error, const Bytes bytesWritten) { return ErrorType::Success; }
-     * //lambda signature:
-     * auto callback = [](const ErrorType error, const Bytes bytesWritten) { return ErrorType::Success; }
-     * @endcode
-    */
-    virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
+    virtual ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) = 0;
     /**
      * @brief Receive a frame of data.
      * @param[in] frameBuffer The buffer to store the received frame data.
@@ -195,21 +181,7 @@ class NetworkAbstraction : public EventQueue {
      * @returns ErrorType::Success if the frame was successfully received
      * @returns ErrorType::Failure if the frame was not received
     */
-    virtual ErrorType rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) = 0;
-    /**
-     * @sa rxBlocking
-     * @param[in] frameBuffer The buffer to store the received frame data.
-     * @param[in] timeout The time to wait to receive data.
-     * @param[in] socket The socket to receive from
-     * @param[in] callback Function that is called when the frame has been received
-     * @code 
-     * //Function member signature:
-     * void callback(ErrorType error, std::shared_ptr<std::string> frameBuffer) { return ErrorType::Success; }
-     * //lambda signature:
-     * auto callback = [](const ErrorType error, std::shared_ptr<std::string> frameBuffer) { return ErrorType::Success; }
-     * @endcode
-    */
-    virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) = 0;
+    virtual ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) = 0;
     /**
      * @brief Get the MAC address of this network interface.
      * @param[out] macAddress The MAC address of this network interface.

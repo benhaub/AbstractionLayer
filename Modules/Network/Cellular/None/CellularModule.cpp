@@ -12,19 +12,11 @@ ErrorType Cellular::networkDown() {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Cellular::txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) {
+ErrorType Cellular::transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Cellular::txNonBlocking(const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    return ErrorType::NotImplemented;
-}
-
-ErrorType Cellular::rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
-    return ErrorType::NotImplemented;
-}
-
-ErrorType Cellular::rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) {
+ErrorType Cellular::receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 

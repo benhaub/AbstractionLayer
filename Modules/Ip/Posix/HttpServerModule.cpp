@@ -53,7 +53,7 @@ ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpTypes::Response>
     return _ipServer->sendNonBlocking(frame, timeout, socket, sendCallback);
 }
 
-ErrorType HttpServer::receiveNonBlocking(std::shared_ptr<HttpTypes::Request> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpTypes::Request> buffer)> callback) {
+ErrorType HttpServer::receiveNonBlocking(std::shared_ptr<HttpTypes::Request> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpTypes::Request> buffer)> callback) {
     constexpr Bytes maxBufferSize = 1448;
     std::shared_ptr<std::string> receivedBuffer = std::make_shared<std::string>(maxBufferSize, 0);
 
@@ -66,5 +66,5 @@ ErrorType HttpServer::receiveNonBlocking(std::shared_ptr<HttpTypes::Request> buf
     };
 
     //What if we don't receive the whole message?
-    return _ipServer->receiveNonBlocking(receivedBuffer, timeout, socket, receiveCallback);
+    return _ipServer->receiveNonBlocking(receivedBuffer, timeout, receiveCallback);
 }

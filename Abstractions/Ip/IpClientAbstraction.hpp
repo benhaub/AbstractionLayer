@@ -8,9 +8,11 @@
 #define __IP_CLIENT_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include "CommunicationProtocol.hpp"
 #include "Log.hpp"
 #include "IpTypes.hpp"
+#include "NetworkAbstraction.hpp"
+//C++
+#include <functional>
 
 /**
  * @namespace IpTypes
@@ -27,19 +29,14 @@ namespace IpTypes {
     };
 }
 
-class NetworkAbstraction;
-
 /**
  * @class IpClientAbstraction
  * @brief Abstraction for creating a client on any network
  * @note You should use the network to handle communication by placing events on it's queue.
 */
-class IpClientAbstraction : public CommunicationProtocol {
+class IpClientAbstraction {
 
     public:
-    /// @brief Constructor
-    IpClientAbstraction() : CommunicationProtocol() { _status.connected = false; }
-    /// @brief Destructor
     virtual ~IpClientAbstraction() = default;
 
     /// @brief The tag for logging.
@@ -75,6 +72,117 @@ class IpClientAbstraction : public CommunicationProtocol {
      * @returns Fnd::ErrorType::NotImplemented if not implemented
     */
     virtual ErrorType disconnect() = 0;
+    /**
+     * @brief Sends data.
+     * @pre The amount of data to send is equal to the size of data. See std::string::resize()
+     * @param[in] data The data to send.
+     * @param[in] timeout The timeout in milliseconds.
+     * @returns ErrorType::Success if the data was sent.
+     * @returns ErrorType::Failure if the data was not sent.
+     * @returns ErrorType::Timeout if the timeout was reached.
+     * @note If the actual send is queued as an event for some other thread (i.e a network thread that actually sends the data)
+     *       then the delay will be the timeout plus any additional scheduling delay incurred by the operating system as a result
+     *       of thread priorities.
+    */
+    virtual ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) = 0;
+    /**
+     * @brief Receives data.
+     * @param[out] buffer The data to receive.
+     * @param[in] timeout The timeout in milliseconds.
+     * @returns ErrorType::Success if the data was received.
+     * @returns ErrorType::Failure if the data was not received.
+     * @returns ErrorType::Timeout if the timeout was reached.
+     * @returns ErrorType::NoData if the buffer has 0 length.
+     * @post The amount of data received is equal to the size of the data if ErrorType::Success is returned. See std::string::size().
+     * @note If the actual send is queued as an event for some other thread (i.e a network thread that actually sends the data)
+     *       then the delay will be the timeout plus any additional scheduling delay incurred by the operating system as a result
+     *       of thread priorities.
+    */
+    virtual ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) = 0;
+    /**
+     * @brief Sends data.
+     * @pre The amount of data to send is equal to the size of data. See std::string::resize()
+     * @param[in] data The data to send.
+     * @param[in] timeout The time to wait to send the data.
+     * @param[in] callback The callback to call when the data is sent.
+     * @code{.cpp}
+     * //Lambda callback
+     * auto callback = [](const ErrorType error, const Bytes bytesWritten) -> void {
+     *     if (ErrorType::Success == error) {
+     *         // Data was sent
+     *     }
+     * };
+     * error = sendNonBlocking(data, timeout, callback);
+     * 
+     * //Member function callback
+     * void Foo::bar(const ErrorType error, const Bytes bytesWritten) {
+     *     if (ErrorType::Success == error) {
+     *         // Data was sent
+     *     }
+     * }
+     * error = sendNonBlocking(data, timeout, std::bind(&Foo::bar, this, std::placeholders::_1, std::placeholders::_2)); 
+     * @endcode
+     * @returns ErrorType::Success if the data was sent.
+     * @returns ErrorType::Failure if the data was not sent.
+     * @post The callback will be called when the data has been sent. The bytes written is valid if and only if error is equal to ErrorType::Success.
+    */
+    virtual ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+        auto tx = [&, callback, data, timeout]() -> ErrorType {
+            ErrorType error = ErrorType::Failure;
+
+            assert(nullptr != callback);
+            assert(nullptr != data.get());
+
+            error = sendBlocking(*data, timeout);
+            callback(error, data->size());
+
+            return error;
+        };
+
+        EventQueue::Event event = EventQueue::Event(std::bind(tx));
+        return network().addEvent(event);
+    }
+    /**
+     * @brief Receives data.
+     * @param[out] buffer The buffer to receive the data into.
+     * @param[in] timeout The time to wait to receive the data.
+     * @param[in] callback The callback to call when the data has been received.
+     * @code{.cpp}
+     * //Lambda callback
+     * auto callback = [](const ErrorType error, std::shared_ptr<std::string> buffer) -> void {
+     *     if (ErrorType::Success == error) {
+     *         // Data was sent
+     *     }
+     * };
+     * error = sendNonBlocking(data, timeout, callback);
+     * 
+     * //Member function callback
+     * void Foo::bar(const ErrorType error, std::shared_ptr<std::string> buffer) {
+     *     if (ErrorType::Success == error) {
+     *         // Data was sent
+     *     }
+     * }
+     * error = sendNonBlocking(data, timeout, std::bind(&Foo::bar, this, std::placeholders::_1, std::placeholders::_2)); 
+     * @endcode
+     * @post The callback will be called when the data has been received. The amount of data received is equal to the size of the
+     *       data if ErrorType::Success is returned. See std::string::size().
+    */
+    virtual ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
+        auto rx = [&, callback, buffer, timeout]() -> ErrorType {
+            ErrorType error = ErrorType::Failure;
+
+            assert(nullptr != callback);
+            assert(nullptr != buffer.get());
+
+            error = receiveBlocking(*buffer, timeout);
+            callback(error, buffer);
+
+            return error;
+        };
+
+        EventQueue::Event event = EventQueue::Event(std::bind(rx));
+        return network().addEvent(event);
+    }
 
     /// @brief Get the socket as a constant reference
     const Socket &sockConst() const { return _socket; }
@@ -119,7 +227,9 @@ class IpClientAbstraction : public CommunicationProtocol {
     /// @brief The port
     Port _port = 0;
     /// @brief The status of the client
-    IpTypes::ClientStatus _status;
+    IpTypes::ClientStatus _status = {
+        false
+    };
 
     private:
     /// @brief The network interface that this client communicates on.

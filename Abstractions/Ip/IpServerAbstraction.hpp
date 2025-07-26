@@ -11,6 +11,7 @@
 #include "Log.hpp"
 #include "IpTypes.hpp"
 #include "EventQueue.hpp"
+#include "NetworkAbstraction.hpp"
 
 /**
  * @namespace IpTypes
@@ -28,7 +29,6 @@ namespace IpServerTypes {
     };
 }
 
-class NetworkAbstraction;
 
 /**
  * @class IpServerAbstraction
@@ -76,7 +76,6 @@ class IpServerAbstraction : public EventQueue {
      * @returns Fnd::ErrorType::Success on success
     */
     virtual ErrorType closeConnection(const Socket socket) = 0;
-
     /**
      * @brief Sends data.
      * @param[in] data The data to send.
@@ -89,17 +88,6 @@ class IpServerAbstraction : public EventQueue {
     */
     virtual ErrorType sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) = 0;
     /**
-     * @brief Sends data.
-     * @param[in] data The data to send.
-     * @param[in] timeout The time to wait for the data to be sent
-     * @param[in] socket The socket to send the data to.
-     * @param[in] callback The callback to call when the data has been sent.
-     * @returns ErrorType::Success if the data was sent.
-     * @returns ErrorType::Failure if the data was not sent.
-     * @post The callback will be called when the data has been sent. The bytes written is valid if and only if error is equal to ErrorType::Success.
-    */
-    virtual ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
-    /**
      * @brief Receives data.
      * @param[in] buffer The data to receive.
      * @param[in] timeout The timeout in milliseconds.
@@ -111,6 +99,37 @@ class IpServerAbstraction : public EventQueue {
     */
     virtual ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket) = 0;
     /**
+     * @brief Sends data.
+     * @param[in] data The data to send.
+     * @param[in] timeout The time to wait for the data to be sent
+     * @param[in] socket The socket to send the data to.
+     * @param[in] callback The callback to call when the data has been sent.
+     * @returns ErrorType::Success if the data was sent.
+     * @returns ErrorType::Failure if the data was not sent.
+     * @post The callback will be called when the data has been sent. The bytes written is valid if and only if error is equal to ErrorType::Success.
+    */
+    virtual ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+
+        auto tx = [&, callback, data, timeout, socket]() -> ErrorType {
+            ErrorType error = ErrorType::Failure;
+
+            assert(nullptr != callback);
+
+            if (nullptr == data.get()) {
+                error = ErrorType::NoData;
+            }
+            else {
+                error = sendBlocking(*data, timeout, socket);
+            }
+
+            callback(error, data->size());
+            return error;
+        };
+
+        EventQueue::Event event = EventQueue::Event(std::bind(tx));
+        return network().addEvent(event);
+    }
+    /**
      * @brief Receives data.
      * @param[in] buffer The buffer to receive the data into.
      * @param[in] timeout The time to wait to receive the data.
@@ -121,7 +140,29 @@ class IpServerAbstraction : public EventQueue {
      * @returns ErrorType::Timeout if the timeout was reached.
      * @post The callback will be called when the data has been received. The buffer is valid if and only if error is equal to ErrorType::Success.
     */
-    virtual ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) = 0;
+    virtual ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) {
+        auto receiveCallback = [&, callback, buffer, timeout]() -> ErrorType {
+            ErrorType error = ErrorType::Failure;
+            Socket socket = -1;
+
+            assert(nullptr != callback);
+
+            if (nullptr == buffer.get()) {
+                error = ErrorType::NoData;
+                callback(error, socket, buffer);
+                return error;
+            }
+
+            error = receiveBlocking(*buffer, timeout, socket);
+
+            callback(error, socket, buffer);
+
+            return error;
+        };
+
+        EventQueue::Event event = EventQueue::Event(receiveCallback);
+        return network().addEvent(event);
+    }
 
     ///@brief Get a mutable reference to the protocol
     IpTypes::Protocol &protocol() { return _protocol; }

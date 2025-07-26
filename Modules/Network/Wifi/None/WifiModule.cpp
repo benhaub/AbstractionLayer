@@ -12,19 +12,11 @@ ErrorType Wifi::networkDown() {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) {
+ErrorType Wifi::transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::txNonBlocking(const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    return ErrorType::NotImplemented;
-}
-
-ErrorType Wifi::rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
-    return ErrorType::NotImplemented;
-}
-
-ErrorType Wifi::rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) {
+ErrorType Wifi::receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 
@@ -33,10 +25,6 @@ ErrorType Wifi::getMacAddress(std::array<char, NetworkTypes::MacAddressStringSiz
 }
 
 ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
-    return ErrorType::NotImplemented;
-}
-
-ErrorType Wifi::mainLoop() {
     return ErrorType::NotImplemented;
 }
 

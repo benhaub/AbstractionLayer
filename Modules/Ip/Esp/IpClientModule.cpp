@@ -1,6 +1,4 @@
-//Abstractions
-#include "NetworkAbstraction.hpp"
-//AbstractionLayer Modules
+//AbstractionLayer
 #include "IpClientModule.hpp"
 #include "OperatingSystemModule.hpp"
 #include "Log.hpp"
@@ -156,7 +154,7 @@ ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds tim
     ErrorType callbackError = ErrorType::Failure;
 
     auto tx = [&]() -> ErrorType {
-        callbackError = network().txBlocking(data, _socket, timeout);
+        callbackError = network().transmit(data, _socket, timeout);
 
         _status.connected = callbackError == ErrorType::Success;
         doneSending = true;
@@ -183,7 +181,7 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
     auto rx = [&]() -> ErrorType {
         assert(0 != _socket);
 
-        callbackError = network().rxBlocking(buffer, _socket, timeout);
+        callbackError = network().receive(buffer, _socket, timeout);
 
         _status.connected = callbackError == ErrorType::Success;
         doneReceiving = true;
@@ -201,40 +199,4 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
     }
 
     return callbackError;
-}
-
-ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    auto tx = [&, callback, data, timeout]() -> ErrorType {
-        ErrorType error = ErrorType::Failure;
-
-        assert(nullptr != callback);
-        assert(nullptr != data.get());
-
-        error = network().txBlocking(*data, _socket, timeout);
-        callback(error, data->size());
-
-        return error;
-    };
-
-    EventQueue::Event event = EventQueue::Event(std::bind(tx));
-    return network().addEvent(event);
-}
-
-ErrorType IpClient::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
-    assert(0 != _socket);
-
-    auto rx = [&, callback, buffer, timeout]() -> ErrorType {
-        ErrorType error = ErrorType::Failure;
-
-        assert(nullptr != callback);
-        assert(nullptr != buffer.get());
-
-        error = network().rxBlocking(*buffer, _socket, timeout);
-        callback(error, buffer);
-
-        return error;
-    };
-
-    EventQueue::Event event = EventQueue::Event(std::bind(rx));
-    return network().addEvent(event);
 }

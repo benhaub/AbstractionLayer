@@ -25,6 +25,6 @@ ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpTypes::Response>
     return ErrorType::NotImplemented;
 }
 
-ErrorType HttpServer::receiveNonBlocking(std::shared_ptr<HttpTypes::Request> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpTypes::Request> buffer)> callback) {
+ErrorType HttpServer::receiveNonBlocking(std::shared_ptr<HttpTypes::Request> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpTypes::Request> buffer)> callback) {
     return ErrorType::NotImplemented;
 }

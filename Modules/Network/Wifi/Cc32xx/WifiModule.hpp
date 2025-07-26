@@ -18,10 +18,8 @@ class Wifi final : public WifiAbstraction {
     ErrorType init() override;
     ErrorType networkUp() override;
     ErrorType networkDown() override;
-    ErrorType txBlocking(const std::string &frame, const Socket socket, const Milliseconds timeout) override;
-    ErrorType txNonBlocking(const std::shared_ptr<std::string> frame, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
-    ErrorType rxBlocking(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) override;
-    ErrorType rxNonBlocking(std::shared_ptr<std::string> frameBuffer, const Socket socket, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> frameBuffer)> callback) override;
+    ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) override;
+    ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) override;
     ErrorType getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) override;
     ErrorType getSignalStrength(DecibelMilliWatts &signalStrength) override;
 

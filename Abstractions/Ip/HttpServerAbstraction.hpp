@@ -89,13 +89,12 @@ class HttpServerAbstraction {
      * @brief Receive a request
      * @param[in] buffer The buffer to receive the request into
      * @param[in] timeout The timeout
-     * @param[out] socket If negative, will contain the socket in which the data was received from. Otherwise it will be the socket in which data is explicitely received from.
      * @param[in] callback The callback to call when the receive is complete
      * @returns ErrorType::Success if the request could be received
      * @returns ErrorType::Timeout if the receive could not be completed within the given timeout
      * @returns ErrorType::LimitReached if the event queue is full
      */
-    virtual ErrorType receiveNonBlocking(std::shared_ptr<HttpTypes::Request> buffer, const Milliseconds timeout, Socket &socket, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpTypes::Request> buffer)> callback) = 0;
+    virtual ErrorType receiveNonBlocking(std::shared_ptr<HttpTypes::Request> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<HttpTypes::Request> buffer)> callback) = 0;
 
     /**
      * @brief Read the request headers from a request to an http server.
