@@ -74,6 +74,9 @@ namespace UartTypes {
             PinNumber rts;                      ///< The request to send pin to use for the uart
             PinNumber cts;                      ///< The clear to send pin to use for the uart
             PeripheralNumber peripheralNumber;  ///< The peripheral number to use for the uart
+
+            HardwareConfig() : line(UartTypes::Line::Unknown), tx(-1), rx(-1), rts(-1), cts(-1), peripheralNumber(PeripheralNumber::Unknown) {}
+
         } hardwareConfig; ///< The hardware configuration parameters
         /**
          * @struct DriverConfig
@@ -85,6 +88,9 @@ namespace UartTypes {
             char parity;                         ///< The parity to use for the uart
             uint8_t stopBits;                    ///< The stop bits to use for the uart
             UartTypes::FlowControl flowControl;  ///< The flow control to use for the uart
+
+            DriverConfig() : baudRate(0), dataBits(0), parity('N'), stopBits(0), flowControl(UartTypes::FlowControl::Unknown) {}
+
         } driverConfig; ///< Teh driver configuration parameters.
         /**
          * @struct FirmwareConfig
@@ -94,6 +100,9 @@ namespace UartTypes {
             Bytes receiveBufferSize;             ///< The receive buffer size to use for the uart
             Bytes transmitBufferSize;            ///< The transmit buffer size to use for the uart
             int8_t terminatingByte;              ///< The terminating byte to use for the uart
+
+            FirmwareConfig() : receiveBufferSize(0), transmitBufferSize(0), terminatingByte(0) {}
+
         } firmwareConfig; ///< The firmware configuration parameters
         /**
          * @struct InterruptConfig
@@ -102,7 +111,12 @@ namespace UartTypes {
         struct InterruptConfig {
             InterruptFlags interruptFlags;       ///< The interrupt flags to use for the uart
             InterruptCallback interruptCallback; ///< The interrupt callback to use for the uart
+
+            InterruptConfig() : interruptFlags(0), interruptCallback(nullptr) {}
+
         } interruptConfig; ///< The interrupt configuration parameters.
+
+        UartParams() : IcCommunicationProtocolTypes::ConfigurationParameters(), hardwareConfig(), driverConfig(), firmwareConfig(), interruptConfig() {}
     };
 }
 
@@ -126,8 +140,6 @@ class UartAbstraction : public IcCommunicationProtocol{
 
     /// @brief Tag for logging.
     static constexpr char TAG[] = "Uart";
-    /// @brief When a pin is unused, set it to this value
-    static constexpr PinNumber Unused = -1;
 
     ErrorType configure(const IcCommunicationProtocolTypes::ConfigurationParameters &params) override {
         _uartParams = static_cast<const UartTypes::UartParams &>(params);
