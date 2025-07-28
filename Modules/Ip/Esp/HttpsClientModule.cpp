@@ -7,10 +7,9 @@
 //ESP
 #include "esp_crt_bundle.h"
 
-ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &socket, const Milliseconds timeout) {
+ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, const Milliseconds timeout) {
     assert(nullptr != _ipClient);
     ErrorType callbackError = ErrorType::Failure;
-    socket = -1;
     bool doneConnecting = false;
 
     auto connectCb = [&]() -> ErrorType {

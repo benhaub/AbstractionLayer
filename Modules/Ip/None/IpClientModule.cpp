@@ -1,6 +1,6 @@
 #include "IpClientModule.hpp"
 
-ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &sock, const Milliseconds timeout) {
+ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 ErrorType IpClient::disconnect() {

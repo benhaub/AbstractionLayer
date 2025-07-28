@@ -9,6 +9,7 @@
 #include <string>
 //TI Drivers
 #include "ti/drivers/net/wifi/device.h"
+#include "ti/drivers/net/wifi/slnetifwifi.h"
 
 class Wifi final : public WifiAbstraction {
 
@@ -18,6 +19,11 @@ class Wifi final : public WifiAbstraction {
     ErrorType init() override;
     ErrorType networkUp() override;
     ErrorType networkDown() override;
+    ErrorType connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &sock, const Milliseconds timeout) override;
+    ErrorType disconnect(const Socket &socket) override;
+    ErrorType listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port, Socket &listenerSocket) override;
+    ErrorType acceptConnection(const Socket &listenerSocket, Socket &newSocket, const Milliseconds timeout) override;
+    ErrorType closeConnection(const Socket socket) override;
     ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) override;
     ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) override;
     ErrorType getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) override;
@@ -117,6 +123,52 @@ class Wifi final : public WifiAbstraction {
                 error = ErrorType::InvalidParameter;
                 return SL_WLAN_PROVISIONING_CMD_STOP;
         }
+    }
+
+    constexpr _i16 toSimplelinkDomain(const IpTypes::Version &version, ErrorType &error) {
+        error = ErrorType::Success;
+
+        switch (version) {
+            case IpTypes::Version::IPv4:
+                return SLNETSOCK_AF_INET;
+            case IpTypes::Version::IPv6:
+                return SLNETSOCK_AF_INET6;
+            default:
+                error = ErrorType::NotSupported;
+                return SLNETSOCK_AF_INET;
+        }
+    }
+
+    constexpr _i16 toSimpleLinkProtocol(const IpTypes::Protocol &protocol, ErrorType &error) {
+        error = ErrorType::Success;
+
+        switch (protocol) {
+            case IpTypes::Protocol::Tcp:
+                return SL_IPPROTO_TCP;
+            case IpTypes::Protocol::Udp:
+                return SL_IPPROTO_UDP;
+            default:
+                error = ErrorType::NotSupported;
+                return SL_IPPROTO_UDP;
+        }
+    }
+
+    constexpr _i16 toSimpleLinkType(const IpTypes::Protocol &protocol, ErrorType &error) {
+        error = ErrorType::Success;
+
+        switch (protocol) {
+            case IpTypes::Protocol::Tcp:
+                return SLNETSOCK_SOCK_STREAM;
+            case IpTypes::Protocol::Udp:
+                return SLNETSOCK_SOCK_DGRAM;
+            default:
+                error = ErrorType::NotSupported;
+                return SLNETSOCK_SOCK_RAW;
+        }
+    }
+
+    constexpr _i16 toSimpleLinkProtocolFamily(const IpTypes::Version &version, ErrorType &error) {
+        return toSimplelinkDomain(version, error);
     }
 };
 

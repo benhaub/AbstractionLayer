@@ -1,11 +1,10 @@
 //AbstractionLayer
 #include "HttpClientModule.hpp"
 
-ErrorType HttpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &socket, const Milliseconds timeout) {
+ErrorType HttpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, const Milliseconds timeout) {
     assert(nullptr != _ipClient);
-    socket = -1;
 
-    return _ipClient->connectTo(hostname, port, protocol, version, socket, timeout);
+    return _ipClient->connectTo(hostname, port, protocol, version, timeout);
 }
 
 ErrorType HttpClient::disconnect() {

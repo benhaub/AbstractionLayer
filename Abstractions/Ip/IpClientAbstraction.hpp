@@ -8,8 +8,6 @@
 #define __IP_CLIENT_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include "Log.hpp"
-#include "IpTypes.hpp"
 #include "NetworkAbstraction.hpp"
 //C++
 #include <functional>
@@ -49,27 +47,11 @@ class IpClientAbstraction {
     }
 
     /**
-     * @brief Connect to a host
-     * @param[in] hostname The hostname to connect to
-     * @param[in] port The port to connect to
-     * @param[in] protocol The protocol to use
-     * @sa IpSettings::Protocol
-     * @param[in] version The version to use
-     * @sa IpTypes::Version
-     * @param[out] socket The socket that was created
-     * @param[in] timeout The amount of time to wait to connect to the host
-     * @post The caller is blocked until the connection is made or the timeout is reached. The connection can still be made after the timeout is reached.
-     * @returns Fnd::ErrorType::Success on success
-     * @returns Fnd::ErrorType::Failure on failure
-     * @returns Fnd::ErrorType::NotImplemented if not implemented
-     * @returns Fnd::ErrorType::NotSupported if the network interface doesn't support the operation
+     * @sa NetworkAbstraction::connectTo
     */
-    virtual ErrorType connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &socket, const Milliseconds timeout) = 0;
+    virtual ErrorType connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, const Milliseconds timeout) = 0;
     /**
-     * @brief Disconnect this client
-     * @returns Fnd::ErrorType::Success on success
-     * @returns Fnd::ErrorType::Failure on failure
-     * @returns Fnd::ErrorType::NotImplemented if not implemented
+     * @sa NetworkAbstraction::disconnect
     */
     virtual ErrorType disconnect() = 0;
     /**

@@ -2,68 +2,17 @@
 #include "IpClientModule.hpp"
 #include "OperatingSystemModule.hpp"
 
-ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &sock, const Milliseconds timeout) {
-    sock = -1;
+ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, const Milliseconds timeout) {
     bool doneConnecting = false;
     ErrorType callbackError = ErrorType::Failure;
 
     auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
         disconnect();
-
-        if (version != IpTypes::Version::IPv4) {
-            PLT_LOGE(TAG, "only IPv4 is supported");
-            callbackError = ErrorType::NotSupported;
-            doneConnecting = true;
-            _status.connected = false;
-            return callbackError;
-        }
-
-        const _i16 protocolFamily = toSimpleLinkProtocolFamily(version, callbackError);
-        if (ErrorType::Success == callbackError) {
-            constexpr void * notUsingInterfaceContext = nullptr;
-            uint16_t destinationIpListSize = 1;
-            uint32_t destinationIp;
-            SlNetSock_AddrIn_t localAddress;
-
-            callbackError = fromPlatformError(SlNetIfWifi_getHostByName(notUsingInterfaceContext, const_cast<char *>(hostname.data()), hostname.length(), &destinationIp, &destinationIpListSize, protocolFamily));
-            if (ErrorType::Success == callbackError) {
-                const _i16 domain = toSimplelinkDomain(version, callbackError);
-
-                if (ErrorType::Success == callbackError) {
-                    const _i16 slProtocol = toSimpleLinkProtocol(protocol, callbackError);
-
-                    if (ErrorType::Success == callbackError) {
-                        const _i16 type = toSimpleLinkType(protocol, callbackError);
-
-                        if (ErrorType::Success == callbackError) {
-                            callbackError = ErrorType::Failure;
-                            _socket = SlNetIfWifi_socket(nullptr, domain, type, slProtocol, nullptr);
-
-                            if (_socket >= 0) {
-                                localAddress.sin_family = protocolFamily;
-                                localAddress.sin_addr.s_addr = SlNetUtil_htonl(destinationIp);
-                                localAddress.sin_port = SlNetUtil_htons(port);
-                                constexpr uint8_t notUsingFlags = 0;
-                                constexpr void * notUsingSocketContext = nullptr;
-
-                                const int32_t connectReturn = SlNetIfWifi_connect(_socket, notUsingSocketContext, reinterpret_cast<SlNetSock_Addr_t *>(&localAddress), sizeof(localAddress), notUsingFlags);
-                                if (connectReturn >= 0) {
-                                    callbackError = ErrorType::Success;
-                                    sock = _socket;
-                                }
-                                else {
-                                    PLT_LOGW(TAG, "Connection error");
-                                    callbackError = ErrorType::Failure;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        callbackError = network().connectTo(hostname, port, protocol, version, _socket, timeout);
 
         _status.connected = callbackError == ErrorType::Success;
         doneConnecting = true;
+
         return callbackError;
     };
 
@@ -81,12 +30,13 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
 }
 
 ErrorType IpClient::disconnect() {
-    if (_socket != -1) {
-        SlNetIfWifi_close(_socket, nullptr);
+    ErrorType error = network().disconnect(_socket);
+
+    if (ErrorType::Success == error) {
         _socket = -1;
     }
 
-    return ErrorType::Success;
+    return error;
 }
 
 ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds timeout) {

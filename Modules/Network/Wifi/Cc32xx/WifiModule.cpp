@@ -142,6 +142,81 @@ ErrorType Wifi::networkDown() {
     return error;
 }
 
+ErrorType Wifi::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &sock, const Milliseconds timeout) {
+    ErrorType error = ErrorType::Failure;
+
+    if (version != IpTypes::Version::IPv4) {
+        error = ErrorType::NotSupported;
+    }
+    else {
+        const _i16 protocolFamily = toSimpleLinkProtocolFamily(version, error);
+        if (ErrorType::Success == error) {
+            constexpr void * notUsingInterfaceContext = nullptr;
+            uint16_t destinationIpListSize = 1;
+            uint32_t destinationIp;
+            SlNetSock_AddrIn_t localAddress;
+
+            error = fromPlatformError(SlNetIfWifi_getHostByName(notUsingInterfaceContext, const_cast<char *>(hostname.data()), hostname.length(), &destinationIp, &destinationIpListSize, protocolFamily));
+            if (ErrorType::Success == error) {
+                const _i16 domain = toSimplelinkDomain(version, error);
+
+                if (ErrorType::Success == error) {
+                    const _i16 slProtocol = toSimpleLinkProtocol(protocol, error);
+
+                    if (ErrorType::Success == error) {
+                        const _i16 type = toSimpleLinkType(protocol, error);
+
+                        if (ErrorType::Success == error) {
+                            error = ErrorType::Failure;
+                            sock = SlNetIfWifi_socket(nullptr, domain, type, slProtocol, nullptr);
+
+                            if (sock >= 0) {
+                                localAddress.sin_family = protocolFamily;
+                                localAddress.sin_addr.s_addr = SlNetUtil_htonl(destinationIp);
+                                localAddress.sin_port = SlNetUtil_htons(port);
+                                constexpr uint8_t notUsingFlags = 0;
+                                constexpr void * notUsingSocketContext = nullptr;
+
+                                const int32_t connectReturn = SlNetIfWifi_connect(sock, notUsingSocketContext, reinterpret_cast<SlNetSock_Addr_t *>(&localAddress), sizeof(localAddress), notUsingFlags);
+                                if (connectReturn >= 0) {
+                                    error = ErrorType::Success;
+                                }
+                                else {
+                                    error = ErrorType::Failure;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return error;
+}
+
+ErrorType Wifi::disconnect(const Socket &socket) {
+    ErrorType error = ErrorType::Success;
+
+    if (-1 != socket) {
+        error = fromPlatformError(SlNetIfWifi_close(socket, nullptr));
+    }
+
+    return error;
+}
+
+ErrorType Wifi::listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port, Socket &listenerSocket) {
+    return ErrorType::NotImplemented;
+}
+
+ErrorType Wifi::acceptConnection(const Socket &listenerSocket, Socket &newSocket, const Milliseconds timeout) {
+    return ErrorType::NotImplemented;
+}
+
+ErrorType Wifi::closeConnection(const Socket socket) {
+    return ErrorType::NotImplemented;
+}
+
 ErrorType Wifi::transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) {
     Bytes sent = 0;
     Bytes remaining = frame.size();

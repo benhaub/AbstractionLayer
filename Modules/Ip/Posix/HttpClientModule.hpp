@@ -9,7 +9,7 @@ class HttpClient final : public HttpClientAbstraction {
     public:
     HttpClient(IpClientAbstraction &ipClient) : HttpClientAbstraction(ipClient) {}
 
-    ErrorType connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &socket, const Milliseconds timeout) override;
+    ErrorType connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, const Milliseconds timeout) override;
     ErrorType disconnect() override;
     ErrorType sendBlocking(const HttpTypes::Request &request, const Milliseconds timeout) override;
     ErrorType receiveBlocking(HttpTypes::Response &response, const Milliseconds timeout) override;

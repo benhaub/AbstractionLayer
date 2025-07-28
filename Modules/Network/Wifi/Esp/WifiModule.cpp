@@ -1,5 +1,4 @@
 //AbstractionLayer
-#include "Log.hpp"
 #include "WifiModule.hpp"
 #include "OperatingSystemModule.hpp"
 #include "Math.hpp"
@@ -7,9 +6,10 @@
 #include <cstring>
 //ESP
 #include "esp_wifi_types.h"
-#include "esp_mac.h" //For setting the Access Point ssid
+#include "esp_mac.h"
 #include "lwip/netdb.h"
 #include "lwip/ip_addr.h"
+#include "lwip/dns.h"
 #include "freertos/event_groups.h"
 
 #ifdef __cplusplus
@@ -196,6 +196,214 @@ ErrorType Wifi::networkDown() {
     return error;
 }
 
+ErrorType Wifi::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &sock, const Milliseconds timeout) {
+    ErrorType error = ErrorType::Failure;
+
+    if (version == IpTypes::Version::IPv4) {
+        ip_addr_t ip_addr;
+        ip_addr.type = IPADDR_TYPE_V4;
+        
+        uint8_t google_dns_server_ip[] = {8,8,8,8};
+        IP4_ADDR(&ip_addr.u_addr.ip4, google_dns_server_ip[0], google_dns_server_ip[1], google_dns_server_ip[2], google_dns_server_ip[3]);
+        dns_setserver(0, &ip_addr);
+        struct hostent *hent = gethostbyname(hostname.data());
+        
+        if (NULL == hent) {
+            uint8_t cloudflare_dns_server_ip[] = {1,1,1,1};
+            IP4_ADDR(&ip_addr.u_addr.ip4, cloudflare_dns_server_ip[0], cloudflare_dns_server_ip[1], cloudflare_dns_server_ip[2], cloudflare_dns_server_ip[3]);
+            dns_setserver(0, &ip_addr);
+            hent = gethostbyname(hostname.data());
+        }
+
+        if (NULL != hent) {
+            struct in_addr **addr_list = (struct in_addr **)hent->h_addr_list;
+            struct sockaddr_in dest_ip;
+            dest_ip.sin_addr.s_addr = addr_list[0]->s_addr;
+            dest_ip.sin_family = toPosixFamily(version);
+            dest_ip.sin_port = htons(port);
+
+            if (-1 != (sock = socket(toPosixFamily(version), toPosixSocktype(protocol), IPPROTO_IP))) {
+                if (0 == connect(sock, (struct sockaddr *)&dest_ip, sizeof(dest_ip))) {
+                    fd_set fdset;
+                    FD_ZERO(&fdset);
+                    FD_SET(sock, &fdset);
+
+                    Microseconds tvUsec = timeout * 1000;
+                    struct timeval timeoutval;
+                    if (tvUsec > std::numeric_limits<decltype(timeoutval.tv_usec)>::max()) {
+                        PLT_LOGW(TAG, "Truncating microseconds because it is bigger than the type used by this platform.");
+                        tvUsec = std::numeric_limits<decltype(timeoutval.tv_usec)>::max();
+                    }
+                    //Try to use seconds if possible. Some systems don't like very large usec timeouts.
+                    if (timeout >= 1000) {
+                        timeoutval.tv_sec = timeout / 1000;
+                        timeoutval.tv_usec = 0;
+                    }
+                    else {
+                        timeoutval.tv_sec = 0;
+                        timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
+                    }
+
+                    // Connection in progress -> have to wait until the connecting socket is marked as writable, i.e. connection completes
+                    int res = select(sock+1, NULL, &fdset, NULL, &timeoutval);
+                    if (res < 0) {
+                        PLT_LOGE(TAG, "Error during connection: select for socket to be writable %s", strerror(errno));
+                        error = ErrorType::Failure;
+                    }
+                    else if (res == 0) {
+                        PLT_LOGE(TAG, "Connection timeout: select for socket to be writable %s", strerror(errno));
+                        error = ErrorType::Timeout;
+                    }
+                    else {
+                        int sockerr;
+                        socklen_t len = (socklen_t)sizeof(int);
+
+                        if (getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&sockerr), &len) < 0) {
+                            PLT_LOGE(TAG, "Error when getting socket error using getsockopt() %s", strerror(errno));
+                            error = ErrorType::Failure;
+                        }
+                        else if (sockerr) {
+                            PLT_LOGE(TAG, "Connection error %d", sockerr);
+                            error = ErrorType::Failure;
+                        }
+                        else {
+                            sock = sock;
+                            error = ErrorType::Success;
+                        }
+                    }
+                }
+                else {
+                    PLT_LOGW(TAG, "Failed to connect: %s", strerror(errno));
+                    error = fromPlatformError(errno);
+                }
+            }
+            else {
+                PLT_LOGW(TAG, "Failed to create socket: %s", strerror(errno));
+                error = fromPlatformError(errno);
+            }
+        }
+        else {
+            PLT_LOGW(TAG, "Failed to get host by name: %d", h_errno);
+            error = fromPlatformError(h_errno);
+        }
+    }
+    else {
+        error = ErrorType::NotSupported;
+    }
+
+    return error;
+}
+
+ErrorType Wifi::disconnect(const Socket &socket) {
+    ErrorType error = ErrorType::Failure;
+
+    if (-1 != shutdown(socket, 0)) {
+        if (-1 != close(socket)) {
+            error = ErrorType::Success;
+        }
+        else {
+            error = fromPlatformError(errno);
+        }
+    }
+    
+    return error;
+}
+
+ErrorType Wifi::listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port, Socket &listenerSocket) {
+    struct sockaddr_storage destinationAddress;
+    int ipProtocol;
+    ErrorType error = ErrorType::Failure;
+
+    if (IpTypes::Version::IPv4 == version) {
+        struct sockaddr_in *ipv4DestinationAddress = reinterpret_cast<struct sockaddr_in *>(&destinationAddress);
+        ipv4DestinationAddress->sin_addr.s_addr = htonl(INADDR_ANY);
+        ipv4DestinationAddress->sin_family = AF_INET;
+        ipv4DestinationAddress->sin_port = htons(port);
+        ipProtocol = IPPROTO_IP;
+
+        listenerSocket = socket(AF_INET, toPosixSocktype(protocol), ipProtocol);
+        if (listenerSocket < 0) {
+            return fromPlatformError(errno);
+        }
+    }
+    else if (IpTypes::Version::IPv6 == version) {
+        struct sockaddr_in6 *ipv6DestinationAddress = reinterpret_cast<struct sockaddr_in6 *>(&destinationAddress);
+        bzero(&ipv6DestinationAddress->sin6_addr, sizeof(ipv6DestinationAddress->sin6_addr));
+        ipv6DestinationAddress->sin6_family = AF_INET6;
+        ipv6DestinationAddress->sin6_port = htons(port);
+        ipProtocol = IPPROTO_IPV6;
+
+        listenerSocket = socket(AF_INET6, toPosixSocktype(protocol), ipProtocol);
+        if (listenerSocket < 0) {
+            return fromPlatformError(errno);
+        }
+    }
+
+    int enable = 1;
+    if (0 == setsockopt(listenerSocket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable))) {
+        if (0 == bind(listenerSocket, reinterpret_cast<struct sockaddr *>(&destinationAddress), sizeof(destinationAddress))) {
+            if (0 == listen(listenerSocket, 1)) {
+                error = ErrorType::Success;
+            }
+            else {
+                error = fromPlatformError(errno);
+            }
+        }
+    }
+
+    return error;
+}
+
+ErrorType Wifi::acceptConnection(const Socket &listenerSocket, Socket &newSocket, const Milliseconds timeout) {
+    struct sockaddr_storage clientAddress;
+    socklen_t clientAddressSize = sizeof(clientAddress);
+    ErrorType error = ErrorType::Failure;
+
+    Microseconds tvUsec = timeout * 1000;
+    struct timeval timeoutval;
+    if (tvUsec > std::numeric_limits<decltype(timeoutval.tv_usec)>::max()) {
+        PLT_LOGW(TAG, "Truncating microseconds because it is bigger than the type used by this platform.");
+        tvUsec = std::numeric_limits<decltype(timeoutval.tv_usec)>::max();
+    }
+    timeoutval.tv_sec = 0;
+    timeoutval.tv_usec = static_cast<decltype(timeoutval.tv_usec)>(tvUsec);
+
+    fd_set readfds;
+
+    FD_ZERO(&readfds);
+    FD_SET(listenerSocket, &readfds);
+
+    int ret;
+    ret = select(listenerSocket + 1, &readfds, NULL, NULL, &timeoutval);
+    if (ret > 0) {
+        if (FD_ISSET(listenerSocket, &readfds)) {
+            if ((newSocket = accept(listenerSocket, (struct sockaddr *)&clientAddress, &clientAddressSize)) >= 0) {
+                error = ErrorType::Success;
+            }
+            else {
+                error = fromPlatformError(errno);
+            }
+        }
+    }
+    else if (0 == ret){
+        error = ErrorType::Timeout;
+    }
+    else {
+        error = fromPlatformError(errno);
+    }
+
+    return error;
+}
+
+ErrorType Wifi::closeConnection(const Socket socket) {
+    if (-1 != close(socket)) {
+        return ErrorType::Success;
+    }
+    else {
+        return fromPlatformError(errno);
+    }
+}
+
 ErrorType Wifi::radioOn() {
     return fromPlatformError(esp_wifi_start());
 }
@@ -294,10 +502,6 @@ ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
     _status.signalStrength = signalStrength;
 
     return ErrorType::Success;
-}
-
-ErrorType Wifi::mainLoop() {
-    return runNextEvent();
 }
 
 ErrorType Wifi::setSsid(WifiTypes::Mode mode, const std::string &ssid) {

@@ -52,28 +52,15 @@ class IpServerAbstraction : public EventQueue {
     }
 
     /**
-     * @brief Listen for connections on a port
-     * @param[in] protocol The protocol to use for the connection
-     * @sa IpTypes::Protocol
-     * @param[in] version The version to use for the connection
-     * @param[in] port The port to listen to
-     * @sa IpTypes::Version
+     * @sa NetworkAbstraction::listenTo
     */
     virtual ErrorType listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port) = 0;
     /**
-     * @brief Accept a connection from a client connecting to the socket given
-     * @param[out] socket The socket that the connection was accepted on
-     * @param[in] timeout The time to wait to accept a connection.
-     * @returns ErrorType::Success on success
-     * @returns ErrorType::LimitReached if the maximum number of connections has been accepted
-     * @returns ErrorType::Timeout if no connections were accepted within the given timeout.
-     * @returns ErrorType::Failure otherwise
+     * @sa NetworkAbstraction::acceptConnection
     */
     virtual ErrorType acceptConnection(Socket &socket, const Milliseconds timeout) = 0;
     /**
-     * @brief Close the connection
-     * @param[in] socket The socket to close
-     * @returns Fnd::ErrorType::Success on success
+     * @sa NetworkAbstraction::closeConnection
     */
     virtual ErrorType closeConnection(const Socket socket) = 0;
     /**

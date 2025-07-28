@@ -3,8 +3,6 @@
 
 //AbstractionLayer
 #include "IpServerAbstraction.hpp"
-//Posix
-#include <sys/socket.h>
 
 class IpServer final : public IpServerAbstraction {
 
@@ -16,29 +14,6 @@ class IpServer final : public IpServerAbstraction {
     ErrorType closeConnection(const Socket socket) override;
     ErrorType sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) override;
     ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket) override;
-
-    private:
-    inline int toPosixFamily(IpTypes::Version version) const {
-        switch (version) {
-            case IpTypes::Version::IPv4:
-                return AF_INET;
-            case IpTypes::Version::IPv6:
-                return AF_INET6;
-            default:
-                return AF_UNSPEC;
-        }
-    }
-
-    inline int toPosixSocktype(IpTypes::Protocol protocol) const {
-        switch (protocol) {
-            case IpTypes::Protocol::Tcp:
-                return SOCK_STREAM;
-            case IpTypes::Protocol::Udp:
-                return SOCK_DGRAM;
-            default:
-                return SOCK_RAW;
-        }
-    }
 
     inline bool connectionsAcceptedIsAtMaximum() const {
         constexpr Count MaxConnections = 10;

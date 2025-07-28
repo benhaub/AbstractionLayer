@@ -9,10 +9,8 @@
 
 //AbstractionLayer
 #include "WifiAbstraction.hpp"
-#include "Error.hpp"
-//C++
-#include <memory>
-#include <string>
+//Posix
+#include <sys/socket.h>
 
 class Wifi final : public WifiAbstraction {
 
@@ -25,6 +23,11 @@ class Wifi final : public WifiAbstraction {
     ErrorType init() override;
     ErrorType networkUp() override;
     ErrorType networkDown() override;
+    ErrorType connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &sock, const Milliseconds timeout) override;
+    ErrorType disconnect(const Socket &socket) override;
+    ErrorType listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port, Socket &listenerSocket) override;
+    ErrorType acceptConnection(const Socket &listenerSocket, Socket &newSocket, const Milliseconds timeout) override;
+    ErrorType closeConnection(const Socket socket) override;
     ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) override;
     ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) override;
     ErrorType getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) override;
@@ -54,6 +57,38 @@ class Wifi final : public WifiAbstraction {
      * @returns ErrorType::Failure if the interface was not returned.
      */
     ErrorType interfaceRoutedTo(const std::array<char, NetworkTypes::Ipv4AddressStringSize> &ipAddress, std::array<char, 16> &interface);
+
+    /**
+     * @brief Convert the IpTypes::Version to a POSIX family type.
+     * @param[in] version The IpTypes::Version to convert
+     * @returns The POSIX family type for the given IpTypes::Version
+     */
+    int toPosixFamily(IpTypes::Version version) {
+        switch (version) {
+            case IpTypes::Version::IPv4:
+                return AF_INET;
+            case IpTypes::Version::IPv6:
+                return AF_INET6;
+            default:
+                return AF_UNSPEC;
+        }
+    }
+
+    /**
+     * @brief Convert the IpTypes::Protocol to a POSIX socket type.
+     * @param[in] protocol The IpTypes::Protocol to convert
+     * @returns The POSIX socket type for the given IpTypes::Protocol
+     */
+    int toPosixSocktype(IpTypes::Protocol protocol) {
+        switch (protocol) {
+            case IpTypes::Protocol::Tcp:
+                return SOCK_STREAM;
+            case IpTypes::Protocol::Udp:
+                return SOCK_DGRAM;
+            default:
+                return SOCK_RAW;
+        }
+    }
 };
 
 #endif // __WIFI_MODULE_HPP__

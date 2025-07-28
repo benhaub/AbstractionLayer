@@ -11,6 +11,7 @@
 #include "WifiAbstraction.hpp"
 //ESP
 #include "esp_wifi.h"
+#include "lwip/netdb.h"
 
 /**
  * @class Wifi
@@ -24,12 +25,15 @@ class Wifi final : public WifiAbstraction {
     ErrorType init() override;
     ErrorType networkUp() override;
     ErrorType networkDown() override;
+    ErrorType connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &sock, const Milliseconds timeout) override;
+    ErrorType disconnect(const Socket &socket) override;
+    ErrorType listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port, Socket &listenerSocket) override;
+    ErrorType acceptConnection(const Socket &listenerSocket, Socket &newSocket, const Milliseconds timeout) override;
+    ErrorType closeConnection(const Socket socket) override;
     ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) override;
     ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) override;
     ErrorType getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) override;
     ErrorType getSignalStrength(DecibelMilliWatts &signalStrength) override;
-
-    ErrorType mainLoop() override;
 
     ErrorType radioOn() override;
     ErrorType radioOff() override;
@@ -64,6 +68,28 @@ class Wifi final : public WifiAbstraction {
                 return WIFI_MODE_APSTA;
             default:
                 return WIFI_MODE_AP;
+        }
+    }
+
+    int toPosixFamily(IpTypes::Version version) {
+        switch (version) {
+            case IpTypes::Version::IPv4:
+                return AF_INET;
+            case IpTypes::Version::IPv6:
+                return AF_INET6;
+            default:
+                return AF_UNSPEC;
+        }
+    }
+
+    int toPosixSocktype(IpTypes::Protocol protocol) {
+        switch (protocol) {
+            case IpTypes::Protocol::Tcp:
+                return SOCK_STREAM;
+            case IpTypes::Protocol::Udp:
+                return SOCK_DGRAM;
+            default:
+                return SOCK_RAW;
         }
     }
 
