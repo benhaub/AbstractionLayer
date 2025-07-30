@@ -56,7 +56,6 @@ ErrorType IpClient::disconnect() {
 }
 
 ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds timeout) {
-    assert(0 != _socket);
     bool doneSending = false;
     ErrorType callbackError = ErrorType::Failure;
 
@@ -86,7 +85,6 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
     ErrorType callbackError = ErrorType::Failure;
 
     auto rx = [&]() -> ErrorType {
-        assert(0 != _socket);
 
         callbackError = network().receive(buffer, _socket, timeout);
 
