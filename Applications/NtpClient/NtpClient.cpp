@@ -3,7 +3,6 @@
 #include "NetworkAbstraction.hpp"
 
 ErrorType NtpClient::connectToServer(const NtpClientTypes::NtpServerHostName hostname, const Port port) {
-    Socket socket = -1;
     Milliseconds timeout = 30*1000;
 
     ErrorType error = ErrorType::Success;
