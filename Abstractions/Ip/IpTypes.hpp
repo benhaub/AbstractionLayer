@@ -16,7 +16,8 @@ namespace IpTypes {
     enum class Version : uint8_t {
         Unknown = 0, ///< Unknown
         IPv4,        ///< Internet Protocol Version 4
-        IPv6         ///< Internet Protocol Version 6
+        IPv6,        ///< Internet Protocol Version 6
+        IPv4v6,      ///< Internet Protocol Version 4 and 6
     };
 
     /**
