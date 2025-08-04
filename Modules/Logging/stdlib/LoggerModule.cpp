@@ -37,7 +37,7 @@ ErrorType Logger::logBuffer(const LogType logType, const char *tag, const char *
     };
 
     for (size_t i = 0, j = 0; i < length; i++) {
-        printf("%02x ", buffer[i]);
+        printf("%02x ", static_cast<unsigned char>(buffer[i]));
 
         if ((i + 1) % 8 == 0) {
             printf(" ");

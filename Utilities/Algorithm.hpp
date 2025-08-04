@@ -1,7 +1,7 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
 * @file   Algorithm.hpp
-* @details \b Synopsis: \n Algorithms
+* @details Algorithms
 * @ingroup Utilities
 *******************************************************************************/
 #ifndef __ALGORITHM_HPP__
@@ -16,24 +16,26 @@
 #include <algorithm>
 
 namespace Algorithm {
-    /**
-     * @brief Splits a string into a vector of strings by a delimiter
-     * @param s The string to split
-     * @param delimiter The delimiter to split the string by
-     * @return std::vector<std::string> The vector of strings
-     * @author https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
-     */
-    inline std::vector<std::string> Split(std::string& s, const char delimiter[]) {
-        std::vector<std::string> tokens;
-        size_t pos = 0;
-        std::string token;
-        while ((pos = s.find(delimiter)) != std::string::npos) {
-            token = s.substr(0, pos);
-            tokens.push_back(token);
-            s.erase(0, pos + strlen(delimiter));
-        }
-        tokens.push_back(s);
 
+    /**
+    * @brief Splits a string into a vector of strings by a delimiter
+    * @param s The string to split
+    * @param delimiter The delimiter to split the string by
+    * @return std::vector<std::string_view> The vector of strings
+    * @post Strings are a shallow copy of s. If s goes out of scope, so does the vector of split strings.
+    */
+    inline std::vector<std::string_view> Split(std::string_view s, const char delimiter[]) {
+        std::vector<std::string_view> tokens;
+        size_t nextDelimiterPosition = 0;
+        size_t lastDelimiterPosition = 0;
+
+        while ((nextDelimiterPosition = s.find(delimiter, lastDelimiterPosition)) != std::string::npos) {
+            tokens.push_back(s.substr(lastDelimiterPosition, (nextDelimiterPosition - lastDelimiterPosition)));
+            lastDelimiterPosition = nextDelimiterPosition + 1;
+          }
+
+        tokens.push_back(s.substr(lastDelimiterPosition));
+ 
         return tokens;
     }
 
