@@ -130,8 +130,8 @@ class NetworkAbstraction : public EventQueue {
     /// @brief Print the status of the network interface
     void printStatus() {
         status();
-        PLT_LOGI(TAG, "<NetworkStatus> <Connected:%s, Signal Strength (dBm):%d> <Pie, Line>",
-        status(false).isUp ? "true" : "false", status(false).signalStrength);
+        PLT_LOGI(TAG, "<NetworkStatus> <Technology:%u, Connected:%s, Signal Strength (dBm):%d> <Pie, Line>",
+        static_cast<uint8_t>(_status.technology), _status.isUp ? "true" : "false", _status.signalStrength);
     }
 
     /**
