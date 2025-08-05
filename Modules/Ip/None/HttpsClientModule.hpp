@@ -1,5 +1,5 @@
-#ifndef __HTTP_CLIENT_MODULE_HPP__
-#define __HTTP_CLIENT_MODULE_HPP__
+#ifndef __HTTPS_CLIENT_MODULE_HPP__
+#define __HTTPS_CLIENT_MODULE_HPP__
 
 //AbstractionLayer
 #include "HttpClientAbstraction.hpp"
@@ -17,4 +17,4 @@ class HttpsClient final : public HttpClientAbstraction {
     ErrorType receiveNonBlocking(std::shared_ptr<HttpTypes::Response> response, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<HttpTypes::Request> buffer)> callback) override;
 };
 
-#endif // __HTTP_CLIENT_MODULE_HPP__
+#endif // __HTTPS_CLIENT_MODULE_HPP__

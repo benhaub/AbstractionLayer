@@ -1,5 +1,5 @@
-#ifndef __HTTP_CLIENT_MODULE_HPP__
-#define __HTTP_CLIENT_MODULE_HPP__
+#ifndef __HTTPS_CLIENT_MODULE_HPP__
+#define __HTTPS_CLIENT_MODULE_HPP__
 
 //AbstractionLayer
 #include "HttpClientAbstraction.hpp"
@@ -43,4 +43,4 @@ class HttpsClient final : public HttpClientAbstraction {
     }
 };
 
-#endif // __HTTP_CLIENT_MODULE_HPP__
+#endif // __HTTPS_CLIENT_MODULE_HPP__
