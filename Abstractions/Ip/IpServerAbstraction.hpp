@@ -1,7 +1,7 @@
 /***************************************************************************//**
 * @author   Ben Haubrich
 * @file     IpServerAbstraction.hpp
-* @details  \b Synopsis: \n Interface for creating a server on any network
+* @details  Interface for creating a server on any network
 * @ingroup Abstractions
 *******************************************************************************/
 #ifndef __IP_SERVER_ABSTRACTION_HPP__
@@ -10,7 +10,6 @@
 //AbstractionLayer
 #include "Log.hpp"
 #include "IpTypes.hpp"
-#include "EventQueue.hpp"
 #include "NetworkAbstraction.hpp"
 
 /**
@@ -29,17 +28,14 @@ namespace IpServerTypes {
     };
 }
 
-
 /**
  * @class IpServerAbstraction
  * @brief Creates a server on any network
  * @note You should use the network to handle communication by placing events on it's queue.
  */
-class IpServerAbstraction : public EventQueue {
+class IpServerAbstraction {
 
     public:
-    /// @brief Constructor
-    IpServerAbstraction() : EventQueue() {}
     /// @brief Destructor
     virtual ~IpServerAbstraction() = default;
 
