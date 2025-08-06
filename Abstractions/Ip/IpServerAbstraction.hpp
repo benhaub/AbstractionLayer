@@ -1,15 +1,13 @@
 /***************************************************************************//**
-* @author   Ben Haubrich
-* @file     IpServerAbstraction.hpp
-* @details  Interface for creating a server on any network
+* @author  Ben Haubrich
+* @file    IpServerAbstraction.hpp
+* @details Interface for creating a server on any network
 * @ingroup Abstractions
 *******************************************************************************/
 #ifndef __IP_SERVER_ABSTRACTION_HPP__
 #define __IP_SERVER_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include "Log.hpp"
-#include "IpTypes.hpp"
 #include "NetworkAbstraction.hpp"
 
 /**
@@ -25,6 +23,8 @@ namespace IpServerTypes {
     struct Status {
         bool listening;          ///< True when the server is listening for connections.
         Count activeConnections; ///< The number of simultaneous active connections.
+
+        Status() : listening(false), activeConnections(0) {}
     };
 }
 
@@ -167,8 +167,7 @@ class IpServerAbstraction {
     ///@param[in] network The network abstraction to set
     void setNetwork(NetworkAbstraction &network) { _network = &network; }
     ///@brief Get a constant reference to the status of the server
-    const IpServerTypes::Status &status() {
-        _status.activeConnections = _connectedSockets.size();
+    const IpServerTypes::Status &status() const {
         return _status;
     }
 
@@ -182,18 +181,14 @@ class IpServerAbstraction {
     /// @brief The port
     Port _port = 0;
     /// @brief The status of the server
-    IpServerTypes::Status _status = {
-        false,
-        0
-    };
+    IpServerTypes::Status _status;
     /// @brief list of all the sockets we have accepted connection for
-    std::vector<Socket> _connectedSockets;
+    std::vector<Socket> _connectedSockets = {};
 
     private:
     /// @brief The network abstraction that this server communicates on.
     /// @note Not a unique_ptr because this IP server does not have exclusive ownersip of the network
     NetworkAbstraction *_network = nullptr;
-
 };
 
 #endif //__IP_SERVER_ABSTRACTION_HPP__
