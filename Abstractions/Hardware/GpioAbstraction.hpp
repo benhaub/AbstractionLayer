@@ -19,6 +19,21 @@
  */
 namespace GpioTypes {
 
+    namespace Interrupts {
+        ///< Logic low triggers an interrupt
+        constexpr InterruptFlags LowLevel = 0x01;
+        ///< Logic high triggers an interrupt
+        constexpr InterruptFlags HighLevel = 0x02;
+        ///< The rising edge triggers an interrupt
+        constexpr InterruptFlags RisingEdge = 0x04;
+        ///< The falling edge triggers an interrupt
+        constexpr InterruptFlags FallingEdge = 0x08;
+        ///< Both rising and falling edge
+        constexpr InterruptFlags RisingOrFallingEdge = 0x0C;
+        ///< Interrupts are disabled
+        constexpr InterruptFlags Disabled = 0x00;
+    }
+
     /**
      * @enum PinDirection
      * @brief Pin direction
@@ -30,20 +45,6 @@ namespace GpioTypes {
     };
 
     /**
-     * @enum InterruptMode
-     * @brief The state of the signal that will trigger an interrupt
-    */
-    enum class InterruptMode : uint8_t {
-        Unknown,             ///< Unknown interrupt mode
-        LowLevel,            ///< Logic low triggers an
-        HighLevel,           ///< Logic high triggers an interrupt
-        RisingEdge,          ///< The rising edge triggers an interrupt
-        FallingEdge,         ///< The falling edge triggers an interrupt
-        RisingOrFallingEdge, ///< Both rising and falling edge
-        Disabled             ///< Interrupts are disabled
-    };
-
-    /**
      * @enum LogicLevel
      * @brief Logic level
     */
@@ -51,6 +52,37 @@ namespace GpioTypes {
         Unknown = 0, ///< Unknown logic level
         Low,         ///< Low logic level
         High         ///< High logic level
+    };
+
+    /**
+     * @struct GpioParams
+     * @brief Contains the parameters used to configure the GPIO.
+     */
+    struct GpioParams {
+
+        struct HardwareConfig {
+            PeripheralNumber peripheralNumber;
+            PinNumber pinNumber;
+            GpioTypes::PinDirection direction;
+            InterruptFlags interruptFlags;
+            bool pullUpEnable;
+            bool pullDownEnable;
+
+            HardwareConfig() : peripheralNumber(PeripheralNumber::Unknown), pinNumber(-1), direction(GpioTypes::PinDirection::DigitalUnknown), interruptFlags(Interrupts::Disabled), pullUpEnable(false), pullDownEnable(false) {}
+        } hardwareConfig;
+
+        /**
+         * @struct InterruptConfig
+         * @brief Contains the interrupt configuration for the GPIO.
+         */
+        struct InterruptConfig {
+            InterruptFlags interruptFlags;       ///< The interrupt flags to use for the uart
+            InterruptCallback interruptCallback; ///< The interrupt callback to use for the uart
+
+            InterruptConfig() : interruptFlags(Interrupts::Disabled), interruptCallback(nullptr) {}
+        } interruptConfig;
+
+        GpioParams() : hardwareConfig(), interruptConfig() {}
     };
 }
 
@@ -66,6 +98,9 @@ class GpioAbstraction {
     ///@brief Destructor
     virtual ~GpioAbstraction() = default;
 
+    /// @brief Tag for logging.
+    static constexpr char TAG[] = "Gpio";
+
     /**
      * @brief Init the gpio after configuring.
      * @pre Call setHardwareConfig first.
@@ -74,20 +109,6 @@ class GpioAbstraction {
      * @returns ErrorType::Failure otherwise.
      */
     virtual ErrorType init() = 0;
-    /**
-     * @brief Set the hadware configuration for the GPIO pin
-     * @param basePeripheralRegister The base peripheral register of the gpio pin. Pointer to the hardware instance of the gpio bank that contains the pin.
-     * @param pinNumber The pin number of the gpio pin.
-     * @param direction The direction of the pin.
-     * @param interruptMode The interrupt mode of the pin.
-     * @param pullUpEnable Enable pull up resistor on the pin.
-     * @param pullDownEnable Enable pull down resistor on the pin.
-     * @returns ErrorType::Success if the pin was configured.
-     * @returns ErrorType::Failure if the pin was not configured.
-     * @returns ErrorType::Invalid parameter if any of the parameters are invalid.
-     * @returns ErrorType::NotImplemented if configuring the gpio pin is not implemented.
-    */
-    virtual ErrorType setHardwareConfig(const Register basePeripheralRegister, const PinNumber pinNumber, const GpioTypes::PinDirection direction, const GpioTypes::InterruptMode interruptMode, const bool pullUpEnable, const bool pullDownEnable) = 0;
     /**
      * @brief write to the pin and set it's logic level.
      * @param logicLevel The logic level to write to the pin.
@@ -110,45 +131,15 @@ class GpioAbstraction {
      */
     virtual ErrorType pinRead(GpioTypes::LogicLevel &logicLevel) = 0;
 
-    /**
-     * @brief Get the pointer to the base register of the gpio peripheral being used.
-    */
-    const uint32_t &basePeripheralRegister() const { return *_basePeripheralRegister; }
-    /**
-     * @brief Get the pin number of this gpio
-    */
-    PinNumber pinNumber() const { return _pinNumber; }
-    /**
-     * @brief Get the interrupt mode of the gpio pin.
-    */
-    GpioTypes::InterruptMode interruptMode() const { return _interruptMode; }
-    /**
-     * @brief Get the direction of the gpio pin.
-    */
-    GpioTypes::PinDirection direction() const { return _direction; }
-    /**
-     * @brief True if a pull-up resistor is enabled on this pin
-    */
-    bool pullUpEnabled() const { return _pullUpEnable; }
-    /**
-     * @brief True if a pull-down resistor is enabled on this pin.
-    */
-    bool pullDownEnabled() const { return _pullDownEnable; }
+    virtual ErrorType configure(const GpioTypes::GpioParams &params) {
+        _gpioParams = static_cast<const GpioTypes::GpioParams &>(params);
+        return ErrorType::Success;
+    }
 
+    const GpioTypes::GpioParams &gpioParams() const { return _gpioParams; }
 
-    protected:
-    /// @brief The base peripheral register of the gpio pin.
-    uint32_t *_basePeripheralRegister;
-    /// @brief The pin number of the gpio pin.
-    PinNumber _pinNumber;
-    /// @brief The interrupt mode of the gpio pin.
-    GpioTypes::InterruptMode _interruptMode = GpioTypes::InterruptMode::Unknown;
-    /// @brief The direction of the gpio pin.
-    GpioTypes::PinDirection _direction = GpioTypes::PinDirection::DigitalUnknown;
-    /// @brief True if a pull-up resistor is enabled on this pin.
-    bool _pullUpEnable;
-    /// @brief True if a pull-down resistor is enabled on this pin.
-    bool _pullDownEnable;
+    private:
+    GpioTypes::GpioParams _gpioParams;
 };
 
 #endif //__GPIO_ABSTRACTION_HPP__

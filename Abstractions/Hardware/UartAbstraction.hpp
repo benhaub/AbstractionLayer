@@ -39,22 +39,26 @@ namespace UartTypes {
         Both         ///< Transmit and receive line.
     };
 
-    /// @brief Overrun interrupt.
-    constexpr uint32_t OverrunInterrupt = 0x01;
-    /// @brief Break error interrupt.
-    constexpr uint32_t BreakErrorInterrupt = 0x02;
-    /// @brief Parity error interrupt.
-    constexpr uint32_t ParityErrorInterrupt = 0x04;
-    /// @brief Framing error interrupt.
-    constexpr uint32_t FramingErrorInterrupt = 0x08;
-    /// @brief Receive timeout interrupt.
-    constexpr uint32_t ReceiveTimeoutInterrupt = 0x10;
-    /// @brief Transmitted interrupt.
-    constexpr uint32_t TransmittedInterrupt = 0x20;
-    /// @brief Received interrupt.
-    constexpr uint32_t ReceivedInterrupt = 0x40;
-    /// @brief Clear to send modem interrupt.
-    constexpr uint32_t CtsModemInterrupt = 0x80;
+    namespace Interrupts {
+        /// @brief Overrun interrupt.
+        constexpr InterruptFlags OverrunInterrupt = 0x01;
+        /// @brief Break error interrupt.
+        constexpr InterruptFlags BreakErrorInterrupt = 0x02;
+        /// @brief Parity error interrupt.
+        constexpr InterruptFlags ParityErrorInterrupt = 0x04;
+        /// @brief Framing error interrupt.
+        constexpr InterruptFlags FramingErrorInterrupt = 0x08;
+        /// @brief Receive timeout interrupt.
+        constexpr InterruptFlags ReceiveTimeoutInterrupt = 0x10;
+        /// @brief Transmitted interrupt.
+        constexpr InterruptFlags TransmittedInterrupt = 0x20;
+        /// @brief Received interrupt.
+        constexpr InterruptFlags ReceivedInterrupt = 0x40;
+        /// @brief Clear to send modem interrupt.
+        constexpr InterruptFlags CtsModemInterrupt = 0x80;
+        /// Interrupts are disabled
+        constexpr InterruptFlags Disabled = 0x00;
+    }
 
     /**
      * @struct UartParams

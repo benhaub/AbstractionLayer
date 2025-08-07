@@ -15,13 +15,14 @@ class Gpio final : public GpioAbstraction {
     Gpio() : GpioAbstraction() {}
 
     ErrorType init() override;
-    ErrorType setHardwareConfig(const Register basePeripheralRegister, const PinNumber pinNumber, const GpioTypes::PinDirection direction, const GpioTypes::InterruptMode interruptMode, const bool pullUpEnable, const bool pullDownEnable) override;
     ErrorType pinWrite(const GpioTypes::LogicLevel &logicLevel) override;
     ErrorType pinRead(GpioTypes::LogicLevel &logicLevel) override;
 
     gpio_num_t toEspPinNumber(const PinNumber pinNumber) {
         return static_cast<gpio_num_t>(pinNumber);
     }
+
+    ErrorType toEspGpioConfig(const GpioTypes::GpioParams &params);
 
     private:
     gpio_config_t _gpioConfig;

@@ -57,7 +57,7 @@ namespace CellularTypes {
         CellularTypes::AccessMode accessMode;                       ///< The access mode to use for the cellular device
         IcCommunicationProtocolTypes::IcDevice icDevice;            ///< The IC device to use to communicate with the cellular modem. Do not set if not needed.
         PinNumber resetPin;                                         ///< The reset pin to use for the cellular device. Do not set if not needed.
-        Register resetPinAddress;                                   ///< The address of the reset pin to use for the cellular device. Do not set if not needed.
+        PeripheralNumber gpio;                                      ///< The gpio peripheral that contains the reset pin to use for the cellular device. Do not set if not needed.
 
         CellularParams() : NetworkTypes::ConfigurationParameters() {
             apn.fill(0);
@@ -65,7 +65,7 @@ namespace CellularTypes {
             accessMode = CellularTypes::AccessMode::Unknown;
             icDevice = IcCommunicationProtocolTypes::IcDevice::Unknown;
             resetPin = -1;
-            resetPinAddress = nullptr;
+            gpio = PeripheralNumber::Unknown;
         }
     };
 }
