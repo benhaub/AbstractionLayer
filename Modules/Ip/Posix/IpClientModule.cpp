@@ -8,17 +8,19 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
     ErrorType callbackError = ErrorType::Failure;
 
     // Ensure any existing connection is properly closed
-    network().disconnect(_socket);
 
     auto connectCb = [&]() -> ErrorType {
+        disconnect();
+
         callbackError = network().connectTo(hostname, port, protocol, version, _socket, timeout);
         doneConnecting = true;
         _status.connected = callbackError == ErrorType::Success;
+
         return callbackError;
     };
 
     ErrorType error = ErrorType::Failure;
-    EventQueue::Event event = EventQueue::Event(std::bind(connectCb));
+    EventQueue::Event event = EventQueue::Event(connectCb);
     if (ErrorType::Success != (error = network().addEvent(event))) {
         PLT_LOGW(TAG, "Could not add connection event to network");
         return error;
@@ -32,22 +34,29 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
 }
 
 ErrorType IpClient::disconnect() {
-    return network().disconnect(_socket);
+    ErrorType error = ErrorType::Success;
+
+    if (_socket != -1) {
+        error = network().disconnect(_socket);
+        _socket = -1;
+    }
+
+    return error;
 }
 
 ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds timeout) {
     bool doneSending = false;
     ErrorType callbackError = ErrorType::Failure;
 
-    auto tx = [&](const std::string &frame, const Milliseconds timeout) -> ErrorType {
-        callbackError = network().transmit(frame, _socket, timeout);
+    auto tx = [&]() -> ErrorType {
+        callbackError = network().transmit(data, _socket, timeout);
 
-        doneSending = true;
         _status.connected = callbackError == ErrorType::Success;
+        doneSending = true;
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(tx, data, timeout));
+    EventQueue::Event event = EventQueue::Event(tx);
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -68,8 +77,8 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
 
         callbackError = network().receive(buffer, _socket, timeout);
 
-        doneReceiving = true;
         _status.connected = callbackError == ErrorType::Success;
+        doneReceiving = true;
         return callbackError;
     };
 

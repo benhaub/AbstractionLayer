@@ -6,18 +6,18 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
     bool doneConnecting = false;
     ErrorType callbackError = ErrorType::Failure;
 
-    auto connectCb = [&](const Milliseconds timeout) -> ErrorType {
+    auto connectCb = [&]() -> ErrorType {
         disconnect();
-        callbackError = network().connectTo(hostname, port, protocol, version, _socket, timeout);
 
-        _status.connected = callbackError == ErrorType::Success;
+        callbackError = network().connectTo(hostname, port, protocol, version, _socket, timeout);
         doneConnecting = true;
+        _status.connected = callbackError == ErrorType::Success;
 
         return callbackError;
     };
 
     ErrorType error = ErrorType::Failure;
-    EventQueue::Event event = EventQueue::Event(std::bind(connectCb, timeout));
+    EventQueue::Event event = EventQueue::Event(connectCb);
     if (ErrorType::Success != (error = network().addEvent(event))) {
         return error;
     }
@@ -43,8 +43,8 @@ ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds tim
     bool doneSending = false;
     ErrorType callbackError = ErrorType::Failure;
 
-    auto tx = [&](const std::string &frame, const Milliseconds timeout) -> ErrorType {
-        callbackError = network().transmit(frame, _socket, timeout);
+    auto tx = [&]() -> ErrorType {
+        callbackError = network().transmit(data, _socket, timeout);
         if (ErrorType::Success != callbackError) {
             _status.connected = false;
         }
@@ -53,7 +53,7 @@ ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds tim
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(tx, data, timeout));
+    EventQueue::Event event = EventQueue::Event(tx);
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -72,15 +72,13 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
 
     auto rx = [&]() -> ErrorType {
         callbackError = network().receive(buffer, _socket, timeout);
-        if (ErrorType::Success != callbackError) {
-            _status.connected = false;
-        }
 
+        _status.connected = callbackError == ErrorType::Success;
         doneReceiving = true;
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(rx));
+    EventQueue::Event event = EventQueue::Event(rx);
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;

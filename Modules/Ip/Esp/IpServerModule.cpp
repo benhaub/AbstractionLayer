@@ -3,7 +3,7 @@
 #include "OperatingSystemModule.hpp"
 
 ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port) {
-    bool listeningDone = false;
+    bool doneListening = false;
     ErrorType callbackError = ErrorType::Failure;
 
     auto listenCallback = [&]() -> ErrorType {
@@ -17,7 +17,9 @@ ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Ve
             _port = port;
         }
 
-        listeningDone = true;
+        _status.listening = callbackError == ErrorType::Success;
+        doneListening = true;
+
         return callbackError;
     };
 
@@ -27,7 +29,7 @@ ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Ve
         return error;
     }
 
-    while (!listeningDone) {
+    while (!doneListening) {
         OperatingSystem::Instance().delay(Milliseconds(1));
     }
 
@@ -72,7 +74,7 @@ ErrorType IpServer::closeConnection(const Socket socket) {
     bool closeConnectionDone = false;
     ErrorType callbackError = ErrorType::Failure;
 
-    auto closeConnection = [&](const Socket socket) -> ErrorType {
+    auto closeConnection = [&, socket]() -> ErrorType {
         callbackError = network().closeConnection(socket);
 
         if (ErrorType::Success == callbackError) {
@@ -91,7 +93,7 @@ ErrorType IpServer::closeConnection(const Socket socket) {
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(closeConnection, socket));
+    EventQueue::Event event = EventQueue::Event(closeConnection);
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;

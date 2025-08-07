@@ -32,7 +32,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
     };
 
     ErrorType error = ErrorType::Failure;
-    EventQueue::Event event = EventQueue::Event(std::bind(connectCb));
+    EventQueue::Event event = EventQueue::Event(connectCb);
     if (ErrorType::Success != (error = network().addEvent(event))) {
         return error;
     }
@@ -67,7 +67,7 @@ ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds tim
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(tx));
+    EventQueue::Event event = EventQueue::Event(tx);
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -85,7 +85,6 @@ ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds time
     ErrorType callbackError = ErrorType::Failure;
 
     auto rx = [&]() -> ErrorType {
-
         callbackError = network().receive(buffer, _socket, timeout);
 
         _status.connected = callbackError == ErrorType::Success;

@@ -6,12 +6,8 @@
 ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port) {
     bool doneListening = false;
     ErrorType callbackError = ErrorType::Failure;
-    _protocol = IpTypes::Protocol::Unknown;
-    _version = IpTypes::Version::Unknown;
-    _port = 0;
-    _status.listening = false;
 
-    network().closeConnection(_listenerSocket);
+    closeConnection(_listenerSocket);
 
     auto listenCb = [&]() -> ErrorType {
         callbackError = network().listenTo(protocol, version, port, _listenerSocket);
@@ -19,7 +15,6 @@ ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Ve
             _protocol = protocol;
             _version = version;
             _port = port;
-            _status.listening = true;
         }
 
         _status.listening = callbackError == ErrorType::Success;
@@ -28,7 +23,7 @@ ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Ve
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(listenCb));
+    EventQueue::Event event = EventQueue::Event(listenCb);
     if (ErrorType::Success != network().addEvent(event)) {
         return ErrorType::Failure;
     }
@@ -61,7 +56,7 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(acceptConnectionCallback));
+    EventQueue::Event event = EventQueue::Event(acceptConnectionCallback);
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -78,7 +73,7 @@ ErrorType IpServer::closeConnection(const Socket socket) {
     bool closeConnectionDone = false;
     ErrorType callbackError = ErrorType::Failure;
 
-    auto closeConnection = [&](const Socket socket) -> ErrorType {
+    auto closeConnection = [&, socket]() -> ErrorType {
         if (ErrorType::Success == network().closeConnection(socket)) {
             const auto closedSocket = std::find(_connectedSockets.begin(), _connectedSockets.end(), socket);
             if (_connectedSockets.end() != closedSocket) {
@@ -99,7 +94,7 @@ ErrorType IpServer::closeConnection(const Socket socket) {
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(closeConnection, socket));
+    EventQueue::Event event = EventQueue::Event(closeConnection);
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -123,7 +118,7 @@ ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds tim
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(tx));
+    EventQueue::Event event = EventQueue::Event(tx);
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -158,7 +153,7 @@ ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds time
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(rx));
+    EventQueue::Event event = EventQueue::Event(rx);
     ErrorType error = network().addEvent(event);
     if (ErrorType::Success != error) {
         return error;
