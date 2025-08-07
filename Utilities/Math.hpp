@@ -96,4 +96,15 @@ constexpr inline T ToBits(const T &numberOfBytes) {
     return numberOfBytes * 8;
 }
 
+/**
+ * @brief Convert an ascii hexidecimal encoding to the value it represents
+ * @details 15 = 'f' - 87
+ * @param[in] asciiHexidecimalEncoding The ascii hexidecimal encoding to convert
+ * @returns The value of the ascii hexidecimal encoding
+ */
+constexpr inline uint8_t asciiHexidecimalEncodingToValue(const char &asciiHexidecimalEncoding) {
+    constexpr uint8_t differenceBetweenHexAsciiEncodingAndValue = (uint8_t)'f' - 15u;
+    return asciiHexidecimalEncoding - differenceBetweenHexAsciiEncodingAndValue;
+}
+
 #endif // __MATH_HPP__
