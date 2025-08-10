@@ -74,6 +74,7 @@ namespace OperatingSystemTypes {
         Percent idle;                               ///< The percent of time the system spent in idle mode. Definition varies depending on the underlying operating sytem.
         Seconds upTime;                             ///< The amount of time since the system was last reset.
         std::vector<MemoryRegionInfo> memoryRegion; ///< Free memory on the system.
+        UnixTime systemTime;                        ///< The current system time.
     };
 }
 
@@ -98,8 +99,10 @@ class OperatingSystemAbstraction {
 
     /// @brief Print that status of the operating system
     void printStatus() {
-        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time (s):%d> <Line, Line, Omit>",
-        status().threadCount, status().idle, status().upTime);
+        status(true);
+
+        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time (s):%d, System UnixTime:%u> <Line, Line, Omit, Omit>",
+        status().threadCount, status().idle, status().upTime, status().systemTime);
         for (const auto &memoryRegion : status().memoryRegion) {
             PLT_LOGI(TAG, "<Memory Region:%s> <Free (%%):%.1f> <Line>",
             memoryRegion.name.data(), memoryRegion.free);
@@ -425,30 +428,34 @@ class OperatingSystemAbstraction {
      * @brief Get the status of the operatings system as a const reference.
      * @returns The status of the operating system.
     */
-    const OperatingSystemTypes::Status &status() {
-        idlePercentage(_status.idle);
-        uptime(_status.upTime);
-        if (_status.memoryRegion.empty()) {
-            Bytes maxHeap;
-            maxHeapSize(maxHeap, {});
-            Bytes availableHeap;
-            availableHeapSize(availableHeap, {});
-            Percent free = 0;
-            if (0 != maxHeap) {
-                free = ((float)availableHeap / maxHeap) * 100.0f;
-            }
-            constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> memoryRegionName = {"Heap"};
-            OperatingSystemTypes::MemoryRegionInfo memoryRegion = {memoryRegionName, free};
-            _status.memoryRegion.push_back(memoryRegion);
-        }
-        else {
-            for (auto &memoryRegion : _status.memoryRegion) {
+    const OperatingSystemTypes::Status &status(bool updateStatus = false) {
+
+        if (updateStatus) {
+            getSystemTime(_status.systemTime);
+            idlePercentage(_status.idle);
+            uptime(_status.upTime);
+            if (_status.memoryRegion.empty()) {
                 Bytes maxHeap;
-                if (ErrorType::Success == maxHeapSize(maxHeap, memoryRegion.name)) {
-                    Bytes availableHeap;
-                    if (ErrorType::Success == availableHeapSize(availableHeap, memoryRegion.name)) {
-                        if (0 != maxHeap) {
-                            memoryRegion.free = ((float)availableHeap / maxHeap) * 100.0f;
+                maxHeapSize(maxHeap, {});
+                Bytes availableHeap;
+                availableHeapSize(availableHeap, {});
+                Percent free = 0;
+                if (0 != maxHeap) {
+                    free = ((float)availableHeap / maxHeap) * 100.0f;
+                }
+                constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> memoryRegionName = {"Heap"};
+                OperatingSystemTypes::MemoryRegionInfo memoryRegion = {memoryRegionName, free};
+                _status.memoryRegion.push_back(memoryRegion);
+            }
+            else {
+                for (auto &memoryRegion : _status.memoryRegion) {
+                    Bytes maxHeap;
+                    if (ErrorType::Success == maxHeapSize(maxHeap, memoryRegion.name)) {
+                        Bytes availableHeap;
+                        if (ErrorType::Success == availableHeapSize(availableHeap, memoryRegion.name)) {
+                            if (0 != maxHeap) {
+                                memoryRegion.free = ((float)availableHeap / maxHeap) * 100.0f;
+                            }
                         }
                     }
                 }
@@ -498,7 +505,8 @@ class OperatingSystemAbstraction {
         .threadCount = 0,
         .idle = -1,
         .upTime = 0,
-        .memoryRegion = {}
+        .memoryRegion = {},
+        .systemTime = 0
     };
 
 };
