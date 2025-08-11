@@ -206,22 +206,25 @@ class Uart : public UartAbstraction {
         if (error == ErrorType::Success) {
             error = toPosixDataBits(uartParams().driverConfig.dataBits, tty); 
 
-            error = toPosixParity(uartParams().driverConfig.parity, tty);
-            if (error == ErrorType::Success) {
+            if (ErrorType::Success == error) {
+                error = toPosixParity(uartParams().driverConfig.parity, tty);
 
-                error = toPosixStopBits(uartParams().driverConfig.stopBits, tty);
                 if (error == ErrorType::Success) {
+                    error = toPosixStopBits(uartParams().driverConfig.stopBits, tty);
 
-                    error = toPosixFlowControl(uartParams().driverConfig.flowControl, tty);
                     if (error == ErrorType::Success) {
-                        tty.c_cc[VMIN]  = 0;
-                        tty.c_cc[VTIME] = 5;
-                        tty.c_cflag |= (CLOCAL | CREAD);
+                        error = toPosixFlowControl(uartParams().driverConfig.flowControl, tty);
 
-                        if (tcsetattr(_fileDescriptor, TCSANOW, &tty) != 0) {
-                            close(_fileDescriptor);
-                            _fileDescriptor = -1;
-                            error = ErrorType::Failure;
+                        if (error == ErrorType::Success) {
+                            tty.c_cc[VMIN]  = 0;
+                            tty.c_cc[VTIME] = 5;
+                            tty.c_cflag |= (CLOCAL | CREAD);
+
+                            if (tcsetattr(_fileDescriptor, TCSANOW, &tty) != 0) {
+                                close(_fileDescriptor);
+                                _fileDescriptor = -1;
+                                error = ErrorType::Failure;
+                            }
                         }
                     }
                 }
