@@ -12,7 +12,7 @@ target_include_directories(OperatingSystem INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(OperatingSystem INTERFACE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
 
 target_link_libraries(tm4c123OperatingSystem PRIVATE abstractionLayer)
-target_link_libraries(tm4c123OperatingSystem PRIVATE OperatingSystem)
+target_link_libraries(tm4c123OperatingSystem PUBLIC OperatingSystem)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE tm4c123OperatingSystem)
 
 target_compile_options(tm4c123OperatingSystem PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
