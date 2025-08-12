@@ -12,7 +12,7 @@ class Nxppcf8506a final : public RtcAbstraction {
     ErrorType init() override;
     ErrorType deinit() override;
     ErrorType writeDate(const DateTime& dateTime) override;
-    ErrorType readDate(DateTime& dateTime) const override;
+    ErrorType readDate(DateTime& dateTime) override;
     ErrorType writeAlarm(const DateTime& dateTime) override;
     ErrorType readAlarm(DateTime& dateTime) override;
     ErrorType setHourMode(bool twentyFourHourMode) override;

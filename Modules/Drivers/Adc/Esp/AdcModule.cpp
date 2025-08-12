@@ -2,7 +2,7 @@
 #include "AdcModule.hpp"
 
 ErrorType Adc::init() {
-    assert(peripheralNumberConst() != PeripheralNumber::Unknown);
+    assert(params().peripheralNumber != PeripheralNumber::Unknown);
 
     const adc_oneshot_unit_init_cfg_t initConfig = {
         .unit_id = ADC_UNIT_1
@@ -17,11 +17,11 @@ ErrorType Adc::init() {
         ErrorType error = ErrorType::Failure;
         //The pins whose alternate functions support the ADC and have analog functionality are exposed in a per-design basis.
         //Consult your PCB schematics to determine which pins to connect to.
-        err = adc_oneshot_config_channel(adcHandle, toEspChannel(channelConst(), error), &config);
+        err = adc_oneshot_config_channel(adcHandle, toEspChannel(params().channel, error), &config);
         if (ESP_OK == err && ErrorType::Success == error) {
             const adc_cali_curve_fitting_config_t calibrationConfig = {
-                .unit_id = toEspAdcUnitNumber(peripheralNumberConst(), error),
-                .chan = toEspChannel(channelConst(), error),
+                .unit_id = toEspAdcUnitNumber(params().peripheralNumber, error),
+                .chan = toEspChannel(params().channel, error),
                 .atten = ADC_ATTEN_DB_12,
                 .bitwidth = ADC_BITWIDTH_DEFAULT
             };
@@ -49,7 +49,7 @@ ErrorType Adc::convert(Count &rawValue) {
     int adcRawValue;
     ErrorType error = ErrorType::Failure;
 
-    esp_err_t err = adc_oneshot_read(adcHandle, toEspChannel(channelConst(), error), &adcRawValue);
+    esp_err_t err = adc_oneshot_read(adcHandle, toEspChannel(params().channel, error), &adcRawValue);
 
     //Can the raw value be negative? Why is it an int?
     assert(adcRawValue >= 0);

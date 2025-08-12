@@ -39,6 +39,15 @@ namespace AdcTypes {
         Twelve,     ///< Channel 12
         Unknown     ///< Unknown channel
     };
+
+    /**
+     * @struct Parameters
+     * @brief Contains the parameters for the ADC.
+     */
+    struct Parameters {
+        AdcTypes::Channel channel = AdcTypes::Channel::Unknown; ///< The channel of the ADC
+        PeripheralNumber peripheralNumber = PeripheralNumber::Unknown; ///< The peripheral number of the ADC
+    };
 }
 
 /**
@@ -54,6 +63,17 @@ class AdcAbstraction {
 
     /// @brief Tag for logging
     static constexpr char TAG[] = "AdcAbstraction";
+
+    /**
+     * @brief Configure the ADC.
+     * @param params The parameters to configure the ADC with.
+     * @returns ErrorType::Success if the ADC was configured
+     * @returns ErrorType::Failure if the ADC was not configured
+     */
+    virtual ErrorType configure(const AdcTypes::Parameters &params) {
+        _params = params;
+        return ErrorType::Success;
+    }
 
     /**
      * @brief Initialize the ADC
@@ -86,20 +106,11 @@ class AdcAbstraction {
      */
     virtual ErrorType rawToVolts(const Count rawValue, Volts &volts) = 0;
 
-    /// @brief Get the channel as a const reference
-    const AdcTypes::Channel &channelConst() const { return _channel; }
-    /// @brief Get the channel as a mutable reference
-    AdcTypes::Channel &channel() { return _channel; }
-    /// @brief Get the peripheral number as a const reference
-    const PeripheralNumber &peripheralNumberConst() const { return _peripheralNumber; }
-    /// @brief Get the peripheral number as a mutable reference
-    PeripheralNumber &peripheralNumber() { return _peripheralNumber; }
+    const AdcTypes::Parameters &params() const { return _params; }
 
-    protected:
-    /// @brief The peripheral number
-    PeripheralNumber _peripheralNumber = PeripheralNumber::Unknown;
-    /// @brief The channel
-    AdcTypes::Channel _channel = AdcTypes::Channel::Unknown;
+    private:
+    /// @brief The parameters for the ADC
+    AdcTypes::Parameters _params;
 };
 
 #endif //__ADC_ABSTRACTION_HPP__

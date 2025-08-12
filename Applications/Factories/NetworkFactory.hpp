@@ -9,11 +9,8 @@
 #define __NETWORK_FACTORY_HPP__
 
 //AbstractionLayer
-#include "Types.hpp"
-#include "Error.hpp"
 #include "WifiModule.hpp"
 #include "CellularModule.hpp"
-#include "Log.hpp"
 //C++
 #include <variant>
 #include <optional>
@@ -38,12 +35,13 @@ namespace NetworkFactory {
 
     /**
      * @brief Creates a network interface for the type selected.
-     * @details The output network is passed by referecen as a parameter because the atomics in EventQueue delete
+     * @details The output network is passed by reference as a parameter because the atomics in EventQueue delete
      *          the move assignment.
      * @param[in] technology The technology to use for the network interface.
      * @sa NetworkTypes::Technology
      * @param[out] network The network that is output by the factory
-     * @returns Pointer to a NetworkAbstraction that contains the network of the type selected.
+     * @returns ErrorType::Success if the network was created successfully
+     * @returns ErrorType::NotSupported if the technology is not supported
      */
     inline ErrorType Factory(NetworkTypes::Technology technology, std::optional<NetworkFactoryTypes::NetworkFactoryVariant> &network) {
         ErrorType error = ErrorType::Success;

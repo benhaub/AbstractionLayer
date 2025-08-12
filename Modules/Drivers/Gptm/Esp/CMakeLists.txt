@@ -14,6 +14,7 @@ OBJECT
 
 target_include_directories(Gptm INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(Gptm INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
+target_include_directories(__idf_main PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(EspGptm PRIVATE abstractionLayer)
 target_link_libraries(EspGptm PRIVATE Gptm)

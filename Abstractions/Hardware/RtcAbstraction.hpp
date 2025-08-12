@@ -53,7 +53,7 @@ class RtcAbstraction {
      * @returns ErrorType::Success if the date and time was read successfully.
      * @returns ErrorType::Failure otherwise.
      */
-    virtual ErrorType readDate(DateTime& dateTime) const = 0;
+    virtual ErrorType readDate(DateTime& dateTime) = 0;
     /**
      * @brief Set the alarm
      * @param[in] dateTime The date and time to set the alarm to.

@@ -12,7 +12,7 @@ ErrorType Rtc::writeDate(const DateTime& dateTime) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Rtc::readDate(DateTime& dateTime) const {
+ErrorType Rtc::readDate(DateTime& dateTime) {
     return ErrorType::NotImplemented;
 }
 

@@ -11,6 +11,7 @@ OBJECT
 target_include_directories(Adc INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(Cc32xxAdc PRIVATE abstractionLayer)
+target_link_libraries(Cc32xxAdc PRIVATE Adc)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE Cc32xxAdc)
 
 target_include_directories(Cc32xxAdc PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)

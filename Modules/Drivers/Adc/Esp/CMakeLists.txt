@@ -10,6 +10,7 @@ OBJECT
 
 target_include_directories(Adc INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(Adc INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
+target_include_directories(__idf_main PUBLIC $<TARGET_PROPERTY:Adc,INTERFACE_INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspAdc PRIVATE abstractionLayer)
 target_link_libraries(EspAdc PRIVATE Adc)

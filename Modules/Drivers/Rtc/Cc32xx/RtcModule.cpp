@@ -47,7 +47,7 @@ ErrorType Rtc::writeDate(const DateTime& dateTime) {
     return fromPlatformError(result);
 }
 
-ErrorType Rtc::readDate(DateTime& dateTime) const {
+ErrorType Rtc::readDate(DateTime& dateTime) {
     SlDateTime_t slDateTime;
     _u8 configOption;
     _u16 configLength;

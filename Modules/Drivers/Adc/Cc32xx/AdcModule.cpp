@@ -1,7 +1,7 @@
 #include "AdcModule.hpp"
 
 ErrorType Adc::init() {
-    if (PeripheralNumber::Unknown == peripheralNumber()) {
+    if (PeripheralNumber::Unknown == params().peripheralNumber) {
         return ErrorType::PrerequisitesNotMet;
     }
 
@@ -11,7 +11,7 @@ ErrorType Adc::init() {
     ADC_Params_init(&adcParameters);
 
     ErrorType error;
-    _handle = ADC_open(toCc32xxAdcPeripheralNumber(peripheralNumber(), error), &adcParameters);
+    _handle = ADC_open(toCc32xxAdcPeripheralNumber(params().peripheralNumber, error), &adcParameters);
     if (nullptr != _handle) {
         if (ErrorType::Success == error) {
             return ErrorType::Success;

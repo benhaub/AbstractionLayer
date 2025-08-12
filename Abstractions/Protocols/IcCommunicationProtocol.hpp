@@ -41,7 +41,7 @@ namespace IcCommunicationProtocolTypes {
 
     /**
      * @struct AdditionalCommunicationParameters
-     * @brief Additional parameters for communication with an IC deviceA
+     * @brief Additional parameters for communication with an IC device
      * @details Fill in if known
      */
     struct AdditionalCommunicationParameters {

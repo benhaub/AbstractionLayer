@@ -8,9 +8,10 @@ OBJECT
   I2cModule.cpp
 )
 
-target_include_directories(NoneI2c INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(I2c INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(NoneI2c PRIVATE abstractionLayer)
+target_link_libraries(NoneI2c PRIVATE I2c)
 target_link_libraries(NoneI2c PRIVATE Event)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE NoneI2c)
 
