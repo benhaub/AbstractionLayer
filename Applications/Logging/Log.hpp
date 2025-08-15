@@ -65,7 +65,7 @@
  * @brief Print a formatted log message to the terminal.
  * @details PLT is short for Platform
  * @param[in] type The type of the log
- * @sa Fnd::LogType
+ * @sa LogType
  * @param[in] tag The tag of the log. Can be any string you like.
  * @param[in] format The format of the log. Format is a printf-style format string
  * @param[in] ... The arguments to the format string
