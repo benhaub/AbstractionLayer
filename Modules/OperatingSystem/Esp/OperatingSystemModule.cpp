@@ -1,4 +1,4 @@
-//Modules
+//AbstractionLayer
 #include "OperatingSystemModule.hpp"
 #include "Math.hpp"
 #include "ProcessorModule.hpp"
@@ -11,6 +11,7 @@
 #include "esp_pthread.h"
 #include "esp_app_desc.h"
 #include "esp_heap_caps.h"
+#include "esp_timer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,21 +41,20 @@ ErrorType OperatingSystem::delay(const Milliseconds delay) {
 }
 
 ErrorType OperatingSystem::delay(const Microseconds delay) {
-    if (configTICK_RATE_HZ <= 1000) {
-        return ErrorType::NotSupported;
+    ErrorType error = ErrorType::Failure;
+
+    if (delay < 1000) {
+        Microseconds expirationTime = Microseconds(esp_timer_get_time()) + delay;
+
+        while (Microseconds(esp_timer_get_time()) <= expirationTime);
+
+        error = ErrorType::Success;
+    }
+    else {
+        error = this->delay(Milliseconds(delay / 1000));
     }
 
-    const TickType_t now = xTaskGetTickCount();
-    const TickType_t oneMillisecond = pdMS_TO_TICKS(1);
-    const Microseconds oneMicrosecond = oneMillisecond * 1000;
-
-    Microseconds remainingDelay = delay;
-
-    if (oneMicrosecond > 0) {
-        while ((differenceBetween(now, xTaskGetTickCount()) / oneMicrosecond) < remainingDelay);
-    }
-
-    return ErrorType::Success;
+    return error;
 }
 
 
