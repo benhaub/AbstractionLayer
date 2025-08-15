@@ -23,6 +23,7 @@
  * @return The new average
 */
 template<typename T>
+requires std::is_arithmetic_v<T>
 constexpr inline T runningAverage(const T &currentAverage, const T &newValue, const Count &numValues) {
     if (numValues > 2) {
         return (currentAverage * (numValues - 1) + newValue) / numValues;
@@ -42,6 +43,7 @@ constexpr inline T runningAverage(const T &currentAverage, const T &newValue, co
  * @return The absolute difference between the two values. If the expected larger value has overflowed then the overflowed value is added to the difference.
  */
 template<typename T>
+requires std::is_unsigned_v<T>
 constexpr inline T differenceBetween(const T &expectedLargerValue, const T &expectedSmallerValue) {
     const T maxValue = std::numeric_limits<T>::max();
 
@@ -63,6 +65,7 @@ constexpr inline T differenceBetween(const T &expectedLargerValue, const T &expe
  * @return The absolute difference between the two values. If the expected larger value has overflowed then the overflowed value is added to the difference.
  */
 template<typename T>
+requires std::is_unsigned_v<T>
 constexpr inline T differenceBetween(const T &expectedLargerValue, const T &expectedSmallerValue, const T &maxValue) {
     if (expectedSmallerValue > expectedLargerValue) {
         //+1 because wrapping to zero counts as an increment (i.e. maxValue + 1 = 0)
@@ -82,6 +85,7 @@ constexpr inline T differenceBetween(const T &expectedLargerValue, const T &expe
  * @returns False otherwise
  */
 template<typename T>
+requires std::is_signed_v<T>
 constexpr inline bool withinError(const T &value1, const T &value2, const T &error) {
     return std::abs(value1 - value2) <= error;
 }
@@ -92,6 +96,7 @@ constexpr inline bool withinError(const T &value1, const T &value2, const T &err
  * @returns The number of bits
  */
 template<typename T>
+requires std::is_arithmetic_v<T>
 constexpr inline T ToBits(const T &numberOfBytes) {
     return numberOfBytes * 8;
 }
