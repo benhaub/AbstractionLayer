@@ -53,9 +53,9 @@ class Adc : public AdcAbstraction {
     adc_unit_t toEspAdcUnitNumber(const PeripheralNumber peripheralNumber, ErrorType &error) {
         error = ErrorType::Success;
         switch (peripheralNumber) {
-            case PeripheralNumber::Zero:
-                return ADC_UNIT_1;
             case PeripheralNumber::One:
+                return ADC_UNIT_1;
+            case PeripheralNumber::Two:
                 return ADC_UNIT_2;
             default:
                 error = ErrorType::InvalidParameter;
