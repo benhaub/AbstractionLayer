@@ -103,6 +103,87 @@ class HBridgeAbstraction {
      * @returns ErrorType::Failure otherwise
      */
     virtual ErrorType brake() = 0;
+    /**
+     * @brief Set a new duty cycle for the PWM signals
+     * @param dutyCycle The new duty cycle for the PWM signals
+     * @returns ErrorType::Success if the duty cycle was set successfully
+     * @returns ErrorType::Failure otherwise
+     * @post The original parameters that were configured before init was called will be updated with the new duty cycle.
+     */
+    virtual ErrorType changeDutyCycle(const Percent dutyCycle) {
+        ErrorType error = ErrorType::Failure;
+
+        if (isDrivenByGptmPwm()) {
+            for (auto &pwm : _gptPwms) {
+                error = pwm.setDutyCycle(dutyCycle);
+                if (ErrorType::Success != error) {
+                    break;
+                }
+            }
+        }
+        else if (isDrivenByStandalonePwm()) {
+            for (auto &pwm : _pwms) {
+                error = pwm.setDutyCycle(dutyCycle);
+                if (ErrorType::Success != error) {
+                    break;
+                }
+            }
+        }
+        else if (isDrivenByGpio()) {
+            // GPIOs do not have a duty cycle
+            error = ErrorType::NotSupported;
+        }
+        else {
+            error = ErrorType::InvalidParameter;
+        }
+
+        if (ErrorType::Success == error) {
+            _params.pwmDutyCycle = dutyCycle;
+        }
+
+        return error;
+    }
+
+    /**
+     * @brief Set a new period for the PWM signals
+     * @param period The new period for the PWM signals
+     * @returns ErrorType::Success if the period was set successfully
+     * @returns ErrorType::Failure otherwise
+     * @post The original parameters that were configured before init was called will be updated with the new period.
+     */
+    virtual ErrorType changePeriod(const Microseconds period) {
+        ErrorType error = ErrorType::Failure;
+
+        if (isDrivenByGptmPwm()) {
+            for (auto &pwm : _gptPwms) {
+                error = pwm.setPeriod(period);
+
+                if (ErrorType::Success != error) {
+                    break;
+                }
+            }
+        }
+        else if (isDrivenByStandalonePwm()) {
+            for (auto &pwm : _pwms) {
+                error = pwm.setPeriod(period);
+                if (ErrorType::Success != error) {
+                    break;
+                }
+            }
+        }
+        else if (isDrivenByGpio()) {
+            error = ErrorType::NotSupported;
+        }
+        else {
+            error = ErrorType::InvalidParameter;
+        }
+
+        if (ErrorType::Success == error) {
+            _params.pwmPeriod = period;
+        }
+
+        return error;
+    }
 
     /// @brief true if driven by GptmPwm
     bool isDrivenByGptmPwm() const { return _params.pwmType == HBridgeTypes::PwmType::Gptm; }

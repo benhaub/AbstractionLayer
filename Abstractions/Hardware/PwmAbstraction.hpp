@@ -78,12 +78,8 @@ class PwmAbstraction {
      *       in the driver config so setting the pin here may not always be required.
      */
     PinNumber &outputPin() { return _outputPin; }
-    /// @brief Get the duty cycle as a mutable reference
-    Percent &dutyCycle() { return _dutyCycle; }
     /// @brief Get the duty cycle as a const reference
     const Percent &dutyCycleConst() const { return _dutyCycle; }
-    /// @brief Get the period as a mutable reference
-    Microseconds &period() { return _period; }
     /// @brief Get the period as a const reference
     const Microseconds &periodConst() const { return _period; }
     /// @brief Get the peripheral number as a mutable reference
