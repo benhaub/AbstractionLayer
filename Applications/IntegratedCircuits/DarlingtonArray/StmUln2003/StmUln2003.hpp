@@ -1,12 +1,21 @@
+#ifndef __STM_ULN_2003_HPP__
+#define __STM_ULN_2003_HPP__
+
 #include "DarlingtonArrayAbstraction.hpp"
 #include "GptmPwmAbstraction.hpp"
 #include "PwmAbstraction.hpp"
 #include "GpioAbstraction.hpp"
 
-template <Count _numberOfPins>
-class DarlingtonArray final : public DarlingtonArrayAbstraction<_numberOfPins> {
+namespace StmUln2003Types {
+    constexpr Count InputPins = 8;
+}
+
+class StmUln2003 final : public DarlingtonArrayAbstraction<StmUln2003Types::InputPins> {
+
     public:
-    DarlingtonArray() : DarlingtonArrayAbstraction<_numberOfPins>() {}
+    StmUln2003() : DarlingtonArrayAbstraction<StmUln2003Types::InputPins>() {}
+
+    ErrorType init() override;
 
     /**
      * @brief Drive the input pin specified on the darlington array to the specified state.
@@ -17,22 +26,7 @@ class DarlingtonArray final : public DarlingtonArrayAbstraction<_numberOfPins> {
      * @returns ErrorType::Success if the pin was driven
      * @returns ErrorType::Failure otherwise
      */
-    ErrorType togglePin(Count pinNumber, bool on) override {
-        if (pinNumber >= _numberOfPins) {
-            return ErrorType::InvalidParameter;
-        }
-
-        if (this->isDrivenByGptmPwm()) {
-            return on ? this->_gptPwms[pinNumber]->start() : this->_gptPwms[pinNumber]->stop();
-        }
-        else if (this->isDrivenByStandalonePwm()) {
-            return on ? this->_pwms[pinNumber]->start() : this->_pwms[pinNumber]->stop();
-        }
-        else if (this->isDrivenByGpio()) {
-            return this->_gpios[pinNumber]->pinWrite(on ? GpioTypes::LogicLevel::High : GpioTypes::LogicLevel::Low);
-        }
-        else {
-            return ErrorType::NotSupported;
-        }
-    }
+    ErrorType togglePin(Count pinNumber, bool on) override;
 };
+
+#endif //__STM_ULN_2003_HPP__

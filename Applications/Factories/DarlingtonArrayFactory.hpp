@@ -33,6 +33,16 @@ namespace DarlingtonArrayFactoryTypes {
         Unknown = 0,    ///< Unknown H-Bridge part number
         StmUln2003 = 1  ///< ST Microelectronics Transistor Array ULN2003
     };
+
+    constexpr Count InputPins(const PartNumber partNumber) {
+        switch (partNumber) {
+            case PartNumber::StmUln2003:
+                return StmUln2003Types::InputPins;
+            default:
+                static_assert("Part number is not supported");
+                return 0;
+        }
+    }
 }
 
 /**
@@ -48,12 +58,12 @@ namespace DarlingtonArrayFactory {
      * @returns ErrorType::Success if the darlington array was created successfully.
      * @returns ErrorType::NotSupported if the part number is not recognized.
      */
-    inline ErrorType Factory(const DarlingtonArrayFactoryTypes::PartNumber partNumber, std::optional<DarlingtonArrayFactoryTypes::DarlingtonArrayFactoryVariant> &darlingtonArray) {
+    inline constexpr ErrorType Factory(const DarlingtonArrayFactoryTypes::PartNumber partNumber, std::optional<DarlingtonArrayFactoryTypes::DarlingtonArrayFactoryVariant> &darlingtonArray) {
         ErrorType error = ErrorType::Success;
 
         switch (partNumber) {
             case DarlingtonArrayFactoryTypes::PartNumber::StmUln2003:
-                hBridge.emplace(std::in_place_type_t<StmUln2003>());
+                darlingtonArray.emplace(std::in_place_type_t<StmUln2003>());
                 break;
             default: [[unlikely]]
                 error =  ErrorType::NotSupported;
