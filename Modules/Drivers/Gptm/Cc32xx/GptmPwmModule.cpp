@@ -3,7 +3,8 @@
 #include <cassert>
 
 ErrorType GptmPwmModule::init() {
-    assert(PeripheralNumber::Unknown != peripheralNumber());
+    assert(PeripheralNumber::Unknown != peripheralNumber() && "Invalid peripheral number");
+    assert(-1 != outputPinConst() && "Invalid pin number");
 
     PWM_init();
 

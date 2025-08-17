@@ -11,11 +11,10 @@ OBJECT
 target_include_directories(Processor INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(Cc32xxProcessor PRIVATE ${CMAKE_CURRENT_LIST_DIR}/CMSIS_6/CMSIS/Core/Include)
 target_include_directories(Cc32xxProcessor PRIVATE ${CMAKE_CURRENT_LIST_DIR}/CMSIS_6/CMSIS/Core/Include/m-profile)
-
-target_link_libraries(Cc32xxProcessor PRIVATE abstractionLayer)
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE Cc32xxProcessor)
-
 target_include_directories(Cc32xxProcessor PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
+
+target_link_libraries(Cc32xxProcessor PUBLIC abstractionLayer)
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE Cc32xxProcessor)
 
 target_compile_options(Cc32xxProcessor PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
 target_compile_definitions(Cc32xxProcessor PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)

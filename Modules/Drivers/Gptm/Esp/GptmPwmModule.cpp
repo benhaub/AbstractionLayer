@@ -12,6 +12,7 @@ namespace {
 
 ErrorType GptmPwmModule::init() {
     assert(PeripheralNumber::Unknown != peripheralNumber());
+    assert(-1 != outputPinConst());
 
     if (_GroupZeroActiveTimers < _MaxTimersPerGroup) {
         _groupId = 0;
