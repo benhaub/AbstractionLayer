@@ -41,16 +41,14 @@
 * @endcode
 */ 
 template <class T, typename... Args> class Global {
+
     public:
     /**
-     * @brief Constructor. Creates your class as a global.
-     * @post If the class did not already exist, then it will be created.
+     * @brief Creates your class as a global.
+     * @details It's optional to call this. It's here in case initialization of the object is preferred before it's first used.
     */
-    static void Init(Args... args) {
-        if (nullptr == self().get()) {
-            self() = std::make_unique<T>(args...);
-            assert(nullptr != self().get());
-        }
+    static constexpr void Init(Args... args) {
+        Instance();
     }
 
     /**
@@ -59,19 +57,8 @@ template <class T, typename... Args> class Global {
      * @pre You must have called Init first.
      * @sa Init
     */
-    static T &Instance() {
-        assert(nullptr != self().get());
-        return *(self().get());
-    }
-
-    /**
-     * @brief Check if the global has been initialized.
-     * @sa Init
-     * @returns true if the global has been initialized.
-     * @returns false otherwise.
-     */
-    static bool IsInitialized() {
-        return nullptr != self().get();
+    static constexpr T &Instance() {
+        return globallyAccessibleObject();
     }
 
     Global(Global const&) = delete;
@@ -81,10 +68,9 @@ template <class T, typename... Args> class Global {
     Global() = default;
 
     private:
-    //Returns a reference of the unique pointer so that ownership is not transferred.
-    static std::unique_ptr<T> &self() {
-        static std::unique_ptr<T> _self;
-        return _self;
+    static T &globallyAccessibleObject(Args... args) {
+        static T _globallyAccessibleObject = T(args...);
+        return _globallyAccessibleObject;
     }
 };
 
