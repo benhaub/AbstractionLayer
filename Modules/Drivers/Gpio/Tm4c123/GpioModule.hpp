@@ -3,8 +3,6 @@
 
 //AbstractionLayer
 #include "GpioAbstraction.hpp"
-//C++
-#include <cstdint>
 
 class Gpio final : public GpioAbstraction {
 

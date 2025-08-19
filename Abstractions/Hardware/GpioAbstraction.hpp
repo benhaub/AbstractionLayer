@@ -10,8 +10,8 @@
 //AbstractionLayer
 #include "Error.hpp"
 #include "Types.hpp"
-//Standard library
-#include <stdint.h>
+//C++
+#include <cstdint>
 
 /**
  * @namespace GpioTypes

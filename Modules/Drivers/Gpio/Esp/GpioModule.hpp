@@ -3,8 +3,6 @@
 
 //AbstractionLayer
 #include "GpioAbstraction.hpp"
-//Standard library
-#include <stdint.h>
 //ESP
 #include "hal/gpio_types.h"
 #include "driver/gpio.h"
