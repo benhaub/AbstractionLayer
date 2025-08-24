@@ -37,7 +37,7 @@ namespace StaticString {
         /// @brief Implementation defined.
         virtual size_t length() const { return size(); }
         /// @brief Implementation defined.
-        virtual char* data() = 0;
+        virtual char *data() = 0;
         /// @brief Implementation defined.
         virtual StandardStringInterface& append(const char *s) = 0;
         /// @brief Implementation defined.
@@ -50,6 +50,14 @@ namespace StaticString {
         virtual StandardStringInterface& assign(std::string_view) = 0;
         /// @brief Implementation defined.
         virtual StandardStringInterface& assign(const char *s, size_t startPosition, size_t length = 0) = 0;
+        /// @brief Implementation defined.
+        virtual void clear() = 0;
+        /// @brief Implementation defined.
+        virtual bool empty() const = 0;
+        /// @brief Implementation defined.
+        virtual void resize(size_t n) = 0;
+        /// @brief Implementation defined.
+        virtual char &back() = 0;
     };
 
     /**
@@ -65,7 +73,7 @@ namespace StaticString {
          * @brief Constructor.
          * @param s The string to initialize the static string to.
          */
-        Data(const char* s) : _str(s) {}
+        constexpr Data(const char* s) : _str(s) {}
 
         /// @brief The underlying static string.
         boost::static_string<_n> _str;
@@ -98,6 +106,10 @@ namespace StaticString {
 
             return *this;
         }
+        void clear() override { _str.clear(); }
+        bool empty() const override { return _str.empty(); }
+        void resize(size_t n) override { _str.resize(n); }
+        char &back() override { return _str.back(); }
     };
 
     /**
@@ -128,7 +140,7 @@ namespace StaticString {
          */
         template<typename T>
         requires std::is_base_of_v<Interface, T>
-        void set(const T& value) {
+        constexpr void set(const T& value) {
             _data = value;
             T *dataPtr = std::any_cast<T>(&_data);
             _dataPtr = static_cast<Interface *>(dataPtr);
