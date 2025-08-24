@@ -247,7 +247,7 @@ class FileSystemAbstraction {
     virtual ErrorType size(FileSystemTypes::File &file) = 0;
 
     /// @brief Get the mount prefix as a constant reference
-    const StaticString::Container &mountPrefix() const { return _mountPrefix; }
+    std::string_view mountPrefix() const { return _mountPrefix; }
     /// @brief Get the name of the file system as a constant reference
     const char &name() const { return _status.partitionName[0]; }
     /// @brief Get the status of the file system as a constant reference
@@ -322,7 +322,7 @@ class FileSystemAbstraction {
 
     protected:
     /// @brief A path that is prepened to all file names for storage
-    StaticString::Container _mountPrefix;
+    std::string _mountPrefix;
     /// @brief The implementation of the file system
     FileSystemTypes::Implementation _implementation;
     /// @brief The status of the file system.

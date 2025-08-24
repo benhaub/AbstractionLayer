@@ -36,7 +36,8 @@ ErrorType Storage::init() {
                 error = ErrorType::InvalidParameter;
         }
 
-        _rootPrefix.set(StaticString::Data<sizeof(APP_HOME_DIRECTORY)>(APP_HOME_DIRECTORY));
+        _rootPrefix.set(StaticString::Data<sizeof(APP_HOME_DIRECTORY "/") + mediumString.size()>(APP_HOME_DIRECTORY "/"));
+        _rootPrefix->append(mediumString.data());
         mkdir(_rootPrefix->c_str(), S_IRWXU); 
 
         _status.isInitialized = true;
