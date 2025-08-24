@@ -10,6 +10,7 @@
 //AbstractionLayer
 #include "EventQueue.hpp"
 #include "Log.hpp"
+#include "StaticString.hpp"
 
 /**
  * @namespace StorageTypes
@@ -83,7 +84,7 @@ class StorageAbstraction : public EventQueue {
     /// @brief Get the storage medium
     StorageTypes::Medium medium() const { return _medium; }
     /// @brief The prefix of storage where filesystems will be mounted as a constant reference.
-    const std::string &rootPrefix() const { return _rootPrefix; }
+    const StaticString::Container &rootPrefix() const { return _rootPrefix; }
 
     private:
     /// @brief The storage medium.
@@ -93,7 +94,7 @@ class StorageAbstraction : public EventQueue {
     /// @brief The status of the storage.
     StorageTypes::Status _status = { .isInitialized = false };
     /// @brief Typically for desktop systems. Specifies the location which to emulate the storage.
-    std::string _rootPrefix;
+    StaticString::Container _rootPrefix;
 };
 
 #endif //__STORAGE_ABSTRACTION_HPP__

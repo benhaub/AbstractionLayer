@@ -10,9 +10,14 @@
 ErrorType FileSystem::mount() {
     const bool fileSystemHasNotBeenMounted = !_status.mounted;
     if (fileSystemHasNotBeenMounted) {
-        _mountPrefix.assign(_storage.rootPrefix() + "/");
-        _mountPrefix.append(std::string(_status.partitionName.data(), strlen(_status.partitionName.data())));
-        mkdir(_mountPrefix.c_str(), S_IRWXU); 
+        _mountPrefix->assign(_storage.rootPrefix()->c_str());
+
+        if (_mountPrefix->back() != '/') {
+            _mountPrefix->append("/");
+        }
+
+        _mountPrefix->append(std::string(_status.partitionName.data(), strlen(_status.partitionName.data())));
+        mkdir(_mountPrefix->c_str(), S_IRWXU); 
         _status.mounted = true;
     }
 
@@ -29,7 +34,7 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto maxStorageQueryCallback = [&]() -> ErrorType {
-        std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefix());
+        std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefix()->c_str());
         size = spaceInfo.capacity;
         maxStorageQueryDone = true;
         return callbackError;
@@ -86,7 +91,7 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
             if (!isOpen(file)) {
                 std::ios_base::openmode openMode = toStdOpenMode(mode, callbackError);
                 if (ErrorType::Success == callbackError) {
-                    std::string absolutePath(mountPrefix());
+                    std::string absolutePath(mountPrefix()->c_str());
                     absolutePath.append(path);
                     openFiles[path] = std::fstream();
                     openFiles[path].open(absolutePath, openMode);
@@ -172,7 +177,7 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
 
     auto removeCallback = [&]() -> ErrorType {
         if (ErrorType::Success == (callbackError = close(file))) {
-            std::string absolutePath(mountPrefix());
+            std::string absolutePath(mountPrefix()->c_str());
             absolutePath.append(file.path->c_str());
             if (0 == std::remove(absolutePath.c_str())) {
                 callbackError = ErrorType::Success;

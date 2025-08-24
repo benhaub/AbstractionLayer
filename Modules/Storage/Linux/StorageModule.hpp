@@ -16,9 +16,6 @@ class Storage final : public StorageAbstraction, public Global<Storage, StorageT
     ErrorType deinit() override;
 
     ErrorType mainLoop() override;
-
-    private:
-    ErrorType getEnvironment(std::string variable, ErrorType &error, std::array<char, 32> &expandedVariable);
 };
 
 #endif //__STORAGE_MODULE_HPP__
