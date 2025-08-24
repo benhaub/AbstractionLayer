@@ -1,7 +1,7 @@
 /***************************************************************************//**
-* @author   Ben Haubrich
-* @file     IcCommunicationProtocol.hpp
-* @details  \b Synopsis: \n Interface for integrated circuit communication
+* @author  Ben Haubrich
+* @file    IcCommunicationProtocol.hpp
+* @details Interface for integrated circuit communication
 * @ingroup Abstractions
 *******************************************************************************/
 #ifndef __IC_COMMUNICATION_PROTOCOL_HPP__
@@ -55,6 +55,7 @@ namespace IcCommunicationProtocolTypes {
 /**
  * @class IcCommunicationProtocol
  * @brief Interface for integrated circuit communication
+ * @details Inherits from EventQueue so that sending and receiving operations can be serialized and made thread-safe.
 */
 class IcCommunicationProtocol : public EventQueue {
 
@@ -88,26 +89,46 @@ class IcCommunicationProtocol : public EventQueue {
     virtual ErrorType deinit() = 0;
     /**
      * @brief transmit data
-     * @sa Fnd::CommunicationProtocol::sendBlocking
+     * @param[in] data The data to transmit
+     * @param[in] timeout The maximum time to wait for the transmission to complete
+     * @param[in] params Additional parameters for the transmission
+     * @returns ErrorType::Success if the data was transmitted successfully
+     * @returns ErrorType::Failure otherwise
     */
     virtual ErrorType txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) = 0;
     /**
      * @brief transmit data
-     * @sa Fnd::CommunicationProtocol::sendNonBlocking
+     * @param[in] data The data to transmit
+     * @param[in] timeout The maximum time to wait for the transmission to complete
+     * @param[in] params Additional parameters for the transmission
+     * @param[in] callback The callback to invoke when the transmission is complete.
     */
     virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
     /**
      * @brief receive data
-     * @sa Fnd::CommunicationProtocol::receiveBlocking
+     * @param[out] buffer The buffer to receive data into
+     * @param[in] timeout The maximum time to wait for the reception to complete
+     * @param[in] params Additional parameters for the reception
+     * @returns ErrorType::Success if the data was received successfully
+     * @returns ErrorType::Failure otherwise
+     * @post The buffer is not modfied in any way unless data is received.
     */
     virtual ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) = 0;
     /**
      * @brief receive data
-     * @sa Fnd::CommunicationProtocol::receiveNonBlocking
+     * @param[out] buffer The buffer to receive data into
+     * @param[in] timeout The maximum time to wait for the reception to complete
+     * @param[in] params Additional parameters for the reception
+     * @param[in] callback The callback to invoke when the reception is complete.
+     * @returns ErrorType::Success if the data was received successfully
+     * @returns ErrorType::Failure otherwise
+     * @post The buffer is not modfied in any way unless data is received.
     */
     virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) = 0;
     /**
      * @brief flush the receive buffer
+     * @returns ErrorType::Success if the buffer was flushed successfully
+     * @returns ErrorType::Failure otherwise
     */
     virtual ErrorType flushRxBuffer() = 0;
 };

@@ -233,6 +233,7 @@ class NetworkAbstraction : public EventQueue {
      * @param[in] timeout The timeout in milliseconds to wait for the transmission to complete
      * @returns ErrorType::Success if the frame was successfully received
      * @returns ErrorType::Failure if the frame was not received
+     * @post The frameBuffer is not modified in any way unless data is received.
     */
     virtual ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) = 0;
     /**
