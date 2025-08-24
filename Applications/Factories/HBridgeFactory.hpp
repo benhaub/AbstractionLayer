@@ -22,9 +22,15 @@ namespace HBridgeFactoryTypes {
 
     ///@brief The tag used for logging
     static constexpr char Tag[] = "HBridgeFactory";
-
+    /**
+     * @typedef HBridgeFactoryVariant
+     * @brief The variant type that can hold any H-Bridge type created by the factory
+     */
     using HBridgeFactoryVariant = std::variant<TiDrv8872>;
-
+    /**
+     * @enum PartNumber
+     * @brief The part number of the H-Bridge
+     */
     enum class PartNumber : uint8_t {
         Unknown = 0,   ///< Unknown H-Bridge part number
         TiDrv8872 = 1  ///< Texas Instruments DRV8872
@@ -39,8 +45,8 @@ namespace HBridgeFactory {
 
     /**
      * @brief Creates an H-Bridge for the type selected.
-     * @param[in] technology The part number of the H-Bridge to create.
-     * @param[out] hbridge The H-Bridge that is output by the factory
+     * @param[in] partNumber The part number of the H-Bridge to create.
+     * @param[out] hBridge The H-Bridge that is output by the factory
      * @returns ErrorType::Success if the H-Bridge was created successfully.
      * @returns ErrorType::NotSupported if the part number is not recognized.
      */

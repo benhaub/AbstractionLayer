@@ -27,6 +27,7 @@ class HttpServerAbstraction {
     /// @brief Tag for logging
     static constexpr char TAG[] = "HttpServer";
 
+    /// @brief print the server status.
     void printStatus() {
         _ipServer->printStatus();
     }

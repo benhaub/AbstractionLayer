@@ -150,6 +150,7 @@ class UartAbstraction : public IcCommunicationProtocol{
         return ErrorType::Success;
     }
 
+    /// @brief Get the UART parameters as a constant reference.
     const UartTypes::UartParams &uartParams() const { return _uartParams; }
 
     private:

@@ -120,6 +120,7 @@ class I2cAbstraction : public IcCommunicationProtocol {
         return ErrorType::NotImplemented;
     }
 
+    /// @brief Get the I2C parameters as a constant reference.
     const I2cTypes::I2cParams &i2cParams() const { return _i2cParams; }
 
     private:

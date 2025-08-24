@@ -26,6 +26,7 @@ class HttpClientAbstraction {
     /// @brief Tag for logging
     static constexpr char TAG[] = "HttpClient";
 
+    /// @brief print the client status.
     void printStatus() {
         _ipClient->printStatus();
     }
@@ -38,7 +39,6 @@ class HttpClientAbstraction {
      * @sa IpSettings::Protocol
      * @param[in] version The version to use
      * @sa IpTypes::Version
-     * @param[out] socket The socket that was created
      * @param[in] timeout The amount of time to wait to connect to the host
      * @post The caller is blocked until the connection is made or the timeout is reached. The connection can still be made after the timeout is reached.
      * @returns Fnd::ErrorType::Success on success
@@ -65,7 +65,7 @@ class HttpClientAbstraction {
     /**
      * @brief Receive a response
      * @pre The message body of the response must have a non-zero size in order to receive data.
-     * @param[in] request The response to receive
+     * @param[in] response The response to receive
      * @param[in] timeout The timeout
      * @returns ErrorType::Success if the request could be received
      * @returns ErrorType::Timeout if the receive could not be completed within the given timeout
@@ -77,7 +77,7 @@ class HttpClientAbstraction {
     virtual ErrorType receiveBlocking(HttpTypes::Response &response, const Milliseconds timeout) = 0;
     /**
      * @brief Send a request
-     * @param[in] data The data to send
+     * @param[in] request The data to send
      * @param[in] timeout The timeout
      * @param[in] callback The callback to call when the send is complete
      * @returns ErrorType::Success if the response could be sent
@@ -98,7 +98,7 @@ class HttpClientAbstraction {
 
     /**
      * @brief Read the response headers from a reply to an http request.
-     * @param[out] reponse The response headers from the reply
+     * @param[out] response The response headers from the reply
      * @param[in] timeout The time to wait to receive data.
      * @param[in] networkReceiveFunction The function to call to receive data. If nullptr, IpClient::receiveBlocking will be used.
      * @returns ErrorType::Success if the response headers were read

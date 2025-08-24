@@ -116,7 +116,6 @@ class IpServerAbstraction {
      * @brief Receives data.
      * @param[in] buffer The buffer to receive the data into.
      * @param[in] timeout The time to wait to receive the data.
-     * @param[out] socket If negative, will contain the socket in which the data was received from. Otherwise it will be the socket in which data is explicitely received from.
      * @param[in] callback The callback to call when the data has been received.
      * @returns ErrorType::Success if the data was received.
      * @returns ErrorType::Failure if the data was not received.

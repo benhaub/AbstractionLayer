@@ -42,6 +42,7 @@ class SpiAbstraction : public IcCommunicationProtocol {
         return ErrorType::Success;
     }
 
+    /// @brief Get the SPI parameters as a constant reference.
     const SpiTypes::SpiParams &spiParams() const { return _spiParams; }
 
     private:

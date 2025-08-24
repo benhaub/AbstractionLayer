@@ -92,7 +92,11 @@ class EventQueue {
             }
 
         }
-
+        /**
+         * @brief Returns true if the eventCallback is valid and can be called.
+         * @returns true if the eventCallback is valid
+         * @returns false if the eventCallback is not valid
+        */
         bool eventCallbackValid() {
             if (_eventCallback) {
                 return true;

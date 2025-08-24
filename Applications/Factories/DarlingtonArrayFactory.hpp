@@ -22,7 +22,10 @@ namespace DarlingtonArrayFactoryTypes {
 
     ///@brief The tag used for logging
     static constexpr char Tag[] = "DarlingtonArrayFactory";
-
+    /**
+     * @typedef DarlingtonArrayFactoryVariant
+     * @brief The variant type that can hold any darlington array type created by the factory
+     */
     using DarlingtonArrayFactoryVariant = std::variant<StmUln2003>;
 
     /**
@@ -34,6 +37,11 @@ namespace DarlingtonArrayFactoryTypes {
         StmUln2003 = 1  ///< ST Microelectronics Transistor Array ULN2003
     };
 
+    /**
+     * @brief Get the number of input pins for the darlington array part number
+     * @param partNumber The part number of the darlington array
+     * @returns The number of input pins for the darlington array part number
+     */
     constexpr Count InputPins(const PartNumber partNumber) {
         switch (partNumber) {
             case PartNumber::StmUln2003:

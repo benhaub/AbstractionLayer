@@ -24,6 +24,10 @@ namespace NetworkFactoryTypes {
     ///@brief The tag used for logging
     static constexpr char Tag[] = "NetworkFactory";
 
+    /**
+     * @typedef NetworkFactoryVariant
+     * @brief The variant type that can hold any network type created by the factory.
+     */
     using NetworkFactoryVariant = std::variant<Wifi, Cellular>;
 }
 

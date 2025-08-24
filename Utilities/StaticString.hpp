@@ -29,14 +29,23 @@ namespace StaticString {
 
         public:
         virtual ~StandardStringInterface() = default;
+        /// @brief Implementation defined.
         virtual const char *c_str() const = 0;
+        /// @brief Implementation defined.
         virtual size_t size() const = 0;
+        /// @brief Implementation defined.
         virtual char* data() = 0;
+        /// @brief Implementation defined.
         virtual StandardStringInterface& append(const char *s) = 0;
+        /// @brief Implementation defined.
         virtual StandardStringInterface& append(std::string_view) = 0;
+        /// @brief Implementation defined.
         virtual StandardStringInterface& append(const char *s, size_t startPosition, size_t length) = 0;
+        /// @brief Implementation defined.
         virtual StandardStringInterface& assign(const char *s) = 0;
+        /// @brief Implementation defined.
         virtual StandardStringInterface& assign(std::string_view) = 0;
+        /// @brief Implementation defined.
         virtual StandardStringInterface& assign(const char *s, size_t startPosition, size_t length = 0) = 0;
     };
 
@@ -49,9 +58,13 @@ namespace StaticString {
     class Data final : public StandardStringInterface {
 
         public:
-        Data() = default;
+        /**
+         * @brief Constructor.
+         * @param s The string to initialize the static string to.
+         */
         Data(const char* s) : _str(s) {}
 
+        /// @brief The underlying static string.
         boost::static_string<_n> _str;
 
         const char *c_str() const override { return _str.c_str(); }

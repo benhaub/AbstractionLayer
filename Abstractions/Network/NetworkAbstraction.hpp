@@ -136,7 +136,7 @@ class NetworkAbstraction : public EventQueue {
 
     /**
      * @brief Configure the network before initializing
-     * @param[in] params The parameters to configure with
+     * @param[in] parameters The parameters to configure with
      * @sa ConfigurationParameters
      */
     virtual ErrorType configure(const NetworkTypes::ConfigurationParameters &parameters) = 0;
@@ -172,7 +172,7 @@ class NetworkAbstraction : public EventQueue {
      * @sa IpSettings::Protocol
      * @param[in] version The version to use
      * @sa IpTypes::Version
-     * @param[out] socket The socket that was created
+     * @param[out] sock The socket that was created
      * @param[in] timeout The amount of time to wait to connect to the host
      * @post The caller is blocked until the connection is made or the timeout is reached. The connection can still be made after the timeout is reached.
      * @returns Fnd::ErrorType::Success on success

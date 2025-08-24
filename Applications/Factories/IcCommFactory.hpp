@@ -20,9 +20,12 @@
  * @brief Contains types and constants used by the IcCommFactory.
  */
 namespace IcCommFactoryTypes {
-    ///@brief The tag used for logging
+    /// @brief The tag used for logging
     static constexpr char Tag[] = "IcCommFactory";
-
+    /**
+     * @typedef IcCommFactoryVariant
+     * @brief The variant type that can hold any IC communication type created by the factory.
+     */
     using IcCommFactoryVariant = std::variant<Uart, Spi, I2c>;
 }
 
@@ -34,12 +37,11 @@ namespace IcCommFactory {
 
     /**
      * @brief Creates a IC device for the type selected.
-     * @param device The IC device to use for communication.
+     * @param[in] device The IC device to use for communication.
      * @sa IcCommunicationProtocolTypes::IcDevice
-     * @param params The parameters to use for the IC device.
-     * @sa IcCommFactoryTypes::I2cParams
-     * @param error The error code following the return of this function.
-     * @returns Pointer to an IcCommunicationProtocol that contains the IC device of the type selected.
+     * @param[out] ic Stores the newly created integrated circuit communication peripheral.
+     * @returns ErrorType::Success if the IcDevice was created.
+     * @returns ErrorType::NotSupported if the device is not supported.
      */
     inline ErrorType Factory(IcCommunicationProtocolTypes::IcDevice device, std::optional<IcCommFactoryTypes::IcCommFactoryVariant> &ic) {
         ErrorType error = ErrorType::Success;

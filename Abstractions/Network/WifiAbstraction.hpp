@@ -201,6 +201,16 @@ class WifiAbstraction : public NetworkAbstraction {
         return error;
     }
 
+    /**
+     * @brief Update the wifi credentials.
+     * @param[in] mode The wifi mode to update the credentials for.
+     * @param[in] ssid The SSID to update to.
+     * @param[in] password The password to update to.
+     * @returns ErrorType::InvalidParameter if the mode is AccessPointAndStation. Update one mode at a time.
+     * @returns ErrorType::Failure if the network could not be brought down or back up.
+     * @returns ErrorType::Success if the credentials were updated successfully.
+     * @post This function brings the network down and back up. Any existing connections will be terminated.
+     */
     ErrorType updateWifiCredentials(WifiTypes::Mode mode, std::string_view ssid, std::string_view password) {
         ErrorType error = ErrorType::Failure;
 

@@ -19,7 +19,7 @@
 namespace IpClientTypes {
 
     /**
-     * @struct ClientStatus
+     * @struct Status
      * @brief The status of the client
     */
     struct Status {

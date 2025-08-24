@@ -65,7 +65,7 @@ class HBridgeAbstraction {
 
     /**
      * @brief Configure the H-Bridge.
-     * @param pwmType The type of PWM used to drive the H-Bridge.
+     * @param params The parameters to configure the H-Bridge with.
      * @returns ErrorType::Success if the H-Bridge was configured
      * @returns ErrorType::Failure if the H-Bridge was not configured
      */

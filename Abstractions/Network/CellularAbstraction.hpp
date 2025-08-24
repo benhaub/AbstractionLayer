@@ -94,6 +94,12 @@ class CellularAbstraction : public NetworkAbstraction {
     */
     virtual ErrorType reset() = 0;
 
+    /**
+     * @brief Configure the cellular network before initializing
+     * @param[in] parameters The parameters to configure with
+     * @sa CellularTypes::CellularParams
+     * @returns ErrorType::Success
+     */
     ErrorType configure(const NetworkTypes::ConfigurationParameters &parameters) override {
         assert(parameters.technology() == NetworkTypes::Technology::Cellular);
 

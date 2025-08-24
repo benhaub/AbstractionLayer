@@ -93,14 +93,16 @@ namespace NtpClientTypes {
     }
 }
 
+/**
+ * @class NtpClient
+ * @brief An Network Time Protocol client.
+ */
 class NtpClient {
 
     public:
     /// @brief Default constructor.
     NtpClient() = default;
-    /**
-     * @brief Disconnect from the NTP server.
-     */
+    /// @brief Disconnect from the NTP server.
     ~NtpClient() {
         disconnect();
     }

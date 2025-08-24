@@ -19,19 +19,17 @@
  */
 namespace GpioTypes {
 
+    /**
+     * @namespace Interrupts
+     * @brief Interrupt flags for GPIO
+     */
     namespace Interrupts {
-        ///< Logic low triggers an interrupt
-        constexpr InterruptFlags LowLevel = 0x01;
-        ///< Logic high triggers an interrupt
-        constexpr InterruptFlags HighLevel = 0x02;
-        ///< The rising edge triggers an interrupt
-        constexpr InterruptFlags RisingEdge = 0x04;
-        ///< The falling edge triggers an interrupt
-        constexpr InterruptFlags FallingEdge = 0x08;
-        ///< Both rising and falling edge
-        constexpr InterruptFlags RisingOrFallingEdge = 0x0C;
-        ///< Interrupts are disabled
-        constexpr InterruptFlags Disabled = 0x00;
+        constexpr InterruptFlags LowLevel = 0x01; ///< The low level triggers an interrupt
+        constexpr InterruptFlags HighLevel = 0x02; ///< The high level triggers an interrupt
+        constexpr InterruptFlags RisingEdge = 0x04; ///< The rising edge triggers an interrupt
+        constexpr InterruptFlags FallingEdge = 0x08; ///< The falling edge triggers an interrupt
+        constexpr InterruptFlags RisingOrFallingEdge = 0x0C; ///< Rising or falling edge triggers an interrupt
+        constexpr InterruptFlags Disabled = 0x00; ///< Interrupts are disabled
     }
 
     /**
@@ -59,17 +57,21 @@ namespace GpioTypes {
      * @brief Contains the parameters used to configure the GPIO.
      */
     struct GpioParams {
-
+        /**
+         * @struct HardwareConfig
+         * @brief Contains the hardware configuration for the GPIO.
+         */
         struct HardwareConfig {
-            PeripheralNumber peripheralNumber;
-            PinNumber pinNumber;
-            GpioTypes::PinDirection direction;
-            InterruptFlags interruptFlags;
-            bool pullUpEnable;
-            bool pullDownEnable;
+            PeripheralNumber peripheralNumber; ///< The peripheral number to use for the GPIO.
+            PinNumber pinNumber;               ///< The pin number to use for the GPIO.
+            GpioTypes::PinDirection direction; ///< The pin direction to use for the GPIO.
+            InterruptFlags interruptFlags;     ///< The interrupt flags to use for the GPIO.
+            bool pullUpEnable;                 ///< True to enable the pull-up resistor, false otherwise.
+            bool pullDownEnable;               ///< True to enable the pull-down resistor, false otherwise.
 
+            /// @brief Constructor
             HardwareConfig() : peripheralNumber(PeripheralNumber::Unknown), pinNumber(-1), direction(GpioTypes::PinDirection::DigitalUnknown), interruptFlags(Interrupts::Disabled), pullUpEnable(false), pullDownEnable(false) {}
-        } hardwareConfig;
+        } hardwareConfig; ///< The hardware configuration for the GPIO.
 
         /**
          * @struct InterruptConfig
@@ -79,9 +81,11 @@ namespace GpioTypes {
             InterruptFlags interruptFlags;       ///< The interrupt flags to use for the uart
             InterruptCallback interruptCallback; ///< The interrupt callback to use for the uart
 
+            /// @brief Constructor
             InterruptConfig() : interruptFlags(Interrupts::Disabled), interruptCallback(nullptr) {}
-        } interruptConfig;
+        } interruptConfig; ///< The interrupt configuration for the GPIO.
 
+        /// @brief Constructor
         GpioParams() : hardwareConfig(), interruptConfig() {}
     };
 }
@@ -131,11 +135,17 @@ class GpioAbstraction {
      */
     virtual ErrorType pinRead(GpioTypes::LogicLevel &logicLevel) = 0;
 
+    /**
+     * @brief Configure the GPIO.
+     * @param params The parameters to configure the GPIO with.
+     * @returns ErrorType::Success
+     */
     virtual ErrorType configure(const GpioTypes::GpioParams &params) {
         _gpioParams = static_cast<const GpioTypes::GpioParams &>(params);
         return ErrorType::Success;
     }
 
+    /// @brief Get the parameters that the GPIO was configured with as a constant reference.
     const GpioTypes::GpioParams &gpioParams() const { return _gpioParams; }
 
     private:

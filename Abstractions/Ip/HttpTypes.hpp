@@ -656,7 +656,7 @@ namespace HttpTypes {
 
     /**
      * @brief Converts HttpTypes::Method to a string.
-     * @param[in] The method of the request
+     * @param[in] method The method of the request
      * @sa HttpTypes::Request
      * @returns The HttpTypes::Method as a string.
      * @returns An empty string if the method is unknown or not supported.

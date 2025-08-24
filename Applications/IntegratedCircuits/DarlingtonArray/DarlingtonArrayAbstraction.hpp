@@ -29,8 +29,8 @@ namespace DarlingtonArrayTypes {
     };
 
     /**
-     * @struct Params
-     * @tparam numberOfPins The number of pins that the transistor array has.
+     * @struct ConfigurationParameters
+     * @tparam _numberOfPins The number of pins that the transistor array has.
      * @brief Parameters for the DarlingtonArray
      */
     template <Count _numberOfPins>
@@ -40,8 +40,9 @@ namespace DarlingtonArrayTypes {
         std::array<PeripheralNumber, _numberOfPins> pwmPeripherals; ///< The peripheral number of pwm1.
         std::array<Microseconds, _numberOfPins> pwmPeriods; ///< The period of the PWM signals.
         std::array<Percent, _numberOfPins> pwmDutyCycles; ///< The duty cycle of the PWM signals.
-        Count numberOfPinsUsed;
+        Count numberOfPinsUsed; ///< The number of pins that are actually used.
 
+        /// @brief Constructor
         ConfigurationParameters() {
             pwmType = DarlingtonArrayTypes::PwmType::Unknown;
             pinNumbers.fill(-1);
@@ -68,9 +69,8 @@ class DarlingtonArrayAbstraction {
 
     /**
      * @brief Configure the Darlington Array.
-     * @param pwmType The type of PWM used to drive the array.
-     * @returns ErrorType::Success if the array was configured
-     * @returns ErrorType::Failure if the array was not configured
+     * @param params The parameters to configure the array with.
+     * @returns ErrorType::Success
      */
     virtual ErrorType configure(const DarlingtonArrayTypes::ConfigurationParameters<_numberOfPins> &params) {
         _params = params;

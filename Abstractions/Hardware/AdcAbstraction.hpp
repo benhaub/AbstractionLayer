@@ -105,7 +105,9 @@ class AdcAbstraction {
      * @returns ErrorType::Failure otherwise.
      */
     virtual ErrorType rawToVolts(const Count rawValue, Volts &volts) = 0;
-
+    /**
+     * @brief Get the parameters that the ADC was configured with as a constant reference.
+     */
     const AdcTypes::Parameters &params() const { return _params; }
 
     private:

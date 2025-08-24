@@ -6,13 +6,22 @@
 #include "PwmAbstraction.hpp"
 #include "GpioAbstraction.hpp"
 
+/**
+ * @namespace StmUln2003Types
+ * @brief Contains types related to the ST Microelectronics ULN2003 Darlington Array.
+ */
 namespace StmUln2003Types {
-    constexpr Count InputPins = 8;
+    constexpr Count InputPins = 8; ///< The number of input pins on the ULN2003
 }
 
+/**
+ * @class StmUln2003
+ * @brief ST Microelectronics ULN2003 Darlington Array
+ */
 class StmUln2003 final : public DarlingtonArrayAbstraction<StmUln2003Types::InputPins> {
 
     public:
+    /// @brief Constructor
     StmUln2003() : DarlingtonArrayAbstraction<StmUln2003Types::InputPins>() {}
 
     ErrorType init() override;

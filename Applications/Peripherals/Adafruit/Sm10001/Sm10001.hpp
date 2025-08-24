@@ -12,6 +12,10 @@
 #include "AdcModule.hpp"
 #include "HBridgeFactory.hpp"
 
+/**
+ * @namespace Sm10001Types
+ * @brief Contains types related to the slide potentiometer by adafruit.
+ */
 namespace Sm10001Types {
     /// @brief Period of the PWMs for the motor.
     constexpr Microseconds PwmPeriod = 1000;
@@ -22,16 +26,17 @@ namespace Sm10001Types {
 
     static_assert(1000 / PwmPeriod <= 250, "Frequency is beyond max recommended in data sheet.");
 
+    /// @brief Tag for logging
     constexpr char TAG[] = "Sm10001";
 
     /**
-     * @enum Direction
+     * @enum ForwardSlideVoltageEffect
      * @brief The effect that a forward slide has in terms of voltage drop
      */
     enum class ForwardSlideVoltageEffect : uint8_t {
-        Unknown = 0,
-        Drops,
-        Raises
+        Unknown = 0, ///< Unknown effect
+        Drops,       ///< Sliding forward decreases the voltage drop.
+        Raises       ///< Sliding forward increases the voltage drop.
     };
 }
 

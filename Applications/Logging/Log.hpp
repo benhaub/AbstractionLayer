@@ -12,24 +12,56 @@
 
 //Use the menuconfig to enable/disable colors
 #ifndef __XTENSA__
+/// @def CONFIG_LOG_COLORS
+/// @brief Enable colored log output
 #define CONFIG_LOG_COLORS
 #endif
 
 #ifdef CONFIG_LOG_COLORS
+/// @def LOG_COLOR_BLACK
+/// @brief The color black
 #define LOG_COLOR_BLACK   "30"
+/// @def LOG_COLOR_RED
+/// @brief The color red
 #define LOG_COLOR_RED     "31"
+/// @def LOG_COLOR_GREEN
+/// @brief The color green
 #define LOG_COLOR_GREEN   "32"
+/// @def LOG_COLOR_BROWN
+/// @brief The color brown
 #define LOG_COLOR_BROWN   "33"
+/// @def LOG_COLOR_BLUE
+/// @brief The color blue
 #define LOG_COLOR_BLUE    "34"
+/// @def LOG_COLOR_PURPLE
+/// @brief The color purple
 #define LOG_COLOR_PURPLE  "35"
+/// @def LOG_COLOR_CYAN
+/// @brief The color cyan
 #define LOG_COLOR_CYAN    "36"
+/// @def LOG_COLOR(COLOR)
+/// @brief Used to make text colored.
 #define LOG_COLOR(COLOR)  "\033[0;" COLOR "m"
+/// @def LOG_BOLD(COLOR)
+/// @brief Used to make text bold and colored.
 #define LOG_BOLD(COLOR)   "\033[1;" COLOR "m"
+/// @def LOG_RESET_COLOR
+/// @brief Used to stop writing text that is coloured.
 #define LOG_RESET_COLOR   "\033[0m"
+/// @def LOG_COLOR_E
+/// @brief The color for error messages
 #define LOG_COLOR_E       LOG_COLOR(LOG_COLOR_RED)
+/// @def LOG_COLOR_W
+/// @brief The color for warnings
 #define LOG_COLOR_W       LOG_COLOR(LOG_COLOR_BROWN)
+/// @def LOG_COLOR_I
+/// @brief The color for information messages
 #define LOG_COLOR_I       LOG_COLOR(LOG_COLOR_GREEN)
+/// @def LOG_COLOR_D
+/// @brief The color for debugging messages
 #define LOG_COLOR_D       LOG_COLOR(LOG_COLOR_PURPLE)
+/// @def LOG_COLOR_V
+/// @brief The color for verbose messages
 #define LOG_COLOR_V       LOG_COLOR(LOG_COLOR_CYAN)
 #else //CONFIG_LOG_COLORS
 /// @def LOG_COLOR_E

@@ -14,7 +14,12 @@
 //C++
 #include <array>
 
+/**
+ * @namespace Mikroe28byj485VTypes
+ * @brief Contains types related to the 28byj485V stepper motor driver.
+ */
 namespace Mikroe28byj485VTypes {
+    /// @brief The number of input pins that the motor has to control the phases.
     constexpr Count InputPins = 4; 
 };
 
