@@ -8,3 +8,7 @@
 	path = Modules/Ip/Posix/mbedtls
   url = https://github.com/Mbed-TLS/mbedtls.git
   ignore = untracked
+[submodule "Utilities/static_string"]
+	path = Utilities/static_string
+	url = https://github.com/boostorg/static_string.git
+  ignore = all
