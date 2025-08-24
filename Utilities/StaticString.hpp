@@ -11,6 +11,7 @@
 #include "Types.hpp"
 #include "Error.hpp"
 //Boost
+#include "boost/static_string/config.hpp"
 #include "boost/static_string.hpp"
 //C++
 #include <any>
@@ -33,6 +34,8 @@ namespace StaticString {
         virtual const char *c_str() const = 0;
         /// @brief Implementation defined.
         virtual size_t size() const = 0;
+        /// @brief Implementation defined.
+        virtual size_t length() const { return size(); }
         /// @brief Implementation defined.
         virtual char* data() = 0;
         /// @brief Implementation defined.
