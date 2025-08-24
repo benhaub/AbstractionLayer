@@ -21,7 +21,7 @@ class FileSystem final : public FileSystemAbstraction {
     ErrorType maxPartitionSize(Bytes &size) override;
     ErrorType availablePartition(Bytes &size) override;
     ErrorType erasePartition() override;
-    ErrorType open(const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) override;
+    ErrorType open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) override;
     ErrorType close(FileSystemTypes::File &file) override;
     ErrorType remove(FileSystemTypes::File &file) override;
     ErrorType readBlocking(FileSystemTypes::File &file, std::string &buffer) override; 

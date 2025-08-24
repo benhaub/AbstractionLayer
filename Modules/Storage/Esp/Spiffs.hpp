@@ -99,7 +99,7 @@ namespace Spiffs {
 
     ErrorType size(FileSystemTypes::File &file) {
         struct stat fileStat;
-        if (0 != stat(file.path.data(), &fileStat)) {
+        if (0 != stat(file.path->data(), &fileStat)) {
             return fromPlatformError(errno);
         }
 
@@ -121,7 +121,7 @@ namespace Spiffs {
     }
 
 
-    static ErrorType open(const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file, FILE *&spiffsFile) {
+    static ErrorType open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file, FILE *&spiffsFile) {
         ErrorType error;
 
         const std::string posixMode = toPosixOpenMode(mode, error);
@@ -131,9 +131,10 @@ namespace Spiffs {
 
         spiffsFile = fopen(path.data(), posixMode.data());
         if (nullptr != spiffsFile) {
-            file.path.assign(path);
+            file.path->assign(path);
             file.isOpen = true;
             file.openMode = mode;
+
             if (ErrorType::Success != (error = size(file))) {
                 close(file, spiffsFile);
             }
@@ -151,12 +152,13 @@ namespace Spiffs {
 
         if (file.isOpen) {
             ErrorType error = close(file, spiffsFile);
+
             if (ErrorType::Success != error) {
                 return error;
             }
         }
 
-        if (0 != unlink(file.path.data())) {
+        if (0 != unlink(file.path->data())) {
             return fromPlatformError(errno);
         }
 

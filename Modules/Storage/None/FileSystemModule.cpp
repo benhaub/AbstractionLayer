@@ -22,7 +22,7 @@ ErrorType FileSystem::erasePartition() {
     return ErrorType::NotImplemented;
 }
 
-ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
+ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
     return ErrorType::NotImplemented;
 }
 

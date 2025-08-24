@@ -175,7 +175,7 @@ ErrorType FileSystem::erasePartition() {
     return callbackError;
 }
 
-ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
+ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
     bool openDone = false;
     ErrorType callbackError = ErrorType::Failure;
     assert(path.size() > 0);
@@ -193,7 +193,7 @@ ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenM
                     FILE *spiffsFile = nullptr;
                     callbackError = Spiffs::open(path, mode, file, spiffsFile);
                     if (ErrorType::Success == callbackError) {
-                        spiffsFiles[file.path] = spiffsFile;
+                        spiffsFiles[file.path->c_str()] = spiffsFile;
                         _status.openedFiles = spiffsFiles.size();
                     }
                 }
@@ -229,9 +229,9 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
                 callbackError = KeyValue::close(_handle, file);
                 break;
             case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::close(file, spiffsFiles[file.path]);
+                callbackError = Spiffs::close(file, spiffsFiles[file.path->c_str()]);
                 if (callbackError == ErrorType::Success) {
-                    spiffsFiles.erase(file.path);
+                    spiffsFiles.erase(file.path->c_str());
                     _status.openedFiles = spiffsFiles.size();
                 }
                 break;
@@ -266,8 +266,8 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
                 callbackError = KeyValue::remove(_handle, file);
                 break;
             case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::remove(file, spiffsFiles[file.path]);
-                spiffsFiles.erase(file.path);
+                callbackError = Spiffs::remove(file, spiffsFiles[file.path->c_str()]);
+                spiffsFiles.erase(file.path->c_str());
                 break;
             default:
                 callbackError = ErrorType::NotSupported;
@@ -300,8 +300,8 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
                 callbackError = KeyValue::readBlocking(_handle, file, buffer);
                 break;
             case FileSystemTypes::Implementation::Spiffs:
-                if (spiffsFiles.contains(file.path)) {
-                    callbackError = Spiffs::readBlocking(spiffsFiles[file.path], file, buffer);
+                if (spiffsFiles.contains(file.path->c_str())) {
+                    callbackError = Spiffs::readBlocking(spiffsFiles[file.path->c_str()], file, buffer);
                 }
                 else {
                     callbackError = ErrorType::PrerequisitesNotMet;
@@ -350,7 +350,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::stri
                 callbackError = KeyValue::writeBlocking(_handle, file, data);
                 break;
             case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::writeBlocking(spiffsFiles[file.path], file, data);
+                callbackError = Spiffs::writeBlocking(spiffsFiles[file.path->c_str()], file, data);
                 break;
             default:
                 callbackError = ErrorType::NotSupported;
@@ -394,7 +394,7 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
                 callbackError = KeyValue::synchronize(_handle);
                 break;
             case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::synchronize(spiffsFiles[file.path]);
+                callbackError = Spiffs::synchronize(spiffsFiles[file.path->c_str()]);
                 break;
             default:
                 callbackError = ErrorType::NotSupported;

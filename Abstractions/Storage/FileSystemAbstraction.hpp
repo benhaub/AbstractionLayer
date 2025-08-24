@@ -11,6 +11,7 @@
 #include "Error.hpp"
 #include "Types.hpp"
 #include "Log.hpp"
+#include "StaticString.hpp"
 //C++
 #include <memory>
 #include <functional>
@@ -79,11 +80,11 @@ namespace FileSystemTypes {
      * @brief A resource for recording data on the storage device.
      */
     struct File {
-        std::string path;        ///< The name of the file.
-        Bytes size;              ///< The size of the file.
-        FileOffset filePointer;  ///< Current offset into the file.
-        OpenMode openMode;       ///< The open mode of the file.
-        bool isOpen;             ///< True if the file is open, false otherwise.
+        StaticString::Container path; ///< The name of the file.
+        Bytes size;             ///< The size of the file.
+        FileOffset filePointer; ///< Current offset into the file.
+        OpenMode openMode;      ///< The open mode of the file.
+        bool isOpen;            ///< True if the file is open, false otherwise.
     };
 }
 
@@ -162,7 +163,7 @@ class FileSystemAbstraction {
      * @returns ErrorType::Success if the file was opened.
      * @returns ErrorType::Failure if could not be opened for any other reason
     */
-    virtual ErrorType open(const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) = 0;
+    virtual ErrorType open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) = 0;
     /**
      * @brief Closes a file.
      * @param[in] file The file to close.

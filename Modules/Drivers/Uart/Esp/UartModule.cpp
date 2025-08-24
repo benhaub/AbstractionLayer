@@ -56,65 +56,25 @@ ErrorType Uart::txBlocking(const std::string &data, const Milliseconds timeout, 
     return ErrorType::Failure;
 }
 
-//Supports both a terminating byte read and a total byte read.
 ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
     ErrorType error;
     esp_err_t result;
     constexpr Bytes toReadAtOnce = 16;
-    Bytes readInThisFrame = 0;
     std::string readBuffer(toReadAtOnce, '\0');
     const PeripheralNumber peripheralNumber = uartParams().hardwareConfig.peripheralNumber;
 
-    if (uartParams().firmwareConfig.terminatingByte >= 0) {
-        buffer.resize(0);
-    }
-    else {
-        uart_port_t uartNumber = toEspPeripheralNumber(peripheralNumber, error);
-        if (ErrorType::Success != error) {
-            return error;
-        }
-
-        result = uart_read_bytes(uartNumber, buffer.data(), buffer.size(), pdMS_TO_TICKS(timeout));
-        if (result > 0) {
-            buffer.resize(result);
-            return ErrorType::Success;
-        }
-
-        buffer.resize(0);
-        return ErrorType::Timeout;
+    uart_port_t uartNumber = toEspPeripheralNumber(peripheralNumber, error);
+    if (ErrorType::Success != error) {
+        return error;
     }
 
-    bool bufferHasRoom = readInThisFrame < buffer.capacity();
-
-    while (bufferHasRoom) {
-        uart_port_t uartNumber = toEspPeripheralNumber(peripheralNumber, error);
-        if (ErrorType::Success != error) {
-            return error;
-        }
-
-        result = uart_read_bytes(uartNumber, readBuffer.data(), readBuffer.capacity(), pdMS_TO_TICKS(timeout));
-        if (result <= 0) {
-            return ErrorType::Failure;
-        }
-
-        readInThisFrame += readBuffer.size();
-
-        buffer.append(readBuffer);
-
-        if (uartParams().firmwareConfig.terminatingByte >= 0) {
-            const size_t indexOfTerminatingByte = buffer.find(static_cast<char>(uartParams().firmwareConfig.terminatingByte), readInThisFrame - readBuffer.capacity());
-            const bool terminatingByteFound = std::string::npos != indexOfTerminatingByte;
-
-            if (terminatingByteFound) {
-                buffer.resize(indexOfTerminatingByte + 1);
-                return ErrorType::Success;
-            }
-        }
-
-        bufferHasRoom = readInThisFrame < buffer.capacity();
+    result = uart_read_bytes(uartNumber, buffer.data(), buffer.size(), pdMS_TO_TICKS(timeout));
+    if (result > 0) {
+        buffer.resize(result);
+        return ErrorType::Success;
     }
 
-    return ErrorType::Failure;
+    return ErrorType::Timeout;
 }
 
 ErrorType Uart::txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {

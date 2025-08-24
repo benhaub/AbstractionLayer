@@ -22,7 +22,7 @@ class FileSystem final : public FileSystemAbstraction {
     ErrorType maxPartitionSize(Bytes &size) override;
     ErrorType availablePartition(Bytes &size) override;
     ErrorType erasePartition() override;
-    ErrorType open(const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) override;
+    ErrorType open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) override;
     ErrorType close(FileSystemTypes::File &file) override;
     ErrorType remove(FileSystemTypes::File &file) override;
     ErrorType readBlocking(FileSystemTypes::File &file, std::string &buffer) override; 
@@ -54,7 +54,7 @@ class FileSystem final : public FileSystemAbstraction {
     private:
     const char nameSpace[NVS_NS_NAME_MAX_SIZE] = "nvsFlash";
     std::unique_ptr<nvs::NVSHandle> _handle;
-    std::map<std::string, FILE *> spiffsFiles;
+    std::map<std::string_view, FILE *> spiffsFiles;
 
     
 

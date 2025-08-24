@@ -81,7 +81,7 @@ ErrorType FileSystem::erasePartition(){
     return ErrorType::NotSupported;
 }
 
-ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
+ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
     bool openDone = false;
     assert(path.size() > 0);
@@ -97,9 +97,9 @@ ErrorType FileSystem::open(const std::string &path, const FileSystemTypes::OpenM
 
         const bool fileIsNotOpen = !openFiles.contains(path);
         if (fileIsNotOpen) {
-            retval = sl_FsOpen(reinterpret_cast<const _u8 *>(path.c_str()), toCc32xxAccessMode(mode, callbackError) | maxSize, &token);
+            retval = sl_FsOpen(reinterpret_cast<const _u8 *>(path.data()), toCc32xxAccessMode(mode, callbackError) | maxSize, &token);
             if (retval >= 0) {
-                file.path.assign(path);
+                file.path->assign(path);
                 file.isOpen = true;
                 file.openMode = mode;
                 file.filePointer = 0;
@@ -140,11 +140,11 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
     bool closeDone = false;
 
     auto closeCallback = [&]() -> ErrorType {
-        const bool fileIsOpen = openFiles.contains(file.path);
+        const bool fileIsOpen = openFiles.contains(file.path->c_str());
         if (fileIsOpen) {
-            _i32 retval = sl_FsClose(openFiles[file.path], NULL, NULL, 0);
+            _i32 retval = sl_FsClose(openFiles[file.path->c_str()], NULL, NULL, 0);
             if (SL_FS_OK == retval) {
-                openFiles.erase(file.path);
+                openFiles.erase(file.path->c_str());
                 file.isOpen = false;
                 file.openMode = FileSystemTypes::OpenMode::Unknown;
                 _status.openedFiles = openFiles.size();
@@ -180,7 +180,7 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
     auto removeCallback = [&]() -> ErrorType {
         if (file.isOpen) {
             if (ErrorType::Success == (callbackError = close(file))) {
-                _i32 retval = sl_FsDel(reinterpret_cast<const unsigned char *>(file.path.c_str()), 0);
+                _i32 retval = sl_FsDel(reinterpret_cast<const unsigned char *>(file.path->c_str()), 0);
                 if (SL_FS_OK == retval) {
                     removeDone = true;
                     callbackError = fromPlatformError(retval);
@@ -212,7 +212,7 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
     bool readDone = false;
 
     auto readCallback = [&]() -> ErrorType {
-        _i32 retval = sl_FsRead(openFiles[file.path], file.filePointer, reinterpret_cast<_u8 *>(buffer.data()), buffer.size());
+        _i32 retval = sl_FsRead(openFiles[file.path->c_str()], file.filePointer, reinterpret_cast<_u8 *>(buffer.data()), buffer.size());
         if (retval > 0) {
             file.filePointer += static_cast<FileOffset>(retval);
             buffer.resize(retval);
@@ -260,7 +260,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::stri
     std::string &dataToWrite = const_cast<std::string &>(data);
 
     auto writeCallback = [&]() -> ErrorType {
-        _i32 retval = sl_FsWrite(openFiles[file.path], file.filePointer, reinterpret_cast<_u8 *>(dataToWrite.data()), dataToWrite.size());
+        _i32 retval = sl_FsWrite(openFiles[file.path->c_str()], file.filePointer, reinterpret_cast<_u8 *>(dataToWrite.data()), dataToWrite.size());
         if (retval >= 0) {
             writeDone = true;
             callbackError = ErrorType::Success;
