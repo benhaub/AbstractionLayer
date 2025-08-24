@@ -53,13 +53,13 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto availableStorageQueryCallback = [&]() -> ErrorType {
-        std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefix());
+        std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefix()->c_str());
         size = spaceInfo.available;
         availableStorageQueryDone = true;
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(availableStorageQueryCallback));
+    EventQueue::Event event = EventQueue::Event(availableStorageQueryCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -118,7 +118,7 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(openCallback));
+    EventQueue::Event event = EventQueue::Event(openCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -153,7 +153,7 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(closeCallback));
+    EventQueue::Event event = EventQueue::Event(closeCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -183,7 +183,7 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(removeCallback));
+    EventQueue::Event event = EventQueue::Event(removeCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -228,7 +228,7 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(readCallback));
+    EventQueue::Event event = EventQueue::Event(readCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -325,7 +325,7 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(synchronizeCallback));
+    EventQueue::Event event = EventQueue::Event(synchronizeCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -358,7 +358,7 @@ ErrorType FileSystem::size(FileSystemTypes::File &file) {
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(sizeQueryCallback));
+    EventQueue::Event event = EventQueue::Event(sizeQueryCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
