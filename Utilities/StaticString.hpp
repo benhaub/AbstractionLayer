@@ -73,7 +73,7 @@ namespace StaticString {
          * @brief Constructor.
          * @param s The string to initialize the static string to.
          */
-        constexpr Data(const char* s) : _str(s) {}
+        constexpr Data(const char (&s)[_n]) : _str(s) {}
         constexpr Data() : _str() {}
 
         /// @brief The underlying static string.

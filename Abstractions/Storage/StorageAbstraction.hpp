@@ -1,7 +1,7 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
 * @file   StorageAbstraction.hpp
-* @details \b Synopsis: \n Interface for any storage type
+* @details Interface for any storage type
 * @ingroup Abstractions
 ******************************************************************************/
 #ifndef __STORAGE_ABSTRACTION_HPP__
@@ -37,6 +37,31 @@ namespace StorageTypes {
         Sd,          ///< Secure Digital
         Otp          ///< One Time Programmable
     };
+
+    /// @brief Convert a Medium enum to a string suitable for creating a file to simulate storage.
+    inline constexpr std::array<std::pair<Medium, std::string_view>, 5> MediumToStringPairs = {{
+        { Medium::Unknown, "Unknown" },
+        { Medium::Flash, "AbstractionLayerFlashStorage" },
+        { Medium::Eeprom, "AbstractionLayerEepromStorage" },
+        { Medium::Sd, "AbstractionLayerSdStorage" },
+        { Medium::Otp, "AbstractionLayerOtpStorage" }
+    }};
+
+    /**
+     * @brief Convert a Medium enum to a string suitable for creating a file to simulate storage.
+     * @param medium The medium to convert to a string.
+     * @returns The string representation of the medium.
+     * @returns "Unknown" if the medium is not recognized.
+     */
+    inline constexpr std::string_view MediumToString(Medium medium) {
+        for (const auto &pair : MediumToStringPairs) {
+            if (pair.first == medium) {
+                return pair.second;
+            }
+        }
+
+        return "Unknown";
+    }
 }
 
 /**

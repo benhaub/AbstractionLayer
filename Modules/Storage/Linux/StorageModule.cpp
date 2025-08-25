@@ -14,33 +14,33 @@
 #endif
 
 ErrorType Storage::init() {
-    ErrorType error = ErrorType::Success;
+    constexpr auto longestMediumStringSize = []() -> size_t {
+        size_t longestSoFar = 0;
 
-    if (!_status.isInitialized) {
-        std::array<char, 32> mediumString;
-
-        switch (medium()) {
-            case StorageTypes::Medium::Flash:
-                strncpy(mediumString.data(), "abstractionLayerFlashStorage", sizeof(mediumString));
-                break;
-            case StorageTypes::Medium::Eeprom:
-                strncpy(mediumString.data(), "abstractionLayerEepromStorage", sizeof(mediumString));
-                break;
-            case StorageTypes::Medium::Sd:
-                strncpy(mediumString.data(), "abstractionLayerSdStorage", sizeof(mediumString));
-                break;
-            case StorageTypes::Medium::Otp:
-                strncpy(mediumString.data(), "abstractionLayerOtpStorage", sizeof(mediumString));
-                break;
-            default:
-                error = ErrorType::InvalidParameter;
+        for (const auto &mapPair : StorageTypes::MediumToStringPairs) {
+            if (mapPair.second.size() > longestSoFar) {
+                longestSoFar = mapPair.second.size();
+            }
         }
 
-        _rootPrefix.set(StaticString::Data<sizeof(APP_HOME_DIRECTORY "/") + mediumString.size()>(APP_HOME_DIRECTORY "/"));
-        _rootPrefix->append(mediumString.data());
-        mkdir(_rootPrefix->c_str(), S_IRWXU); 
+        return longestSoFar;
+    };
 
-        _status.isInitialized = true;
+    ErrorType error = ErrorType::NotAvailable;
+
+    if (!_status.isInitialized) {
+
+        _rootPrefix.set(StaticString::Data<longestMediumStringSize() + sizeof(APP_HOME_DIRECTORY "/")>());
+        std::string_view mediumString = StorageTypes::MediumToString(medium());
+
+        if (0 != mediumString.compare(StorageTypes::MediumToString(StorageTypes::Medium::Unknown))) {
+            _rootPrefix->assign(APP_HOME_DIRECTORY "/");
+            _rootPrefix->append(mediumString);
+            mkdir(_rootPrefix->c_str(), S_IRWXU);
+
+            _status.isInitialized = true;
+            error = ErrorType::Success;
+        }
     }
 
     return error;
