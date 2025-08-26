@@ -235,8 +235,8 @@ enum class PeripheralNumber : uint8_t {
     Six,              ///< Peripheral number 6.
     Seven,            ///< Peripheral number 7.
     Eight,            ///< Peripheral number 8.
-    CuUsbSerial10,    ///< cu.usbserial-10
-    TtyCuUsbSerial10, ///< tty.usbserial-10
+    Nine,             ///< Peripheral number 9.
+    Ten,              ///< Peripheral number 10.
     Unknown           ///< Unknown and invalid peripheral number.
 };
 ///@typedef Register

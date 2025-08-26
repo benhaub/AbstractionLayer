@@ -31,25 +31,34 @@ class Uart : public UartAbstraction {
     int _fileDescriptor = -1;
 
     /**
-     * @brief Discover available serial devices on Darwin
-     * @param peripheralNumber The peripheral number to discover
-     * @returns ErrorType::Success if devices were discovered successfully
-     */
-    ErrorType discoverSerialDevices(const PeripheralNumber peripheralNumber);
-
-    /**
      * @brief Convert a peripheral number to a device path
      * @param peripheralNumber The peripheral number to convert
      * @returns The device path
      */
     std::string toDevicePath(const PeripheralNumber peripheralNumber) {
         switch (peripheralNumber) {
-            case PeripheralNumber::CuUsbSerial10:
+            case PeripheralNumber::Zero:
                 return "/dev/cu.usbserial-10";
-            case PeripheralNumber::TtyCuUsbSerial10:
+            case PeripheralNumber::One:
                 return "/dev/tty.usbserial-10";
+            case PeripheralNumber::Two:
+                return "/dev/tty.usbmodem-101";
+            case PeripheralNumber::Three:
+                return "/dev/tty.usbserial-1110";
+            case PeripheralNumber::Four:
+                return "/dev/ttyUSB0";
+            case PeripheralNumber::Five:
+                return "/dev/ttyUSB1";
+            case PeripheralNumber::Six:
+                return "/dev/ttyUSB2";
+            case PeripheralNumber::Seven:
+                return "/dev/ttyACM0";
+            case PeripheralNumber::Eight:
+                return "/dev/ttyACM1";
+            case PeripheralNumber::Nine:
+                return "/dev/ttyACM2";
             default:
-                return "";
+                    return "";
         }
     }
 

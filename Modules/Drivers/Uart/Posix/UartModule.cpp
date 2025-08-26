@@ -6,8 +6,9 @@
 ErrorType Uart::init() {
     ErrorType error = ErrorType::Failure;
 
-    error = discoverSerialDevices(uartParams().hardwareConfig.peripheralNumber);
-    if (ErrorType::Success == error) {
+    _devicePath = toDevicePath(uartParams().hardwareConfig.peripheralNumber);
+
+    if (!_devicePath.empty()) {
         _fileDescriptor = open(_devicePath.c_str(), O_RDWR | O_NONBLOCK);
 
         if (-1 != _fileDescriptor) {
@@ -95,18 +96,5 @@ ErrorType Uart::flushRxBuffer() {
         return ErrorType::Failure;
     }
     
-    return ErrorType::Success;
-}
-
-ErrorType Uart::discoverSerialDevices(const PeripheralNumber peripheralNumber) {
-    _devicePath = toDevicePath(peripheralNumber);
-    
-    // Check if the device file exists and is accessible
-    if (_devicePath.empty()) {
-        return ErrorType::InvalidParameter;
-    }
-    
-    // For now, we'll assume the device exists if we have a valid path
-    // In a real implementation, you'd want to check if the file exists
     return ErrorType::Success;
 }
