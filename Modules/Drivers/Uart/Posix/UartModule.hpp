@@ -58,7 +58,7 @@ class Uart : public UartAbstraction {
             case PeripheralNumber::Nine:
                 return "/dev/ttyACM2";
             default:
-                    return "";
+                return "";
         }
     }
 

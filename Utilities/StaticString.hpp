@@ -10,8 +10,8 @@
 //AbstractionLayer
 #include "Types.hpp"
 #include "Error.hpp"
+#include "StaticStringConfig.h"
 //Boost
-#include "boost/static_string/config.hpp"
 #include "boost/static_string.hpp"
 //C++
 #include <any>
