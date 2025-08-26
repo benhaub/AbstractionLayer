@@ -39,25 +39,35 @@ namespace StaticString {
         /// @brief Implementation defined.
         virtual char *data() = 0;
         /// @brief Implementation defined.
-        virtual StandardStringInterface& append(const char *s) = 0;
+        virtual StandardStringInterface &append(const char *s, size_t length) = 0;
         /// @brief Implementation defined.
-        virtual StandardStringInterface& append(std::string_view) = 0;
+        virtual StandardStringInterface &append(std::string_view s) = 0;
         /// @brief Implementation defined.
-        virtual StandardStringInterface& append(const char *s, size_t startPosition, size_t length) = 0;
+        virtual StandardStringInterface &assign(const char *s, size_t length) = 0;
         /// @brief Implementation defined.
-        virtual StandardStringInterface& assign(const char *s) = 0;
-        /// @brief Implementation defined.
-        virtual StandardStringInterface& assign(std::string_view) = 0;
-        /// @brief Implementation defined.
-        virtual StandardStringInterface& assign(const char *s, size_t startPosition, size_t length = 0) = 0;
+        virtual StandardStringInterface &assign(std::string_view) = 0;
         /// @brief Implementation defined.
         virtual void clear() = 0;
         /// @brief Implementation defined.
         virtual bool empty() const = 0;
+        /// @brief Implementation defined
+        virtual size_t capacity() const = 0;
         /// @brief Implementation defined.
         virtual void resize(size_t n) = 0;
         /// @brief Implementation defined.
         virtual char &back() = 0;
+        /// @brief Implementation defined
+        virtual void push_back(const char &c) = 0;
+        /// @brief Implementation defined
+        virtual size_t find(const char &c, const size_t pos = 0) const = 0;
+        /// @brief Implementation defined
+        virtual size_t find(const char *s, const size_t len) const = 0;
+        /// @brief Implementation defined
+        virtual size_t find(std::string_view) const = 0;
+        /// @brief Implementation defined
+        virtual size_t find(const char *s, const size_t pos, const size_t len) const = 0;
+        /// @brief Implementation defined
+        virtual StandardStringInterface &erase(const size_t from, const size_t to) = 0;
     };
 
     /**
@@ -82,35 +92,25 @@ namespace StaticString {
         const char *c_str() const override { return _str.c_str(); }
         size_t size() const override { return _str.size(); }
         char *data() { return _str.data(); }
-        StandardStringInterface &append(const char *s) { _str.append(s); return *this; }
-        StandardStringInterface &append(std::string_view s) { _str.append(s); return *this; }
-        StandardStringInterface &append(const char *s, size_t startPosition, size_t length) override {
-            const auto first = _str.begin() + startPosition;
-            const auto last = _str.begin() + length;
-            _str.append(first, last); return *this;
+        StandardStringInterface &append(const char *s, size_t length) override {
+            _str.append(s, length); return *this;
         }
-        StandardStringInterface &assign(const char *s) override {
-            _str.assign(s); return *this;
+        StandardStringInterface &append(std::string_view s) { _str.assign(s); return *this;}
+        StandardStringInterface &assign(const char *s, size_t length) override {
+            _str.assign(s, length); return *this;
         }
-        StandardStringInterface &assign(std::string_view s) override {
-            _str.assign(s); return *this;
-        }
-        StandardStringInterface &assign(const char *s, size_t startPosition, size_t length = 0) override {
-            if (0 == length) {
-                _str.assign(s + startPosition);
-            }
-            else {
-                const auto first = _str.begin() + startPosition;
-                const auto last = _str.begin() + length;
-                _str.assign(first, last);
-            }
-
-            return *this;
-        }
+        StandardStringInterface &assign(std::string_view s) { _str.assign(s); return *this; }
         void clear() override { _str.clear(); }
         bool empty() const override { return _str.empty(); }
+        size_t capacity() const override { return _str.capacity(); }
         void resize(size_t n) override { _str.resize(n); }
         char &back() override { return _str.back(); }
+        void push_back(const char &c) override { return _str.push_back(c); }
+        size_t find(const char &c, const size_t pos) const override { return _str.find(c, pos); }
+        size_t find(const char *s, const size_t len) const override { return _str.find(s, 0, len); }
+        size_t find(std::string_view s) const override { return _str.find(s); }
+        size_t find(const char *s, const size_t pos, const size_t len) const override { return _str.find(s, pos, len); }
+        StandardStringInterface &erase(const size_t from, const size_t to) override { _str.erase(from, to); return *this; }
     };
 
     /**
@@ -119,6 +119,19 @@ namespace StaticString {
      * @details This is useful for storing template classes in a common container without needing to know the template parameters
      */
     class Container {
+
+        public:
+        /// @brief Default Constructor
+        Container() = default;
+        /**
+         * @brief Initializing a Container with Data.
+         * @tparam _n The maximum number of bytes the string can store.
+         * @returns A Container of string length _n
+         */
+        template <size_t _n>
+        Container(const Data<_n> &other) {
+            set(other);
+        }
 
         private:
         /// @brief The pure virtual interface that the container returns.
@@ -166,9 +179,15 @@ namespace StaticString {
         Interface *operator->() {
             return get();
         }
-        /// @brief Shorthand operator for Container::get
+        /// @brief Shorthand operator for Container::get const
         const Interface *operator->() const {
             return getConst();
+        }
+        /// @brief Shorthand operator Container::set
+        template<size_t _n>
+        Container &operator=(const Data<_n> &other) {
+            set(other);
+            return *this;
         }
     };
 }
