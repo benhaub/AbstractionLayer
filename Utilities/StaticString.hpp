@@ -95,7 +95,7 @@ namespace StaticString {
         StandardStringInterface &append(const char *s, size_t length) override {
             _str.append(s, length); return *this;
         }
-        StandardStringInterface &append(std::string_view s) override { _str.assign(s); return *this;}
+        StandardStringInterface &append(std::string_view s) override { _str.append(s); return *this;}
         StandardStringInterface &assign(const char *s, size_t length) override {
             _str.assign(s, length); return *this;
         }
