@@ -9,39 +9,40 @@
 //C++
 #include <cstring>
 
+#ifndef APP_HOME_DIRECTORY
+#error "Please define your platforms home directory as APP_HOME_DIRECTORY."
+#endif
+
 ErrorType Storage::init() {
-    if (_status.isInitialized) {
-        return ErrorType::Success;
+    constexpr auto longestMediumStringSize = []() -> size_t {
+        size_t longestSoFar = 0;
+
+        for (const auto &mapPair : StorageTypes::MediumToStringPairs) {
+            if (mapPair.second.size() > longestSoFar) {
+                longestSoFar = mapPair.second.size();
+            }
+        }
+
+        return longestSoFar;
+    };
+
+    ErrorType error = ErrorType::NotAvailable;
+
+    if (!_status.isInitialized) {
+
+        _rootPrefix.set(StaticString::Data<longestMediumStringSize() + sizeof(APP_HOME_DIRECTORY "/")>());
+        std::string_view mediumString = StorageTypes::MediumToString(medium());
+
+        if (0 != mediumString.compare(StorageTypes::MediumToString(StorageTypes::Medium::Unknown))) {
+            _rootPrefix->assign(APP_HOME_DIRECTORY "/");
+            _rootPrefix->append(mediumString);
+            mkdir(_rootPrefix->c_str(), S_IRWXU);
+
+            _status.isInitialized = true;
+            error = ErrorType::Success;
+        }
     }
 
-    std::array<char, 32> mediumString;
-    switch (medium()) {
-        case StorageTypes::Medium::Flash:
-            strncpy(mediumString.data(), "abstractionLayerFlashStorage", sizeof(mediumString));
-            break;
-        case StorageTypes::Medium::Eeprom:
-            strncpy(mediumString.data(), "abstractionLayerEepromStorage", sizeof(mediumString));
-            break;
-        case StorageTypes::Medium::Sd:
-            strncpy(mediumString.data(), "abstractionLayerSdStorage", sizeof(mediumString));
-            break;
-        case StorageTypes::Medium::Otp:
-            strncpy(mediumString.data(), "abstractionLayerOtpStorage", sizeof(mediumString));
-            break;
-        default:
-            return ErrorType::InvalidParameter;
-    }
-
-    ErrorType error;
-    constexpr char home[] = "HOME";
-    std::array<char, 32> expandedHome;
-    getEnvironment(home, error, expandedHome);
-    _rootPrefix.assign(expandedHome.data(), strlen(expandedHome.data()));
-    _rootPrefix.append("/");
-    _rootPrefix.append(mediumString.data(), strlen(mediumString.data()));
-    mkdir(_rootPrefix.c_str(), S_IRWXU); 
-
-    _status.isInitialized = true;
     return error;
 } 
 

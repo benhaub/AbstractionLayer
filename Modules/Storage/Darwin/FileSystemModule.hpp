@@ -20,7 +20,7 @@ class FileSystem final : public FileSystemAbstraction {
     ErrorType maxPartitionSize(Bytes &size) override;
     ErrorType availablePartition(Bytes &size) override;
     ErrorType erasePartition() override;
-    ErrorType open(const std::string &path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) override;
+    ErrorType open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) override;
     ErrorType close(FileSystemTypes::File &file) override;
     ErrorType remove(FileSystemTypes::File &file) override;
     ErrorType readBlocking(FileSystemTypes::File &file, std::string &buffer) override; 
@@ -31,7 +31,7 @@ class FileSystem final : public FileSystemAbstraction {
     ErrorType size(FileSystemTypes::File &file) override;
 
     private:
-    std::map<std::string, std::fstream> openFiles;
+    std::map<std::string_view, std::fstream> openFiles;
 
     std::ios_base::openmode toStdOpenMode(FileSystemTypes::OpenMode mode, ErrorType &error) {
         error = ErrorType::Success;
@@ -58,7 +58,7 @@ class FileSystem final : public FileSystemAbstraction {
     }
 
     inline bool isOpen(const FileSystemTypes::File &file) {
-        if (openFiles.contains(file.path) && openFiles[file.path].is_open()) {
+        if (openFiles.contains(file.path->c_str()) && openFiles[file.path->c_str()].is_open()) {
                 return true;
         }
 
