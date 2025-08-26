@@ -209,8 +209,8 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
         assert(buffer.size() > 0);
 
         if (canReadFromFile(file.openMode) && isOpen(file)) {
-            if (openFiles[file.path->data()].seekg(file.filePointer, std::ios_base::beg).good()) {
-                std::istream &is = openFiles[file.path->data()].read(buffer.data(), buffer.size());
+            if (openFiles[file.path->c_str()].seekg(file.filePointer, std::ios_base::beg).good()) {
+                std::istream &is = openFiles[file.path->c_str()].read(buffer.data(), buffer.size());
 
                 if (is.rdstate() & std::ios_base::eofbit) {
                     callbackError = ErrorType::EndOfFile;
@@ -224,7 +224,7 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
             }
             else {
                 //Very important to clear otherwise future calls to fstream functions may fail because the bits are set.
-                openFiles[file.path->data()].clear();
+                openFiles[file.path->c_str()].clear();
             }
         }
 
