@@ -91,7 +91,7 @@ namespace StaticString {
 
         const char *c_str() const override { return _str.c_str(); }
         size_t size() const override { return _str.size(); }
-        char *data() { return _str.data(); }
+        char *data() override { return _str.data(); }
         StandardStringInterface &append(const char *s, size_t length) override {
             _str.append(s, length); return *this;
         }
