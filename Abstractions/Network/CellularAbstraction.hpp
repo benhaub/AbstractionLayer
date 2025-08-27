@@ -61,6 +61,10 @@ namespace CellularTypes {
         PinNumber resetPin;                                         ///< The reset pin to use for the cellular device. Do not set if not needed.
         PeripheralNumber resetGpio;                                 ///< The gpio peripheral that contains the reset pin to use for the cellular device. Do not set if not needed.
         PeripheralNumber uartPeripheral;                            ///< The uart peripheral to use for the cellular device. Do not set if not needed
+        PinNumber uartTx;                                           ///< The TX pin to use for the cellular device. Do not set if not needed.
+        PinNumber uartRx;                                           ///< The RX pin to use for the cellular device. Do not set if not needed.
+        PinNumber uartRts;                                          ///< The RTS pin to use for the cellular device. Do not set if not needed.
+        PinNumber uartCts;                                          ///< The CTS pin to use for the cellular device. Do not set if not needed.
         PeripheralNumber usbPeripheral;                             ///< The usb peripheral to use for the cellular device. Do not set if not needed
 
         CellularParams() : NetworkTypes::ConfigurationParameters() {
