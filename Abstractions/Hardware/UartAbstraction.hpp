@@ -103,9 +103,8 @@ namespace UartTypes {
         struct FirmwareConfig {
             Bytes receiveBufferSize;             ///< The receive buffer size to use for the uart
             Bytes transmitBufferSize;            ///< The transmit buffer size to use for the uart
-            int8_t terminatingByte;              ///< The terminating byte to use for the uart
 
-            FirmwareConfig() : receiveBufferSize(0), transmitBufferSize(0), terminatingByte(0) {}
+            FirmwareConfig() : receiveBufferSize(0), transmitBufferSize(0) {}
 
         } firmwareConfig; ///< The firmware configuration parameters
         /**

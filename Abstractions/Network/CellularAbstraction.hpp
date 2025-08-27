@@ -44,6 +44,8 @@ namespace CellularTypes {
         DirectPush   ///< Direct push. Commands are sent using an AT command and responses are sent over pure uart
     };
 
+    constexpr size_t MaxApnLength = 64;
+
     /**
      * @struct CellularParams
      * @brief Contains the parameters used to configure the cellular device.
@@ -52,7 +54,7 @@ namespace CellularTypes {
         /// @brief The technology type these parameters are meant for
         NetworkTypes::Technology technology() const override { return NetworkTypes::Technology::Cellular; }
 
-        std::array<char, 64> apn;                                   ///< The APN to use for the cellular device
+        std::array<char, MaxApnLength> apn;                                   ///< The APN to use for the cellular device
         CellularTypes::RadioAccessTechnology radioAccessTechnology; ///< The radio access technology to use for the cellular device
         CellularTypes::AccessMode accessMode;                       ///< The access mode to use for the cellular device
         IcCommunicationProtocolTypes::IcDevice icDevice;            ///< The IC device to use to communicate with the cellular modem. Do not set if not needed.

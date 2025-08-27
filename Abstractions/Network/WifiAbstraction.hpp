@@ -50,6 +50,9 @@ namespace WifiTypes {
         WpaPmk         ///< WPA PMK
     };
 
+    constexpr size_t MaxSsidLength = 32;
+    constexpr size_t MaxPasswordLength = 64;
+
     /**
      * @struct WifiParams
      * @brief Contains the parameters used to configure the wifi.
@@ -58,12 +61,12 @@ namespace WifiTypes {
         /// @brief The technology type these parameters are meant for
         NetworkTypes::Technology technology() const override { return NetworkTypes::Technology::Wifi; }
 
-        char accessPointSsid[32];     ///< The SSID of the access point (Connecting to this device)
-        char accessPointPassword[64]; ///< The password of the access point
-        char stationSsid[32];         ///< The SSID of the station (Wifi that this device connects to)
-        char stationPassword[64];     ///< The password of the station
-        WifiTypes::AuthMode authMode; ///< Password authentication
-        WifiTypes::Mode mode;         ///< Station, access point, or both
+        std::array<char, MaxSsidLength> accessPointSsid;     ///< The SSID of the access point (Connecting to this device)
+        std::array<char, MaxPasswordLength> accessPointPassword; ///< The password of the access point
+        std::array<char, MaxSsidLength> stationSsid;         ///< The SSID of the station (Wifi that this device connects to)
+        std::array<char, MaxPasswordLength> stationPassword;     ///< The password of the station
+        WifiTypes::AuthMode authMode;             ///< Password authentication
+        WifiTypes::Mode mode;                     ///< Station, access point, or both
     };
 }
 
@@ -141,16 +144,16 @@ class WifiAbstraction : public NetworkAbstraction {
         const auto &params = static_cast<const WifiTypes::WifiParams &>(parameters);
 
         if (WifiTypes::Mode::AccessPointAndStation == params.mode) {
-            error = setSsid(WifiTypes::Mode::AccessPoint, params.accessPointSsid);
+            error = setSsid(WifiTypes::Mode::AccessPoint, params.accessPointSsid.data());
             if (ErrorType::Success == error) {
-                error = setSsid(WifiTypes::Mode::Station, params.stationSsid);
+                error = setSsid(WifiTypes::Mode::Station, params.stationSsid.data());
             }
         }
         else if (WifiTypes::Mode::AccessPoint == params.mode) {
-            error = setSsid(WifiTypes::Mode::AccessPoint, params.accessPointSsid);
+            error = setSsid(WifiTypes::Mode::AccessPoint, params.accessPointSsid.data());
         }
         else if (WifiTypes::Mode::Station == params.mode) {
-            error = setSsid(WifiTypes::Mode::Station, params.stationSsid);
+            error = setSsid(WifiTypes::Mode::Station, params.stationSsid.data());
         }
         if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
             PLT_LOGW(TAG, "Setting wifi SSID is not allowed on this platform <error:%u>", (uint8_t)error);
@@ -168,16 +171,16 @@ class WifiAbstraction : public NetworkAbstraction {
         }
 
         if (WifiTypes::Mode::AccessPointAndStation == params.mode) {
-            error = setPassword(WifiTypes::Mode::AccessPoint, params.accessPointPassword);
+            error = setPassword(WifiTypes::Mode::AccessPoint, params.accessPointPassword.data());
             if (ErrorType::Success == error) {
-                error = setPassword(WifiTypes::Mode::Station, params.stationPassword);
+                error = setPassword(WifiTypes::Mode::Station, params.stationPassword.data());
             }
         }
         else if (WifiTypes::Mode::AccessPoint == params.mode) {
-            error = setPassword(WifiTypes::Mode::AccessPoint, params.accessPointPassword);
+            error = setPassword(WifiTypes::Mode::AccessPoint, params.accessPointPassword.data());
         }
         else if (WifiTypes::Mode::Station == params.mode) {
-            error = setPassword(WifiTypes::Mode::Station, params.stationPassword);
+            error = setPassword(WifiTypes::Mode::Station, params.stationPassword.data());
         }
         if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
             PLT_LOGW(TAG, "Setting wifi password is not allowed on this platform <error:%u>", (uint8_t)error);
