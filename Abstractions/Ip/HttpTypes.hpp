@@ -392,8 +392,8 @@ namespace HttpTypes {
         assert(theIndexThatTheHeaderStartsAt <= theIndexThatTheHeaderEndsAt);
 
         if (std::string::npos != theIndexThatTheHeaderStartsAt && std::string::npos != theIndexThatTheHeaderEndsAt) {
-            std::string contentTypeHeader = request.substr(theIndexThatTheHeaderStartsAt, theIndexThatTheHeaderEndsAt);
-            if (std::string::npos != contentTypeHeader.find(value)) {
+            std::string_view requestView = std::string_view(request).substr(theIndexThatTheHeaderStartsAt, theIndexThatTheHeaderEndsAt);
+            if (std::string::npos != requestView.find(value)) {
                 return ErrorType::Success;
             }
         }
@@ -462,7 +462,14 @@ namespace HttpTypes {
         }
 
         if (std::string::npos != uriEndIndex && std::string::npos != uriStartIndex) {
-            uriStartIndex >= uriEndIndex ? request.requestLine.uri = "" : request.requestLine.uri = buffer.substr(uriStartIndex, uriEndIndex - uriStartIndex);
+
+            if (uriStartIndex >= uriEndIndex) {
+                request.requestLine.uri.clear();
+            }
+            else {
+                std::string_view bufferView = std::string_view(buffer).substr(uriStartIndex, uriEndIndex - uriStartIndex);
+                request.requestLine.uri.assign(bufferView);
+            }
         }
         else {
             request.requestLine.uri = "";
@@ -645,7 +652,8 @@ namespace HttpTypes {
         size_t contentLengthEnd = buffer.find("\r\n", contentLengthBegin);
         if (std::string::npos != contentLengthBegin) {
             contentLengthBegin += sizeof("Content-Length:");
-            request.headers.contentLength = std::stoi(buffer.substr(contentLengthBegin, contentLengthEnd - contentLengthBegin));
+            std::string_view bufferView = std::string_view(buffer).substr(contentLengthBegin, contentLengthEnd - contentLengthBegin);
+            request.headers.contentLength = std::stoul(bufferView.data(), nullptr, 10);
         }
         else {
             request.headers.contentLength = 0;
