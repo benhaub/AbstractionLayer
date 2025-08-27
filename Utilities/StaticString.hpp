@@ -25,6 +25,7 @@ namespace StaticString {
     /**
      * @class StandardStringInterface
      * @brief Interface for implementing std::string-like strings.
+     * @note substr is not inlcuded because it creates a static_string of the same length as the original (doubling the memory usage)
      */
     class StandardStringInterface {
 
@@ -53,7 +54,7 @@ namespace StaticString {
         /// @brief Implementation defined
         virtual size_t capacity() const = 0;
         /// @brief Implementation defined.
-        virtual void resize(size_t n) = 0;
+        virtual void resize(const size_t n) = 0;
         /// @brief Implementation defined.
         virtual char &back() = 0;
         /// @brief Implementation defined
@@ -67,7 +68,7 @@ namespace StaticString {
         /// @brief Implementation defined
         virtual size_t find(const char *s, const size_t pos, const size_t len) const = 0;
         /// @brief Implementation defined
-        virtual StandardStringInterface &erase(const size_t from, const size_t to) = 0;
+        virtual StandardStringInterface &erase(const size_t pos, const size_t n) = 0;
     };
 
     /**
@@ -103,14 +104,14 @@ namespace StaticString {
         void clear() override { _str.clear(); }
         bool empty() const override { return _str.empty(); }
         size_t capacity() const override { return _str.capacity(); }
-        void resize(size_t n) override { _str.resize(n); }
+        void resize(const size_t n) override { _str.resize(n); }
         char &back() override { return _str.back(); }
         void push_back(const char &c) override { return _str.push_back(c); }
         size_t find(const char &c, const size_t pos) const override { return _str.find(c, pos); }
         size_t find(const char *s, const size_t len) const override { return _str.find(s, 0, len); }
         size_t find(std::string_view s) const override { return _str.find(s); }
         size_t find(const char *s, const size_t pos, const size_t len) const override { return _str.find(s, pos, len); }
-        StandardStringInterface &erase(const size_t from, const size_t to) override { _str.erase(from, to); return *this; }
+        StandardStringInterface &erase(const size_t pos, const size_t n) override { _str.erase(pos, n); return *this; }
     };
 
     /**
