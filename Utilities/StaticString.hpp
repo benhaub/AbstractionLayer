@@ -69,6 +69,8 @@ namespace StaticString {
         virtual size_t find(const char *s, const size_t pos, const size_t len) const = 0;
         /// @brief Implementation defined
         virtual StandardStringInterface &erase(const size_t pos, const size_t n) = 0;
+        /// @brief Implementation defined
+        virtual const char &at(const size_t pos) const = 0;
     };
 
     /**
@@ -85,6 +87,7 @@ namespace StaticString {
          * @param s The string to initialize the static string to.
          */
         constexpr Data(const char (&s)[_n]) : _str(s) {}
+        /// @brief Constructor
         constexpr Data() : _str() {}
 
         /// @brief The underlying static string.
@@ -112,6 +115,14 @@ namespace StaticString {
         size_t find(std::string_view s) const override { return _str.find(s); }
         size_t find(const char *s, const size_t pos, const size_t len) const override { return _str.find(s, pos, len); }
         StandardStringInterface &erase(const size_t pos, const size_t n) override { _str.erase(pos, n); return *this; }
+        const char &at(const size_t pos) const { return _str.at(pos); }
+
+        char &operator[](const size_t pos) {
+            return _str[pos];
+        }
+        const char &operator[](const size_t pos) const {
+            return _str[pos];
+        }
     };
 
     /**
