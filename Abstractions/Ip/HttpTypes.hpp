@@ -403,8 +403,7 @@ namespace HttpTypes {
 
     /**
      * @brief Convert a raw Http request to an AbstractionLayer http request.
-     * @details This function could be called iteratively to read the request headers as you receive them, but would not be as optimal
-     *          as receivng all of them first and then calling this function.
+     * @details This function can be called iteratively to read the request headers as you receive them.
      * @sa HttpTypes::Request
      * @param[in] buffer The raw data of the http request.
      * @param[out] request The converted htpp request.
@@ -437,9 +436,6 @@ namespace HttpTypes {
             request.requestLine.method = HttpTypes::Method::Delete;
             uriStartIndex += sizeof("DELETE");
         }
-        else {
-            request.requestLine.method = HttpTypes::Method::Unknown;
-        }
 
         if (std::string::npos != (uriEndIndex = buffer.find("HTTP/1.0"))) {
             request.requestLine.version = HttpTypes::Version::Http1_0;
@@ -457,9 +453,6 @@ namespace HttpTypes {
             request.requestLine.version = HttpTypes::Version::Http3_0;
             uriEndIndex -= 1;
         }
-        else {
-            request.requestLine.version = HttpTypes::Version::Unknown;
-        }
 
         if (std::string::npos != uriEndIndex && std::string::npos != uriStartIndex) {
 
@@ -470,9 +463,6 @@ namespace HttpTypes {
                 std::string_view bufferView = std::string_view(buffer).substr(uriStartIndex, uriEndIndex - uriStartIndex);
                 request.requestLine.uri.assign(bufferView);
             }
-        }
-        else {
-            request.requestLine.uri = "";
         }
 
         if (ErrorType::Success == findHeaderValue(buffer, "Content-Type", "text/html")) {
@@ -502,18 +492,12 @@ namespace HttpTypes {
         else if (ErrorType::Success == findHeaderValue(buffer, "Content-Type", "image/tiff")) {
             request.headers.contentType = HttpTypes::Type::ImageTiff;
         }
-        else {
-            request.headers.contentType = HttpTypes::Type::Unknown;
-        }
 
         if (ErrorType::Success == findHeaderValue(buffer, "Connection:", "keep-alive")) {
             request.headers.connection = HttpTypes::Connection::KeepAlive;
         }
         else if (ErrorType::Success == findHeaderValue(buffer, "Connection:", "close")) {
             request.headers.connection = HttpTypes::Connection::Close;
-        }
-        else {
-            request.headers.connection = HttpTypes::Connection::Unknown;
         }
 
         if (ErrorType::Success == findHeaderValue(buffer, "Accept:", "text/html")) {
@@ -654,9 +638,6 @@ namespace HttpTypes {
             contentLengthBegin += sizeof("Content-Length:");
             std::string_view bufferView = std::string_view(buffer).substr(contentLengthBegin, contentLengthEnd - contentLengthBegin);
             request.headers.contentLength = std::stoul(bufferView.data(), nullptr, 10);
-        }
-        else {
-            request.headers.contentLength = 0;
         }
 
         return ErrorType::Success;

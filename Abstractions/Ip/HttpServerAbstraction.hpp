@@ -106,6 +106,8 @@ class HttpServerAbstraction {
      * @param[out] sock The socket from which the data was received.
      * @param[in] networkReceiveFunction The function to call to receive data. If nullptr, IpClient::receiveBlocking will be used.
      * @returns ErrorType::Success if the response headers were read
+     * @returns ErrorType::LimitReached if the buffer was not long enough to fully read the longest header present in the request.
+                If your the client, make the request again with a larger buffer. If you're the server, you can send a 431 or 414.
      * @returns Any errors returned by IpClient::receiveBlocking
      * @code
      *   ErrorType error;
@@ -135,8 +137,9 @@ class HttpServerAbstraction {
      */
     ErrorType readRequestHeaders(HttpTypes::Request &request, const Milliseconds timeout, Socket &sock, std::function<ErrorType(std::string &buffer, const Milliseconds timeout)> networkReceiveFunction = nullptr) {
         std::string &buffer = request.messageBody;
+        assert(buffer.size() >= 4 && "Buffer size must be at least 4 bytes in order to detect the end of the request headers");
         const Bytes bufferSize = buffer.size();
-        assert(bufferSize > 1 && "Buffer size must be greater than 1 in order to detect the end of the request headers");
+        ErrorType error = ErrorType::Failure;
 
         auto receive = [&](std::string &buffer) -> ErrorType {
             ErrorType error = ErrorType::Failure;
@@ -151,39 +154,58 @@ class HttpServerAbstraction {
             return error;
         };
 
-        ErrorType error = receive(buffer);
+        constexpr char requestHeaderSeperator[] = "\r\n";
+        constexpr char endOfRequestHeaders[] = "\r\n\r\n";
+        size_t requestBodyBegin = std::string::npos;
+        bool entireRequestNotRead = true;
+        std::string lastPartialHeader;
 
-        if (ErrorType::Success == error) {
-            constexpr char endOfRequestHeaders[] = "\r\n\r\n";
+        do {
+            buffer.resize(bufferSize == lastPartialHeader.size() ? bufferSize : bufferSize - lastPartialHeader.size());
+            error = receive(buffer);
 
-            size_t requestBodyBegin = buffer.find(endOfRequestHeaders);
-            const bool theBufferWasNotLargeEnoughToReadTheHeaderInOneGo = std::string::npos == requestBodyBegin;
-            if (theBufferWasNotLargeEnoughToReadTheHeaderInOneGo) {
-                //Extra buffer to store the request header fragments.
-                std::string requestBuffer = buffer;
-
-                do {
-                    buffer.resize(bufferSize);
-                    error = receive(buffer);
-
-                    if (ErrorType::Success == error) {
-                        requestBuffer.append(buffer);
-                        requestBodyBegin = requestBuffer.find(endOfRequestHeaders);
-                    }
-
-                    
-                } while (ErrorType::Success == error && std::string::npos == requestBodyBegin);
+            if (ErrorType::Success == error) {
+                buffer.insert(0, lastPartialHeader);
+                error = toHttpRequest(buffer, request);
 
                 if (ErrorType::Success == error) {
-                    buffer.swap(requestBuffer);
+
+                    const bool requestHeaderPartiallyRead = 0 != buffer.compare(buffer.size() - sizeof(requestHeaderSeperator)-1,
+                                                                        sizeof(requestHeaderSeperator)-1,
+                                                                        requestHeaderSeperator,
+                                                                        sizeof(requestHeaderSeperator)-1);
+
+                    if (requestHeaderPartiallyRead) {
+                        const size_t beginningOfLastCompleteHeader = buffer.rfind(requestHeaderSeperator) + sizeof(requestHeaderSeperator)-1;
+                        if (std::string::npos != beginningOfLastCompleteHeader) {
+                            std::string_view partiallyReadHeader = std::string_view(buffer).substr(beginningOfLastCompleteHeader);
+                            lastPartialHeader.assign(partiallyReadHeader);
+                        }
+                        else {
+                            //We could try to store up the header fragments in a new buffer, but at what point do we stop?
+                            //What if the header fragment reads into the next header? It's best to just give up here because it
+                            //puts more control into the application. The software will be easier to debug and maintain when the
+                            //application is able to make more decisions and has the most effect on the overall behaviour.
+                            return ErrorType::LimitReached;
+                        }
+                    }
+                    else {
+                        lastPartialHeader.clear();
+                    }
                 }
             }
-
-            if (std::string::npos != requestBodyBegin) {
-                //If any of the body was read while extracting the request headers, remove everything except the message body.
-                error = toHttpRequest(buffer, request);
-                buffer.erase(0, requestBodyBegin + sizeof(endOfRequestHeaders)-1);
+            else {
+                break;
             }
+
+            requestBodyBegin = buffer.find(endOfRequestHeaders);
+            entireRequestNotRead = std::string::npos == requestBodyBegin;
+
+        } while (entireRequestNotRead);
+
+        //If any of the body was read while extracting the request headers, remove everything except the message body.
+        if (requestBodyBegin < buffer.size()) {
+            buffer.erase(0, requestBodyBegin + sizeof(endOfRequestHeaders)-1);
         }
 
         return error;
