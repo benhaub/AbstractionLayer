@@ -103,6 +103,8 @@ class HttpClientAbstraction {
      * @param[in] networkReceiveFunction The function to call to receive data. If nullptr, IpClient::receiveBlocking will be used.
      * @returns ErrorType::Success if the response headers were read
      * @returns Any errors returned by IpClient::receiveBlocking
+     * @post If exactly the size of the header was read and parsed at the end of this function, then the size of the message body will be returned as zero
+     *       and it may safely be resized back to its original size since the message body contains no message body data.
      */
     ErrorType readResponseHeaders(HttpTypes::Response &response, const Milliseconds timeout, std::function<ErrorType(std::string &buffer, const Milliseconds timeout)> networkReceiveFunction = nullptr) {
         std::string &buffer = response.messageBody;

@@ -39,6 +39,7 @@ namespace NetworkTypes {
     */
     struct Status {
         bool isUp;                       ///< True when the network is up and ready for use.
+        bool isProvisioned;              ///< True when the network is provisioned and ready to connect to access points.
         Technology technology;           ///< The technology of the network interface.
         std::string manufacturerName;    ///< The manufacturer name of the network interface.
         DecibelMilliWatts signalStrength;///< The signal strength of the network interface.
@@ -268,6 +269,7 @@ class NetworkAbstraction : public EventQueue {
     /// @brief The current status of the network interface
     NetworkTypes::Status _status = {
         .isUp = false,
+        .isProvisioned = false,
         .technology = NetworkTypes::Technology::Unknown,
         .manufacturerName = "",
         .signalStrength = 0

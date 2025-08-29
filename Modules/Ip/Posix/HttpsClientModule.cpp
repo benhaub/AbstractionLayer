@@ -159,9 +159,6 @@ ErrorType HttpsClient::sendBlocking(const HttpTypes::Request &request, const Mil
             if (noFatalErrorsOccured) {
                 written += ret;
             }
-            else if (ret == 0) {
-                PLT_LOGW(TAG, "mbedtls_ssl_write sent 0 bytes <frameSize:%u, written:%u>", frame.size(), written);
-            }
             else {
                 PLT_LOGW(TAG, "mbedtls_ssl_write failed <error:-0x%x>", -ret);
             }
@@ -190,7 +187,8 @@ ErrorType HttpsClient::sendBlocking(const HttpTypes::Request &request, const Mil
 
 ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Milliseconds timeout) {
     assert(nullptr != _ipClient);
-    assert(response.messageBody.size() > 0);
+    const Bytes messageBodySize = response.messageBody.size();
+    assert(messageBodySize > 0);
     ErrorType callbackError = ErrorType::Success;
     Bytes read = 0;
     bool doneReceiving = false;
@@ -198,20 +196,17 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
     auto receiveCallback = [&]() -> ErrorType {
         auto networkReceiveFunction = [&](std::string &buffer, const Milliseconds timeout) -> ErrorType {
             int ret = mbedtls_ssl_read(&_ssl, reinterpret_cast<uint8_t *>(&buffer[0]), buffer.size());
-            if (ret < 0) {
+            if (ret <= 0) {
                 if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
                     // Need more data or write buffer full - retry
-                    buffer.resize(0);
                     return ErrorType::Success; // Indicate we need to retry
                 }
                 if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
                     // Server closed connection gracefully - this is normal
-                    buffer.resize(0);
                     return ErrorType::Success;
                 }
                 if (ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET) {
                     // Server sent new session ticket - continue operation
-                    buffer.resize(0);
                     return ErrorType::Success; // Indicate we need to retry
                 }
 
@@ -226,36 +221,43 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
 
         if (0 == response.representationHeaders.contentLength) {
             callbackError = readResponseHeaders(response, timeout, networkReceiveFunction);
+
+            read = response.messageBody.size();
+
+            if (0 == read) {
+                //If exactly the header was read, then no bytes from the message body were read so we can resize to start reading it.
+                response.messageBody.resize(messageBodySize);
+            }
         }
-        else {
-            int ret;
 
-            do {
-                ret = mbedtls_ssl_read(&_ssl, reinterpret_cast<uint8_t *>(&response.messageBody[read]), response.messageBody.size() - read);
+        int ret;
 
-                if (ret < 0) {
-                    if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
-                        // Need more data or write buffer full - continue loop
-                        continue;
-                    }
-                    if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
-                        // Server closed connection gracefully - this is normal
-                        break;
-                    }
-                    if (ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET) {
-                        // Server sent new session ticket - continue operation
-                        continue;
-                    }
-                    PLT_LOGW(TAG, "mbedtls_ssl_read failed <error:-0x%x>", -ret);
-                    callbackError = ErrorType::Failure;
+        do {
+            ret = mbedtls_ssl_read(&_ssl, reinterpret_cast<uint8_t *>(&response.messageBody[read]), response.messageBody.size() - read);
+
+            if (ret <= 0) {
+                if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+                    // Need more data or write buffer full - continue loop
+                    continue;
                 }
-                else {
-                    read += ret;
+                if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
+                    // Server closed connection gracefully - this is normal
+                    break;
+                }
+                if (ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET) {
+                    // Server sent new session ticket - continue operation
+                    continue;
                 }
 
+                PLT_LOGW(TAG, "mbedtls_ssl_read failed <error:-0x%x>", -ret);
+                callbackError = ErrorType::Failure;
+            }
+            else {
+                read += ret;
+            }
 
-            } while (read < response.messageBody.size() && (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE));
-        }
+
+        } while (read < response.messageBody.size() && (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) && ErrorType::Success == callbackError);
 
         if (read > 0 && callbackError == ErrorType::Success) {
             response.messageBody.resize(read);

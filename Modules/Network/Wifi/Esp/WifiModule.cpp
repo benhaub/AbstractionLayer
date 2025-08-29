@@ -33,7 +33,6 @@ constexpr unsigned int wifiApAndStaStartedBit = BIT2;
 ErrorType Wifi::init() {
     esp_err_t err;
     ErrorType error;
-    _status.isUp = false;
 
     if (WifiTypes::Mode::Unknown == mode() || WifiTypes::AuthMode::Unknown == authMode()) {
         return ErrorType::PrerequisitesNotMet;
@@ -572,14 +571,14 @@ static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t even
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_CONNECTED) {
         PLT_LOGI(Wifi::TAG, "Station connected");
-        const_cast<NetworkTypes::Status &>(self->status()).isUp = true;
+        const_cast<NetworkTypes::Status &>(self->status()).isProvisioned = true;
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_DISCONNECTED) {
         PLT_LOGI(Wifi::TAG, "Station disconnected");
-        const_cast<NetworkTypes::Status &>(self->status()).isUp = false;
+        const_cast<NetworkTypes::Status &>(self->status()).isProvisioned = false;
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_START) {
-        esp_wifi_connect();
+        self->networkUp();
         PLT_LOGI(Wifi::TAG, "Station started");
         xEventGroupSetBits(wifiEventGroup, wifiStaStartedBit);
         if (xEventGroupGetBits(wifiEventGroup) & wifiApStartedBit) {

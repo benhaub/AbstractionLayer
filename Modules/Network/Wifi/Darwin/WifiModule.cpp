@@ -13,6 +13,8 @@
 #include <signal.h>
 
 ErrorType Wifi::init() {
+    _status.isProvisioned = true;
+    _status.isUp = true;
     return ErrorType::NotAvailable;
 }
 

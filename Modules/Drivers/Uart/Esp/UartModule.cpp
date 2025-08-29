@@ -24,6 +24,9 @@ ErrorType Uart::init() {
                 if (ErrorType::Success == error) {
                     uartConfig.flow_ctrl = toEspFlowControl(uartParams().driverConfig.flowControl, error);
 
+                    uartConfig.flags.allow_pd = 0;
+                    uartConfig.flags.backup_before_sleep = 0;
+
                     if (ESP_OK == uart_param_config(uartPort, &uartConfig)) {
 
                         if (ESP_OK == uart_set_pin(uartPort, uartParams().hardwareConfig.tx, uartParams().hardwareConfig.rx, uartParams().hardwareConfig.rts, uartParams().hardwareConfig.cts)) {
