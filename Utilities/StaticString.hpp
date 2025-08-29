@@ -115,7 +115,7 @@ namespace StaticString {
         size_t find(std::string_view s) const override { return _str.find(s); }
         size_t find(const char *s, const size_t pos, const size_t len) const override { return _str.find(s, pos, len); }
         StandardStringInterface &erase(const size_t pos, const size_t n) override { _str.erase(pos, n); return *this; }
-        const char &at(const size_t pos) const { return _str.at(pos); }
+        const char &at(const size_t pos) const override { return _str.at(pos); }
 
         char &operator[](const size_t pos) {
             return _str[pos];
