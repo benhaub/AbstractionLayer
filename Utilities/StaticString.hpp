@@ -40,11 +40,11 @@ namespace StaticString {
         /// @brief Implementation defined.
         virtual char *data() = 0;
         /// @brief Implementation defined.
-        virtual StandardStringInterface &append(const char *s, size_t length) = 0;
+        virtual StandardStringInterface &append(const char *s, const size_t length) = 0;
         /// @brief Implementation defined.
         virtual StandardStringInterface &append(std::string_view s) = 0;
         /// @brief Implementation defined.
-        virtual StandardStringInterface &assign(const char *s, size_t length) = 0;
+        virtual StandardStringInterface &assign(const char *s, const size_t length) = 0;
         /// @brief Implementation defined.
         virtual StandardStringInterface &assign(std::string_view) = 0;
         /// @brief Implementation defined.
@@ -104,14 +104,15 @@ namespace StaticString {
         const char *c_str() const override { return _str.c_str(); }
         size_t size() const override { return _str.size(); }
         char *data() override { return _str.data(); }
-        StandardStringInterface &append(const char *s, size_t length) override {
+        StandardStringInterface &append(const char *s, const size_t length) override {
             _str.append(s, length); return *this;
         }
         StandardStringInterface &append(std::string_view s) override { _str.append(s); return *this;}
-        StandardStringInterface &assign(const char *s, size_t length) override {
+        StandardStringInterface &assign(const char *s, const size_t length) override {
             _str.assign(s, length); return *this;
         }
         StandardStringInterface &assign(std::string_view s) override { _str.assign(s); return *this; }
+        StandardStringInterface &assign(const Data<_n> &other) { return assign(other.c_str(), other.size()); }
         void clear() override { _str.clear(); }
         bool empty() const override { return _str.empty(); }
         size_t capacity() const override { return _str.capacity(); }
