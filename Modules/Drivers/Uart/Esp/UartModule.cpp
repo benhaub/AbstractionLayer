@@ -52,12 +52,18 @@ ErrorType Uart::deinit() {
     return error;
 }
 
+ErrorType Uart::txBlocking(const StaticString::Container &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
+    return txBlocking(data->c_str(), data->size(), timeout);
+}
 ErrorType Uart::txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
+    return txBlocking(data.c_str(), data.size(), timeout);
+}
+ErrorType Uart::txBlocking(const char *data, const size_t size, const Milliseconds timeout) {
     ErrorType error = ErrorType::Failure;
     const uart_port_t uartPort = toEspPeripheralNumber(uartParams().hardwareConfig.peripheralNumber, error);
 
     if (ErrorType::Success == error) {
-        if (-1 != uart_write_bytes(uartPort, data.data(), data.size())) {
+        if (-1 != uart_write_bytes(uartPort, data, size)) {
             error = ErrorType::Success;
         }
     }
@@ -65,14 +71,34 @@ ErrorType Uart::txBlocking(const std::string &data, const Milliseconds timeout, 
     return error;
 }
 
+ErrorType Uart::rxBlocking(StaticString::Container &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
+    ErrorType error = ErrorType::Failure;
+    size_t bytesRead = 0;
+
+    if (ErrorType::Success == (error = rxBlocking(&buffer[0], buffer->size(), bytesRead, timeout))) {
+        buffer->resize(bytesRead);
+    }
+
+    return error;
+}
 ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
+    ErrorType error = ErrorType::Failure;
+    size_t bytesRead = 0;
+
+    if (ErrorType::Success == (error = rxBlocking(&buffer[0], buffer.size(), bytesRead, timeout))) {
+        buffer.resize(bytesRead);
+    }
+
+    return error;
+}
+ErrorType Uart::rxBlocking(char *buffer, const size_t bufferSize, size_t &bytesRead, const Milliseconds timeout) {
     ErrorType error = ErrorType::Failure;
     const uart_port_t uartPort = toEspPeripheralNumber(uartParams().hardwareConfig.peripheralNumber, error);
 
     if (ErrorType::Success == error) {
-        const esp_err_t result = uart_read_bytes(uartPort, &buffer[0], buffer.size(), pdMS_TO_TICKS(timeout));
+        const esp_err_t result = uart_read_bytes(uartPort, buffer, bufferSize, pdMS_TO_TICKS(timeout));
         if (result > 0) {
-            buffer.resize(result);
+            bytesRead = result;
             error = ErrorType::Success;
         }
         else if (0 == result) {
@@ -83,10 +109,30 @@ ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout, cons
     return error;
 }
 
-ErrorType Uart::txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+ErrorType Uart::txNonBlocking(const std::shared_ptr<StaticString::Container> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+    return ErrorType::NotImplemented;
+}
+ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     return ErrorType::NotImplemented;
 }
 
+ErrorType Uart::rxNonBlocking(std::shared_ptr<StaticString::Container> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<StaticString::Container> buffer)> callback) {
+    auto rx = [&, callback, buffer]() -> ErrorType {
+        ErrorType error = ErrorType::Failure;
+        const Milliseconds timeout = 1000;
+
+        error = rxBlocking(*buffer, timeout, params);
+
+        if (nullptr != callback) {
+            callback(error, buffer);
+        }
+
+        return error;
+    };
+
+    EventQueue::Event event = EventQueue::Event(rx);
+    return addEvent(event);
+}
 ErrorType Uart::rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
     auto rx = [&, callback, buffer]() -> ErrorType {
         ErrorType error = ErrorType::Failure;

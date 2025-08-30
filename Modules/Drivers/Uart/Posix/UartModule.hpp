@@ -18,47 +18,54 @@ class Uart : public UartAbstraction {
 
     ErrorType init() override;
     ErrorType deinit() override;
+    ErrorType txBlocking(const StaticString::Container &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
     ErrorType txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType rxBlocking(StaticString::Container &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
     ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType txNonBlocking(const std::shared_ptr<StaticString::Container> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
     ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
+    ErrorType rxNonBlocking(std::shared_ptr<StaticString::Container> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<StaticString::Container> buffer)> callback) override;
     ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
     ErrorType flushRxBuffer() override;
 
     private:
     /// @brief The discovered serial device path
-    std::string _devicePath;
+    StaticString::Container _devicePath;
     /// @brief The file descriptor
     int _fileDescriptor = -1;
+
+    ErrorType txBlocking(const char *data, const size_t size, const Milliseconds timeout);
+    ErrorType rxBlocking(char *buffer, const size_t bufferSize, size_t &bytesRead, const Milliseconds timeout);
 
     /**
      * @brief Convert a peripheral number to a device path
      * @param peripheralNumber The peripheral number to convert
      * @returns The device path
      */
-    std::string toDevicePath(const PeripheralNumber peripheralNumber) {
+    StaticString::Container toDevicePath(const PeripheralNumber peripheralNumber) {
         switch (peripheralNumber) {
             case PeripheralNumber::Zero:
-                return "/dev/cu.usbserial-10";
+                return StaticString::Data("/dev/cu.usbserial-10");
             case PeripheralNumber::One:
-                return "/dev/tty.usbserial-10";
+                return StaticString::Data("/dev/tty.usbserial-10");
             case PeripheralNumber::Two:
-                return "/dev/tty.usbmodem-101";
+                return StaticString::Data("/dev/tty.usbmodem-101");
             case PeripheralNumber::Three:
-                return "/dev/tty.usbserial-1110";
+                return StaticString::Data("/dev/tty.usbserial-1110");
             case PeripheralNumber::Four:
-                return "/dev/ttyUSB0";
+                return StaticString::Data("/dev/ttyUSB0");
             case PeripheralNumber::Five:
-                return "/dev/ttyUSB1";
+                return StaticString::Data("/dev/ttyUSB1");
             case PeripheralNumber::Six:
-                return "/dev/ttyUSB2";
+                return StaticString::Data("/dev/ttyUSB2");
             case PeripheralNumber::Seven:
-                return "/dev/ttyACM0";
+                return StaticString::Data("/dev/ttyACM0");
             case PeripheralNumber::Eight:
-                return "/dev/ttyACM1";
+                return StaticString::Data("/dev/ttyACM1");
             case PeripheralNumber::Nine:
-                return "/dev/ttyACM2";
+                return StaticString::Data("/dev/ttyACM2");
             default:
-                return "";
+                return StaticString::Data("");
         }
     }
 

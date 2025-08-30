@@ -9,6 +9,7 @@
 
 //AbstractionLayer
 #include "EventQueue.hpp"
+#include "StaticString.hpp"
 //C++
 #include <memory>
 #include <optional>
@@ -93,8 +94,11 @@ class IcCommunicationProtocol : public EventQueue {
      * @param[in] timeout The maximum time to wait for the transmission to complete
      * @param[in] params Additional parameters for the transmission
      * @returns ErrorType::Success if the data was transmitted successfully
+     * @returns ErrorType::LimitReached if the data was partially transmitted
      * @returns ErrorType::Failure otherwise
     */
+    virtual ErrorType txBlocking(const StaticString::Container &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) = 0;
+    /// @copydoc ErrorType txBlocking(const StaticString::Container,const Milliseconds,const IcCommunicationProtocolTypes::AdditionalCommunicationParameters)
     virtual ErrorType txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) = 0;
     /**
      * @brief transmit data
@@ -103,6 +107,8 @@ class IcCommunicationProtocol : public EventQueue {
      * @param[in] params Additional parameters for the transmission
      * @param[in] callback The callback to invoke when the transmission is complete.
     */
+    virtual ErrorType txNonBlocking(const std::shared_ptr<StaticString::Container> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
+    /// @copydoc ErrorType txNonBlocking(const std::shared_ptr<StaticString::Container>,const Milliseconds,const IcCommunicationProtocolTypes::AdditionalCommunicationParameters,std::function<void(const ErrorType,const Bytes)>)
     virtual ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) = 0;
     /**
      * @brief receive data
@@ -113,6 +119,8 @@ class IcCommunicationProtocol : public EventQueue {
      * @returns ErrorType::Failure otherwise
      * @post The buffer is not modfied in any way unless data is received.
     */
+    virtual ErrorType rxBlocking(StaticString::Container &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) = 0;
+    /// @copydoc ErrorType rxBlocking(StaticString::Container,const Milliseconds,const IcCommunicationProtocolTypes::AdditionalCommunicationParameters)
     virtual ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) = 0;
     /**
      * @brief receive data
@@ -124,6 +132,8 @@ class IcCommunicationProtocol : public EventQueue {
      * @returns ErrorType::Failure otherwise
      * @post The buffer is not modfied in any way unless data is received.
     */
+    virtual ErrorType rxNonBlocking(std::shared_ptr<StaticString::Container> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<StaticString::Container> buffer)> callback) = 0;
+    /// @copydoc ErrorType rxNonBlocking(std::shared_ptr<StaticString::Container>,const Milliseconds,const IcCommunicationProtocolTypes::AdditionalCommunicationParameters,std::function<void(const ErrorType, std::shared_ptr<StaticString::Container>)>);
     virtual ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) = 0;
     /**
      * @brief flush the receive buffer

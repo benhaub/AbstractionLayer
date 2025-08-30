@@ -4,7 +4,8 @@
 //AbstractionLayer
 #include "I2cAbstraction.hpp"
 //ESP
-#include "driver/i2c.h"
+#include "driver/i2c_master.h"
+#include "driver/i2c_slave.h"
 
 class I2c final : public I2cAbstraction {
 
@@ -13,9 +14,13 @@ class I2c final : public I2cAbstraction {
 
     ErrorType init() override;
     ErrorType deinit() override;
+    ErrorType txBlocking(const StaticString::Container &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
     ErrorType txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType rxBlocking(StaticString::Container &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
     ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType txNonBlocking(const std::shared_ptr<StaticString::Container> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
     ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
+    ErrorType rxNonBlocking(std::shared_ptr<StaticString::Container> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<StaticString::Container> buffer)> callback) override;
     ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
     ErrorType flushRxBuffer() override;
 
@@ -57,14 +62,16 @@ class I2c final : public I2cAbstraction {
         return 0;
     }
 
-    i2c_port_t toEspPort(const PeripheralNumber peripheral, ErrorType &error) {
+    i2c_port_num_t toEspPort(const PeripheralNumber peripheral, ErrorType &error) {
         error = ErrorType::Success;
 
         switch (peripheral) {
             case PeripheralNumber::Zero:
                 return I2C_NUM_0;
             case PeripheralNumber::One:
+#if SOC_HP_I2C_NUM >= 2
                 return I2C_NUM_1;
+#endif
             case PeripheralNumber::Two:
             case PeripheralNumber::Three:
             case PeripheralNumber::Four:
