@@ -47,6 +47,17 @@ namespace CellularTypes {
     constexpr size_t MaxApnLength = 64;
 
     /**
+     * @struct Status
+     * @brief The status of the cellular network.
+    */
+    struct Status {
+        DecibelMilliWatts signalStrength;         ///< The signal strength of the network interface.
+        StaticString::Container manufacturerName; ///< The manufacturer name of the network interface.
+
+        Status() : signalStrength(0), manufacturerName(StaticString::Data<16>()) {}
+    };
+
+    /**
      * @struct CellularParams
      * @brief Contains the parameters used to configure the cellular device.
      */
@@ -89,14 +100,21 @@ class CellularAbstraction : public NetworkAbstraction {
     public:
     /// @brief Default constructor
     CellularAbstraction() {
-        _status.isUp = false;
-        _status.technology = NetworkTypes::Technology::Cellular;
+        NetworkAbstraction::_status.technology = NetworkTypes::Technology::Cellular;
     }
     /// @brief Default destructor
     virtual ~CellularAbstraction() = default;
 
     /// @brief Tag for logging
     static constexpr char TAG[] = "Cellular";
+
+    void printStatus() {
+        status();
+        PLT_LOGI(TAG, "<CellularStatus> <Technology:%u, isUp:%s, Signal Strength (dBm):%d> <Pie, Line>",
+        static_cast<uint8_t>(NetworkAbstraction::_status.technology),
+                             NetworkAbstraction::_status.isUp ? "yes" : "no",
+                             _status.signalStrength);
+        }
 
     /**
      * @brief Reset the cellular device.
@@ -120,10 +138,24 @@ class CellularAbstraction : public NetworkAbstraction {
 
     /// @brief Get the cellular parameters as a constant reference
     const CellularTypes::CellularParams &cellularParams() const { return _cellularParams; }
+    /// @brief Get the status of the cellular network
+    const CellularTypes::Status &status(const bool updateStatus = true) {
+        if (updateStatus) {
+            //Not only does it not really make sense to want to know the signal strength if you aren't connected to anything,
+            //but some platforms will not allow this and may event crash if you ask for the status before the network is initialized.
+            if (NetworkAbstraction::_status.isUp) {
+                getSignalStrength(_status.signalStrength);
+            }
+        }
+
+        return _status;
+    }
 
     private:
-    // @brief The cellular parameters.
+    /// @brief The cellular parameters.
     CellularTypes::CellularParams _cellularParams;
+    /// @brief The status of the cellular network
+    CellularTypes::Status _status;
 };
 
 #endif // __CELLULAR_ABSTRACTION_HPP__

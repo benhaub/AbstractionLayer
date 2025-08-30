@@ -38,11 +38,10 @@ namespace NetworkTypes {
      * @brief The status of the network interface.
     */
     struct Status {
-        bool isUp;                       ///< True when the network is up and ready for use.
-        bool isProvisioned;              ///< True when the network is provisioned and ready to connect to access points.
-        Technology technology;           ///< The technology of the network interface.
-        std::string manufacturerName;    ///< The manufacturer name of the network interface.
-        DecibelMilliWatts signalStrength;///< The signal strength of the network interface.
+        bool isUp;                                ///< True when the network is up and ready for use.
+        Technology technology;                    ///< The technology of the network interface.
+
+        Status() : isUp(false), technology(Technology::Unknown) {}
     };
 
     /// @brief Size of an IPv4 address string with tombstone
@@ -128,13 +127,6 @@ class NetworkAbstraction : public EventQueue {
     /// @brief Tag for logging
     static constexpr char TAG[] = "Network";
 
-    /// @brief Print the status of the network interface
-    void printStatus() {
-        status();
-        PLT_LOGI(TAG, "<NetworkStatus> <Technology:%u, Connected:%s, Signal Strength (dBm):%d> <Pie, Line>",
-        static_cast<uint8_t>(_status.technology), _status.isUp ? "true" : "false", _status.signalStrength);
-    }
-
     /**
      * @brief Configure the network before initializing
      * @param[in] parameters The parameters to configure with
@@ -151,18 +143,21 @@ class NetworkAbstraction : public EventQueue {
     * @post Network can be used to connect after this function returns ErrorType::Success.
     * @post Will init with a default setting if network parameters are not set prior to this call.
     * @post NetworkTypes::Status::isUp will be set to true after this function returns ErrorType::Success
+    * @pre configure
     */
     virtual ErrorType init() = 0;
     /**
      * @brief Bring up the network interface so that it is ready for use (e.g. IP connections)
      * @returns ErrorType::Success if the network interface was brought up successfully
      * @returns ErrorType::Failure if the network interface could not be brought up
+     * @pre init
     */
     virtual ErrorType networkUp() = 0;
     /**
      * @brief Bring down the network interface.
      * @returns ErrorType::Success if the network interface was brought down successfully
      * @returns ErrorType::Failure if the network interface could not be brought down
+     * @pre init
     */
     virtual ErrorType networkDown() = 0;
     /**
@@ -180,6 +175,7 @@ class NetworkAbstraction : public EventQueue {
      * @returns Fnd::ErrorType::Failure on failure
      * @returns Fnd::ErrorType::NotImplemented if not implemented
      * @returns Fnd::ErrorType::NotSupported if the network interface doesn't support the operation
+     * @pre init
     */
     virtual ErrorType connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, Socket &sock, const Milliseconds timeout) = 0;
     /**
@@ -188,6 +184,7 @@ class NetworkAbstraction : public EventQueue {
      * @returns Fnd::ErrorType::Success on success
      * @returns Fnd::ErrorType::Failure on failure
      * @returns Fnd::ErrorType::NotImplemented if not implemented
+     * @pre init
     */
     virtual ErrorType disconnect(const Socket &socket) = 0;
     /**
@@ -198,6 +195,7 @@ class NetworkAbstraction : public EventQueue {
      * @param[in] port The port to listen to
      * @sa IpTypes::Version
      * @param[out] listenerSocket The socket that was created to listen for connections
+     * @pre init
     */
     virtual ErrorType listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port, Socket &listenerSocket) = 0;
     /**
@@ -209,12 +207,14 @@ class NetworkAbstraction : public EventQueue {
      * @returns ErrorType::LimitReached if the maximum number of connections has been accepted
      * @returns ErrorType::Timeout if no connections were accepted within the given timeout.
      * @returns ErrorType::Failure otherwise
+     * @pre init
     */
     virtual ErrorType acceptConnection(const Socket &listenerSocket, Socket &newSocket, const Milliseconds timeout) = 0;
     /**
      * @brief Close the connection
      * @param[in] socket The socket to close
      * @returns Fnd::ErrorType::Success on success
+     * @pre init
     */
     virtual ErrorType closeConnection(const Socket socket) = 0;
     /**
@@ -225,6 +225,7 @@ class NetworkAbstraction : public EventQueue {
      * @returns ErrorType::Success if the transmission was successful
      * @returns ErrorType::Failure if the transmission failed
      * @post NetworkTypes::Status::isUp will be set to false after this function returns ErrorType::Success
+     * @pre init
     */
     virtual ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) = 0;
     /**
@@ -235,6 +236,7 @@ class NetworkAbstraction : public EventQueue {
      * @returns ErrorType::Success if the frame was successfully received
      * @returns ErrorType::Failure if the frame was not received
      * @post The frameBuffer is not modified in any way unless data is received.
+     * @pre init
     */
     virtual ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) = 0;
     /**
@@ -242,6 +244,7 @@ class NetworkAbstraction : public EventQueue {
      * @param[out] macAddress The MAC address of this network interface.
      * @returns ErrorType::Success if the MAC address was successfully retrieved
      * @returns ErrorType::Failure if the MAC address was not successfully retrieved
+     * @pre init
     */
     virtual ErrorType getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) = 0;
     /**
@@ -249,31 +252,18 @@ class NetworkAbstraction : public EventQueue {
     * @param[out] signalStrength The signal strength of the network interface.
     * @returns ErrorType::Success if the signal strength was successfully retrieved
     * @returns ErrorType::Failure if the signal strength was not successfully retrieved
+    * @pre init
     */
     virtual ErrorType getSignalStrength(DecibelMilliWatts &signalStrength) = 0;
 
     /// @brief The current status of the network interface as a const reference.
-    const NetworkTypes::Status &status(const bool updateStatus = true) {
-        if (updateStatus) {
-            //Not only does it not really make sense to want to know the signal strength if you aren't connected to anything,
-            //but some platforms will not allow this and may event crash if you ask for the status before the network is initialized.
-            if (_status.isUp) {
-                getSignalStrength(_status.signalStrength);
-            }
-        }
-
+    const NetworkTypes::Status &status() const {
         return _status;
     }
 
     protected:
     /// @brief The current status of the network interface
-    NetworkTypes::Status _status = {
-        .isUp = false,
-        .isProvisioned = false,
-        .technology = NetworkTypes::Technology::Unknown,
-        .manufacturerName = "",
-        .signalStrength = 0
-    };
+    NetworkTypes::Status _status;
 };
 
 #endif // __NETWORK_ABSTRACTION_HPP__

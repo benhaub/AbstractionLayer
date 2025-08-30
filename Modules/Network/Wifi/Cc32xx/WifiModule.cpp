@@ -6,7 +6,7 @@
 //TI
 #include "ti/drivers/net/wifi/slnetifwifi.h"
 
-Wifi::Wifi() : WifiAbstraction() {
+ErrorType Wifi::init() {
     Spi spi;
     Id thread;
     ErrorType error = spi.init();
@@ -58,10 +58,6 @@ Wifi::Wifi() : WifiAbstraction() {
     SlWlanRxFilterOperationCommandBuff_t rxFilterIdMask;
     memset(rxFilterIdMask.FilterBitmap, 0xFF, 8);
     sl_WlanSet(SL_WLAN_RX_FILTERS_ID, SL_WLAN_RX_FILTER_REMOVE, sizeof(rxFilterIdMask), (uint8_t *)&rxFilterIdMask);
-}
-
-ErrorType Wifi::init() {
-    ErrorType error = ErrorType::Success;
 
     //Turn off and on for changes to take affect.
     error = radioOff();

@@ -17,7 +17,8 @@ class Wifi final : public WifiAbstraction {
     public:
     Wifi() : WifiAbstraction() {
         //Wifi on a posix system is always up.
-        _status.isUp = true;
+        NetworkAbstraction::_status.isUp = true;
+        _status.isProvisioned = true;
     }
 
     ErrorType init() override;

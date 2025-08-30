@@ -6,8 +6,8 @@
 class Cellular final : public CellularAbstraction {
     public:
     Cellular() : CellularAbstraction() {
-        _status.isUp = false;
-        _status.technology = NetworkTypes::Technology::Cellular;
+        NetworkAbstraction::_status.isUp = false;
+        NetworkAbstraction::_status.technology = NetworkTypes::Technology::Cellular;
     }
 
     ErrorType init() override;

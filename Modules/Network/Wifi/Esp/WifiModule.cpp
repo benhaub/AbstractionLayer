@@ -179,7 +179,7 @@ ErrorType Wifi::networkUp() {
 
     esp_err_t err = esp_wifi_connect();
     if (ESP_OK == err) {
-        _status.isUp = true;
+        NetworkAbstraction::_status.isUp = true;
     }
     else {
         PLT_LOGW(TAG, "Failed to bring up wifi network <Error:%s>", esp_err_to_name(err));
@@ -191,7 +191,7 @@ ErrorType Wifi::networkUp() {
 
 ErrorType Wifi::networkDown() {
     ErrorType error = fromPlatformError(esp_wifi_disconnect());
-    _status.isUp = false;
+    NetworkAbstraction::_status.isUp = false;
     return error;
 }
 
@@ -571,11 +571,11 @@ static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t even
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_CONNECTED) {
         PLT_LOGI(Wifi::TAG, "Station connected");
-        const_cast<NetworkTypes::Status &>(self->status()).isProvisioned = true;
+        const_cast<WifiTypes::Status &>(self->status()).isProvisioned = true;
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_DISCONNECTED) {
         PLT_LOGI(Wifi::TAG, "Station disconnected");
-        const_cast<NetworkTypes::Status &>(self->status()).isProvisioned = false;
+        const_cast<WifiTypes::Status &>(self->status()).isProvisioned = false;
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_START) {
         self->networkUp();

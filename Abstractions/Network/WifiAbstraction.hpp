@@ -54,6 +54,17 @@ namespace WifiTypes {
     constexpr size_t MaxPasswordLength = 64;
 
     /**
+     * @struct Status
+     * @brief The status of the wifi network.
+    */
+    struct Status {
+        bool isProvisioned; ///< True when the network is provisioned and ready to connect to access points.
+        DecibelMilliWatts signalStrength;///< The signal strength of the network interface.
+
+        Status() : isProvisioned(false), signalStrength(0) {}
+    };
+
+    /**
      * @struct WifiParams
      * @brief Contains the parameters used to configure the wifi.
      */
@@ -61,12 +72,12 @@ namespace WifiTypes {
         /// @brief The technology type these parameters are meant for
         NetworkTypes::Technology technology() const override { return NetworkTypes::Technology::Wifi; }
 
-        std::array<char, MaxSsidLength> accessPointSsid;     ///< The SSID of the access point (Connecting to this device)
+        std::array<char, MaxSsidLength> accessPointSsid;         ///< The SSID of the access point (Connecting to this device)
         std::array<char, MaxPasswordLength> accessPointPassword; ///< The password of the access point
-        std::array<char, MaxSsidLength> stationSsid;         ///< The SSID of the station (Wifi that this device connects to)
+        std::array<char, MaxSsidLength> stationSsid;             ///< The SSID of the station (Wifi that this device connects to)
         std::array<char, MaxPasswordLength> stationPassword;     ///< The password of the station
-        WifiTypes::AuthMode authMode;             ///< Password authentication
-        WifiTypes::Mode mode;                     ///< Station, access point, or both
+        WifiTypes::AuthMode authMode;                            ///< Password authentication
+        WifiTypes::Mode mode;                                    ///< Station, access point, or both
     };
 }
 
@@ -75,18 +86,28 @@ namespace WifiTypes {
  * @brief Interface for communication over the wifi.
 */
 class WifiAbstraction : public NetworkAbstraction {
+
     public:
     /**
      * @brief Anything that should be called before init should be called in the constructor
     */
     WifiAbstraction() {
-        _status.isUp = false;
-        _status.technology = NetworkTypes::Technology::Wifi;
+        _status.isProvisioned = false;
+        NetworkAbstraction::_status.technology = NetworkTypes::Technology::Wifi;
     }
     virtual ~WifiAbstraction() = default;
 
     /// @brief Tag for logging
     static constexpr char TAG[] = "Wifi";
+
+    void printStatus() {
+        status();
+        PLT_LOGI(TAG, "<WifiStatus> <Technology:%u, isUp:%s, isProvisioned:%s, Signal Strength (dBm):%d> <Pie, Line>",
+        static_cast<uint8_t>(NetworkAbstraction::_status.technology),
+                             _status.isProvisioned ? "yes" : "no",
+                             NetworkAbstraction::_status.isUp ? "true" : "false",
+                             _status.signalStrength);
+    }
 
     /**
      * @brief Turn the wifi radio on.
@@ -256,6 +277,18 @@ class WifiAbstraction : public NetworkAbstraction {
     const uint8_t &maxConnections() const { return _maxConnections; }
     /// @brief Get the authentication mode as a constant reference
     const WifiTypes::AuthMode &authMode() const { return _authMode; }
+    /// @brief Get the status of the wifi network
+    const WifiTypes::Status &status(const bool updateStatus = true) {
+        if (updateStatus) {
+            //Not only does it not really make sense to want to know the signal strength if you aren't connected to anything,
+            //but some platforms will not allow this and may event crash if you ask for the status before the network is initialized.
+            if (NetworkAbstraction::_status.isUp) {
+                getSignalStrength(_status.signalStrength);
+            }
+        }
+
+        return _status;
+    }
 
     protected:
     /// @brief The current wifi mode
@@ -274,6 +307,8 @@ class WifiAbstraction : public NetworkAbstraction {
     uint8_t _maxConnections = 0;
     /// @brief The current authentication mode
     WifiTypes::AuthMode _authMode = WifiTypes::AuthMode::Unknown;
+    /// @brief Status of the wifi network
+    WifiTypes::Status _status;
 };
 
 #endif

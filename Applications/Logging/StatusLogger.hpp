@@ -18,6 +18,7 @@
 #include "NetworkAbstraction.hpp"
 #include "FileSystemAbstraction.hpp"
 #include "StorageAbstraction.hpp"
+#include "WifiAbstraction.hpp"
 #include "CellularAbstraction.hpp"
 
 namespace {
@@ -122,7 +123,14 @@ class StatusLogger {
         std::tuple<std::vector<ListOfAbstractionsThatLog>...> _loggers;
     };
     /// @brief Used to toggle logging for an Abstraction
-    LoggerToggler<IpClientAbstraction *, IpServerAbstraction *, HttpServerAbstraction *, NetworkAbstraction *, CellularAbstraction *, FileSystemAbstraction *, OperatingSystemAbstraction *, StorageAbstraction *> _loggerToggler;
+    LoggerToggler<IpClientAbstraction *,
+                  IpServerAbstraction *,
+                  HttpServerAbstraction *,
+                  WifiAbstraction *,
+                  CellularAbstraction *,
+                  FileSystemAbstraction *,
+                  OperatingSystemAbstraction *,
+                  StorageAbstraction *> _loggerToggler;
     /// @brief Emitted when the logging interval has elapsed
     SignalsAndSlots::Signal<> _intervalElapsed;
 
