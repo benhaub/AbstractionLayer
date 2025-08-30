@@ -37,10 +37,10 @@ class Wifi final : public WifiAbstraction {
 
     ErrorType radioOn() override;
     ErrorType radioOff() override;
-    ErrorType setSsid(WifiTypes::Mode mode, const std::string &ssid) override;
-    ErrorType setPassword(WifiTypes::Mode mode, const std::string &password) override;
-    ErrorType setMode(WifiTypes::Mode mode) override { _mode = mode; return ErrorType::Success; }
-    ErrorType setAuthMode(WifiTypes::AuthMode authMode) override { _authMode = authMode; return ErrorType::Success; }
+    ErrorType setSsid(WifiTypes::Mode mode, const StaticString::Data<WifiTypes::MaxSsidLength> &ssid) override;
+    ErrorType setPassword(WifiTypes::Mode mode, const StaticString::Data<WifiTypes::MaxPasswordLength> &password) override;
+    ErrorType setMode(WifiTypes::Mode mode) override { _params.mode = mode; return ErrorType::Success; }
+    ErrorType setAuthMode(WifiTypes::AuthMode authMode) override { _params.authMode = authMode; return ErrorType::Success; }
 
     private:
     wifi_auth_mode_t toEspAuthMode(WifiTypes::AuthMode authMode) {
@@ -96,8 +96,8 @@ class Wifi final : public WifiAbstraction {
     ErrorType initAccessPoint();
     ErrorType initStation();
 
-    ErrorType setStationSsid(const std::string &ssid);
-    ErrorType setAccessPointSsid(const std::string &ssid);
+    ErrorType setStationSsid(const StaticString::Data<WifiTypes::MaxSsidLength> &ssid);
+    ErrorType setAccessPointSsid(const StaticString::Data<WifiTypes::MaxSsidLength> &ssid);
 };
 
 #endif // __WIFI_MODULE_HPP__

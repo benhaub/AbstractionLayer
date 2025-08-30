@@ -56,11 +56,11 @@ ErrorType Wifi::radioOff() {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::setSsid(WifiTypes::Mode mode, const std::string &ssid) {
+ErrorType Wifi::setSsid(WifiTypes::Mode mode, const StaticString::Data<WifiTypes::MaxSsidLength> &ssid) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::setPassword(WifiTypes::Mode mode, const std::string &password) {
+ErrorType Wifi::setPassword(WifiTypes::Mode mode, const StaticString::Data<WifiTypes::MaxPasswordLength> &password) {
     return ErrorType::NotImplemented;
 }
 

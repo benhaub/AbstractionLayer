@@ -8,6 +8,7 @@
 #define __WIFI_ABSTRACTION_HPP__
 
 #include "NetworkAbstraction.hpp"
+#include "StaticString.hpp"
 
 /**
  * @namespace WifiTypes
@@ -65,17 +66,17 @@ namespace WifiTypes {
     };
 
     /**
-     * @struct WifiParams
+     * @struct Params
      * @brief Contains the parameters used to configure the wifi.
      */
-    struct WifiParams final : public NetworkTypes::ConfigurationParameters {
+    struct Params final : public NetworkTypes::ConfigurationParameters {
         /// @brief The technology type these parameters are meant for
         NetworkTypes::Technology technology() const override { return NetworkTypes::Technology::Wifi; }
 
-        std::array<char, MaxSsidLength> accessPointSsid;         ///< The SSID of the access point (Connecting to this device)
-        std::array<char, MaxPasswordLength> accessPointPassword; ///< The password of the access point
-        std::array<char, MaxSsidLength> stationSsid;             ///< The SSID of the station (Wifi that this device connects to)
-        std::array<char, MaxPasswordLength> stationPassword;     ///< The password of the station
+        StaticString::Data<MaxSsidLength> accessPointSsid;         ///< The SSID of the access point (Connecting to this device)
+        StaticString::Data<MaxPasswordLength> accessPointPassword; ///< The password of the access point
+        StaticString::Data<MaxSsidLength> stationSsid;             ///< The SSID of the station (Wifi that this device connects to)
+        StaticString::Data<MaxPasswordLength> stationPassword;     ///< The password of the station
         WifiTypes::AuthMode authMode;                            ///< Password authentication
         WifiTypes::Mode mode;                                    ///< Station, access point, or both
     };
@@ -131,7 +132,7 @@ class WifiAbstraction : public NetworkAbstraction {
      * @returns ErrorType::Success if the ssid is set.
      * @post No changes take effect until either initialization is complete or wifi is reinitialized
      */
-    virtual ErrorType setSsid(WifiTypes::Mode mode, const std::string &ssid) = 0;
+    virtual ErrorType setSsid(WifiTypes::Mode mode, const StaticString::Data<WifiTypes::MaxSsidLength> &ssid) = 0;
     /**
      * @brief Set the password for the selected mode.
      * @pre Since passwords have length requirements based on the authorization mode, you must call setAuthMode first.
@@ -142,7 +143,7 @@ class WifiAbstraction : public NetworkAbstraction {
      * @returns ErrorType::Success if the password is set.
      * @post No changes take effect until either initialization is complete or wifi is reinitialized
     */
-    virtual ErrorType setPassword(WifiTypes::Mode mode, const std::string &password) = 0;
+    virtual ErrorType setPassword(WifiTypes::Mode mode, const StaticString::Data<WifiTypes::MaxPasswordLength> &password) = 0;
     /**
      * @brief set the wifi mode.
      * @param[in] mode The mode to set.
@@ -162,19 +163,19 @@ class WifiAbstraction : public NetworkAbstraction {
         assert(parameters.technology() == NetworkTypes::Technology::Wifi);
         ErrorType error = ErrorType::Success;
 
-        const auto &params = static_cast<const WifiTypes::WifiParams &>(parameters);
+        _params = static_cast<const WifiTypes::Params &>(parameters);
 
-        if (WifiTypes::Mode::AccessPointAndStation == params.mode) {
-            error = setSsid(WifiTypes::Mode::AccessPoint, params.accessPointSsid.data());
+        if (WifiTypes::Mode::AccessPointAndStation == _params.mode) {
+            error = setSsid(WifiTypes::Mode::AccessPoint, _params.accessPointSsid);
             if (ErrorType::Success == error) {
-                error = setSsid(WifiTypes::Mode::Station, params.stationSsid.data());
+                error = setSsid(WifiTypes::Mode::Station, _params.stationSsid);
             }
         }
-        else if (WifiTypes::Mode::AccessPoint == params.mode) {
-            error = setSsid(WifiTypes::Mode::AccessPoint, params.accessPointSsid.data());
+        else if (WifiTypes::Mode::AccessPoint == _params.mode) {
+            error = setSsid(WifiTypes::Mode::AccessPoint, _params.accessPointSsid);
         }
-        else if (WifiTypes::Mode::Station == params.mode) {
-            error = setSsid(WifiTypes::Mode::Station, params.stationSsid.data());
+        else if (WifiTypes::Mode::Station == _params.mode) {
+            error = setSsid(WifiTypes::Mode::Station, _params.stationSsid);
         }
         if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
             PLT_LOGW(TAG, "Setting wifi SSID is not allowed on this platform <error:%u>", (uint8_t)error);
@@ -183,7 +184,7 @@ class WifiAbstraction : public NetworkAbstraction {
             PLT_LOGE(TAG, "Failed to set ssid <error:%u>", (uint8_t)error);
         }
 
-        error = setAuthMode(params.authMode);
+        error = setAuthMode(_params.authMode);
         if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
             PLT_LOGW(TAG, "Setting authorization modes is not allowed on this platform <error:%u>", (uint8_t)error);
         }
@@ -191,17 +192,17 @@ class WifiAbstraction : public NetworkAbstraction {
             PLT_LOGE(TAG, "Failed to set atuhorization mode <error:%u>", (uint8_t)error);
         }
 
-        if (WifiTypes::Mode::AccessPointAndStation == params.mode) {
-            error = setPassword(WifiTypes::Mode::AccessPoint, params.accessPointPassword.data());
+        if (WifiTypes::Mode::AccessPointAndStation == _params.mode) {
+            error = setPassword(WifiTypes::Mode::AccessPoint, _params.accessPointPassword);
             if (ErrorType::Success == error) {
-                error = setPassword(WifiTypes::Mode::Station, params.stationPassword.data());
+                error = setPassword(WifiTypes::Mode::Station, _params.stationPassword);
             }
         }
-        else if (WifiTypes::Mode::AccessPoint == params.mode) {
-            error = setPassword(WifiTypes::Mode::AccessPoint, params.accessPointPassword.data());
+        else if (WifiTypes::Mode::AccessPoint == _params.mode) {
+            error = setPassword(WifiTypes::Mode::AccessPoint, _params.accessPointPassword);
         }
-        else if (WifiTypes::Mode::Station == params.mode) {
-            error = setPassword(WifiTypes::Mode::Station, params.stationPassword.data());
+        else if (WifiTypes::Mode::Station == _params.mode) {
+            error = setPassword(WifiTypes::Mode::Station, _params.stationPassword);
         }
         if (ErrorType::NotImplemented == error || ErrorType::NotAvailable == error) {
             PLT_LOGW(TAG, "Setting wifi password is not allowed on this platform <error:%u>", (uint8_t)error);
@@ -210,7 +211,7 @@ class WifiAbstraction : public NetworkAbstraction {
             PLT_LOGE(TAG, "Failed to set password <error:%u>", (uint8_t)error);
         }
 
-        error = setMode(params.mode);
+        error = setMode(_params.mode);
         if (ErrorType::Success != error) {
             const bool isCriticalErrror = !((ErrorType::NotImplemented == error) || (ErrorType::NotAvailable == error));
             if (isCriticalErrror) {
@@ -235,19 +236,19 @@ class WifiAbstraction : public NetworkAbstraction {
      * @returns ErrorType::Success if the credentials were updated successfully.
      * @post This function brings the network down and back up. Any existing connections will be terminated.
      */
-    ErrorType updateWifiCredentials(WifiTypes::Mode mode, std::string_view ssid, std::string_view password) {
+    ErrorType updateWifiCredentials(WifiTypes::Mode mode, const StaticString::Data<WifiTypes::MaxSsidLength> &ssid, const StaticString::Data<WifiTypes::MaxPasswordLength> &password) {
         ErrorType error = ErrorType::Failure;
 
         error = networkDown();
 
         if (ErrorType::Success == error) {
             if (mode == WifiTypes::Mode::AccessPoint) {
-                _accessPointSsid = ssid;
-                _accessPointPassword = password;
+                _params.accessPointSsid.assign(ssid);
+                _params.accessPointPassword = password;
             }
             else if (mode == WifiTypes::Mode::Station) {
-                _stationSsid = ssid;
-                _stationPassword = password;
+                _params.stationSsid.assign(ssid);
+                _params.stationPassword = password;
             }
             else {
                 error = ErrorType::InvalidParameter;
@@ -261,23 +262,6 @@ class WifiAbstraction : public NetworkAbstraction {
         return error;
     }
 
-    /// @brief  Get the mode as a constant reference
-    const WifiTypes::Mode &mode() const { return _mode; }
-    /// @brief Get the SSID for the access point as a constant reference
-    const std::string &accessPointSsid() const { return _accessPointSsid; }
-    /// @brief Get the password for the access point as a constant reference
-    const std::string &accessPointPassword() const { return _accessPointPassword; }
-    /// @brief Get the SSID for the station as a constant reference
-    const std::string &stationSsid() const { return _stationSsid; }
-    /// @brief Get the password for the station as a constant reference
-    const std::string &stationPassword() const { return _stationPassword; }
-    /// @brief Get the channel as a constant reference
-    const uint8_t &channel() const { return _channel; }
-    /// @brief Get the max connections as a constant reference
-    const uint8_t &maxConnections() const { return _maxConnections; }
-    /// @brief Get the authentication mode as a constant reference
-    const WifiTypes::AuthMode &authMode() const { return _authMode; }
-    /// @brief Get the status of the wifi network
     const WifiTypes::Status &status(const bool updateStatus = true) {
         if (updateStatus) {
             //Not only does it not really make sense to want to know the signal strength if you aren't connected to anything,
@@ -291,23 +275,9 @@ class WifiAbstraction : public NetworkAbstraction {
     }
 
     protected:
-    /// @brief The current wifi mode
-    WifiTypes::Mode _mode = WifiTypes::Mode::Unknown;
-    /// @brief The current access point ssid
-    std::string _accessPointSsid;
-    /// @brief The current access point password
-    std::string _accessPointPassword;
-    /// @brief The current station ssid
-    std::string _stationSsid;
-    /// @brief The current station password
-    std::string _stationPassword;
-    /// @brief The current channel
-    uint8_t _channel = 0;
-    /// @brief The current limit on the number of connections
-    uint8_t _maxConnections = 0;
-    /// @brief The current authentication mode
-    WifiTypes::AuthMode _authMode = WifiTypes::AuthMode::Unknown;
-    /// @brief Status of the wifi network
+    /// @brief
+    WifiTypes::Params _params;
+    /// @brief The status of the wifi network
     WifiTypes::Status _status;
 };
 

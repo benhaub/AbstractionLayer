@@ -34,7 +34,7 @@ ErrorType Wifi::init() {
     esp_err_t err;
     ErrorType error;
 
-    if (WifiTypes::Mode::Unknown == mode() || WifiTypes::AuthMode::Unknown == authMode()) {
+    if (WifiTypes::Mode::Unknown == _params.mode || WifiTypes::AuthMode::Unknown == _params.authMode) {
         return ErrorType::PrerequisitesNotMet;
     }
 
@@ -66,9 +66,9 @@ ErrorType Wifi::init() {
         return fromPlatformError(err);
     }
 
-    esp_wifi_set_mode(toEspWifiMode(mode()));
+    esp_wifi_set_mode(toEspWifiMode(_params.mode));
     unsigned int eventBitsToWaitFor = 0;
-    switch (mode()) {
+    switch (_params.mode) {
         case WifiTypes::Mode::AccessPoint: {
             error = initAccessPoint();
             eventBitsToWaitFor |= wifiApStartedBit;
@@ -126,12 +126,12 @@ ErrorType Wifi::initAccessPoint() {
     wifi_config_t wifiAccessPointConfig;
     memset(&wifiAccessPointConfig, 0, sizeof(wifi_config_t));
 
-    memcpy(wifiAccessPointConfig.ap.ssid, accessPointSsid().data(), accessPointSsid().length());
-    wifiAccessPointConfig.ap.ssid_len = accessPointSsid().length();
+    memcpy(wifiAccessPointConfig.ap.ssid, _params.accessPointSsid.c_str(), _params.accessPointSsid.length());
+    wifiAccessPointConfig.ap.ssid_len = _params.accessPointSsid.length();
     wifiAccessPointConfig.ap.channel = 1;
-    memcpy(wifiAccessPointConfig.ap.password, accessPointPassword().data(), accessPointPassword().length());
+    memcpy(wifiAccessPointConfig.ap.password, _params.accessPointPassword.c_str(), _params.accessPointPassword.length());
     wifiAccessPointConfig.ap.max_connection = 10;
-    wifiAccessPointConfig.ap.authmode = toEspAuthMode(authMode());
+    wifiAccessPointConfig.ap.authmode = toEspAuthMode(_params.authMode);
     wifiAccessPointConfig.ap.pmf_cfg.required = false;
 
     esp_err_t err = esp_wifi_set_config(WIFI_IF_AP, &wifiAccessPointConfig);
@@ -147,14 +147,14 @@ ErrorType Wifi::initStation() {
     }
     else {
         //Not a typo, stations connect to access points.
-        PLT_LOGI(TAG, "Reconnecting to access point <ssid:%s, password:%s>", stationSsid().c_str(), stationPassword().c_str());
+        PLT_LOGI(TAG, "Reconnecting to access point <ssid:%s, password:%s>", _params.stationSsid.c_str(), _params.stationPassword.c_str());
     }
 
     wifi_config_t wifiStationConfig;
     memset(&wifiStationConfig, 0, sizeof(wifi_config_t));
 
-    memcpy(wifiStationConfig.sta.ssid, stationSsid().data(), stationSsid().length());
-    memcpy(wifiStationConfig.sta.password, stationPassword().data(), stationPassword().length());
+    memcpy(wifiStationConfig.sta.ssid, _params.stationSsid.data(), _params.stationSsid.length());
+    memcpy(wifiStationConfig.sta.password, _params.stationPassword.data(), _params.stationPassword.length());
     wifiStationConfig.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
     wifiStationConfig.sta.failure_retry_cnt = 5;
     //Minimum security that we will accept.
@@ -166,14 +166,14 @@ ErrorType Wifi::initStation() {
 }
 
 ErrorType Wifi::networkUp() {
-    if (WifiTypes::Mode::AccessPointAndStation == mode()) {
+    if (WifiTypes::Mode::AccessPointAndStation == _params.mode) {
         initAccessPoint();
         initStation();
     }
-    else if (WifiTypes::Mode::AccessPoint == mode()) {
+    else if (WifiTypes::Mode::AccessPoint == _params.mode) {
         initAccessPoint();
     }
-    else if (WifiTypes::Mode::Station == mode()) {
+    else if (WifiTypes::Mode::Station == _params.mode) {
         initStation();
     }
 
@@ -503,7 +503,7 @@ ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
     return ErrorType::Success;
 }
 
-ErrorType Wifi::setSsid(WifiTypes::Mode mode, const std::string &ssid) {
+ErrorType Wifi::setSsid(WifiTypes::Mode mode, const StaticString::Data<WifiTypes::MaxSsidLength> &ssid) {
     if (WifiTypes::Mode::Station == mode) {
         setStationSsid(ssid);
     }
@@ -517,26 +517,26 @@ ErrorType Wifi::setSsid(WifiTypes::Mode mode, const std::string &ssid) {
     return ErrorType::Success; 
 }
 
-ErrorType Wifi::setStationSsid(const std::string &ssid) {
-    _stationSsid = ssid;
+ErrorType Wifi::setStationSsid(const StaticString::Data<WifiTypes::MaxSsidLength> &ssid) {
+    _params.stationSsid.assign(ssid);
 
     return ErrorType::Success;
 }
 
-ErrorType Wifi::setAccessPointSsid(const std::string &ssid) {
-    _accessPointSsid = ssid;
+ErrorType Wifi::setAccessPointSsid(const StaticString::Data<WifiTypes::MaxSsidLength> &ssid) {
+    _params.accessPointSsid.assign(ssid);
 
     return ErrorType::Success;
 }
 
-ErrorType Wifi::setPassword(WifiTypes::Mode mode, const std::string &password) {
+ErrorType Wifi::setPassword(WifiTypes::Mode mode, const StaticString::Data<WifiTypes::MaxPasswordLength> &password) {
     ErrorType error = ErrorType::Success;
 
     if (WifiTypes::Mode::Station == mode) {
-        _stationPassword = password;
+        _params.stationPassword.assign(password);
     }
     else if (WifiTypes::Mode::AccessPoint == mode) {
-        _accessPointPassword = password;
+        _params.accessPointPassword.assign(password);
     }
     else if (WifiTypes::Mode::AccessPointAndStation == mode) {
         error = ErrorType::InvalidParameter;
