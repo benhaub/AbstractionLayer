@@ -61,7 +61,7 @@ namespace CellularTypes {
      * @struct CellularParams
      * @brief Contains the parameters used to configure the cellular device.
      */
-    struct CellularParams final : public NetworkTypes::ConfigurationParameters {
+    struct Params final : public NetworkTypes::ConfigurationParameters {
         /// @brief The technology type these parameters are meant for
         NetworkTypes::Technology technology() const override { return NetworkTypes::Technology::Cellular; }
 
@@ -78,7 +78,7 @@ namespace CellularTypes {
         PinNumber uartCts;                                          ///< The CTS pin to use for the cellular device. Do not set if not needed.
         PeripheralNumber usbPeripheral;                             ///< The usb peripheral to use for the cellular device. Do not set if not needed
 
-        CellularParams() : NetworkTypes::ConfigurationParameters() {
+        Params() : NetworkTypes::ConfigurationParameters() {
             apn.fill(0);
             radioAccessTechnology = CellularTypes::RadioAccessTechnology::Unknown;
             accessMode = CellularTypes::AccessMode::Unknown;
@@ -131,13 +131,13 @@ class CellularAbstraction : public NetworkAbstraction {
     ErrorType configure(const NetworkTypes::ConfigurationParameters &parameters) override {
         assert(parameters.technology() == NetworkTypes::Technology::Cellular);
 
-        _cellularParams = static_cast<const CellularTypes::CellularParams &>(parameters);
+        _params = static_cast<const CellularTypes::Params &>(parameters);
 
         return ErrorType::Success;
     }
 
     /// @brief Get the cellular parameters as a constant reference
-    const CellularTypes::CellularParams &cellularParams() const { return _cellularParams; }
+    const CellularTypes::Params &params() const { return _params; }
     /// @brief Get the status of the cellular network
     const CellularTypes::Status &status(const bool updateStatus = true) {
         if (updateStatus) {
@@ -151,9 +151,9 @@ class CellularAbstraction : public NetworkAbstraction {
         return _status;
     }
 
-    private:
+    protected:
     /// @brief The cellular parameters.
-    CellularTypes::CellularParams _cellularParams;
+    CellularTypes::Params _params;
     /// @brief The status of the cellular network
     CellularTypes::Status _status;
 };
