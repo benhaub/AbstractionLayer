@@ -141,7 +141,7 @@ class FileSystemAbstraction {
      * @brief Print the status of the file system
      */
     void printStatus() {
-        PLT_LOGI(TAG, "<FileSystem:%s> <Implementation:%u, Mounted:%s, Open Files:%u, Free (%%):%.1f> <Pie, Stairs, Line>",
+        PLT_LOGI(TAG, "<FileSystem:%s> <Implementation:%u, Mounted:%s, Open Files:%u, Free (%%):%.1f> <Omit, Pie, Stairs, Line>",
         _params.PartitionName().data(), _params.Implementation(), status().mounted ? "true" : "false", status().openedFiles, status().freeSpace);
     }
 
