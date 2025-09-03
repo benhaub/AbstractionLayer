@@ -126,7 +126,7 @@ class FileSystemAbstraction {
      * @brief Constructor
      * @details Takes a templated struct so as to not force the entire class to be a template. We selectively pick out the things that we need available at
      *          compile time.
-     * @sa FileSystemTypes::Implementation
+     * @param params Compile-time constant expressions for creating the file system.
      * @param storage The storage medium the file system is on.
      */
     constexpr FileSystemAbstraction(const FileSystemTypes::Params<FileSystemTypes::PartitionName, FileSystemTypes::Implementation> &params, StorageAbstraction &storage) :
