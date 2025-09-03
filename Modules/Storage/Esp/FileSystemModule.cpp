@@ -11,7 +11,7 @@ ErrorType FileSystem::mount() {
     auto mountCallback = [&]() -> ErrorType {
         switch(_implementation) {
             case FileSystemTypes::Implementation::KeyValue:
-                callbackError = KeyValue::mount(*this, nameSpace, _handle);
+                callbackError = KeyValue::mount(*this, _nameSpace, _handle);
                 break;
             case FileSystemTypes::Implementation::Spiffs:
                 callbackError = Spiffs::mount(*this);

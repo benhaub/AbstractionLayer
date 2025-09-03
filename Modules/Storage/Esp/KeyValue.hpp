@@ -11,7 +11,7 @@
  * @brief Key Value NVS storage.
  */
 namespace KeyValue {
-    ErrorType mount(FileSystem &fs, const char nameSpace[], std::unique_ptr<nvs::NVSHandle> &_handle) {
+    ErrorType mount(FileSystem &fs, const std::array<char, FileSystemTypes::_PartitionNameLength> &nameSpace, std::unique_ptr<nvs::NVSHandle> &_handle) {
         esp_err_t err = nvs_flash_init_partition(&fs.name());
         if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
             return fromPlatformError(err);
@@ -20,7 +20,7 @@ namespace KeyValue {
         //This is a little different than how some other file systems would work. We only need to open once.
         //When we open the handle we get access to all the files (key/values) in flash. We actually do not want
         //to close until we unmount.
-        _handle = nvs::open_nvs_handle_from_partition(&fs.name(), nameSpace, NVS_READWRITE, &err);
+        _handle = nvs::open_nvs_handle_from_partition(&fs.name(), nameSpace.data(), NVS_READWRITE, &err);
 
         return fromPlatformError(err);
     }

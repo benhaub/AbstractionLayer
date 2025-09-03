@@ -52,7 +52,7 @@ class FileSystem final : public FileSystemAbstraction {
     }
 
     private:
-    const char nameSpace[NVS_NS_NAME_MAX_SIZE] = "nvsFlash";
+    static constexpr std::array<char, NVS_NS_NAME_MAX_SIZE> _nameSpace = {"nvsFlash"};
     std::unique_ptr<nvs::NVSHandle> _handle;
     std::map<std::string_view, FILE *> spiffsFiles;
 
