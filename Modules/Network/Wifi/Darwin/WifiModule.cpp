@@ -34,6 +34,7 @@ ErrorType Wifi::connectTo(std::string_view hostname, const Port port, const IpTy
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = toPosixFamily(version);
         hints.ai_socktype = toPosixSocktype(protocol);
+        hints.ai_flags |= AI_NUMERICSERV;
 
         const int status = getaddrinfo(hostname.data(), std::to_string(port).c_str(), &hints, &res);
         if (0 == status) {

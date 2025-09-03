@@ -41,6 +41,8 @@ ErrorType IpClient::disconnect() {
         _socket = -1;
     }
 
+    _status.connected = ErrorType::Success == error;
+
     return error;
 }
 
