@@ -11,6 +11,8 @@
 //AbstractionLayer
 #include "AdcModule.hpp"
 #include "HBridgeFactory.hpp"
+#include "OperatingSystemModule.hpp"
+#include "Math.hpp"
 
 /**
  * @namespace Sm10001Types
@@ -44,6 +46,9 @@ namespace Sm10001Types {
  * @class Sm10001
  * @brief Driver for the slide potentiometer by adafruit
  */
+template <typename T, HBridgeFactoryTypes::PartNumber _PartNumber, HBridgeTypes::PwmType _PwmType, PeripheralNumber _AdcPeripheralNumber, AdcTypes::Channel _Channel,
+          PinNumber _MotorInputA, PinNumber _MotorInputB, T _MaxVoltageDrop, T _MinVoltageDrop>
+          requires(std::is_same_v<T, Volts>)
 class Sm10001 {
 
     public:
@@ -52,17 +57,16 @@ class Sm10001 {
      * @returns ErrorType::Success if the PWMs were initialized
      * @returns ErrorType::Failure otherwise
      */
-    ErrorType init(const HBridgeFactoryTypes::PartNumber hBridgePartNumber, const HBridgeTypes::PwmType pwmType, const PeripheralNumber adcPeripheralNumber, const AdcTypes::Channel channel,
-                   const PinNumber motorInputA, const PinNumber motorInputB, const Volts maxVoltageDrop, const Volts minVoltageDrop) {
+    ErrorType init() {
 
-        ErrorType error = HBridgeFactory::Factory(hBridgePartNumber, _hBridge);
+        ErrorType error = HBridgeFactory::Factory<_PartNumber>(_hBridge);
 
         if (ErrorType::Success == error) {
             std::visit([&](auto &hBridge) {
                 HBridgeTypes::ConfigurationParameters params;
-                params.pwmType = pwmType;
-                params.input1 = _motorInputA = motorInputA;
-                params.input2 = _motorInputB = motorInputB;
+                params.pwmType = _PwmType;
+                params.input1 = _MotorInputA;
+                params.input2 = _MotorInputB;
                 params.pwm1 = PeripheralNumber::Zero;
                 params.pwm2 = PeripheralNumber::One;
                 params.pwmPeriod = Sm10001Types::PwmPeriod;
@@ -75,14 +79,11 @@ class Sm10001 {
 
             if (ErrorType::Success == error) {
                 AdcTypes::Parameters adcParams;
-                adcParams.channel = channel;
-                adcParams.peripheralNumber = adcPeripheralNumber;
+                adcParams.channel = _Channel;
+                adcParams.peripheralNumber = _AdcPeripheralNumber;
                 _adc.configure(adcParams);
 
                 error = _adc.init();
-
-                _maxVoltage = maxVoltageDrop;
-                _minVoltage = minVoltageDrop;
             }
         }
 
@@ -94,27 +95,122 @@ class Sm10001 {
      * @returns ErrorType::Success if the slide was successful
      * @returns ErrorType::Failure otherwise
      */
-    ErrorType slideForward(const Milliseconds slideTime);
+    ErrorType slideForward(const Milliseconds slideTime) {
+        return std::visit([&](auto &hBridge) -> ErrorType {
+            const Count numIterations = (slideTime*1000) / hBridge.params().pwmPeriod;
+            ErrorType error = ErrorType::Success;;
+
+            for (Count i = 0; i < numIterations; i++) {
+                error = hBridge.driveForward();
+
+                if (ErrorType::Success == error) {
+                    OperatingSystem::Instance().delay(hBridge.params().pwmPeriod / 2);
+                    error = hBridge.brake();
+                }
+                else {
+                    break;
+                }
+            }
+
+            return error;
+
+        }, *_hBridge);
+    }
     /**
      * @brief Slide backward
      * @param slideTime The amount of time to slide backward for.
      * @returns ErrorType::Success if the slide was successful
      * @returns ErrorType::Failure otherwise
      */
-    ErrorType slideBackward(const Milliseconds slideTime);
+    ErrorType slideBackward(const Milliseconds slideTime) {
+        return std::visit([&](auto &hBridge) -> ErrorType {
+            const Count numIterations = (slideTime*1000) / hBridge.params().pwmPeriod;
+            ErrorType error = ErrorType::Success;
+
+            for (Count i = 0; i < numIterations; i++) {
+                ErrorType error = hBridge.driveBackward();
+
+                if (ErrorType::Success == error) {
+                    OperatingSystem::Instance().delay(hBridge.params().pwmPeriod / 2);
+                    error = hBridge.brake();
+                }
+                else {
+                    break;
+                }
+            }
+
+            return error;
+
+        }, *_hBridge);
+    }
     /**
      * @brief Slide the wiper to the desired voltage drop reading.
      * @param ofMaxVoltage The desired voltage drop as a percentage of the maximum possible
      * @param hysteresis The amount of difference in the voltage that is fed back that is acceptable.
      */
-    ErrorType slideToVoltage(const Percent ofMaxVoltage, const Volts hysteresis);
+    ErrorType slideToVoltage(const Percent ofMaxVoltage, const Volts hysteresis) {
+        Volts currentReading = 0.0f;
+        ErrorType error = getVoltageDrop(currentReading, Sm10001Types::AdcMultiSamples);
+        const Volts desired = (ofMaxVoltage / 100.0f) * maxVoltage();
+
+        if (ErrorType::Success == error) {
+            if (0 != _minimumForwardSlideTime && 0 != _minimumBackwardSlideTime) {
+
+                if (Sm10001Types::ForwardSlideVoltageEffect::Unknown != _forwardSlideVoltageEffect) {
+                    while (!withinError(desired, currentReading, hysteresis) && ErrorType::Success == error) {
+                        if (currentReading < desired) {
+
+                            if (_forwardSlideVoltageEffect == Sm10001Types::ForwardSlideVoltageEffect::Raises) {
+                                error = slideForward(_minimumForwardSlideTime);
+                            }
+                            else {
+                                error = slideBackward(_minimumBackwardSlideTime);
+                            }
+                        }
+                        else {
+                            if (_forwardSlideVoltageEffect == Sm10001Types::ForwardSlideVoltageEffect::Drops) {
+                                error = slideForward(_minimumForwardSlideTime);
+                            }
+                            else {
+                                error = slideBackward(_minimumBackwardSlideTime);
+                            }
+                        }
+
+                        error = getVoltageDrop(currentReading, Sm10001Types::AdcMultiSamples);
+                    }
+                }
+                else {
+                    error = ErrorType::PrerequisitesNotMet;
+                }
+            }
+            else {
+                error = ErrorType::PrerequisitesNotMet;
+            }
+        }
+
+        return error;
+    }
     /**
      * @brief Set the speed at which the slide moves
      * @param speed The speed at which the slide moves
      * @returns ErrorType::Success if the speed was set successfully
      * @returns ErrorType::Failure otherwise
      */
-    ErrorType setSpeed(const Percent speed);
+    ErrorType setSpeed(const Percent speed) {
+        if (speed < 0.0f || speed > 100.0f) {
+            return ErrorType::InvalidParameter;
+        }
+
+        return std::visit([&](auto &hBridge) -> ErrorType {
+            ErrorType error = hBridge.changeDutyCycle(speed);
+
+            if (ErrorType::Success == error) {
+                _speed = speed;
+            }
+
+            return error;
+        }, *_hBridge);
+    }
     /**
      * @brief Get the voltage drop reading from the potentiometer
      * @param[out] volts The voltage drop reading will be stored here
@@ -123,7 +219,25 @@ class Sm10001 {
      * @returns ErrorType::Failure otherwise
      * @post volts is invalid only if ErrorType::Failure is returned.
      */
-    ErrorType getVoltageDrop(Volts &volts, const Count multiSamples);
+    ErrorType getVoltageDrop(Volts &voltageDrop, const Count multiSamples) {
+        Count rawAdcValue = 0;
+        Volts currentReading = 0.0f;
+        ErrorType error = ErrorType::Failure;
+
+        for (Count i = 0; i < multiSamples; i++) {
+            error = _adc.convert(rawAdcValue);
+
+            if (ErrorType::Success == error) {
+                error = _adc.rawToVolts(rawAdcValue, currentReading);
+
+                if (ErrorType::Success == error) {
+                    voltageDrop = runningAverage(voltageDrop, currentReading, i);
+                }
+            }
+        }
+
+        return error;
+    }
     /**
      * @brief Measures and saves the minimum and maximum voltage values that represent 100% and 0% voltage drop of the potentiometer.
      *        Also measures the average voltage that is changed when sliding forwards and backwards.
@@ -134,12 +248,20 @@ class Sm10001 {
      * @returns ErrorType::Success if the calibration was successful
      * @returns Any errors returned by slideBackward, slideForward, getVoltageDrop
      */
-    ErrorType calibrate(const Count numRetries, const Volts hysteresis, const Milliseconds slideTime);
+    ErrorType calibrate(const Count numRetries, const Volts hysteresis, const Milliseconds slideTime) {
+        ErrorType error = calibrateMinimumForwardSlideTime(_minimumForwardSlideTime, hysteresis);
+
+        if (ErrorType::Success == error) {
+            error = calibrateMinimumBackwardSlideTime(_minimumBackwardSlideTime, hysteresis);
+        }
+
+        return error;
+    }
 
     /// @brief Get the minimum voltage as a constant reference
-    const Volts &minVoltage() const { return _minVoltage; }
+    constexpr Volts &minVoltage() const { return _MinVoltageDrop; }
     /// @brief Get the maximum voltage as a constant reference
-    const Volts &maxVoltage() const { return _maxVoltage; }
+    constexpr Volts &maxVoltage() const { return _MaxVoltageDrop; }
     /// @brief Get the speed as a constant reference
     const Percent &speed() const { return _speed; }
     /// @brief Get the minimum forward slide time as a constant reference
@@ -154,14 +276,6 @@ class Sm10001 {
     std::optional<HBridgeFactoryTypes::HBridgeFactoryVariant> _hBridge;
     /// @brief The ADC that reads the potentiometer voltage drop.
     Adc _adc;
-    /// @brief The pin number of the motor input A.
-    PinNumber _motorInputA = -1;
-    /// @brief The pin number of the motor input B.
-    PinNumber _motorInputB = -1;
-    /// @brief The minimum voltage value that represents 100% voltage drop of the potentiometer.
-    Volts _minVoltage = 0.0f;
-    /// @brief The maximum voltage value that represents 0% voltage drop of the potentiometer.
-    Volts _maxVoltage = 0.0f;
     /// @brief The percentage of the maximum speed at which the slide moves.
     Percent _speed = 0.0f;
     /// @brief The minimum slide time that needs to be applied to slideForward to cause a voltage change.
@@ -178,7 +292,47 @@ class Sm10001 {
      * @returns ErrorType::Success if the calibration was successfull
      * @returns ErrorType::Failure otherwise.
      */
-    ErrorType calibrateMinimumForwardSlideTime(Milliseconds &minimumForwardSlideTime, const Volts hysteresis);
+    ErrorType calibrateMinimumForwardSlideTime(Milliseconds &minimumForwardSlideTime, const Volts hysteresis) {
+        minimumForwardSlideTime = 0;
+        Volts potentiometerVoltageDropPrevious = 0.0f;
+        Volts potentiometerVoltageDropNow = 0.0f;
+        Volts differenceBetweenNowAndPrevious = 0.0f;
+
+        ErrorType error = getVoltageDrop(potentiometerVoltageDropNow, Sm10001Types::AdcMultiSamples);
+
+        if (ErrorType::Success == error) {
+            potentiometerVoltageDropPrevious = potentiometerVoltageDropNow;
+
+            while (differenceBetweenNowAndPrevious < hysteresis) {
+                minimumForwardSlideTime++;
+                error = slideForward(minimumForwardSlideTime);
+
+                if (ErrorType::Success == error) {
+                    error = getVoltageDrop(potentiometerVoltageDropNow, Sm10001Types::AdcMultiSamples);
+
+                    //In case the wiper is positioned all the way to one end such that it can't slide forward.
+                    if (withinError(potentiometerVoltageDropNow, maxVoltage(), hysteresis) || withinError(potentiometerVoltageDropNow, minVoltage(), hysteresis)) {
+                        slideBackward(minimumForwardSlideTime*32);
+
+                        if (!(withinError(potentiometerVoltageDropNow, maxVoltage(), hysteresis) || withinError(potentiometerVoltageDropNow, minVoltage(), hysteresis))) {
+                            minimumForwardSlideTime = 0;
+                        }
+                    }
+                    else {
+                        differenceBetweenNowAndPrevious = std::abs(potentiometerVoltageDropNow - potentiometerVoltageDropPrevious);
+                    }
+
+                    potentiometerVoltageDropNow > potentiometerVoltageDropPrevious ? _forwardSlideVoltageEffect = Sm10001Types::ForwardSlideVoltageEffect::Raises : Sm10001Types::ForwardSlideVoltageEffect::Drops;
+                }
+
+                if (ErrorType::Success != error) {
+                    break;
+                }
+            }
+        }
+
+        return error;
+    }
     /**
      * @brief Determine the minimum number of milliseconds needed to move the wiper backward at the current speed.
      * @param[out] minimumBackwardSlideTime The minimum amount of time needed to slide forward.
@@ -186,7 +340,49 @@ class Sm10001 {
      * @returns ErrorType::Success if the calibration was successfull
      * @returns ErrorType::Failure otherwise.
      */
-    ErrorType calibrateMinimumBackwardSlideTime(Milliseconds &minimumBackwardSlideTime, const Volts hysteresis);
+    ErrorType calibrateMinimumBackwardSlideTime(Milliseconds &minimumBackwardSlideTime, const Volts hysteresis) {
+        minimumBackwardSlideTime = 0;
+        Volts potentiometerVoltageDropPrevious = 0.0f;
+        Volts potentiometerVoltageDropNow = 0.0f;
+        Volts differenceBetweenNowAndPrevious = 0.0f;
+
+        ErrorType error = getVoltageDrop(potentiometerVoltageDropNow, Sm10001Types::AdcMultiSamples);
+        
+        if (ErrorType::Success == error) {
+            potentiometerVoltageDropPrevious = potentiometerVoltageDropNow;
+
+            while (differenceBetweenNowAndPrevious < hysteresis) {
+                minimumBackwardSlideTime++;
+                error = slideBackward(minimumBackwardSlideTime);
+
+                if (ErrorType::Success == error) {
+                    error = getVoltageDrop(potentiometerVoltageDropNow, Sm10001Types::AdcMultiSamples);
+
+                    //In case the wiper is positioned all the way to one end such that it can't slide backward.
+                    if (withinError(potentiometerVoltageDropNow, maxVoltage(), hysteresis) || withinError(potentiometerVoltageDropNow, minVoltage(), hysteresis)) {
+                        error = slideForward(minimumBackwardSlideTime*32);
+
+                        if (ErrorType::Success == error) {
+
+                            if (!(withinError(potentiometerVoltageDropNow, maxVoltage(), hysteresis) || withinError(potentiometerVoltageDropNow, minVoltage(), hysteresis))) {
+                                minimumBackwardSlideTime = 0;
+                            }
+                        }
+                    }
+                    else {
+                        differenceBetweenNowAndPrevious = std::abs(potentiometerVoltageDropNow - potentiometerVoltageDropPrevious);
+                    }
+
+                }
+
+                if (ErrorType::Success != error) {
+                    break;
+                }
+            }
+        }
+
+        return error;
+    }
 };
 
 #endif //__SM10001_HPP__

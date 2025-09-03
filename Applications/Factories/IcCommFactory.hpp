@@ -43,10 +43,11 @@ namespace IcCommFactory {
      * @returns ErrorType::Success if the IcDevice was created.
      * @returns ErrorType::NotSupported if the device is not supported.
      */
-    inline ErrorType Factory(IcCommunicationProtocolTypes::IcDevice device, std::optional<IcCommFactoryTypes::IcCommFactoryVariant> &ic) {
+    template <IcCommunicationProtocolTypes::IcDevice _Device>
+    inline constexpr ErrorType Factory(std::optional<IcCommFactoryTypes::IcCommFactoryVariant> &ic) {
         ErrorType error = ErrorType::Success;
 
-        switch (device) {
+        switch (_Device) {
             case IcCommunicationProtocolTypes::IcDevice::Uart:
                 ic.emplace(std::in_place_type_t<Uart>());
                 break;

@@ -29,7 +29,7 @@ namespace Mikroe28byj485VTypes {
  * @brief API for stepper motor driver by Mikroe
  * @see https://www.mikroe.com/step-motor-5v
  */
-template<DarlingtonArrayFactoryTypes::PartNumber _partNumber, DarlingtonArrayTypes::PwmType _pwmType, std::array<PinNumber, Mikroe28byj485VTypes::InputPins> _inputPins, std::array<PeripheralNumber, Mikroe28byj485VTypes::InputPins> _pwmPeripherals>
+template<DarlingtonArrayFactoryTypes::PartNumber _PartNumber, DarlingtonArrayTypes::PwmType _PwmType, std::array<PinNumber, Mikroe28byj485VTypes::InputPins> _InputPins, std::array<PeripheralNumber, Mikroe28byj485VTypes::InputPins> _PwmPeripherals>
 class Mikroe28byj485V {
 
     public:
@@ -43,16 +43,16 @@ class Mikroe28byj485V {
      */
     ErrorType init() {
 
-        ErrorType error = DarlingtonArrayFactory::Factory(_partNumber, _darlingtonArray);
+        ErrorType error = DarlingtonArrayFactory::Factory<_PartNumber>(_darlingtonArray);
 
         if (ErrorType::Success == error) {
             return std::visit([&](auto &darlingtonArray) -> ErrorType {
                 
                 if(Mikroe28byj485VTypes::InputPins <= darlingtonArray.inputPins()) {
-                    DarlingtonArrayTypes::ConfigurationParameters<DarlingtonArrayFactoryTypes::InputPins(_partNumber)> params;
-                    params.pwmType = _pwmType;
-                    std::copy_n(_inputPins.begin(), _inputPins.size(), params.pinNumbers.begin());
-                    std::copy_n(_pwmPeripherals.begin(), _pwmPeripherals.size(), params.pwmPeripherals.begin());
+                    DarlingtonArrayTypes::ConfigurationParameters<DarlingtonArrayFactoryTypes::InputPins(_PartNumber)> params;
+                    params.pwmType = _PwmType;
+                    std::copy_n(_InputPins.begin(), _InputPins.size(), params.pinNumbers.begin());
+                    std::copy_n(_PwmPeripherals.begin(), _PwmPeripherals.size(), params.pwmPeripherals.begin());
                     //Default values that you can change later.
                     params.pwmDutyCycles.fill(100.0f);
                     params.pwmPeriods.fill(2E5);

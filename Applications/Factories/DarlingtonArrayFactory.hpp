@@ -66,10 +66,11 @@ namespace DarlingtonArrayFactory {
      * @returns ErrorType::Success if the darlington array was created successfully.
      * @returns ErrorType::NotSupported if the part number is not recognized.
      */
-    inline constexpr ErrorType Factory(const DarlingtonArrayFactoryTypes::PartNumber partNumber, std::optional<DarlingtonArrayFactoryTypes::DarlingtonArrayFactoryVariant> &darlingtonArray) {
+    template <DarlingtonArrayFactoryTypes::PartNumber _PartNumber>
+    inline constexpr ErrorType Factory(std::optional<DarlingtonArrayFactoryTypes::DarlingtonArrayFactoryVariant> &darlingtonArray) {
         ErrorType error = ErrorType::Success;
 
-        switch (partNumber) {
+        switch (_PartNumber) {
             case DarlingtonArrayFactoryTypes::PartNumber::StmUln2003:
                 darlingtonArray.emplace(std::in_place_type_t<StmUln2003>());
                 break;

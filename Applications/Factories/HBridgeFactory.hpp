@@ -50,10 +50,11 @@ namespace HBridgeFactory {
      * @returns ErrorType::Success if the H-Bridge was created successfully.
      * @returns ErrorType::NotSupported if the part number is not recognized.
      */
-    inline ErrorType Factory(const HBridgeFactoryTypes::PartNumber partNumber, std::optional<HBridgeFactoryTypes::HBridgeFactoryVariant> &hBridge) {
+    template <HBridgeFactoryTypes::PartNumber _PartNumber>
+    inline constexpr ErrorType Factory(std::optional<HBridgeFactoryTypes::HBridgeFactoryVariant> &hBridge) {
         ErrorType error = ErrorType::Success;
 
-        switch (partNumber) {
+        switch (_PartNumber) {
             case HBridgeFactoryTypes::PartNumber::TiDrv8872:
                 hBridge.emplace(std::in_place_type_t<TiDrv8872>());
                 break;

@@ -47,10 +47,11 @@ namespace NetworkFactory {
      * @returns ErrorType::Success if the network was created successfully
      * @returns ErrorType::NotSupported if the technology is not supported
      */
-    inline ErrorType Factory(NetworkTypes::Technology technology, std::optional<NetworkFactoryTypes::NetworkFactoryVariant> &network) {
+    template <NetworkTypes::Technology _Technology>
+    inline ErrorType Factory(std::optional<NetworkFactoryTypes::NetworkFactoryVariant> &network) {
         ErrorType error = ErrorType::Success;
 
-        switch (technology) {
+        switch (_Technology) {
             case NetworkTypes::Technology::Wifi:
                 network.emplace(std::in_place_type_t<Wifi>());
                 break;
