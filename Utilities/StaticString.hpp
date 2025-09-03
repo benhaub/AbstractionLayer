@@ -169,9 +169,7 @@ namespace StaticString {
          * @brief A pointer so that the we any_cast to a Interface pointer.
          * @details A cast directly from T to Interface* is not allowed, so we need this intermediate step.
          */
-        std::any _dataPtr;
-        /// @brief Same as _dataPtr, but for const pointers.
-        std::any _dataPtrConst;
+        Interface *_dataPtr = nullptr;
 
         public:
         /**
@@ -185,21 +183,19 @@ namespace StaticString {
             _data = value;
             T *dataPtr = std::any_cast<T>(&_data);
             _dataPtr = static_cast<Interface *>(dataPtr);
-            const T *dataPtrConst = std::any_cast<const T>(&_data);
-            _dataPtrConst = static_cast<const Interface *>(dataPtrConst);
         }
 
         /// @brief Get a constant interface pointer
         const Interface *const getConst() const {
             assert(_data.has_value());
-            const auto ptr = std::any_cast<const Interface *>(_dataPtrConst);
-            return ptr;
+            assert(nullptr != _dataPtr);
+            return _dataPtr;
         }
         /// @brief Get a mutable interface pointer
         Interface *get() {
             assert(_data.has_value());
-            auto ptr = std::any_cast<Interface *>(_dataPtr);
-            return ptr;
+            assert(nullptr != _dataPtr);
+            return _dataPtr;
         }
         /// @brief Iterator support for range-based for loops
         char* begin() {
