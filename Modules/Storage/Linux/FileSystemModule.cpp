@@ -7,18 +7,23 @@
 #include <filesystem>
 #include <cstring>
 
+#ifndef APP_HOME_DIRECTORY
+#error "Please define your platforms home directory as APP_HOME_DIRECTORY. Don't include a trailing slash. In CMake, `APP_HOME_DIRECTORY=\"$ENV{HOME}\"` will work."
+#endif
+
 ErrorType FileSystem::mount() {
     const bool fileSystemHasNotBeenMounted = !_status.mounted;
 
     if (fileSystemHasNotBeenMounted) {
-        _mountPrefix.assign(_storage.rootPrefix()->c_str());
+        _mountPrefix.set(StaticString::Data<StorageTypes::longestMediumStringSize() + sizeof(APP_HOME_DIRECTORY "/") + FileSystemTypes::_PartitionNameLength>());
+        _mountPrefix->assign(_storage.rootPrefix()->c_str());
 
-        if (_mountPrefix.back() != '/') {
-            _mountPrefix.append("/");
+        if (_mountPrefix->back() != '/') {
+            _mountPrefix->append("/");
         }
 
-        _mountPrefix.append(std::string(_status.partitionName.data(), strlen(_status.partitionName.data())));
-        mkdir(_mountPrefix.c_str(), S_IRWXU); 
+        _mountPrefix->append(std::string(_params.PartitionName().data(), strlen(_params.PartitionName().data())));
+        mkdir(_mountPrefix->c_str(), S_IRWXU); 
         _status.mounted = true;
     }
 

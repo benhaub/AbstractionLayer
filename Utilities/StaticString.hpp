@@ -149,7 +149,7 @@ namespace StaticString {
 
         public:
         /// @brief Default Constructor
-        Container() = default;
+        constexpr Container() = default;
         /**
          * @brief Initializing a Container with Data.
          * @tparam _n The maximum number of bytes the string can store.

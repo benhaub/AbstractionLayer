@@ -39,14 +39,14 @@ namespace Spiffs {
 
     ErrorType maxPartitionSize(FileSystem &fs, Bytes &size) {
         size_t maxSize;
-        ErrorType error = fromPlatformError(esp_spiffs_info(&fs.name(), &maxSize, NULL));
+        ErrorType error = fromPlatformError(esp_spiffs_info(fs.name().data(), &maxSize, NULL));
         size = maxSize;
         return error;
     }
 
     ErrorType availablePartition(FileSystem &fs, Bytes &size) {
         size_t availableSize;
-        ErrorType error = fromPlatformError(esp_spiffs_info(&fs.name(), NULL, &availableSize));
+        ErrorType error = fromPlatformError(esp_spiffs_info(fs.name().data(), NULL, &availableSize));
         size = availableSize;
         return error;
     }
@@ -56,7 +56,7 @@ namespace Spiffs {
         const esp_vfs_spiffs_conf_t conf = {
             //Base path has to be not null and not "/" or the undocumented ESP_ERR_INVALID_ARG is returned.
             .base_path = "/www",
-            .partition_label = &fs.name(),
+            .partition_label = fs.name().data(),
             .max_files = FileSystem::_MaxOpenFiles,
             .format_if_mount_failed = false
         };
@@ -90,11 +90,11 @@ namespace Spiffs {
     }
 
     ErrorType unmount(FileSystem &fs) {
-        return fromPlatformError(esp_vfs_spiffs_unregister(&fs.name()));
+        return fromPlatformError(esp_vfs_spiffs_unregister(fs.name().data()));
     }
 
     ErrorType erasePartition(FileSystem &fs) {
-        return fromPlatformError(esp_spiffs_format(&fs.name()));
+        return fromPlatformError(esp_spiffs_format(fs.name().data()));
     }
 
     ErrorType size(FileSystemTypes::File &file) {

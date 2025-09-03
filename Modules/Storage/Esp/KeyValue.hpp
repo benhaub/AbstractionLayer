@@ -12,7 +12,7 @@
  */
 namespace KeyValue {
     ErrorType mount(FileSystem &fs, const std::array<char, FileSystemTypes::_PartitionNameLength> &nameSpace, std::unique_ptr<nvs::NVSHandle> &_handle) {
-        esp_err_t err = nvs_flash_init_partition(&fs.name());
+        esp_err_t err = nvs_flash_init_partition(fs.name().data());
         if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
             return fromPlatformError(err);
         }
@@ -20,13 +20,13 @@ namespace KeyValue {
         //This is a little different than how some other file systems would work. We only need to open once.
         //When we open the handle we get access to all the files (key/values) in flash. We actually do not want
         //to close until we unmount.
-        _handle = nvs::open_nvs_handle_from_partition(&fs.name(), nameSpace.data(), NVS_READWRITE, &err);
+        _handle = nvs::open_nvs_handle_from_partition(fs.name().data(), nameSpace.data(), NVS_READWRITE, &err);
 
         return fromPlatformError(err);
     }
 
     ErrorType unmount(FileSystem &fs, std::unique_ptr<nvs::NVSHandle> &_handle) {
-        esp_err_t err = nvs_flash_deinit_partition(&fs.name());
+        esp_err_t err = nvs_flash_deinit_partition(fs.name().data());
         _handle.release();
         return fromPlatformError(err);
     }
@@ -35,7 +35,7 @@ namespace KeyValue {
         nvs_stats_t stats;
         esp_err_t err;
 
-        err = nvs_get_stats(&fs.name(), &stats);
+        err = nvs_get_stats(fs.name().data(), &stats);
 
         //https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/nvs_flash.html#structure-of-a-page
         //One entry is 32 bytes.
@@ -48,7 +48,7 @@ namespace KeyValue {
         nvs_stats_t stats;
         esp_err_t err;
 
-        err = nvs_get_stats(&fs.name(), &stats);
+        err = nvs_get_stats(fs.name().data(), &stats);
 
         //https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/nvs_flash.html#structure-of-a-page
         //One entry is 32 bytes.
@@ -58,7 +58,7 @@ namespace KeyValue {
     }
 
     ErrorType erasePartition(FileSystem &fs) {
-        return fromPlatformError(nvs_flash_erase_partition(&fs.name()));
+        return fromPlatformError(nvs_flash_erase_partition(fs.name().data()));
     }
 
     ErrorType open(FileSystem &fs, std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file ) {

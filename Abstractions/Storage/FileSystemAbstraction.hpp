@@ -25,16 +25,18 @@ class StorageAbstraction;
 namespace FileSystemTypes {
 
     static constexpr Count _PartitionNameLength = 16;
+    using PartitionName = std::array<char, _PartitionNameLength>;
 
     /**
      * @struct Status
      * @brief The status of the file system.
     */
     struct Status {
-        std::array<char, _PartitionNameLength> partitionName;///< The name of the partition the file system is on.
         bool mounted;                                        ///< True if the file system is mounted, false otherwise.
         Percent freeSpace;                                   ///< The free space on the file system.
         Count openedFiles;                                   ///< The number of files opened on the file system.
+
+        constexpr Status() : mounted(false), freeSpace(0), openedFiles(0) {}
     };
 
     /**
@@ -86,6 +88,29 @@ namespace FileSystemTypes {
         OpenMode openMode;      ///< The open mode of the file.
         bool isOpen;            ///< True if the file is open, false otherwise.
     };
+
+    /**
+     * @struct Params
+     * @brief Parameters for the file system
+     * @details Instead of specializing the template with concrete types, we use generics and bind them to a requires clause so that the constrcutor can declare it
+     *          as a parameter without specifying the exact type, leaving that choice up the to user.
+     * @tparam N The name of the partition
+     * @tparam I The implementation of the file system
+     */
+    template <typename N, typename I>
+    requires std::is_same_v<N, PartitionName> &&
+             std::is_same_v<I, FileSystemTypes::Implementation>
+    struct Params {
+        const N &PartitionName() const { return _name; }
+        const I &Implementation() const { return _implementation; }
+        constexpr bool ImplementationIsSameAs(const I implemenation) const { return std::is_same_v<I, decltype(implemenation)>; }
+
+        Params(N name, I implemenation) : _name(name), _implementation(implemenation) {}
+
+        private:
+        N _name;
+        I _implementation;
+    };
 }
 
 /**
@@ -95,16 +120,17 @@ namespace FileSystemTypes {
 class FileSystemAbstraction {
 
     public:
+    /// @brief Default constructor
+    FileSystemAbstraction() = delete;
     /**
      * @brief Constructor
-     * @param name The name of the partition the file system is on.
-     * @param implementation The implementation of the file system.
+     * @details Takes a templated struct so as to not force the entire class to be a template. We selectively pick out the things that we need available at
+     *          compile time.
      * @sa FileSystemTypes::Implementation
      * @param storage The storage medium the file system is on.
      */
-    FileSystemAbstraction(const std::array<char, FileSystemTypes::_PartitionNameLength> &name, FileSystemTypes::Implementation implementation, StorageAbstraction &storage) : _implementation(implementation), _storage(storage) {
-        _status.partitionName = name;
-    }
+    constexpr FileSystemAbstraction(const FileSystemTypes::Params<FileSystemTypes::PartitionName, FileSystemTypes::Implementation> &params, StorageAbstraction &storage) :
+                          _params(params), _storage(storage) {}
     /// @brief Default destructor
     virtual ~FileSystemAbstraction() = default;
 
@@ -115,8 +141,8 @@ class FileSystemAbstraction {
      * @brief Print the status of the file system
      */
     void printStatus() {
-        PLT_LOGI(TAG, "<FileSystem:%s> <Mounted:%s, Open Files:%u, Free (%%):%.1f> <Pie, Stairs, Line>",
-        status().partitionName.data(), status().mounted ? "true" : "false", status().openedFiles, status().freeSpace);
+        PLT_LOGI(TAG, "<FileSystem:%s> <Implementation:%u, Mounted:%s, Open Files:%u, Free (%%):%.1f> <Pie, Stairs, Line>",
+        _params.PartitionName().data(), _params.Implementation(), status().mounted ? "true" : "false", status().openedFiles, status().freeSpace);
     }
 
     /**
@@ -247,9 +273,9 @@ class FileSystemAbstraction {
     virtual ErrorType size(FileSystemTypes::File &file) = 0;
 
     /// @brief Get the mount prefix as a constant reference
-    std::string_view mountPrefix() const { return _mountPrefix; }
+    std::string_view mountPrefix() const { return _mountPrefix->c_str(); }
     /// @brief Get the name of the file system as a constant reference
-    const char &name() const { return _status.partitionName[0]; }
+    const FileSystemTypes::PartitionName name() const { return _params.PartitionName(); }
     /// @brief Get the status of the file system as a constant reference
     const FileSystemTypes::Status &status() {
         //Bytes is a uint32_t so on systems with more than 4GiB of storage, this will overflow.
@@ -322,16 +348,11 @@ class FileSystemAbstraction {
 
     protected:
     /// @brief A path that is prepened to all file names for storage
-    std::string _mountPrefix;
-    /// @brief The implementation of the file system
-    FileSystemTypes::Implementation _implementation;
+    StaticString::Container _mountPrefix;
     /// @brief The status of the file system.
-    FileSystemTypes::Status _status = {
-        .partitionName = {0},
-        .mounted = false,
-        .freeSpace = -1,
-        .openedFiles = 0
-    };
+    FileSystemTypes::Status _status;
+    /// @brief Parameters for creating a file system.
+    FileSystemTypes::Params<FileSystemTypes::PartitionName, FileSystemTypes::Implementation> _params;
     /// @brief The storage this abstraction is bound to
     StorageAbstraction &_storage;
 };

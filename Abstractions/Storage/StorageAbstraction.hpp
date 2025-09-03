@@ -18,6 +18,8 @@
  */
 namespace StorageTypes {
 
+    constexpr Bytes RootPrefixMaxSize = 64;
+
     /**
      * @struct Status
      * @brief The status of the storage.
@@ -62,6 +64,18 @@ namespace StorageTypes {
 
         return "Unknown";
     }
+
+    constexpr auto longestMediumStringSize = []() -> size_t {
+        size_t longestSoFar = 0;
+
+        for (const auto &mapPair : StorageTypes::MediumToStringPairs) {
+            if (mapPair.second.size() > longestSoFar) {
+                longestSoFar = mapPair.second.size();
+            }
+        }
+
+        return longestSoFar;
+    };
 }
 
 /**

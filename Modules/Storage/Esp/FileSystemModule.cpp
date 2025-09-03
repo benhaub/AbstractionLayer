@@ -9,15 +9,14 @@ ErrorType FileSystem::mount() {
     ErrorType callbackError = ErrorType::Failure;
 
     auto mountCallback = [&]() -> ErrorType {
-        switch(_implementation) {
-            case FileSystemTypes::Implementation::KeyValue:
-                callbackError = KeyValue::mount(*this, _nameSpace, _handle);
-                break;
-            case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::mount(*this);
-                break;
-            default:
-                callbackError = ErrorType::NotSupported;
+        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+            callbackError = KeyValue::mount(*this, _nameSpace, _handle);
+        }
+        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+            callbackError = Spiffs::mount(*this);
+        }
+        else {
+            callbackError = ErrorType::NotSupported;
         }
 
         mountDone = true;
@@ -45,15 +44,14 @@ ErrorType FileSystem::unmount() {
     ErrorType callbackError = ErrorType::Failure;
 
     auto unmountCallback = [&]() -> ErrorType {
-        switch (_implementation) {
-            case FileSystemTypes::Implementation::KeyValue:
-                callbackError = KeyValue::unmount(*this, _handle);
-                break;
-            case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::unmount(*this);
-                break;
-            default:
-                callbackError = ErrorType::NotSupported;
+        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+            callbackError = KeyValue::unmount(*this, _handle);
+        }
+        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+            callbackError = Spiffs::unmount(*this);
+        }
+        else {
+            callbackError = ErrorType::NotSupported;
         }
 
         unmountDone = true;
@@ -81,15 +79,14 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto maxStorageQueryCallback = [&]() -> ErrorType {
-        switch(_implementation) {
-            case FileSystemTypes::Implementation::KeyValue:
-                callbackError = KeyValue::maxPartitionSize(*this, size);
-                break;
-            case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::maxPartitionSize(*this, size);
-                break;
-            default:
-                callbackError = ErrorType::NotSupported;
+        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+            callbackError = KeyValue::maxPartitionSize(*this, size);
+        }
+        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+            callbackError = Spiffs::maxPartitionSize(*this, size);
+        }
+        else {
+            callbackError = ErrorType::NotSupported;
         }
 
         maxStorageQueryDone = true;
@@ -114,15 +111,14 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto availableStorageQueryCallback = [&]() -> ErrorType {
-        switch(_implementation) {
-            case FileSystemTypes::Implementation::KeyValue:
-                callbackError = KeyValue::availablePartition(*this, size);
-                break;
-            case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::availablePartition(*this, size);
-                break;
-            default:
-                callbackError = ErrorType::NotSupported;
+        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+            callbackError = KeyValue::availablePartition(*this, size);
+        }
+        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+            callbackError = Spiffs::availablePartition(*this, size);
+        }
+        else {
+            callbackError = ErrorType::NotSupported;
         }
 
         availableStorageQueryDone = true;
@@ -147,15 +143,14 @@ ErrorType FileSystem::erasePartition() {
     ErrorType callbackError = ErrorType::Failure;
 
     auto erasePartitionCallback = [&]() -> ErrorType {
-        switch(_implementation) {
-            case FileSystemTypes::Implementation::KeyValue:
-                callbackError = KeyValue::erasePartition(*this);
-                break;
-            case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::erasePartition(*this);
-                break;
-            default:
-                callbackError = ErrorType::NotSupported;
+        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+            callbackError = KeyValue::erasePartition(*this);
+        }
+        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+            callbackError = Spiffs::erasePartition(*this);
+        }
+        else {
+            callbackError = ErrorType::NotSupported;
         }
 
         erasePartitionDone = true;
@@ -181,25 +176,24 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
     assert(path.size() > 0);
 
     auto openCallback = [&]() -> ErrorType {
-        switch (_implementation) {
-            case FileSystemTypes::Implementation::KeyValue:
-                callbackError = KeyValue::open(*this, path, mode, file);
-                break;
-            case FileSystemTypes::Implementation::Spiffs:
-                if (spiffsFiles.size() >= _MaxOpenFiles) {
-                    callbackError = ErrorType::LimitReached;
+        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+            callbackError = KeyValue::open(*this, path, mode, file);
+        }
+        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+            if (spiffsFiles.size() >= _MaxOpenFiles) {
+                callbackError = ErrorType::LimitReached;
+            }
+            else {
+                FILE *spiffsFile = nullptr;
+                callbackError = Spiffs::open(path, mode, file, spiffsFile);
+                if (ErrorType::Success == callbackError) {
+                    spiffsFiles[file.path->c_str()] = spiffsFile;
+                    _status.openedFiles = spiffsFiles.size();
                 }
-                else {
-                    FILE *spiffsFile = nullptr;
-                    callbackError = Spiffs::open(path, mode, file, spiffsFile);
-                    if (ErrorType::Success == callbackError) {
-                        spiffsFiles[file.path->c_str()] = spiffsFile;
-                        _status.openedFiles = spiffsFiles.size();
-                    }
-                }
-                break;
-            default:
-                callbackError = ErrorType::NotSupported;
+            }
+        }
+        else {
+            callbackError = ErrorType::NotSupported;
         }
 
         openDone = true;
@@ -224,20 +218,20 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto closeCallback = [&]() -> ErrorType {
-        switch (_implementation) {
-            case FileSystemTypes::Implementation::KeyValue:
-                callbackError = KeyValue::close(_handle, file);
-                break;
-            case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::close(file, spiffsFiles[file.path->c_str()]);
-                if (callbackError == ErrorType::Success) {
-                    spiffsFiles.erase(file.path->c_str());
-                    _status.openedFiles = spiffsFiles.size();
-                }
-                break;
-            default:
-                callbackError = ErrorType::NotSupported;
+        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+            callbackError = KeyValue::close(_handle, file);
         }
+        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+            callbackError = Spiffs::close(file, spiffsFiles[file.path->c_str()]);
+            if (callbackError == ErrorType::Success) {
+                spiffsFiles.erase(file.path->c_str());
+                _status.openedFiles = spiffsFiles.size();
+            }
+        }
+        else {
+            callbackError = ErrorType::NotSupported;
+        }
+
 
         closeDone = true;
         return callbackError;
@@ -261,16 +255,15 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto removeCallback = [&]() -> ErrorType {
-        switch (_implementation) {
-            case FileSystemTypes::Implementation::KeyValue:
-                callbackError = KeyValue::remove(_handle, file);
-                break;
-            case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::remove(file, spiffsFiles[file.path->c_str()]);
-                spiffsFiles.erase(file.path->c_str());
-                break;
-            default:
-                callbackError = ErrorType::NotSupported;
+        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+            callbackError = KeyValue::remove(_handle, file);
+        }
+        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+            callbackError = Spiffs::remove(file, spiffsFiles[file.path->c_str()]);
+            spiffsFiles.erase(file.path->c_str());
+        }
+        else {
+            callbackError = ErrorType::NotSupported;
         }
 
         removeDone = true;
@@ -295,20 +288,19 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
     ErrorType callbackError = ErrorType::Failure;
 
     auto readCallback = [&]() -> ErrorType {
-        switch (_implementation) {
-            case FileSystemTypes::Implementation::KeyValue:
-                callbackError = KeyValue::readBlocking(_handle, file, buffer);
-                break;
-            case FileSystemTypes::Implementation::Spiffs:
-                if (spiffsFiles.contains(file.path->c_str())) {
-                    callbackError = Spiffs::readBlocking(spiffsFiles[file.path->c_str()], file, buffer);
-                }
-                else {
-                    callbackError = ErrorType::PrerequisitesNotMet;
-                }
-                break;
-            default:
-                callbackError = ErrorType::NotSupported;
+        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+            callbackError = KeyValue::readBlocking(_handle, file, buffer);
+        }
+        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+            if (spiffsFiles.contains(file.path->c_str())) {
+                callbackError = Spiffs::readBlocking(spiffsFiles[file.path->c_str()], file, buffer);
+            }
+            else {
+                callbackError = ErrorType::PrerequisitesNotMet;
+            }
+        }
+        else {
+            callbackError = ErrorType::NotSupported;
         }
 
         readDone = true;
@@ -345,15 +337,14 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::stri
     ErrorType callbackError = ErrorType::Failure;
 
     auto writeCallback = [&]() -> ErrorType {
-        switch (_implementation) {
-            case FileSystemTypes::Implementation::KeyValue:
-                callbackError = KeyValue::writeBlocking(_handle, file, data);
-                break;
-            case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::writeBlocking(spiffsFiles[file.path->c_str()], file, data);
-                break;
-            default:
-                callbackError = ErrorType::NotSupported;
+        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+            callbackError = KeyValue::writeBlocking(_handle, file, data);
+        }
+        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+            callbackError = Spiffs::writeBlocking(spiffsFiles[file.path->c_str()], file, data);
+        }
+        else {
+            callbackError = ErrorType::NotSupported;
         }
 
         writeDone = true;
@@ -389,15 +380,14 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto syncCallback = [&]() -> ErrorType {
-        switch (_implementation) {
-            case FileSystemTypes::Implementation::KeyValue:
-                callbackError = KeyValue::synchronize(_handle);
-                break;
-            case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::synchronize(spiffsFiles[file.path->c_str()]);
-                break;
-            default:
-                callbackError = ErrorType::NotSupported;
+        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+            callbackError = KeyValue::synchronize(_handle);
+        }
+        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+            callbackError = Spiffs::synchronize(spiffsFiles[file.path->c_str()]);
+        }
+        else {
+            callbackError = ErrorType::NotSupported;
         }
 
         syncDone = true;
@@ -422,15 +412,14 @@ ErrorType FileSystem::size(FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto sizeQueryCallback = [&]() -> ErrorType {
-        switch (_implementation) {
-            case FileSystemTypes::Implementation::KeyValue:
-                callbackError = KeyValue::size(_handle, file);
-                break;
-            case FileSystemTypes::Implementation::Spiffs:
-                callbackError = Spiffs::size(file);
-                break;
-            default:
-                callbackError = ErrorType::NotSupported;
+        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+            callbackError = KeyValue::size(_handle, file);
+        }
+        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+            callbackError = Spiffs::size(file);
+        }
+        else {
+            callbackError = ErrorType::NotSupported;
         }
 
         sizeQueryDone = true;
