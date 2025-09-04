@@ -99,7 +99,7 @@ class CellularAbstraction : public NetworkAbstraction {
 
     public:
     /// @brief Default constructor
-    CellularAbstraction() {
+    CellularAbstraction() : NetworkAbstraction() {
         NetworkAbstraction::_status.technology = NetworkTypes::Technology::Cellular;
     }
     /// @brief Default destructor

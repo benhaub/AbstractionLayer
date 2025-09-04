@@ -7,7 +7,6 @@
 //ESP
 #include "esp_wifi_types.h"
 #include "esp_mac.h"
-#include "lwip/netdb.h"
 #include "lwip/ip_addr.h"
 #include "lwip/dns.h"
 #include "freertos/event_groups.h"

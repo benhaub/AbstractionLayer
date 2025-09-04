@@ -103,10 +103,10 @@ class WifiAbstraction : public NetworkAbstraction {
 
     void printStatus() {
         status();
-        PLT_LOGI(TAG, "<WifiStatus> <Technology:%u, isUp:%s, isProvisioned:%s, Signal Strength (dBm):%d> <Pie, Line>",
+        PLT_LOGI(TAG, "<WifiStatus> <Technology:%u, isUp:%u, isProvisioned:%u, Signal Strength (dBm):%d> <Pie, Line>",
         static_cast<uint8_t>(NetworkAbstraction::_status.technology),
-                             _status.isProvisioned ? "yes" : "no",
-                             NetworkAbstraction::_status.isUp ? "true" : "false",
+                             NetworkAbstraction::_status.isUp,
+                             _status.isProvisioned,
                              _status.signalStrength);
     }
 

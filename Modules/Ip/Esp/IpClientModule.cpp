@@ -1,12 +1,6 @@
 //AbstractionLayer
 #include "IpClientModule.hpp"
 #include "OperatingSystemModule.hpp"
-#include "Log.hpp"
-//Esp
-//C++
-#include <cassert>
-#include <cstring>
-#include <limits>
 
 /*
  * I tried the example code for non-blocking sockets from ESP github, it didn't work.
