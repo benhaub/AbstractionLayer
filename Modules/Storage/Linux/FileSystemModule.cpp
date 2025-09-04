@@ -22,7 +22,7 @@ ErrorType FileSystem::mount() {
             _mountPrefix->append("/");
         }
 
-        _mountPrefix->append(std::string(_params.PartitionName().data(), strlen(_params.PartitionName().data())));
+        _mountPrefix->append(std::string_view(_params.partitionName().data(), strlen(_params.partitionName().data())));
         mkdir(_mountPrefix->c_str(), S_IRWXU); 
         _status.mounted = true;
     }

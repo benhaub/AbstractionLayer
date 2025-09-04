@@ -23,6 +23,7 @@ ErrorType FileSystem::mount() {
         if (ErrorType::Success == callbackError) {
             _status.mounted = true;
         }
+
         return callbackError;
     };
 
