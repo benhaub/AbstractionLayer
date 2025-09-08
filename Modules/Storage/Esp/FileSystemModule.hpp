@@ -1,6 +1,14 @@
 #ifndef __FILE_SYSTEM_MODULE_HPP__
 #define __FILE_SYSTEM_MODULE_HPP__
 
+#ifndef ESP_FILE_SYSTEM_ENABLE_NVS
+#error "Please define whether or not to enable the NVS filesystem"
+#endif
+
+#ifndef ESP_FILE_SYSTEM_ENABLE_SPIFFS
+#error "Please define whether or not to enable the SPIFFS filesystem"
+#endif
+
 //AbstractionLayer
 #include "FileSystemAbstraction.hpp"
 #include "StorageAbstraction.hpp"
@@ -13,7 +21,14 @@
 class FileSystem final : public FileSystemAbstraction {
 
     public:
-    FileSystem(StorageAbstraction &storage) : FileSystemAbstraction(storage) {}
+    FileSystem(StorageAbstraction &storage, FileSystemTypes::Implementation implementation, FileSystemTypes::PartitionName partitionName) : FileSystemAbstraction(storage, implementation, partitionName) {
+        if (FileSystemTypes::Implementation::KeyValue == implementation && ESP_FILE_SYSTEM_ENABLE_NVS != 1) {
+            assert(false);
+        }
+        else if (FileSystemTypes::Implementation::Spiffs == implementation && ESP_FILE_SYSTEM_ENABLE_SPIFFS != 1) {
+            assert(false);
+        }
+    }
 
     static constexpr Count _MaxOpenFiles = 10;
 

@@ -11,7 +11,7 @@
 class FileSystem final: public FileSystemAbstraction {
 
     public:
-    FileSystem(StorageAbstraction &storage) : FileSystemAbstraction(storage) {
+    FileSystem(StorageAbstraction &storage, FileSystemTypes::Implementation implementation, FileSystemTypes::PartitionName partitionName) : FileSystemAbstraction(storage, implementation, partitionName) {
         //Since mounting is not supported on simplelink.
         _status.mounted = true;
     }

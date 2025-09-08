@@ -21,8 +21,8 @@ class StorageAbstraction;
  */
 namespace FileSystemTypes {
 
-    static constexpr Count _PartitionNameLength = 16;
-    using PartitionName = std::array<char, _PartitionNameLength>;
+    static constexpr Count PartitionNameLength = 16;
+    using PartitionName = std::array<char, PartitionNameLength>;
 
     /**
      * @struct Status
@@ -85,32 +85,6 @@ namespace FileSystemTypes {
         OpenMode openMode;      ///< The open mode of the file.
         bool isOpen;            ///< True if the file is open, false otherwise.
     };
-
-    struct ConfigurationParameters {
-
-        public:
-        virtual constexpr Implementation implementation() const {
-            return Implementation::Unknown; 
-        };
-        virtual constexpr PartitionName partitionName() const {
-            constexpr PartitionName name = {"Invalid"};
-            return name;
-        }
-
-        virtual constexpr bool ImplementationIsSameAs(const FileSystemTypes::Implementation implementation) const {
-            return false;
-        }
-    };
-
-    template <FileSystemTypes::PartitionName _PartitionName, FileSystemTypes::Implementation _Implementation>
-    struct Params final : public FileSystemTypes::ConfigurationParameters {
-
-        public:
-        constexpr FileSystemTypes::Implementation implementation() const override { return _Implementation; }
-        constexpr FileSystemTypes::PartitionName partitionName() const override { return _PartitionName; }
-
-        constexpr bool ImplementationIsSameAs(const FileSystemTypes::Implementation implementation) const override { return _Implementation == implementation; }
-    };
 }
 
 /**
@@ -124,36 +98,28 @@ class FileSystemAbstraction {
      * @brief Constructor
      * @param storage The storage medium the file system is on.
      */
-    constexpr FileSystemAbstraction(StorageAbstraction &storage) : _storage(storage) {}
-    /// @brief Default destructor
+    FileSystemAbstraction(StorageAbstraction &storage, FileSystemTypes::Implementation implementation, FileSystemTypes::PartitionName partitionName) :
+                          _storage(storage), _implementation(implementation), _partitionName(partitionName) {}
+    /// @brief Destructor
     virtual ~FileSystemAbstraction() = default;
 
-    /// @brief The tag for logging
+    /// @brief Tag for logging
     static constexpr char TAG[] = "FileSystem";
 
     /**
      * @brief Print the status of the file system
      */
     void printStatus() {
-        PLT_LOGI(TAG, "<FileSystem:%s> <Implementation:%u, Mounted:%s, Open Files:%u, Free (%%):%.1f> <Omit, Pie, Stairs, Line>",
-        _params.partitionName().data(), _params.implementation(), status().mounted ? "true" : "false", status().openedFiles, status().freeSpace);
+        PLT_LOGI(TAG, "<FileSystem%s> <Implementation:&u, Mounted:%u, Open Files:%u, Free (%%):%.1f> <Omit, Pie, Stairs, Line>",
+                      partitionName().data(), implementation(), status().mounted, status().openedFiles, status().freeSpace);
     }
 
-    /**
-     * @brief Configure the network before initializing
-     * @param[in] parameters The parameters to configure with
-     * @sa ConfigurationParameters
-     */
-    virtual ErrorType configure(const FileSystemTypes::ConfigurationParameters &parameters) {
-        _params = parameters;
-
-        return ErrorType::Success;
-    }
     /**
      * @brief Mount the file system
      * @returns ErrorType::Success if the file system was mounted
      * @returns ErrorType::Failure otherwise
      * @post FileSystemTypes::Status::mounted is set to true when this call returns with ErrorType::Success
+     * @pre configure must be called first
      */
     virtual ErrorType mount() = 0;
     /**
@@ -278,8 +244,6 @@ class FileSystemAbstraction {
 
     /// @brief Get the mount prefix as a constant reference
     std::string_view mountPrefix() const { return _mountPrefix->c_str(); }
-    /// @brief Get the name of the file system as a constant reference
-    const FileSystemTypes::PartitionName name() const { return _params.partitionName(); }
     /// @brief Get the status of the file system as a constant reference
     const FileSystemTypes::Status &status() {
         //Bytes is a uint32_t so on systems with more than 4GiB of storage, this will overflow.
@@ -300,6 +264,11 @@ class FileSystemAbstraction {
 
         return _status;
     }
+
+    /// @brief Get the name of the file system as a constant reference
+    const FileSystemTypes::PartitionName partitionName() const { return _partitionName; }
+    /// @brief Get the implementation of the file system as a constant reference
+    FileSystemTypes::Implementation implementation() const { return _implementation; }
 
     /**
      * @brief Check if a file must exist
@@ -355,10 +324,12 @@ class FileSystemAbstraction {
     StaticString::Container _mountPrefix;
     /// @brief The status of the file system.
     FileSystemTypes::Status _status;
-    /// @brief Configuration parameters for the filesystem to use for initialization
-    FileSystemTypes::ConfigurationParameters _params;
     /// @brief The storage this abstraction is bound to
     StorageAbstraction &_storage;
+    /// @brief The implementation of the file system
+    FileSystemTypes::Implementation _implementation;
+    /// @brief The name of the file system
+    FileSystemTypes::PartitionName _partitionName;
 };
 
 #endif //__FILE_SYSTEM_ABSTRACTION_HPP__

@@ -1,18 +1,35 @@
-#ifndef __KEY_VALUE_HPP
-#define __KEY_VALUE_HPP
+#ifndef __KEY_VALUE_HPP__
+#define __KEY_VALUE_HPP__
 
 //AbstractionLayer
 #include "FileSystemModule.hpp"
 //ESP
 #include "nvs_flash.h"
 
+namespace KeyValue {
+    ErrorType mount(FileSystem &fs, const FileSystemTypes::PartitionName &nameSpace, std::unique_ptr<nvs::NVSHandle> &_handle);
+    ErrorType unmount(FileSystem &fs, std::unique_ptr<nvs::NVSHandle> &_handle);
+    ErrorType maxPartitionSize(FileSystem &fs, Bytes &size);
+    ErrorType availablePartition(FileSystem &fs, Bytes &size);
+    ErrorType erasePartition(FileSystem &fs);
+    ErrorType open(FileSystem &fs, std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file );
+    ErrorType synchronize(std::unique_ptr<nvs::NVSHandle> &_handle);
+    ErrorType close(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file);
+    ErrorType remove(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file);
+    ErrorType readBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, std::string &buffer);
+    ErrorType writeBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, const std::string &data);
+    ErrorType size(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file);
+}
+
+#if ESP_FILE_SYSTEM_ENABLE_NVS
+
 /**
  * @namespace KeyValue
  * @brief Key Value NVS storage.
  */
 namespace KeyValue {
-    ErrorType mount(FileSystem &fs, const std::array<char, FileSystemTypes::_PartitionNameLength> &nameSpace, std::unique_ptr<nvs::NVSHandle> &_handle) {
-        esp_err_t err = nvs_flash_init_partition(fs.name().data());
+    ErrorType mount(FileSystem &fs, const FileSystemTypes::PartitionName &nameSpace, std::unique_ptr<nvs::NVSHandle> &_handle) {
+        esp_err_t err = nvs_flash_init_partition(fs.partitionName().data());
         if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
             return fromPlatformError(err);
         }
@@ -20,13 +37,13 @@ namespace KeyValue {
         //This is a little different than how some other file systems would work. We only need to open once.
         //When we open the handle we get access to all the files (key/values) in flash. We actually do not want
         //to close until we unmount.
-        _handle = nvs::open_nvs_handle_from_partition(fs.name().data(), nameSpace.data(), NVS_READWRITE, &err);
+        _handle = nvs::open_nvs_handle_from_partition(fs.partitionName().data(), nameSpace.data(), NVS_READWRITE, &err);
 
         return fromPlatformError(err);
     }
 
     ErrorType unmount(FileSystem &fs, std::unique_ptr<nvs::NVSHandle> &_handle) {
-        esp_err_t err = nvs_flash_deinit_partition(fs.name().data());
+        esp_err_t err = nvs_flash_deinit_partition(fs.partitionName().data());
         _handle.release();
         return fromPlatformError(err);
     }
@@ -35,7 +52,7 @@ namespace KeyValue {
         nvs_stats_t stats;
         esp_err_t err;
 
-        err = nvs_get_stats(fs.name().data(), &stats);
+        err = nvs_get_stats(fs.partitionName().data(), &stats);
 
         //https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/nvs_flash.html#structure-of-a-page
         //One entry is 32 bytes.
@@ -48,7 +65,7 @@ namespace KeyValue {
         nvs_stats_t stats;
         esp_err_t err;
 
-        err = nvs_get_stats(fs.name().data(), &stats);
+        err = nvs_get_stats(fs.partitionName().data(), &stats);
 
         //https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/nvs_flash.html#structure-of-a-page
         //One entry is 32 bytes.
@@ -58,7 +75,7 @@ namespace KeyValue {
     }
 
     ErrorType erasePartition(FileSystem &fs) {
-        return fromPlatformError(nvs_flash_erase_partition(fs.name().data()));
+        return fromPlatformError(nvs_flash_erase_partition(fs.partitionName().data()));
     }
 
     ErrorType open(FileSystem &fs, std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file ) {
@@ -154,4 +171,5 @@ namespace KeyValue {
     }
 };
 
-#endif /* __KEY_VALUE_HPP */
+#endif //ESP_FILE_SYSTEM_ENABLE_NVS
+#endif /* __KEY_VALUE_HPP__ */

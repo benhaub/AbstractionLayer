@@ -1,18 +1,18 @@
 //AbstractionLayer
 #include "FileSystemModule.hpp"
 #include "OperatingSystemModule.hpp"
-#include "KeyValue.hpp"
 #include "Spiffs.hpp"
+#include "KeyValue.hpp"
 
 ErrorType FileSystem::mount() {
     bool mountDone = false;
     ErrorType callbackError = ErrorType::Failure;
 
     auto mountCallback = [&]() -> ErrorType {
-        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
             callbackError = KeyValue::mount(*this, _nameSpace, _handle);
         }
-        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+        else if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             callbackError = Spiffs::mount(*this);
         }
         else {
@@ -45,10 +45,10 @@ ErrorType FileSystem::unmount() {
     ErrorType callbackError = ErrorType::Failure;
 
     auto unmountCallback = [&]() -> ErrorType {
-        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
             callbackError = KeyValue::unmount(*this, _handle);
         }
-        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+        else if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             callbackError = Spiffs::unmount(*this);
         }
         else {
@@ -59,6 +59,7 @@ ErrorType FileSystem::unmount() {
         if (ErrorType::Success == callbackError) {
             _status.mounted = false;
         }
+
         return callbackError;
     };
 
@@ -80,10 +81,10 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto maxStorageQueryCallback = [&]() -> ErrorType {
-        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
             callbackError = KeyValue::maxPartitionSize(*this, size);
         }
-        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+        else if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             callbackError = Spiffs::maxPartitionSize(*this, size);
         }
         else {
@@ -112,10 +113,10 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto availableStorageQueryCallback = [&]() -> ErrorType {
-        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
             callbackError = KeyValue::availablePartition(*this, size);
         }
-        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+        else if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             callbackError = Spiffs::availablePartition(*this, size);
         }
         else {
@@ -144,10 +145,10 @@ ErrorType FileSystem::erasePartition() {
     ErrorType callbackError = ErrorType::Failure;
 
     auto erasePartitionCallback = [&]() -> ErrorType {
-        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
             callbackError = KeyValue::erasePartition(*this);
         }
-        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+        else if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             callbackError = Spiffs::erasePartition(*this);
         }
         else {
@@ -177,10 +178,10 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
     assert(path.size() > 0);
 
     auto openCallback = [&]() -> ErrorType {
-        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
             callbackError = KeyValue::open(*this, path, mode, file);
         }
-        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+        else if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             if (spiffsFiles.size() >= _MaxOpenFiles) {
                 callbackError = ErrorType::LimitReached;
             }
@@ -219,10 +220,10 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto closeCallback = [&]() -> ErrorType {
-        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
             callbackError = KeyValue::close(_handle, file);
         }
-        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+        else if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             callbackError = Spiffs::close(file, spiffsFiles[file.path->c_str()]);
             if (callbackError == ErrorType::Success) {
                 spiffsFiles.erase(file.path->c_str());
@@ -256,10 +257,10 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto removeCallback = [&]() -> ErrorType {
-        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
             callbackError = KeyValue::remove(_handle, file);
         }
-        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+        else if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             callbackError = Spiffs::remove(file, spiffsFiles[file.path->c_str()]);
             spiffsFiles.erase(file.path->c_str());
         }
@@ -289,16 +290,11 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
     ErrorType callbackError = ErrorType::Failure;
 
     auto readCallback = [&]() -> ErrorType {
-        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
             callbackError = KeyValue::readBlocking(_handle, file, buffer);
         }
-        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
-            if (spiffsFiles.contains(file.path->c_str())) {
-                callbackError = Spiffs::readBlocking(spiffsFiles[file.path->c_str()], file, buffer);
-            }
-            else {
-                callbackError = ErrorType::PrerequisitesNotMet;
-            }
+        else if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
+            callbackError = Spiffs::readBlocking(spiffsFiles[file.path->c_str()], file, buffer);
         }
         else {
             callbackError = ErrorType::NotSupported;
@@ -338,10 +334,10 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::stri
     ErrorType callbackError = ErrorType::Failure;
 
     auto writeCallback = [&]() -> ErrorType {
-        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
             callbackError = KeyValue::writeBlocking(_handle, file, data);
         }
-        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+        else if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             callbackError = Spiffs::writeBlocking(spiffsFiles[file.path->c_str()], file, data);
         }
         else {
@@ -381,10 +377,10 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto syncCallback = [&]() -> ErrorType {
-        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
             callbackError = KeyValue::synchronize(_handle);
         }
-        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+        else if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             callbackError = Spiffs::synchronize(spiffsFiles[file.path->c_str()]);
         }
         else {
@@ -413,10 +409,10 @@ ErrorType FileSystem::size(FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
 
     auto sizeQueryCallback = [&]() -> ErrorType {
-        if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::KeyValue)) {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
             callbackError = KeyValue::size(_handle, file);
         }
-        else if constexpr (_params.ImplementationIsSameAs(FileSystemTypes::Implementation::Spiffs)) {
+        else if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             callbackError = Spiffs::size(file);
         }
         else {

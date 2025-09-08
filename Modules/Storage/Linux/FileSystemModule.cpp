@@ -15,14 +15,14 @@ ErrorType FileSystem::mount() {
     const bool fileSystemHasNotBeenMounted = !_status.mounted;
 
     if (fileSystemHasNotBeenMounted) {
-        _mountPrefix.set(StaticString::Data<StorageTypes::longestMediumStringSize() + sizeof(APP_HOME_DIRECTORY "/") + FileSystemTypes::_PartitionNameLength>());
+        _mountPrefix.set(StaticString::Data<StorageTypes::longestMediumStringSize() + sizeof(APP_HOME_DIRECTORY "/") + FileSystemTypes::PartitionNameLength>());
         _mountPrefix->assign(_storage.rootPrefix()->c_str());
 
         if (_mountPrefix->back() != '/') {
             _mountPrefix->append("/");
         }
 
-        _mountPrefix->append(std::string_view(_params.partitionName().data(), strlen(_params.partitionName().data())));
+        _mountPrefix->append(std::string_view(partitionName().data(), strlen(partitionName().data())));
         mkdir(_mountPrefix->c_str(), S_IRWXU); 
         _status.mounted = true;
     }

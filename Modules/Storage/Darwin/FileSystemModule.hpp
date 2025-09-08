@@ -11,7 +11,7 @@
 class FileSystem final : public FileSystemAbstraction {
 
     public:
-    FileSystem(const FileSystemTypes::Params<FileSystemTypes::PartitionName, FileSystemTypes::Implementation> &params, StorageAbstraction &storage) : FileSystemAbstraction(params, storage) {}
+    FileSystem(StorageAbstraction &storage, FileSystemTypes::Implementation implementation, FileSystemTypes::PartitionName partitionName) : FileSystemAbstraction(storage, implementation, partitionName) {}
 
     static constexpr Count _MaxOpenFiles = 10;
 

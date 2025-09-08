@@ -8,6 +8,24 @@
 //ESP
 #include "sys/stat.h"
 
+namespace Spiffs {
+    std::string toPosixOpenMode(const FileSystemTypes::OpenMode mode, ErrorType &error);
+    ErrorType maxPartitionSize(FileSystem &fs, Bytes &size);
+    ErrorType availablePartition(FileSystem &fs, Bytes &size);
+    ErrorType mount(FileSystem &fs);
+    ErrorType unmount(FileSystem &fs);
+    ErrorType erasePartition(FileSystem &fs);
+    ErrorType size(FileSystemTypes::File &file);
+    ErrorType close(FileSystemTypes::File &file, FILE *spiffsFile);
+    ErrorType open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file, FILE *&spiffsFile);
+    ErrorType remove(FileSystemTypes::File &file, FILE *spiffsFile);
+    ErrorType readBlocking(FILE *spiffsFile, FileSystemTypes::File &file, std::string &buffer);
+    ErrorType writeBlocking(FILE *spiffsFile, FileSystemTypes::File &file, const std::string &data);
+    ErrorType synchronize(FILE *spiffsFile);
+}
+
+#if ESP_FILE_SYSTEM_ENABLE_SPIFFS
+
 /**
  * @namespace Spiffs
  * @brief SPIFFS storage.
@@ -39,14 +57,14 @@ namespace Spiffs {
 
     ErrorType maxPartitionSize(FileSystem &fs, Bytes &size) {
         size_t maxSize;
-        ErrorType error = fromPlatformError(esp_spiffs_info(fs.name().data(), &maxSize, NULL));
+        ErrorType error = fromPlatformError(esp_spiffs_info(fs.partitionName().data(), &maxSize, NULL));
         size = maxSize;
         return error;
     }
 
     ErrorType availablePartition(FileSystem &fs, Bytes &size) {
         size_t availableSize;
-        ErrorType error = fromPlatformError(esp_spiffs_info(fs.name().data(), NULL, &availableSize));
+        ErrorType error = fromPlatformError(esp_spiffs_info(fs.partitionName().data(), NULL, &availableSize));
         size = availableSize;
         return error;
     }
@@ -56,7 +74,7 @@ namespace Spiffs {
         const esp_vfs_spiffs_conf_t conf = {
             //Base path has to be not null and not "/" or the undocumented ESP_ERR_INVALID_ARG is returned.
             .base_path = "/www",
-            .partition_label = fs.name().data(),
+            .partition_label = fs.partitionName().data(),
             .max_files = FileSystem::_MaxOpenFiles,
             .format_if_mount_failed = false
         };
@@ -90,11 +108,11 @@ namespace Spiffs {
     }
 
     ErrorType unmount(FileSystem &fs) {
-        return fromPlatformError(esp_vfs_spiffs_unregister(fs.name().data()));
+        return fromPlatformError(esp_vfs_spiffs_unregister(fs.partitionName().data()));
     }
 
     ErrorType erasePartition(FileSystem &fs) {
-        return fromPlatformError(esp_spiffs_format(fs.name().data()));
+        return fromPlatformError(esp_spiffs_format(fs.partitionName().data()));
     }
 
     ErrorType size(FileSystemTypes::File &file) {
@@ -121,7 +139,7 @@ namespace Spiffs {
     }
 
 
-    static ErrorType open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file, FILE *&spiffsFile) {
+    ErrorType open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file, FILE *&spiffsFile) {
         ErrorType error;
 
         const std::string posixMode = toPosixOpenMode(mode, error);
@@ -217,4 +235,5 @@ namespace Spiffs {
     }
 }
 
+#endif // ESP_FILE_SYSTEM_ENABLE_SPIFFS
 #endif /* __SPIFFS_HPP__ */
