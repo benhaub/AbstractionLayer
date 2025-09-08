@@ -15,6 +15,7 @@
 #include <functional>
 #include <string>
 #include <algorithm>
+#include <cassert>
 
 /**
  * @namespace OperatingSystemTypes

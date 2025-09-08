@@ -12,6 +12,8 @@
 #include "Log.hpp"
 #include "Math.hpp"
 #include "IpTypes.hpp"
+//C++
+#include <string>
 
 /**
  * @namespace NetworkTypes

@@ -47,22 +47,21 @@ namespace IcCommFactory {
     inline constexpr ErrorType Factory(std::optional<IcCommFactoryTypes::IcCommFactoryVariant> &ic) {
         ErrorType error = ErrorType::Success;
 
-        switch (_Device) {
-            case IcCommunicationProtocolTypes::IcDevice::Uart:
-                ic.emplace(std::in_place_type_t<Uart>());
-                break;
-            case IcCommunicationProtocolTypes::IcDevice::Spi:
-                ic.emplace(std::in_place_type_t<Spi>());
-                break;
-            case IcCommunicationProtocolTypes::IcDevice::I2c:
-                ic.emplace(std::in_place_type_t<I2c>());
-                break;
-            default: [[unlikely]]
-                error =  ErrorType::NotSupported;
+        if constexpr (_Device == IcCommunicationProtocolTypes::IcDevice::Uart) {
+            ic.emplace(std::in_place_type_t<Uart>());
+        }
+        else if constexpr (_Device == IcCommunicationProtocolTypes::IcDevice::Spi) {
+            ic.emplace(std::in_place_type_t<Spi>());
+        }
+        else if constexpr (_Device == IcCommunicationProtocolTypes::IcDevice::I2c) {
+            ic.emplace(std::in_place_type_t<I2c>());
+        }
+        else { [[unlikely]]
+            error =  ErrorType::NotSupported;
         }
 
         return error;
     }
 }
 
-#endif // __NETWORK_FACTORY_HPP__
+#endif // __IC_COMM_FACTORY_HPP__

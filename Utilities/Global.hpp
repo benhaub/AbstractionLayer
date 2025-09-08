@@ -7,10 +7,6 @@
 #ifndef __GLOBAL_HPP__
 #define __GLOBAL_HPP__
 
-//C++
-#include <memory>
-#include <cassert>
-
 /**
 * @class Global
 * @brief Makes a class globally accessible when inherited from

@@ -7,6 +7,7 @@
 #include <cstring>
 #include <vector>
 #include <array>
+#include <cassert>
 //AbstractionLayer
 #include "Types.hpp"
 

@@ -1,5 +1,5 @@
-#ifndef __FILE_MODULE_HPP__
-#define __FILE_MODULE_HPP__
+#ifndef __FILE_SYSTEM_MODULE_HPP__
+#define __FILE_SYSTEM_MODULE_HPP__
 
 //AbstractionLayer
 #include "FileSystemAbstraction.hpp"
@@ -58,4 +58,4 @@ class FileSystem final: public FileSystemAbstraction {
     }
 };
 
-#endif //__FILE_MODULE_HPP__
+#endif //__FILE_SYSTEM_MODULE_HPP__

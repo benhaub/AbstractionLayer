@@ -10,7 +10,8 @@
 //AbstractionLayer
 #include "NetworkAbstraction.hpp"
 //C++
-#include <functional>
+#include <memory>
+#include <cassert>
 
 /**
  * @namespace IpTypes

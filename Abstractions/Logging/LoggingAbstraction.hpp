@@ -10,8 +10,6 @@
 //AbstractionLayer
 #include "Error.hpp"
 #include "Types.hpp"
-//C++
-#include <string>
 
 /**
  * @enum LogType

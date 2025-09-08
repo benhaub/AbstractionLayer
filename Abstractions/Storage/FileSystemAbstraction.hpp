@@ -8,13 +8,10 @@
 #define __FILE_SYSTEM_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include "Error.hpp"
-#include "Types.hpp"
 #include "Log.hpp"
 #include "StaticString.hpp"
 //C++
 #include <memory>
-#include <functional>
 
 class StorageAbstraction;
 
