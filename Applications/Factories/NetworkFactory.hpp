@@ -48,20 +48,23 @@ namespace NetworkFactory {
      * @returns ErrorType::NotSupported if the technology is not supported
      */
     template <NetworkTypes::Technology _Technology>
-    inline ErrorType Factory(std::optional<NetworkFactoryTypes::NetworkFactoryVariant> &network) {
+    inline constexpr ErrorType Factory(std::optional<NetworkFactoryTypes::NetworkFactoryVariant> &network) {
         ErrorType error = ErrorType::Success;
 
-        switch (_Technology) {
-            case NetworkTypes::Technology::Wifi:
-                network.emplace(std::in_place_type_t<Wifi>());
-                break;
-            case NetworkTypes::Technology::Zigbee:
-            case NetworkTypes::Technology::Ethernet:
-            case NetworkTypes::Technology::Cellular:
-                network.emplace(std::in_place_type_t<Cellular>());
-                break;
-            default: [[unlikely]]
-                error =  ErrorType::NotSupported;
+        if constexpr (_Technology == NetworkTypes::Technology::Wifi) {
+            network.emplace(std::in_place_type_t<Wifi>());
+        }
+        else if constexpr (_Technology == NetworkTypes::Technology::Zigbee) {
+            error = ErrorType::NotSupported;
+        }
+        else if constexpr (_Technology == NetworkTypes::Technology::Ethernet) {
+            error = ErrorType::NotSupported;
+        }
+        else if constexpr (_Technology == NetworkTypes::Technology::Cellular) {
+            network.emplace(std::in_place_type_t<Cellular>());
+        }
+        else { [[unlikely]]
+            error =  ErrorType::NotSupported;
         }
 
         return error;

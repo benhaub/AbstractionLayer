@@ -70,12 +70,11 @@ namespace DarlingtonArrayFactory {
     inline constexpr ErrorType Factory(std::optional<DarlingtonArrayFactoryTypes::DarlingtonArrayFactoryVariant> &darlingtonArray) {
         ErrorType error = ErrorType::Success;
 
-        switch (_PartNumber) {
-            case DarlingtonArrayFactoryTypes::PartNumber::StmUln2003:
-                darlingtonArray.emplace(std::in_place_type_t<StmUln2003>());
-                break;
-            default: [[unlikely]]
-                error =  ErrorType::NotSupported;
+        if constexpr (_PartNumber == DarlingtonArrayFactoryTypes::PartNumber::StmUln2003) {
+            darlingtonArray.emplace(std::in_place_type_t<StmUln2003>());
+        }
+        else { [[unlikely]]
+            error =  ErrorType::NotSupported;
         }
 
         return error;

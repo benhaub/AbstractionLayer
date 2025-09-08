@@ -54,12 +54,11 @@ namespace HBridgeFactory {
     inline constexpr ErrorType Factory(std::optional<HBridgeFactoryTypes::HBridgeFactoryVariant> &hBridge) {
         ErrorType error = ErrorType::Success;
 
-        switch (_PartNumber) {
-            case HBridgeFactoryTypes::PartNumber::TiDrv8872:
-                hBridge.emplace(std::in_place_type_t<TiDrv8872>());
-                break;
-            default: [[unlikely]]
-                error =  ErrorType::NotSupported;
+        if constexpr (_PartNumber == HBridgeFactoryTypes::PartNumber::TiDrv8872) {
+            hBridge.emplace(std::in_place_type_t<TiDrv8872>());
+        }
+        else { [[unlikely]]
+            error =  ErrorType::NotSupported;
         }
 
         return error;
