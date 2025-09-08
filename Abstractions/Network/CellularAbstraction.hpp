@@ -45,6 +45,7 @@ namespace CellularTypes {
     };
 
     constexpr size_t MaxApnLength = 64;
+    using Apn = std::array<char, MaxApnLength>;
 
     /**
      * @struct Status
@@ -65,28 +66,30 @@ namespace CellularTypes {
         /// @brief The technology type these parameters are meant for
         NetworkTypes::Technology technology() const override { return NetworkTypes::Technology::Cellular; }
 
-        std::array<char, MaxApnLength> apn;                                   ///< The APN to use for the cellular device
+        Apn apn;                                                    ///< The APN to use for the cellular device
         CellularTypes::RadioAccessTechnology radioAccessTechnology; ///< The radio access technology to use for the cellular device
         CellularTypes::AccessMode accessMode;                       ///< The access mode to use for the cellular device
         IcCommunicationProtocolTypes::IcDevice icDevice;            ///< The IC device to use to communicate with the cellular modem. Do not set if not needed.
-        PinNumber resetPin;                                         ///< The reset pin to use for the cellular device. Do not set if not needed.
         PeripheralNumber resetGpio;                                 ///< The gpio peripheral that contains the reset pin to use for the cellular device. Do not set if not needed.
-        PeripheralNumber uartPeripheral;                            ///< The uart peripheral to use for the cellular device. Do not set if not needed
-        PinNumber uartTx;                                           ///< The TX pin to use for the cellular device. Do not set if not needed.
-        PinNumber uartRx;                                           ///< The RX pin to use for the cellular device. Do not set if not needed.
-        PinNumber uartRts;                                          ///< The RTS pin to use for the cellular device. Do not set if not needed.
-        PinNumber uartCts;                                          ///< The CTS pin to use for the cellular device. Do not set if not needed.
-        PeripheralNumber usbPeripheral;                             ///< The usb peripheral to use for the cellular device. Do not set if not needed
+        PinNumber resetPin;                                         ///< The reset pin to use for the cellular device. Do not set if not needed.
+        PeripheralNumber icCommPeripheralNumber;                    ///< The IC communication peripheral to use for the cellular device. Do not set if not needed
+        PinNumber icCommTx;                                         ///< The TX pin to use for the cellular device. Do not set if not needed.
+        PinNumber icCommRx;                                         ///< The RX pin to use for the cellular device. Do not set if not needed.
+        PinNumber icCommRts;                                        ///< The RTS pin to use for the cellular device. Do not set if not needed.
+        PinNumber icCommCts;                                        ///< The CTS pin to use for the cellular device. Do not set if not needed.
 
         Params() : NetworkTypes::ConfigurationParameters() {
             apn.fill(0);
             radioAccessTechnology = CellularTypes::RadioAccessTechnology::Unknown;
             accessMode = CellularTypes::AccessMode::Unknown;
             icDevice = IcCommunicationProtocolTypes::IcDevice::Unknown;
-            resetPin = -1;
             resetGpio = PeripheralNumber::Unknown;
-            uartPeripheral = PeripheralNumber::Unknown;
-            usbPeripheral = PeripheralNumber::Unknown;
+            resetPin = -1;
+            icCommPeripheralNumber = PeripheralNumber::Unknown;
+            icCommTx = -1;
+            icCommRx = -1;
+            icCommRts = -1;
+            icCommCts = -1;
         }
     };
 }
