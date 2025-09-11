@@ -40,8 +40,8 @@ namespace NetworkTypes {
      * @brief The status of the network interface.
     */
     struct Status {
-        bool isUp;                                ///< True when the network is up and ready for use.
-        Technology technology;                    ///< The technology of the network interface.
+        bool isUp;             ///< True when the network is up and ready for use.
+        Technology technology; ///< The technology of the network interface.
 
         Status() : isUp(false), technology(Technology::Unknown) {}
     };

@@ -53,8 +53,7 @@ ErrorType Wifi::init() {
                     }
                 }
                 else {
-                    PLT_LOGI(TAG, "Wifi already initialized. Skipping configuration.");
-                    NetworkAbstraction::_status.isUp = true;
+                    PLT_LOGW(TAG, "Wifi already initialized.");
                     return ErrorType::Success;
                 }
             }
@@ -535,6 +534,8 @@ static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t even
         if (xEventGroupGetBits(wifiEventGroup) & wifiStaStartedBit) {
             xEventGroupSetBits(wifiEventGroup, wifiApAndStaStartedBit);
         }
+
+        const_cast<NetworkTypes::Status &>(self->NetworkAbstraction::status()).isUp = true;
     }
     if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_AP_STACONNECTED) {
         wifi_event_ap_staconnected_t *event = (wifi_event_ap_staconnected_t *) eventData;
@@ -560,6 +561,8 @@ static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t even
         if (xEventGroupGetBits(wifiEventGroup) & wifiApStartedBit) {
             xEventGroupSetBits(wifiEventGroup, wifiApAndStaStartedBit);
         }
+
+        const_cast<NetworkTypes::Status &>(self->NetworkAbstraction::status()).isUp = true;
     }
     else if (eventBase == IP_EVENT && eventId == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *) eventData;
