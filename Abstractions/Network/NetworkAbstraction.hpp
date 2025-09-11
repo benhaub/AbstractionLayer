@@ -138,13 +138,8 @@ class NetworkAbstraction : public EventQueue {
     /**
     * @brief Initialize the interface.
     * @pre Call configure first.
-    * @returns ErrorType::Success if the network interface was initialized and ready for clients to connect.
-    * @returns ErrorType::Timeout if the the interface could not be initialized in time.
+    * @returns ErrorType::Success if the network interface was initialized.
     * @returns ErrorType::Failure otherwise
-    * @post May block for up to a maximum of 10 seconds to bring the interface up.
-    * @post Network can be used to connect after this function returns ErrorType::Success.
-    * @post Will init with a default setting if network parameters are not set prior to this call.
-    * @post NetworkTypes::Status::isUp will be set to true after this function returns ErrorType::Success
     * @pre configure
     */
     virtual ErrorType init() = 0;

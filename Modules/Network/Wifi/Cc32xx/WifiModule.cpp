@@ -60,10 +60,7 @@ ErrorType Wifi::init() {
 
             //Turn off and on for changes to take affect.
             if (ErrorType::Success == (error = radioOff())) {
-
-                if (ErrorType::Success == (error = radioOn())) {
-                    error = networkUp();
-                }
+                error = radioOn();
             }
         }
     }

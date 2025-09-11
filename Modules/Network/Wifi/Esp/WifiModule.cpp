@@ -28,93 +28,40 @@ constexpr unsigned int wifiApAndStaStartedBit = BIT2;
 #endif
 
 //Based off https://github.com/espressif/esp-idf/blob/c5865270b50529cd32353f588d8a917d89f3dba4/examples/wifi/softap_sta/main/softap_sta.c
-//networkUp() is not called because it's functionality is implemented in the event handler.
 ErrorType Wifi::init() {
     esp_err_t err;
-    ErrorType error;
-
-    if (WifiTypes::Mode::Unknown == _params.mode || WifiTypes::AuthMode::Unknown == _params.authMode) {
-        return ErrorType::PrerequisitesNotMet;
-    }
-
     wifiEventGroup = xEventGroupCreate();
 
-    err = esp_netif_init();
-    if (ESP_OK != err) {
-        return fromPlatformError(err);
-    }
+    if (ESP_OK == (err = esp_netif_init())) {
+        err = esp_event_loop_create_default();
 
-    if (ESP_OK != (err = esp_event_loop_create_default())) {
-        bool isCriticalErrror = !(err = ESP_ERR_INVALID_STATE);
-        if (isCriticalErrror) {
-            return fromPlatformError(err);
+        const bool isNotCriticalErrror = (err = ESP_ERR_INVALID_STATE);
+        if (isNotCriticalErrror) {
+            err = ESP_OK;
         }
-    }
 
-    err = esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &WifiEventHandler, this);
-    if (ESP_OK != err) {
-        return fromPlatformError(err);
-    }
-    err = esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &WifiEventHandler, this);
-    if (ESP_OK != err) {
-        return fromPlatformError(err);
-    }
+        if (ESP_OK == (err = esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &WifiEventHandler, this))) {
 
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    if (ESP_OK != (err = esp_wifi_init(&cfg))) {
-        return fromPlatformError(err);
-    }
+            if (ESP_OK == (err = esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &WifiEventHandler, this))) {
+                wifi_mode_t mode;
 
-    esp_wifi_set_mode(toEspWifiMode(_params.mode));
-    unsigned int eventBitsToWaitFor = 0;
-    switch (_params.mode) {
-        case WifiTypes::Mode::AccessPoint: {
-            error = initAccessPoint();
-            eventBitsToWaitFor |= wifiApStartedBit;
-            break;
-        }
-        case WifiTypes::Mode::Station: {
-            error = initStation();
-            eventBitsToWaitFor |= wifiStaStartedBit;
-            break;
-        }
-        case WifiTypes::Mode::AccessPointAndStation: {
-            error = initStation();
-            if (ErrorType::Success == error) {
-                error = initAccessPoint();
+                if (ESP_ERR_WIFI_NOT_INIT == esp_wifi_get_mode(&mode)) {
+                    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+
+                    if (ESP_OK == (err = esp_wifi_init(&cfg))) {
+                        return radioOn();
+                    }
+                }
+                else {
+                    PLT_LOGI(TAG, "Wifi already initialized. Skipping configuration.");
+                    NetworkAbstraction::_status.isUp = true;
+                    return ErrorType::Success;
+                }
             }
-            eventBitsToWaitFor |= wifiApAndStaStartedBit;
-            break;
-        }
-        default: {
-            error = ErrorType::InvalidParameter;
-            break;
         }
     }
 
-    if (ErrorType::Success != error) {
-        return error;
-    }
-
-    error = radioOn();
-    if (ErrorType::Success != error) {
-        return error;
-    }
-
-    constexpr Milliseconds timeout = 10000;
-    PLT_LOGI(TAG, "Waiting at most %us for wifi to be ready", timeout / 1000);
-    EventBits_t bits = xEventGroupWaitBits(wifiEventGroup,
-                                          eventBitsToWaitFor,
-                                          pdFALSE,
-                                          pdFALSE,
-                                          pdMS_TO_TICKS(timeout));
-
-    if (bits & eventBitsToWaitFor) {
-        return ErrorType::Success;
-    }
-    else {
-        return ErrorType::Timeout;
-    }
+    return fromPlatformError(err);
 }
 
 ErrorType Wifi::initAccessPoint() {
@@ -165,27 +112,58 @@ ErrorType Wifi::initStation() {
 }
 
 ErrorType Wifi::networkUp() {
-    if (WifiTypes::Mode::AccessPointAndStation == _params.mode) {
-        initAccessPoint();
-        initStation();
-    }
-    else if (WifiTypes::Mode::AccessPoint == _params.mode) {
-        initAccessPoint();
-    }
-    else if (WifiTypes::Mode::Station == _params.mode) {
-        initStation();
+    ErrorType error = ErrorType::InvalidParameter;
+
+    if (WifiTypes::Mode::Unknown != _params.mode && WifiTypes::AuthMode::Unknown != _params.authMode) {
+        esp_wifi_set_mode(toEspWifiMode(_params.mode));
+        unsigned int eventBitsToWaitFor = 0;
+
+        if (WifiTypes::Mode::AccessPointAndStation == _params.mode) {
+            eventBitsToWaitFor |= wifiApAndStaStartedBit;
+            initAccessPoint();
+            initStation();
+        }
+        else if (WifiTypes::Mode::AccessPoint == _params.mode) {
+            eventBitsToWaitFor |= wifiApStartedBit;
+            initAccessPoint();
+        }
+        else if (WifiTypes::Mode::Station == _params.mode) {
+            eventBitsToWaitFor |= wifiStaStartedBit;
+            initStation();
+        }
+        else { [[unlikely]]
+            error = ErrorType::InvalidParameter;
+        }
+
+        if (ErrorType::Success == error) {
+            constexpr Milliseconds timeout = 10000;
+            PLT_LOGI(TAG, "Waiting at most %us for wifi to be ready", timeout / 1000);
+            EventBits_t bits = xEventGroupWaitBits(wifiEventGroup,
+                                                eventBitsToWaitFor,
+                                                pdFALSE,
+                                                pdFALSE,
+                                                pdMS_TO_TICKS(timeout));
+
+            if (bits & eventBitsToWaitFor) {
+                esp_err_t err = esp_wifi_connect();
+
+                if (ESP_OK == err) {
+                    NetworkAbstraction::_status.isUp = true;
+                }
+                else {
+                    PLT_LOGW(TAG, "Failed to bring up wifi network <Error:%s>", esp_err_to_name(err));
+                    error = fromPlatformError(err);
+                }
+
+                error = ErrorType::Success;
+            }
+            else {
+                error = ErrorType::Timeout;
+            }
+        }
     }
 
-    esp_err_t err = esp_wifi_connect();
-    if (ESP_OK == err) {
-        NetworkAbstraction::_status.isUp = true;
-    }
-    else {
-        PLT_LOGW(TAG, "Failed to bring up wifi network <Error:%s>", esp_err_to_name(err));
-        return fromPlatformError(err);
-    }
-
-    return ErrorType::Success;
+    return error;
 }
 
 ErrorType Wifi::networkDown() {
@@ -577,7 +555,6 @@ static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t even
         const_cast<WifiTypes::Status &>(self->status()).isProvisioned = false;
     }
     else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_START) {
-        self->networkUp();
         PLT_LOGI(Wifi::TAG, "Station started");
         xEventGroupSetBits(wifiEventGroup, wifiStaStartedBit);
         if (xEventGroupGetBits(wifiEventGroup) & wifiApStartedBit) {
