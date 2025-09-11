@@ -30,11 +30,11 @@ ErrorType Cellular::closeConnection(const Socket socket) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Cellular::transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) {
+ErrorType Cellular::transmit(std::string_view frame, const Socket socket, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Cellular::receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
+ErrorType Cellular::receive(char *frameBuffer, const size_t bufferSize, const Socket socket, Bytes &read, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 

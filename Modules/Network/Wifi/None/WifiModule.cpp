@@ -32,11 +32,11 @@ ErrorType Wifi::closeConnection(const Socket socket) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) {
+ErrorType Wifi::transmit(std::string_view frame, const Socket socket, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Wifi::receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
+ErrorType Wifi::receive(char *frameBuffer, const size_t bufferSize, const Socket socket, Bytes &read, const Milliseconds timeout) {
     return ErrorType::NotImplemented;
 }
 

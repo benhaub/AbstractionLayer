@@ -387,7 +387,7 @@ ErrorType Wifi::radioOff() {
     return fromPlatformError(esp_wifi_stop());
 }
 
-ErrorType Wifi::transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) {
+ErrorType Wifi::transmit(std::string_view frame, const Socket socket, const Milliseconds timeout) {
     Bytes sent = 0;
     Bytes remaining = frame.size();
 
@@ -406,9 +406,9 @@ ErrorType Wifi::transmit(const std::string &frame, const Socket socket, const Mi
     return ErrorType::Success;
 }
 
-ErrorType Wifi::receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
+ErrorType Wifi::receive(char *frameBuffer, const size_t bufferSize, const Socket socket, Bytes &read, const Milliseconds timeout) {
     ErrorType error = ErrorType::Timeout;
-    ssize_t bytesReceived = 0;
+    read = 0;
 
     Microseconds tvUsec = timeout * 1000;
     struct timeval timeoutval;
@@ -437,7 +437,8 @@ ErrorType Wifi::receive(std::string &frameBuffer, const Socket socket, const Mil
         error = fromPlatformError(errno);
     }
     else if (FD_ISSET(socket, &readfds)) {
-        if (-1 == (bytesReceived = recv(socket, frameBuffer.data(), frameBuffer.size(), 0))) {
+        ssize_t bytesReceived = 0;
+        if (-1 == (bytesReceived = recv(socket, &frameBuffer[0], bufferSize, 0))) {
             error = fromPlatformError(errno);
         }
         else if (0 == bytesReceived) {
@@ -445,7 +446,7 @@ ErrorType Wifi::receive(std::string &frameBuffer, const Socket socket, const Mil
             error = ErrorType::PrerequisitesNotMet;
         }
         else {
-            frameBuffer.resize(bytesReceived);
+            read = bytesReceived;
             error = ErrorType::Success;
         }
     }

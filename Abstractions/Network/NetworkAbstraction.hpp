@@ -12,6 +12,7 @@
 #include "Log.hpp"
 #include "Math.hpp"
 #include "IpTypes.hpp"
+#include "StaticString.hpp"
 //C++
 #include <string>
 
@@ -225,7 +226,15 @@ class NetworkAbstraction : public EventQueue {
      * @post NetworkTypes::Status::isUp will be set to false after this function returns ErrorType::Success
      * @pre init
     */
-    virtual ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) = 0;
+    virtual ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) {
+        return transmit(std::string_view(frame.data(), frame.size()), socket, timeout);
+    }
+    /// @copydoc ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout)
+    virtual ErrorType transmit(const StaticString::Container &frame, const Socket socket, const Milliseconds timeout) {
+        return transmit(std::string_view(frame->c_str(), frame->size()), socket, timeout);
+    }
+    /// @copydoc ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout)
+    virtual ErrorType transmit(std::string_view frame, const Socket socket, const Milliseconds timeout) = 0;
     /**
      * @brief Receive a frame of data.
      * @param[in] frameBuffer The buffer to store the received frame data.
@@ -236,7 +245,29 @@ class NetworkAbstraction : public EventQueue {
      * @post The frameBuffer is not modified in any way unless data is received.
      * @pre init
     */
-    virtual ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) = 0;
+    virtual ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) {
+        Bytes read = 0;
+        const ErrorType error = receive(&frameBuffer[0], frameBuffer.size(), socket, read, timeout);
+
+        if (ErrorType::Success == error) {
+            frameBuffer.resize(read);
+        }
+
+        return error;
+    }
+    /// @copydoc ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout)
+    virtual ErrorType receive(StaticString::Container &frameBuffer, const Socket socket, const Milliseconds timeout) {
+        Bytes read = 0;
+        const ErrorType error = receive(&frameBuffer[0], frameBuffer->size(), socket, read, timeout);
+
+        if (ErrorType::Success == error) {
+            frameBuffer->resize(read);
+        }
+
+        return error;
+    }
+    /// @copydoc ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout)
+    virtual ErrorType receive(char *frameBuffer, const size_t bufferSize, const Socket socket, Bytes &read, const Milliseconds timeout) = 0;
     /**
      * @brief Get the MAC address of this network interface.
      * @param[out] macAddress The MAC address of this network interface.

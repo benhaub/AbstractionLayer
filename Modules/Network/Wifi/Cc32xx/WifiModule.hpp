@@ -24,8 +24,8 @@ class Wifi final : public WifiAbstraction {
     ErrorType listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port, Socket &listenerSocket) override;
     ErrorType acceptConnection(const Socket &listenerSocket, Socket &newSocket, const Milliseconds timeout) override;
     ErrorType closeConnection(const Socket socket) override;
-    ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout) override;
-    ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout) override;
+    ErrorType transmit(std::string_view frame, const Socket socket, const Milliseconds timeout);
+    ErrorType receive(char *frameBuffer, const size_t bufferSize, const Socket socket, Bytes &read, const Milliseconds timeout);
     ErrorType getMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) override;
     ErrorType getSignalStrength(DecibelMilliWatts &signalStrength) override;
 
@@ -36,7 +36,6 @@ class Wifi final : public WifiAbstraction {
     ErrorType setMode(WifiTypes::Mode mode) override;
     ErrorType setAuthMode(WifiTypes::AuthMode authMode) override;
 
-    private:
     WifiTypes::Mode fromCc32xxRole(const _i16 role) {
         switch (role) {
             case ROLE_STA:
