@@ -59,6 +59,7 @@ namespace NetworkTypes {
      * @returns The data in host byte order.
      */
     template<typename T>
+    requires std::is_arithmetic_v<T>
     inline T NetworkToHostByteOrder(const T &data) {
         const uint16_t i = 1;
 
