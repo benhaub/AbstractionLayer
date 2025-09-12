@@ -259,6 +259,33 @@ using Socket = int32_t;
 ///@typedef Ipv4Address
 ///IP version 4 address
 using Ipv4Address = uint32_t;
+/**
+ * @namespace IpTypes
+ * @brief Types for IP connections
+*/
+namespace IpTypes {
+
+    /**
+     * @enum Version
+     * @brief The version to use for the IP connection
+    */
+    enum class Version : uint8_t {
+        Unknown = 0, ///< Unknown
+        IPv4,        ///< Internet Protocol Version 4
+        IPv6,        ///< Internet Protocol Version 6
+        IPv4v6,      ///< Internet Protocol Version 4 and 6
+    };
+
+    /**
+     * @enum Protocol
+     * @brief The protocol to use for the IP connection
+    */
+    enum class Protocol : uint8_t {
+        Unknown = 0, ///< Unknown
+        Tcp,         ///< Transmission Control Protocol
+        Udp          ///< User Datagram Protocol
+    };
+}
 
 /**
  * @brief Converts a DateTime structure to a Unix time.

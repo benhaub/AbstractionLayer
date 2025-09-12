@@ -11,9 +11,9 @@ OBJECT
 target_include_directories(NtpClient PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(NtpClient PRIVATE abstractionLayer)
+target_link_libraries(NtpClient PRIVATE IpClient)
+target_link_libraries(NtpClient PRIVATE Logging)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE NtpClient)
-
-target_include_directories(NtpClient PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
 
 target_compile_options(NtpClient PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
 target_compile_definitions(NtpClient PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)

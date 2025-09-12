@@ -90,3 +90,16 @@ void * _sbrk(uint32_t delta)
 }
 
 #endif
+
+#ifdef __cplusplus
+extern "C" {
+
+void SimpleLinkNetAppRequestMemFreeEventHandler(uint8_t *buffer) {
+    return;
+}
+
+#endif
+
+#ifdef __cplusplus
+}
+#endif

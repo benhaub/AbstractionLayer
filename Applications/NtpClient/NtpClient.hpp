@@ -8,7 +8,7 @@
 #define __NTP_CLIENT_HPP__
 
 //AbstractionLayer
-#include "IpClientModule.hpp"
+#include "IpClient.hpp"
 
 /**
  * @namespace NtpClientTypes

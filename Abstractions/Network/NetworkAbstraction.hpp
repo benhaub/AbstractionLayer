@@ -1,7 +1,7 @@
 /***************************************************************************//**
-* @author   Ben Haubrich
-* @file     NetworkAbstraction.hpp
-* @details  \b Synopsis: \n Interface for communication over the network.
+* @author  Ben Haubrich
+* @file    NetworkAbstraction.hpp
+* @details Interface for communication over the network.
 * @ingroup Abstractions
 *******************************************************************************/
 #ifndef __NETWORK_ABSTRACTION_HPP__
@@ -11,7 +11,7 @@
 #include "EventQueue.hpp"
 #include "Log.hpp"
 #include "Math.hpp"
-#include "IpTypes.hpp"
+#include "Types.hpp"
 #include "StaticString.hpp"
 //C++
 #include <string>

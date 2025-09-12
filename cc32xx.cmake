@@ -25,7 +25,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Drivers/Adc/Cc32xx)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/OperatingSystem/Cc32xx/FreeRTOS)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Network/Wifi/Cc32xx)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Network/Cellular/None)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Ip/Cc32xx)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Http/Cc32xx)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Logging/Cc32xx)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Storage/Cc32xx)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Error/Cc32xx)
@@ -47,6 +47,8 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/IntegratedCircuits/Rtc)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/RtcManager)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/NtpClient)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/TickTimer)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/IpClient)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/IpServer)
 
 target_compile_definitions(${PROJECT_NAME}${EXECUTABLE_SUFFIX}
 PRIVATE

@@ -12,9 +12,6 @@
 #include "OperatingSystemModule.hpp"
 #include "SignalsAndSlots.hpp"
 
-#include "IpClientAbstraction.hpp"
-#include "IpServerAbstraction.hpp"
-#include "HttpServerAbstraction.hpp"
 #include "NetworkAbstraction.hpp"
 #include "FileSystemAbstraction.hpp"
 #include "StorageAbstraction.hpp"
@@ -30,9 +27,6 @@ namespace {
      */
     template <typename Abstraction>
     concept CompatibleLoggers = requires(Abstraction abstraction) {
-        std::is_base_of<IpClientAbstraction, Abstraction>::value ||
-        std::is_base_of<IpServerAbstraction, Abstraction>::value ||
-        std::is_base_of<HttpServerAbstraction, Abstraction>::value ||
         std::is_base_of<NetworkAbstraction, Abstraction>::value ||
         std::is_base_of<OperatingSystemAbstraction, Abstraction>::value ||
         std::is_base_of<FileSystemAbstraction, Abstraction>::value ||
@@ -123,10 +117,7 @@ class StatusLogger {
         std::tuple<std::vector<ListOfAbstractionsThatLog>...> _loggers;
     };
     /// @brief Used to toggle logging for an Abstraction
-    LoggerToggler<IpClientAbstraction *,
-                  IpServerAbstraction *,
-                  HttpServerAbstraction *,
-                  WifiAbstraction *,
+    LoggerToggler<WifiAbstraction *,
                   CellularAbstraction *,
                   FileSystemAbstraction *,
                   OperatingSystemAbstraction *,
