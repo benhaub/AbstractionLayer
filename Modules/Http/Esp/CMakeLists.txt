@@ -14,7 +14,7 @@ OBJECT
 target_include_directories(Http INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(Http INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
 target_include_directories(Http INTERFACE $<TARGET_PROPERTY:Protocols,INTERFACE_INCLUDE_DIRECTORIES>)
-target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:IpClient,INTERFACE_INCLUDE_DIRECTORIES>)
+target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:Http,INTERFACE_INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspIpClient PRIVATE abstractionLayer)
 target_link_libraries(EspIpClient PRIVATE Http)

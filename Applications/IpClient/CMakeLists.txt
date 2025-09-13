@@ -12,7 +12,7 @@ target_include_directories(IpClient PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(IpClient PRIVATE abstractionLayer)
 target_link_libraries(IpClient PRIVATE Logging)
-target_link_libraries(IpClient PRIVATE OperatingSystem)
+target_link_libraries(IpClient PUBLIC OperatingSystem)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE IpClient)
 
 target_compile_options(IpClient PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)

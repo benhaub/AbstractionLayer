@@ -9,9 +9,9 @@
 
 //AbstractionLayer
 #include "NetworkAbstraction.hpp"
+#include "OperatingSystemModule.hpp"
 //C++
 #include <memory>
-#include <cassert>
 
 /**
  * @namespace IpTypes
@@ -67,11 +67,13 @@ class IpClient {
      *       then the delay will be the timeout plus any additional scheduling delay incurred by the operating system as a result
      *       of thread priorities.
     */
-    ErrorType sendBlocking(const std::string &data, const Milliseconds timeout);
+    ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) {
+        return sendBlockingImplementation(data, timeout);
+    }
     /// @copydoc sendBlocking(const std::string &data, const Milliseconds timeout)
-    ErrorType sendBlocking(const StaticString::Container &data, const Milliseconds timeout);
-    /// @copydoc sendBlocking(const std::string &data, const Milliseconds timeout)
-    ErrorType sendBlocking(std::string_view data, const Milliseconds timeout);
+    ErrorType sendBlocking(const StaticString::Container &data, const Milliseconds timeout) {
+        return sendBlockingImplementation(data, timeout);
+    }
     /**
      * @brief Receives data.
      * @param[out] buffer The data to receive.
@@ -85,11 +87,13 @@ class IpClient {
      *       then the delay will be the timeout plus any additional scheduling delay incurred by the operating system as a result
      *       of thread priorities.
     */
-    ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout);
+    ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) {
+        return receiveBlockingImplementation(buffer, timeout);
+    }
     /// @copydoc ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout)
-    ErrorType receiveBlocking(StaticString::Container &buffer, const Milliseconds timeout);
-    /// @copydoc ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout)
-    ErrorType receiveBlocking(char *buffer, size_t bufferSize, Bytes &read, const Milliseconds timeout);
+    ErrorType receiveBlocking(StaticString::Container &buffer, const Milliseconds timeout) {
+        return receiveBlockingImplementation(buffer,  timeout);
+    }
     /**
      * @brief Sends data.
      * @pre The amount of data to send is equal to the size of data. See std::string::resize()
@@ -196,6 +200,60 @@ class IpClient {
     /// @brief The network interface that this client communicates on.
     /// @note Not a unique_ptr because this IP client does not have exclusive ownersip of the network
     NetworkAbstraction *_network = nullptr;
+
+    /// @copydoc sendBlocking(const std::string &data, const Milliseconds timeout)
+    template <typename Data>
+    ErrorType sendBlockingImplementation(Data &data, const Milliseconds timeout) {
+        bool doneSending = false;
+        ErrorType callbackError = ErrorType::Failure;
+
+        auto tx = [&]() -> ErrorType {
+            callbackError = network().transmit(data, _socket, timeout);
+
+            _status.connected = callbackError == ErrorType::Success;
+            doneSending = true;
+            return callbackError;
+        };
+
+        EventQueue::Event event = EventQueue::Event(tx);
+        ErrorType error = network().addEvent(event);
+        if (ErrorType::Success != error) {
+            return error;
+        }
+
+        while (!doneSending) {
+            OperatingSystem::Instance().delay(Milliseconds(1));
+        }
+
+        return callbackError;
+    }
+    /// @copydoc ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout)
+    template <typename Buffer>
+    ErrorType receiveBlockingImplementation(Buffer &buffer, const Milliseconds timeout) {
+        bool doneReceiving = false;
+        ErrorType callbackError = ErrorType::Failure;
+
+        auto rx = [&]() -> ErrorType {
+
+            callbackError = network().receive(buffer, _socket, timeout);
+
+            _status.connected = callbackError == ErrorType::Success;
+            doneReceiving = true;
+            return callbackError;
+        };
+
+        EventQueue::Event event = EventQueue::Event(rx);
+        ErrorType error = network().addEvent(event);
+        if (ErrorType::Success != error) {
+            return error;
+        }
+
+        while (!doneReceiving) {
+            OperatingSystem::Instance().delay(Milliseconds(1));
+        }
+
+        return callbackError;
+    }
 };
 
 #endif // __IP_CLIENT_ABSTRACTION_HPP__

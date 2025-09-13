@@ -233,8 +233,6 @@ class NetworkAbstraction : public EventQueue {
     virtual ErrorType transmit(const StaticString::Container &frame, const Socket socket, const Milliseconds timeout) {
         return transmit(std::string_view(frame->c_str(), frame->size()), socket, timeout);
     }
-    /// @copydoc ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout)
-    virtual ErrorType transmit(std::string_view frame, const Socket socket, const Milliseconds timeout) = 0;
     /**
      * @brief Receive a frame of data.
      * @param[in] frameBuffer The buffer to store the received frame data.
@@ -266,8 +264,6 @@ class NetworkAbstraction : public EventQueue {
 
         return error;
     }
-    /// @copydoc ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout)
-    virtual ErrorType receive(char *frameBuffer, const size_t bufferSize, const Socket socket, Bytes &read, const Milliseconds timeout) = 0;
     /**
      * @brief Get the MAC address of this network interface.
      * @param[out] macAddress The MAC address of this network interface.
@@ -293,6 +289,11 @@ class NetworkAbstraction : public EventQueue {
     protected:
     /// @brief The current status of the network interface
     NetworkTypes::Status _status;
+
+    /// @copydoc ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout)
+    virtual ErrorType transmit(std::string_view frame, const Socket socket, const Milliseconds timeout) = 0;
+    /// @copydoc ErrorType receive(std::string &frameBuffer, const Socket socket, const Milliseconds timeout)
+    virtual ErrorType receive(char *frameBuffer, const size_t bufferSize, const Socket socket, Bytes &read, const Milliseconds timeout) = 0;
 };
 
 #endif // __NETWORK_ABSTRACTION_HPP__

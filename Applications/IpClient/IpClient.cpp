@@ -1,6 +1,5 @@
 //AbstractionLayer
 #include "IpClient.hpp"
-#include "OperatingSystemModule.hpp"
 
 ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, const Milliseconds timeout) {
     bool doneConnecting = false;
@@ -45,86 +44,6 @@ ErrorType IpClient::disconnect() {
     return error;
 }
 
-ErrorType IpClient::sendBlocking(const std::string &data, const Milliseconds timeout) {
-    return sendBlocking(std::string_view(data.data(), data.size()), timeout);
-}
-
-ErrorType IpClient::sendBlocking(const StaticString::Container &data, const Milliseconds timeout) {
-    return sendBlocking(std::string_view(data->c_str(), data->size()), timeout);
-}
-
-ErrorType IpClient::sendBlocking(std::string_view data, const Milliseconds timeout) {
-    bool doneSending = false;
-    ErrorType callbackError = ErrorType::Failure;
-
-    auto tx = [&]() -> ErrorType {
-        callbackError = network().transmit(data, _socket, timeout);
-
-        _status.connected = callbackError == ErrorType::Success;
-        doneSending = true;
-        return callbackError;
-    };
-
-    EventQueue::Event event = EventQueue::Event(tx);
-    ErrorType error = network().addEvent(event);
-    if (ErrorType::Success != error) {
-        return error;
-    }
-
-    while (!doneSending) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
-    }
-
-    return callbackError;
-}
-
-ErrorType IpClient::receiveBlocking(std::string &buffer, const Milliseconds timeout) {
-    Bytes read = 0;
-    const ErrorType error = receiveBlocking(&buffer[0], buffer.size(), read, timeout);
-
-    if (ErrorType::Success == error) {
-        buffer.resize(read);
-    }
-
-    return error;
-}
-
-ErrorType IpClient::receiveBlocking(StaticString::Container &buffer, const Milliseconds timeout) {
-    Bytes read = 0;
-    const ErrorType error = receiveBlocking(&buffer[0], buffer->size(), read, timeout);
-
-    if (ErrorType::Success == error) {
-        buffer->resize(read);
-    }
-
-    return error;
-}
-
-ErrorType IpClient::receiveBlocking(char *buffer, size_t bufferSize, Bytes &read, const Milliseconds timeout) {
-    bool doneReceiving = false;
-    ErrorType callbackError = ErrorType::Failure;
-
-    auto rx = [&]() -> ErrorType {
-
-        callbackError = network().receive(buffer, bufferSize, _socket, read, timeout);
-
-        _status.connected = callbackError == ErrorType::Success;
-        doneReceiving = true;
-        return callbackError;
-    };
-
-    EventQueue::Event event = EventQueue::Event(rx);
-    ErrorType error = network().addEvent(event);
-    if (ErrorType::Success != error) {
-        return error;
-    }
-
-    while (!doneReceiving) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
-    }
-
-    return callbackError;
-}
 /**
  * @brief Sends data.
  * @pre The amount of data to send is equal to the size of data. See std::string::resize()

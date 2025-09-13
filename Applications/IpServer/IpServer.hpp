@@ -9,9 +9,9 @@
 
 //AbstractionLayer
 #include "NetworkAbstraction.hpp"
+#include "OperatingSystemModule.hpp"
 //C++
 #include <memory>
-#include <cassert>
 
 /**
  * @namespace IpTypes
@@ -72,7 +72,13 @@ class IpServer {
      * @returns ErrorType::Timeout if the timeout was reached.
      * @post The amount of data to transmit is equal to the size of the data. See std::string::size(), std::string::resize().
     */
-    ErrorType sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket);
+    ErrorType sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) {
+        return sendBlockingImplementation(data, timeout, socket);
+    }
+    /// @copydoc sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket)
+    ErrorType sendBlocking(const StaticString::Container &data, const Milliseconds timeout, const Socket socket) {
+        return sendBlockingImplementation(data, timeout, socket);
+    }
     /**
      * @brief Receives data.
      * @param[in] buffer The data to receive.
@@ -83,7 +89,13 @@ class IpServer {
      * @returns ErrorType::Timeout if the timeout was reached.
      * @post The amount of data received is equal to the size of the data. See std::string::size(), std::string::resize().
     */
-    ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket);
+    ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket) {
+        return receiveBlockingImplementation(buffer, timeout, socket);
+    }
+    /// @copydoc receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket)
+    ErrorType receiveBlocking(StaticString::Container &buffer, const Milliseconds timeout, Socket &socket) {
+        return receiveBlockingImplementation(buffer, timeout, socket);
+    }
     /**
      * @brief Sends data.
      * @param[in] data The data to send.
@@ -149,6 +161,68 @@ class IpServer {
     /// @brief The network abstraction that this server communicates on.
     /// @note Not a unique_ptr because this IP server does not have exclusive ownersip of the network
     NetworkAbstraction *_network = nullptr;
+
+    /// @copydoc sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket)
+    template <typename Data>
+    ErrorType sendBlockingImplementation(Data &data, const Milliseconds timeout, const Socket socket) {
+        bool sent = false;
+        ErrorType callbackError = ErrorType::Failure;
+
+        auto tx = [&]() -> ErrorType {
+            callbackError = network().transmit(data, socket, timeout);
+
+            sent = true;
+            return callbackError;
+        };
+
+        EventQueue::Event event = EventQueue::Event(tx);
+        ErrorType error = network().addEvent(event);
+        if (ErrorType::Success != error) {
+            return error;
+        }
+
+        while (!sent) {
+            OperatingSystem::Instance().delay(Milliseconds(1));
+        }
+
+        return callbackError;
+    }
+    /// @copydoc receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket)
+    template <typename Buffer>
+    ErrorType receiveBlockingImplementation(Buffer &buffer, const Milliseconds timeout, Socket &socket) {
+        bool received = false;
+        ErrorType callbackError = ErrorType::NoData;
+
+        auto rx = [&]() -> ErrorType {
+            if (-1 == socket) {
+                for (size_t i = 0; i < _connectedSockets.size(); i++) {
+                    callbackError = network().receive(buffer, _connectedSockets[i], timeout);
+                    socket = _connectedSockets[i];
+                    if (ErrorType::Success == callbackError) {
+                        break;
+                    }
+                }
+            }
+            else {
+                callbackError = network().receive(buffer, socket, timeout);
+            }
+
+            received = true;
+            return callbackError;
+        };
+
+        EventQueue::Event event = EventQueue::Event(rx);
+        ErrorType error = network().addEvent(event);
+        if (ErrorType::Success != error) {
+            return error;
+        }
+
+        while (!received) {
+            OperatingSystem::Instance().delay(Milliseconds(1));
+        }
+
+        return callbackError;
+    }
 };
 
 #endif //__IP_SERVER_HPP__

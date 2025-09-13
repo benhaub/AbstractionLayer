@@ -1,7 +1,5 @@
 //AbstractionLayer
 #include "IpServer.hpp"
-#include "OperatingSystemModule.hpp"
-#include "Log.hpp"
 
 ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port) {
     bool doneListening = false;
@@ -103,30 +101,6 @@ ErrorType IpServer::closeConnection(const Socket socket) {
     return callbackError;
 }
 
-ErrorType IpServer::sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket) {
-    bool sent = false;
-    ErrorType callbackError = ErrorType::Failure;
-
-    auto tx = [&]() -> ErrorType {
-        callbackError = network().transmit(data, socket, timeout);
-
-        sent = true;
-        return callbackError;
-    };
-
-    EventQueue::Event event = EventQueue::Event(tx);
-    ErrorType error = network().addEvent(event);
-    if (ErrorType::Success != error) {
-        return error;
-    }
-
-    while (!sent) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
-    }
-
-    return callbackError;
-}
-
 ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const Socket socket, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     auto tx = [&, callback, data, timeout, socket]() -> ErrorType {
         ErrorType error = ErrorType::Failure;
@@ -146,41 +120,6 @@ ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, con
 
     EventQueue::Event event = EventQueue::Event(std::bind(tx));
     return network().addEvent(event);
-}
-
-ErrorType IpServer::receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket) {
-    bool received = false;
-    ErrorType callbackError = ErrorType::NoData;
-
-    auto rx = [&]() -> ErrorType {
-        if (-1 == socket) {
-            for (size_t i = 0; i < _connectedSockets.size(); i++) {
-                callbackError = network().receive(buffer, _connectedSockets[i], timeout);
-                socket = _connectedSockets[i];
-                if (ErrorType::Success == callbackError) {
-                    break;
-                }
-            }
-        }
-        else {
-            callbackError = network().receive(buffer, socket, timeout);
-        }
-
-        received = true;
-        return callbackError;
-    };
-
-    EventQueue::Event event = EventQueue::Event(rx);
-    ErrorType error = network().addEvent(event);
-    if (ErrorType::Success != error) {
-        return error;
-    }
-
-    while (!received) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
-    }
-
-    return callbackError;
 }
 
 ErrorType IpServer::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, const Socket socket, std::shared_ptr<std::string> buffer)> callback) {
