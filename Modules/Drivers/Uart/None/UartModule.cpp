@@ -11,7 +11,7 @@ ErrorType Uart::deinit() {
 ErrorType Uart::txBlocking(const StaticString::Container &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
     return ErrorType::NotImplemented;
 }
-ErrorType Uart::txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
+ErrorType Uart::txBlocking(std::string_view data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
     return ErrorType::NotImplemented;
 }
 ErrorType Uart::txBlocking(const char *data, const size_t size, const Milliseconds timeout) {

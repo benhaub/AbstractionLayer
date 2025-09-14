@@ -99,7 +99,7 @@ class IcCommunicationProtocol : public EventQueue {
     */
     virtual ErrorType txBlocking(const StaticString::Container &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) = 0;
     /// @copydoc ErrorType txBlocking(const StaticString::Container,const Milliseconds,const IcCommunicationProtocolTypes::AdditionalCommunicationParameters)
-    virtual ErrorType txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) = 0;
+    virtual ErrorType txBlocking(std::string_view data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) = 0;
     /**
      * @brief transmit data
      * @param[in] data The data to transmit

@@ -32,8 +32,8 @@ ErrorType Uart::deinit() {
 ErrorType Uart::txBlocking(const StaticString::Container &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
     return txBlocking(data->c_str(), data->size(), timeout);
 }
-ErrorType Uart::txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
-    return txBlocking(data.c_str(), data.size(), timeout);
+ErrorType Uart::txBlocking(std::string_view data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
+    return txBlocking(data.data(), data.size(), timeout);
 }
 ErrorType Uart::txBlocking(const char *data, const size_t size, const Milliseconds timeout) {
     if (_fileDescriptor < 0) {
@@ -41,6 +41,7 @@ ErrorType Uart::txBlocking(const char *data, const size_t size, const Millisecon
     }
     
     ssize_t bytesWritten = write(_fileDescriptor, data, size);
+
     if (bytesWritten < 0) {
         return ErrorType::Failure;
     }

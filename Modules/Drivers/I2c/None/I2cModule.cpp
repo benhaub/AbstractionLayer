@@ -11,7 +11,7 @@ ErrorType I2c::deinit() {
 ErrorType I2c::txBlocking(const StaticString::Container &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
     return ErrorType::NotImplemented;
 }
-ErrorType I2c::txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
+ErrorType I2c::txBlocking(std::string_view data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
     return ErrorType::NotImplemented;
 }
 ErrorType I2c::txBlocking(const char *data, const size_t size, const Milliseconds timeout) {

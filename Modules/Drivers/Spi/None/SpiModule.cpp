@@ -11,7 +11,7 @@ ErrorType Spi::deinit() {
 ErrorType Spi::txBlocking(const StaticString::Container &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
     return ErrorType::NotImplemented;
 }
-ErrorType Spi::txBlocking(const std::string &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
+ErrorType Spi::txBlocking(std::string_view data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
     return ErrorType::NotImplemented;
 }
 ErrorType Spi::txBlocking(const char *data, const size_t size, const Milliseconds timeout) {
