@@ -12,7 +12,6 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
 
         callbackError = network().connectTo(hostname, port, protocol, version, _socket, timeout);
         doneConnecting = true;
-        _status.connected = callbackError == ErrorType::Success;
 
         return callbackError;
     };
@@ -38,8 +37,6 @@ ErrorType IpClient::disconnect() {
         error = network().disconnect(_socket);
         _socket = -1;
     }
-
-    _status.connected = ErrorType::Success == error;
 
     return error;
 }

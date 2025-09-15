@@ -14,21 +14,6 @@
 #include <memory>
 
 /**
- * @namespace IpTypes
- * @brief Types for the IP client
-*/
-namespace IpClientTypes {
-
-    /**
-     * @struct Status
-     * @brief The status of the client
-    */
-    struct Status {
-        bool connected; ///< True when the client is connected to the host.
-    };
-}
-
-/**
  * @class IpClient
  * @brief Abstraction for creating a client on any network
  * @note You should use the network to handle communication by placing events on it's queue.
@@ -40,12 +25,6 @@ class IpClient {
 
     /// @brief The tag for logging.
     static constexpr char TAG[] =  "IpClient";
-
-    /// @brief Print the status of the IP client
-    void printStatus() const {
-        PLT_LOGI(TAG, "<IpClientStatus> <Connected:%s> <Pie, Line>",
-        statusConst().connected ? "true" : "false");
-    }
 
     /**
      * @sa NetworkAbstraction::connectTo
@@ -173,8 +152,6 @@ class IpClient {
     NetworkAbstraction &network() { assert(nullptr != _network); return *_network; }
     /// @brief Get the network abstraction that this client communicates on as a constant reference
     const NetworkAbstraction &networkConst() const { assert(nullptr != _network); return *_network; }
-    /// @brief Get the status of the client as a const reference
-    const IpClientTypes::Status &statusConst() const { return _status; }
 
     /// @brief Set the network abstraction that this client communicates on.
     /// @param[in] network The network abstraction to use.
@@ -191,10 +168,6 @@ class IpClient {
     std::string _hostname = "";
     /// @brief The port
     Port _port = 0;
-    /// @brief The status of the client
-    IpClientTypes::Status _status = {
-        false
-    };
 
     private:
     /// @brief The network interface that this client communicates on.

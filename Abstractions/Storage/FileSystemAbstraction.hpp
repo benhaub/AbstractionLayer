@@ -110,7 +110,7 @@ class FileSystemAbstraction {
      * @brief Print the status of the file system
      */
     void printStatus() {
-        PLT_LOGI(TAG, "<FileSystem%s> <Implementation:&u, Mounted:%u, Open Files:%u, Free (%%):%.1f> <Omit, Pie, Stairs, Line>",
+        PLT_LOGI(TAG, "<FileSystem:%s> <Implementation:%u, Mounted:%u, Open Files:%u, Free (%%):%.1f> <Omit, Pie, Stairs, Line>",
                       partitionName().data(), implementation(), status().mounted, status().openedFiles, status().freeSpace);
     }
 
