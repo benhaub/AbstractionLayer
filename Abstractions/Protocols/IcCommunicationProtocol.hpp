@@ -116,8 +116,10 @@ class IcCommunicationProtocol : public EventQueue {
      * @param[in] timeout The maximum time to wait for the reception to complete
      * @param[in] params Additional parameters for the reception
      * @returns ErrorType::Success if the data was received successfully
+     * @returns ErrorType::Timeout if the timeout was reache before data was received
+     * @returns ErrorType::NoData if no data was available to read.
      * @returns ErrorType::Failure otherwise
-     * @post The buffer is not modfied in any way unless data is received.
+     * @post The buffer is not modfied in any way unless data is received. If data is received then the buffer will be resized to the amount of bytes read.
     */
     virtual ErrorType rxBlocking(StaticString::Container &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) = 0;
     /// @copydoc ErrorType rxBlocking(StaticString::Container,const Milliseconds,const IcCommunicationProtocolTypes::AdditionalCommunicationParameters)
@@ -128,9 +130,9 @@ class IcCommunicationProtocol : public EventQueue {
      * @param[in] timeout The maximum time to wait for the reception to complete
      * @param[in] params Additional parameters for the reception
      * @param[in] callback The callback to invoke when the reception is complete.
-     * @returns ErrorType::Success if the data was received successfully
-     * @returns ErrorType::Failure otherwise
-     * @post The buffer is not modfied in any way unless data is received.
+     * @returns Any errors returned by rxBlocking.
+     * @returns Any errors returned by EventQueue::addEvent
+     * @post The buffer is not modfied in any way unless data is received. If data is received then the buffer will be resized to the amount of bytes read.
     */
     virtual ErrorType rxNonBlocking(std::shared_ptr<StaticString::Container> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<StaticString::Container> buffer)> callback) = 0;
     /// @copydoc ErrorType rxNonBlocking(std::shared_ptr<StaticString::Container>,const Milliseconds,const IcCommunicationProtocolTypes::AdditionalCommunicationParameters,std::function<void(const ErrorType, std::shared_ptr<StaticString::Container>)>);

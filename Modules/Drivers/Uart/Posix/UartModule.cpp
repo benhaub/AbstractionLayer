@@ -84,6 +84,7 @@ ErrorType Uart::rxBlocking(char *buffer, const size_t bufferSize, size_t &bytesR
     
     fd_set readfds;
     struct timeval tv;
+    bytesRead = 0;
     
     FD_ZERO(&readfds);
     FD_SET(_fileDescriptor, &readfds);
