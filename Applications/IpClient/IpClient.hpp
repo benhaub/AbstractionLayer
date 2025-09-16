@@ -183,7 +183,6 @@ class IpClient {
         auto tx = [&]() -> ErrorType {
             callbackError = network().transmit(data, _socket, timeout);
 
-            _status.connected = callbackError == ErrorType::Success;
             doneSending = true;
             return callbackError;
         };
@@ -210,7 +209,6 @@ class IpClient {
 
             callbackError = network().receive(buffer, _socket, timeout);
 
-            _status.connected = callbackError == ErrorType::Success;
             doneReceiving = true;
             return callbackError;
         };
