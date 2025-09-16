@@ -215,7 +215,7 @@ class FileSystemAbstraction {
      * @returns ErrorType::Failure if the data could not be written for any other reason.
      * @post The number of bytes read is represented by the size of data (use std::string::size())
     */
-    virtual ErrorType writeBlocking(FileSystemTypes::File &file, const std::string &data) = 0; 
+    virtual ErrorType writeBlocking(FileSystemTypes::File &file, std::string_view data) = 0; 
     /**
      * @brief Writes data to a file.
      * This is a non-blocking operating. Control will return as soon as the required data is passed to the calling thread

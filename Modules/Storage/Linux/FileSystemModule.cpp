@@ -264,15 +264,15 @@ ErrorType FileSystem::readNonBlocking(FileSystemTypes::File &file, std::shared_p
     return _storage.addEvent(event);
 }
 
-ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::string &data) {
+ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_view data) {
     bool writeDone = false;
     ErrorType callbackError = ErrorType::PrerequisitesNotMet;
 
-    auto writeCallback = [&](const std::string &data) -> ErrorType {
+    auto writeCallback = [&]() -> ErrorType {
         if (isOpen(file)) {
             if (canWriteToFile(file.openMode)) {
                 if (openFiles[file.path->c_str()].seekp(file.filePointer, std::ios_base::beg).good()) {
-                    if (openFiles[file.path->c_str()].write(data.c_str(), static_cast<std::streamsize>(data.size())).good()) {
+                    if (openFiles[file.path->c_str()].write(data.data(), static_cast<std::streamsize>(data.size())).good()) {
                         callbackError = synchronize(file);
                         file.size += data.size();
                     }
@@ -288,7 +288,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::stri
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(writeCallback, data));
+    EventQueue::Event event = EventQueue::Event(writeCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
@@ -303,7 +303,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::stri
 
 ErrorType FileSystem::writeNonBlocking(FileSystemTypes::File &file, const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     auto writeCallback = [&, callback](std::shared_ptr<std::string> data) -> ErrorType {
-        ErrorType error = writeBlocking(file, *data);
+        ErrorType error = writeBlocking(file, std::string_view(data->data(), data->size()));
         callback(error, data->size());
         return error;
     };

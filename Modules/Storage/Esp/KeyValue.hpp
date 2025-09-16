@@ -17,7 +17,7 @@ namespace KeyValue {
     ErrorType close(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file);
     ErrorType remove(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file);
     ErrorType readBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, std::string &buffer);
-    ErrorType writeBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, const std::string &data);
+    ErrorType writeBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, std::string_view data);
     ErrorType size(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file);
 }
 
@@ -152,11 +152,11 @@ namespace KeyValue {
         return fromPlatformError(err);
     }
 
-    ErrorType writeBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, const std::string &data) {
+    ErrorType writeBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, std::string_view data) {
         ErrorType error = ErrorType::InvalidParameter;
         if (nullptr != _handle.get()) {
             if (file.path->length() < NVS_KEY_NAME_MAX_SIZE) {
-                error = fromPlatformError(_handle->set_blob(file.path->c_str(), data.c_str(), data.size()));
+                error = fromPlatformError(_handle->set_blob(file.path->c_str(), data.data(), data.size()));
             }
         }
 

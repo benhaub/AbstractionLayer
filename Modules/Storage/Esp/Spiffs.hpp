@@ -20,7 +20,7 @@ namespace Spiffs {
     ErrorType open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file, FILE *&spiffsFile);
     ErrorType remove(FileSystemTypes::File &file, FILE *spiffsFile);
     ErrorType readBlocking(FILE *spiffsFile, FileSystemTypes::File &file, std::string &buffer);
-    ErrorType writeBlocking(FILE *spiffsFile, FileSystemTypes::File &file, const std::string &data);
+    ErrorType writeBlocking(FILE *spiffsFile, FileSystemTypes::File &file, std::string_view data);
     ErrorType synchronize(FILE *spiffsFile);
 }
 
@@ -206,12 +206,12 @@ namespace Spiffs {
         return error;
     }
 
-    ErrorType writeBlocking(FILE *spiffsFile, FileSystemTypes::File &file, const std::string &data) {
+    ErrorType writeBlocking(FILE *spiffsFile, FileSystemTypes::File &file, std::string_view data) {
         if (0 != fseek(spiffsFile, file.filePointer, SEEK_SET)) {
             return fromPlatformError(errno);
         }
 
-        if (0 != fwrite(data.c_str(), 1, data.size(), spiffsFile)) {
+        if (0 != fwrite(data.data(), 1, data.size(), spiffsFile)) {
             return fromPlatformError(errno);
         }
 

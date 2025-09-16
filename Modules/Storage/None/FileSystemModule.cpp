@@ -42,7 +42,7 @@ ErrorType FileSystem::readNonBlocking(FileSystemTypes::File &file, std::shared_p
     return ErrorType::NotImplemented;
 }
 
-ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::string &data) {
+ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_view data) {
     return ErrorType::NotImplemented;
 }
 

@@ -329,7 +329,7 @@ ErrorType FileSystem::readNonBlocking(FileSystemTypes::File &file, std::shared_p
     return _storage.addEvent(event);
 }
 
-ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::string &data) {
+ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_view data) {
     bool writeDone = false;
     ErrorType callbackError = ErrorType::Failure;
 
@@ -363,7 +363,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::stri
 
 ErrorType FileSystem::writeNonBlocking(FileSystemTypes::File &file, const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     auto writeCallback = [&, callback](std::shared_ptr<std::string> data) -> ErrorType {
-        ErrorType error = writeBlocking(file, *data);
+        ErrorType error = writeBlocking(file, std::string_view(data->data(), data->size()));
         callback(error, data->size());
         return error;
     };

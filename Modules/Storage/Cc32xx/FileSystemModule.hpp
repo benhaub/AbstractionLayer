@@ -26,7 +26,7 @@ class FileSystem final: public FileSystemAbstraction {
     ErrorType remove(FileSystemTypes::File &file) override;
     ErrorType readBlocking(FileSystemTypes::File &file, std::string &buffer) override; 
     ErrorType readNonBlocking(FileSystemTypes::File &file, std::shared_ptr<std::string> buffer, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
-    ErrorType writeBlocking(FileSystemTypes::File &file, const std::string &data) override; 
+    ErrorType writeBlocking(FileSystemTypes::File &file, std::string_view data) override; 
     ErrorType writeNonBlocking(FileSystemTypes::File &file, const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
     ErrorType synchronize(const FileSystemTypes::File &file) override;
     ErrorType size(FileSystemTypes::File &file) override;

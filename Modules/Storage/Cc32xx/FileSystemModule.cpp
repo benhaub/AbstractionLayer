@@ -252,15 +252,18 @@ ErrorType FileSystem::readNonBlocking(FileSystemTypes::File &file, std::shared_p
     return _storage.addEvent(event);
 }
 
-ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::string &data) {
+ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_view data) {
     ErrorType callbackError = ErrorType::Failure;
     bool writeDone = false;
 
     //SimpleLink write function does not accept a constant string.
-    std::string &dataToWrite = const_cast<std::string &>(data);
+    std::string_view dataToWrite(data);
 
     auto writeCallback = [&]() -> ErrorType {
-        _i32 retval = sl_FsWrite(openFiles[file.path->c_str()], file.filePointer, reinterpret_cast<_u8 *>(dataToWrite.data()), dataToWrite.size());
+        //DO NOT try to edit data. Only casting away constness because FsWrite does not take a const parameter.
+        //It's UB to edit a string_view.
+        char *data = const_cast<char *>(dataToWrite.data());
+        _i32 retval = sl_FsWrite(openFiles[file.path->c_str()], file.filePointer, reinterpret_cast<_u8 *>(data), dataToWrite.size());
         if (retval >= 0) {
             writeDone = true;
             callbackError = ErrorType::Success;
@@ -289,7 +292,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, const std::stri
 
 ErrorType FileSystem::writeNonBlocking(FileSystemTypes::File &file, const std::shared_ptr<std::string> data, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     auto writeCallback = [&, callback](std::shared_ptr<std::string> data) -> ErrorType {
-        ErrorType error = writeBlocking(file, *data);
+        ErrorType error = writeBlocking(file, std::string_view(data->data(), data->size()));
         callback(error, data->size());
         return error;
     };
