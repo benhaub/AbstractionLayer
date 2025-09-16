@@ -46,7 +46,7 @@ class IpClient {
      *       then the delay will be the timeout plus any additional scheduling delay incurred by the operating system as a result
      *       of thread priorities.
     */
-    ErrorType sendBlocking(const std::string &data, const Milliseconds timeout) {
+    ErrorType sendBlocking(std::string_view data, const Milliseconds timeout) {
         return sendBlockingImplementation(data, timeout);
     }
     /// @copydoc sendBlocking(const std::string &data, const Milliseconds timeout)
@@ -99,8 +99,9 @@ class IpClient {
      * @returns ErrorType::Success if the data was sent.
      * @returns ErrorType::Failure if the data was not sent.
      * @post The callback will be called when the data has been sent. The bytes written is valid if and only if error is equal to ErrorType::Success.
+     * @post Ownership of data is moved to this call. No access to data is allowed after this call.
     */
-    virtual ErrorType sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback);
+    virtual ErrorType sendNonBlocking(std::string &data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback);
     /**
      * @brief Receives data.
      * @param[out] buffer The buffer to receive the data into.
@@ -108,7 +109,7 @@ class IpClient {
      * @param[in] callback The callback to call when the data has been received.
      * @code{.cpp}
      * //Lambda callback
-     * auto callback = [](const ErrorType error, std::shared_ptr<std::string> buffer) -> void {
+     * auto callback = [](const ErrorType error, std::string &buffer) -> void {
      *     if (ErrorType::Success == error) {
      *         // Data was sent
      *     }
@@ -116,7 +117,7 @@ class IpClient {
      * error = sendNonBlocking(data, timeout, callback);
      * 
      * //Member function callback
-     * void Foo::bar(const ErrorType error, std::shared_ptr<std::string> buffer) {
+     * void Foo::bar(const ErrorType error, std::string &buffer) {
      *     if (ErrorType::Success == error) {
      *         // Data was sent
      *     }
@@ -125,8 +126,9 @@ class IpClient {
      * @endcode
      * @post The callback will be called when the data has been received. The amount of data received is equal to the size of the
      *       data if ErrorType::Success is returned. See std::string::size().
+     * @post Ownership of buffer is moved to this call. No access to buffer is allowed after this call. The buffer will be available again in the callback.
     */
-    ErrorType receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback);
+    ErrorType receiveNonBlocking(std::string &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string &buffer)> callback);
 
     /// @brief Get the socket as a constant reference
     const Socket &sockConst() const { return _socket; }

@@ -41,87 +41,34 @@ ErrorType IpClient::disconnect() {
     return error;
 }
 
-/**
- * @brief Sends data.
- * @pre The amount of data to send is equal to the size of data. See std::string::resize()
- * @param[in] data The data to send.
- * @param[in] timeout The time to wait to send the data.
- * @param[in] callback The callback to call when the data is sent.
- * @code{.cpp}
- * //Lambda callback
- * auto callback = [](const ErrorType error, const Bytes bytesWritten) -> void {
- *     if (ErrorType::Success == error) {
- *         // Data was sent
- *     }
- * };
- * error = sendNonBlocking(data, timeout, callback);
- * 
- * //Member function callback
- * void Foo::bar(const ErrorType error, const Bytes bytesWritten) {
- *     if (ErrorType::Success == error) {
- *         // Data was sent
- *     }
- * }
- * error = sendNonBlocking(data, timeout, std::bind(&Foo::bar, this, std::placeholders::_1, std::placeholders::_2)); 
- * @endcode
- * @returns ErrorType::Success if the data was sent.
- * @returns ErrorType::Failure if the data was not sent.
- * @post The callback will be called when the data has been sent. The bytes written is valid if and only if error is equal to ErrorType::Success.
-*/
-ErrorType IpClient::sendNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    auto tx = [&, callback, data, timeout]() -> ErrorType {
+ErrorType IpClient::sendNonBlocking(std::string &data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+    auto tx = [&, callback, data = std::move(data), timeout]() -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         assert(nullptr != callback);
-        assert(nullptr != data.get());
 
-        error = sendBlocking(*data, timeout);
-        callback(error, data->size());
+        error = sendBlocking(std::string_view(data.data(), data.size()), timeout);
+        callback(error, data.size());
 
         return error;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(tx));
+    EventQueue::Event event = EventQueue::Event(tx);
     return network().addEvent(event);
 }
-/**
- * @brief Receives data.
- * @param[out] buffer The buffer to receive the data into.
- * @param[in] timeout The time to wait to receive the data.
- * @param[in] callback The callback to call when the data has been received.
- * @code{.cpp}
- * //Lambda callback
- * auto callback = [](const ErrorType error, std::shared_ptr<std::string> buffer) -> void {
- *     if (ErrorType::Success == error) {
- *         // Data was sent
- *     }
- * };
- * error = sendNonBlocking(data, timeout, callback);
- * 
- * //Member function callback
- * void Foo::bar(const ErrorType error, std::shared_ptr<std::string> buffer) {
- *     if (ErrorType::Success == error) {
- *         // Data was sent
- *     }
- * }
- * error = sendNonBlocking(data, timeout, std::bind(&Foo::bar, this, std::placeholders::_1, std::placeholders::_2)); 
- * @endcode
- * @post The callback will be called when the data has been received. The amount of data received is equal to the size of the
- *       data if ErrorType::Success is returned. See std::string::size().
-*/
-ErrorType IpClient::receiveNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
-    auto rx = [&, callback, buffer, timeout]() -> ErrorType {
+
+ErrorType IpClient::receiveNonBlocking(std::string &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string &buffer)> callback) {
+    auto rx = [&, callback, buffer = std::move(buffer), timeout]() mutable -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         assert(nullptr != callback);
-        assert(nullptr != buffer.get());
 
-        error = receiveBlocking(*buffer, timeout);
+        error = receiveBlocking(buffer, timeout);
         callback(error, buffer);
 
         return error;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(rx));
+    EventQueue::Event event = EventQueue::Event(rx);
     return network().addEvent(event);
 }
