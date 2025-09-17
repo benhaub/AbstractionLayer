@@ -57,14 +57,14 @@ ErrorType IpClient::sendNonBlocking(std::string &data, const Milliseconds timeou
     return network().addEvent(event);
 }
 
-ErrorType IpClient::receiveNonBlocking(std::string &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string &buffer)> callback) {
+ErrorType IpClient::receiveNonBlocking(std::string &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string_view buffer)> callback) {
     auto rx = [&, callback, buffer = std::move(buffer), timeout]() mutable -> ErrorType {
         ErrorType error = ErrorType::Failure;
 
         assert(nullptr != callback);
 
         error = receiveBlocking(buffer, timeout);
-        callback(error, buffer);
+        callback(error, std::string_view(buffer.data(), buffer.size()));
 
         return error;
     };

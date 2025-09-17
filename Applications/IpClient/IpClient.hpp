@@ -109,26 +109,28 @@ class IpClient {
      * @param[in] callback The callback to call when the data has been received.
      * @code{.cpp}
      * //Lambda callback
-     * auto callback = [](const ErrorType error, std::string &buffer) -> void {
+     * auto callback = [](const ErrorType error, std::string_view buffer) -> void {
      *     if (ErrorType::Success == error) {
      *         // Data was sent
+     *         // Feel free to copy the data from the buffer you need it for something else
      *     }
      * };
-     * error = sendNonBlocking(data, timeout, callback);
+     * error = receiveNonBlocking(data, timeout, callback);
      * 
      * //Member function callback
-     * void Foo::bar(const ErrorType error, std::string &buffer) {
+     * void Foo::bar(const ErrorType error, std::string_view buffer, bool extraParameter) {
      *     if (ErrorType::Success == error) {
      *         // Data was sent
      *     }
      * }
-     * error = sendNonBlocking(data, timeout, std::bind(&Foo::bar, this, std::placeholders::_1, std::placeholders::_2)); 
+     * //As long as you have one std::placeholder for the error and the buffer, you can bind extra parameters to your callback.
+     * error = receiveNonBlocking(data, timeout, std::bind(&Foo::bar, this, std::placeholders::_1, std::placeholders::_2, extraParameter)); 
      * @endcode
      * @post The callback will be called when the data has been received. The amount of data received is equal to the size of the
      *       data if ErrorType::Success is returned. See std::string::size().
      * @post Ownership of buffer is moved to this call. No access to buffer is allowed after this call. The buffer will be available again in the callback.
     */
-    ErrorType receiveNonBlocking(std::string &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string &buffer)> callback);
+    ErrorType receiveNonBlocking(std::string &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string_view buffer)> callback);
 
     /// @brief Get the socket as a constant reference
     const Socket &sockConst() const { return _socket; }
