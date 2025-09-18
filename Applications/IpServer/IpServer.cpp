@@ -29,7 +29,7 @@ ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Ve
         return ErrorType::Failure;
     }
 
-    while (!doneListening) {
+    if (!doneListening) {
         OperatingSystem::Instance().block();
     }
 
@@ -62,7 +62,7 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
         return error;
     }
 
-    while (!acceptConnectionDone) {
+    if (!acceptConnectionDone) {
         OperatingSystem::Instance().block();
     }
 
@@ -103,7 +103,7 @@ ErrorType IpServer::closeConnection(const Socket socket) {
         return error;
     }
 
-    while (!closeConnectionDone) {
+    if (!closeConnectionDone) {
         OperatingSystem::Instance().block();
     }
 

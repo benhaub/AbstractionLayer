@@ -200,7 +200,7 @@ class IpClient {
             return error;
         }
 
-        while (!doneSending) {
+        if (!doneSending) {
             OperatingSystem::Instance().block();
         }
 
@@ -229,7 +229,7 @@ class IpClient {
             return error;
         }
 
-        while (!doneReceiving) {
+        if (!doneReceiving) {
             OperatingSystem::Instance().block();
         }
 

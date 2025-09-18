@@ -83,7 +83,7 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
         return error;
     }
 
-    while (!doneConnecting) {
+    if (!doneConnecting) {
         OperatingSystem::Instance().block();
     }
 
@@ -119,7 +119,7 @@ ErrorType HttpsClient::disconnect() {
             return error;
         }
 
-        while (!doneDisconnecting) {
+        if (!doneDisconnecting) {
             OperatingSystem::Instance().block();
         }
 
@@ -187,7 +187,7 @@ ErrorType HttpsClient::sendBlocking(const HttpTypes::Request &request, const Mil
         return error;
     }
 
-    while (!doneSending) {
+    if (!doneSending) {
         OperatingSystem::Instance().block();
     }
 
@@ -293,7 +293,7 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
         return error;
     }
 
-    while (!doneReceiving) {
+    if (!doneReceiving) {
         OperatingSystem::Instance().block();
     }
 

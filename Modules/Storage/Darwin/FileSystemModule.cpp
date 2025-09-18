@@ -54,7 +54,7 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
         return error;
     }
 
-    while (!maxStorageQueryDone) {
+    if (!maxStorageQueryDone) {
         OperatingSystem::Instance().block();
     }
 
@@ -81,7 +81,7 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
         return error;
     }   
 
-    while (!availableStorageQueryDone) {
+    if (!availableStorageQueryDone) {
         OperatingSystem::Instance().block();
     }
 
@@ -145,7 +145,7 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
         return error;
     }
 
-    while (!openDone) {
+    if (!openDone) {
         OperatingSystem::Instance().block();
     }
 
@@ -180,7 +180,7 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
         return error;
     }
 
-    while (!closeDone) {
+    if (!closeDone) {
         OperatingSystem::Instance().block();
     }
 
@@ -213,7 +213,7 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
         return error;
     }
 
-    while (!removeDone) {
+    if (!removeDone) {
         OperatingSystem::Instance().block();
     }
 
@@ -261,7 +261,7 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
         return error;
     }
 
-    while (!readDone) {
+    if (!readDone) {
         OperatingSystem::Instance().block();
     }
 
@@ -313,7 +313,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_vie
         return error;
     }
 
-    while (!writeDone) {
+    if (!writeDone) {
         OperatingSystem::Instance().block();
     }
 
@@ -364,7 +364,7 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
         return error;
     }
 
-    while (!synchronizeDone) {
+    if (!synchronizeDone) {
         OperatingSystem::Instance().block();
     }
 
@@ -400,7 +400,7 @@ ErrorType FileSystem::size(FileSystemTypes::File &file) {
         return error;
     }
 
-    while (!sizeQueryDone) {
+    if (!sizeQueryDone) {
         OperatingSystem::Instance().block();
     }
 

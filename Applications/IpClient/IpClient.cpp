@@ -25,7 +25,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
         return error;
     }
 
-    while (!doneConnecting) {
+    if (!doneConnecting) {
         OperatingSystem::Instance().block();
     }
 

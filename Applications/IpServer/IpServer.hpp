@@ -184,7 +184,7 @@ class IpServer {
             return error;
         }
 
-        while (!sent) {
+        if (!sent) {
             OperatingSystem::Instance().block();
         }
 
@@ -223,7 +223,7 @@ class IpServer {
             return error;
         }
 
-        while (!received) {
+        if (!received) {
             OperatingSystem::Instance().block();
         }
 

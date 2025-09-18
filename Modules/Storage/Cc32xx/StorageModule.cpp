@@ -60,7 +60,7 @@ ErrorType Storage::deinit() {
         return error;
     }
 
-    while (!deinitializationDone) {
+    if (!deinitializationDone) {
         OperatingSystem::Instance().block();
     }
 
