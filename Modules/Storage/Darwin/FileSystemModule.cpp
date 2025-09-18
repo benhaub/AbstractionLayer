@@ -35,48 +35,54 @@ ErrorType FileSystem::unmount() {
 }
 
 ErrorType FileSystem::maxPartitionSize(Bytes &size) {
-    bool maxStorageQueryDone = false;
     ErrorType callbackError = ErrorType::Failure;
+    bool maxStorageQueryDone = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto maxStorageQueryCallback = [&]() -> ErrorType {
+    auto maxStorageQueryCallback = [&, thread]() -> ErrorType {
         std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefix());
         size = spaceInfo.capacity;
+        OperatingSystem::Instance().unblock(thread);
         maxStorageQueryDone = true;
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(maxStorageQueryCallback));
+    EventQueue::Event event = EventQueue::Event(maxStorageQueryCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!maxStorageQueryDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
 }
 
 ErrorType FileSystem::availablePartition(Bytes &size) {
-    bool availableStorageQueryDone = false;
     ErrorType callbackError = ErrorType::Failure;
+    bool availableStorageQueryDone = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto availableStorageQueryCallback = [&]() -> ErrorType {
+    auto availableStorageQueryCallback = [&, thread]() -> ErrorType {
         std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefix());
         size = spaceInfo.available;
+        OperatingSystem::Instance().unblock(thread);
         availableStorageQueryDone = true;
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(availableStorageQueryCallback));
+    EventQueue::Event event = EventQueue::Event(availableStorageQueryCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }   
 
     while (!availableStorageQueryDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -87,19 +93,24 @@ ErrorType FileSystem::erasePartition() {
 }
 
 ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
-    bool openDone = false;
-    ErrorType callbackError = ErrorType::PrerequisitesNotMet;
     assert(path.size() > 0);
+    ErrorType callbackError = ErrorType::PrerequisitesNotMet;
+    bool openDone = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto openCallback = [&]() -> ErrorType {
+    auto openCallback = [&, thread]() -> ErrorType {
         if (_storage.status().isInitialized) {
+
             if (!isOpen(file)) {
                 std::ios_base::openmode openMode = toStdOpenMode(mode, callbackError);
+
                 if (ErrorType::Success == callbackError) {
                     std::string absolutePath(mountPrefix());
                     absolutePath.append(path);
                     openFiles[path] = std::fstream();
                     openFiles[path].open(absolutePath, openMode);
+
                     if (openFiles[path].good()) {
                         file.path->assign(path);
                         
@@ -124,17 +135,18 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
         }
 
         openDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(openCallback));
+    EventQueue::Event event = EventQueue::Event(openCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!openDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -143,8 +155,10 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
 ErrorType FileSystem::close(FileSystemTypes::File &file) {
     bool closeDone = false;
     ErrorType callbackError = ErrorType::Success;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto closeCallback = [&]() -> ErrorType {
+    auto closeCallback = [&, thread]() -> ErrorType {
         if (isOpen(file)) {
             if (ErrorType::Success == (callbackError = synchronize(file))) {
                 openFiles[file.path->data()].close();
@@ -155,21 +169,19 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
             }
         }
 
-        assert(false == isOpen(file));
-
         closeDone = true;
-        callbackError = ErrorType::Success;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(closeCallback));
+    EventQueue::Event event = EventQueue::Event(closeCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!closeDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -178,8 +190,10 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
 ErrorType FileSystem::remove(FileSystemTypes::File &file) {
     bool removeDone = false;
     ErrorType callbackError = ErrorType::Failure;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto removeCallback = [&]() -> ErrorType {
+    auto removeCallback = [&, thread]() -> ErrorType {
         if (ErrorType::Success == (callbackError = close(file))) {
             std::string absolutePath(mountPrefix().data());
             absolutePath.append(file.path->c_str());
@@ -188,18 +202,19 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
             }
         }
 
+        OperatingSystem::Instance().unblock(thread);
         removeDone = true;
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(removeCallback));
+    EventQueue::Event event = EventQueue::Event(removeCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!removeDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -208,8 +223,10 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
 ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buffer) {
     bool readDone = false;
     ErrorType callbackError = ErrorType::PrerequisitesNotMet;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto readCallback = [&]() -> ErrorType {
+    auto readCallback = [&, thread]() -> ErrorType {
         //If the buffer doesn't have a size, you won't be able to read anything.
         assert(buffer.size() > 0);
 
@@ -233,18 +250,19 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
             }
         }
 
+        OperatingSystem::Instance().unblock(thread);
         readDone = true;
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(readCallback));
+    EventQueue::Event event = EventQueue::Event(readCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!readDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -265,8 +283,10 @@ ErrorType FileSystem::readNonBlocking(FileSystemTypes::File &file, std::shared_p
 ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_view data) {
     bool writeDone = false;
     ErrorType callbackError = ErrorType::PrerequisitesNotMet;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto writeCallback = [&]() -> ErrorType {
+    auto writeCallback = [&, thread]() -> ErrorType {
         if (isOpen(file)) {
             if (canWriteToFile(file.openMode)) {
                 if (openFiles[file.path->data()].seekp(file.filePointer, std::ios_base::beg).good()) {
@@ -282,6 +302,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_vie
             }
         }
 
+        OperatingSystem::Instance().unblock(thread);
         writeDone = true;
         return callbackError;
     };
@@ -293,7 +314,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_vie
     }
 
     while (!writeDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return error;
@@ -313,8 +334,10 @@ ErrorType FileSystem::writeNonBlocking(FileSystemTypes::File &file, const std::s
 ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
     bool synchronizeDone = false;
     ErrorType callbackError = ErrorType::PrerequisitesNotMet;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto synchronizeCallback = [&]() -> ErrorType {
+    auto synchronizeCallback = [&, thread]() -> ErrorType {
         if (isOpen(file)) {
             if (openFiles[file.path->c_str()].flush().good()) {
                 callbackError = ErrorType::Success;
@@ -330,18 +353,19 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
             }
         }
 
+        OperatingSystem::Instance().unblock(thread);
         synchronizeDone = true;
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(synchronizeCallback));
+    EventQueue::Event event = EventQueue::Event(synchronizeCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!synchronizeDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -350,8 +374,10 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
 ErrorType FileSystem::size(FileSystemTypes::File &file) {
     bool sizeQueryDone = false;
     ErrorType callbackError = ErrorType::PrerequisitesNotMet;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto sizeQueryCallback = [&]() -> ErrorType {
+    auto sizeQueryCallback = [&, thread]() -> ErrorType {
         if (isOpen(file)) {
             if(openFiles[file.path->data()].seekg(0, std::ios_base::end).good()) {
                 file.size = openFiles[file.path->data()].tellg();
@@ -363,18 +389,19 @@ ErrorType FileSystem::size(FileSystemTypes::File &file) {
             openFiles[file.path->data()].clear();
         }
 
+        OperatingSystem::Instance().unblock(thread);
         sizeQueryDone = true;
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(sizeQueryCallback));
+    EventQueue::Event event = EventQueue::Event(sizeQueryCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!sizeQueryDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;

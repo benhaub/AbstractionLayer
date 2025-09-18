@@ -11,8 +11,10 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
     assert(nullptr != _network);
     ErrorType callbackError = ErrorType::Failure;
     bool doneConnecting = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto connectCb = [&]() -> ErrorType {
+    auto connectCb = [&, thread]() -> ErrorType {
         disconnect();
 
         if (PSA_SUCCESS == psa_crypto_init()) {
@@ -61,18 +63,19 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
         }
 
         callbackError == ErrorType::Success ? _connected = true : _connected = false;
+        OperatingSystem::Instance().unblock(thread);
         doneConnecting = true;
         return callbackError;
     };
 
     ErrorType error = ErrorType::Failure;
-    EventQueue::Event event = EventQueue::Event(std::bind(connectCb));
+    EventQueue::Event event = EventQueue::Event(connectCb);
     if (ErrorType::Success != (error = _ipClient.network().addEvent(event))) {
         return error;
     }
 
     while (!doneConnecting) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -84,8 +87,10 @@ ErrorType HttpsClient::disconnect() {
     if (_connected) {
         ErrorType callbackError = ErrorType::Failure;
         bool doneDisconnecting = false;
+        Id thread;
+        OperatingSystem::Instance().currentThreadId(thread);
 
-        auto disconnectCb = [&]() -> ErrorType {
+        auto disconnectCb = [&, thread]() -> ErrorType {
             if (0 == mbedtls_ssl_close_notify(&_ssl)) {
                 callbackError = ErrorType::Success;
             }
@@ -94,18 +99,19 @@ ErrorType HttpsClient::disconnect() {
             freeSslContexts();
 
             _connected = false;
+            OperatingSystem::Instance().unblock(thread);
             doneDisconnecting = true;
             return callbackError;
         };
 
         ErrorType error = ErrorType::Failure;
-        EventQueue::Event event = EventQueue::Event(std::bind(disconnectCb));
+        EventQueue::Event event = EventQueue::Event(disconnectCb);
         if (ErrorType::Success != (error = _ipClient.network().addEvent(event))) {
             return error;
         }
 
         while (!doneDisconnecting) {
-            OperatingSystem::Instance().delay(Milliseconds(1));
+            OperatingSystem::Instance().block();
         }
 
         return callbackError;
@@ -119,8 +125,10 @@ ErrorType HttpsClient::sendBlocking(const HttpTypes::Request &request, const Mil
     assert(nullptr != _network);
     ErrorType callbackError = ErrorType::Failure;;
     bool doneSending = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto sendCb = [&]() -> ErrorType {
+    auto sendCb = [&, thread]() -> ErrorType {
         //Big enough that hopefully the string doesn't have to reallocate.
         constexpr Bytes headerSize = 512;
         std::string frame(headerSize + request.messageBody.size(), 0);
@@ -162,18 +170,19 @@ ErrorType HttpsClient::sendBlocking(const HttpTypes::Request &request, const Mil
         } while (needToTryAgain || (noFatalErrorsOccured && frameNotFullyWritten));
 
         noFatalErrorsOccured ? callbackError = ErrorType::Success : callbackError = ErrorType::Failure;
+        OperatingSystem::Instance().unblock(thread);
         doneSending = true;
         return callbackError;
     };
 
     ErrorType error = ErrorType::Failure;
-    EventQueue::Event event = EventQueue::Event(std::bind(sendCb));
+    EventQueue::Event event = EventQueue::Event(sendCb);
     if (ErrorType::Success != (error = _ipClient.network().addEvent(event))) {
         return error;
     }
 
     while (!doneSending) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -186,8 +195,10 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
     ErrorType callbackError = ErrorType::Success;
     Bytes read = 0;
     bool doneReceiving = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto receiveCallback = [&]() -> ErrorType {
+    auto receiveCallback = [&, thread]() -> ErrorType {
         auto networkReceiveFunction = [&](std::string &buffer, const Milliseconds timeout) -> ErrorType {
             int ret = mbedtls_ssl_read(&_ssl, reinterpret_cast<uint8_t *>(&buffer[0]), buffer.size());
             if (ret < 0) {
@@ -262,18 +273,19 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
             response.messageBody.resize(read);
         }
 
+        OperatingSystem::Instance().unblock(thread);
         doneReceiving = true;
         return callbackError;
     };
 
     ErrorType error = ErrorType::Failure;
-    EventQueue::Event event = EventQueue::Event(std::bind(receiveCallback));
+    EventQueue::Event event = EventQueue::Event(receiveCallback);
     if (ErrorType::Success != (error = _ipClient.network().addEvent(event))) {
         return error;
     }
 
     while (!doneReceiving) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;

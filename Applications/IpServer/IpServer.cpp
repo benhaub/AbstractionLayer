@@ -4,10 +4,12 @@
 ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port) {
     bool doneListening = false;
     ErrorType callbackError = ErrorType::Failure;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
     closeConnection(_listenerSocket);
 
-    auto listenCb = [&]() -> ErrorType {
+    auto listenCb = [&, thread]() -> ErrorType {
         callbackError = network().listenTo(protocol, version, port, _listenerSocket);
         if (ErrorType::Success == callbackError) {
             _protocol = protocol;
@@ -16,6 +18,7 @@ ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Ve
         }
 
         _status.listening = callbackError == ErrorType::Success;
+        OperatingSystem::Instance().unblock(thread);
         doneListening = true;
 
         return callbackError;
@@ -27,7 +30,7 @@ ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Ve
     }
 
     while (!doneListening) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -37,8 +40,10 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
     bool acceptConnectionDone = false;
     ErrorType callbackError = ErrorType::Failure;
     socket = -1;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto acceptConnectionCallback = [&]() -> ErrorType {
+    auto acceptConnectionCallback = [&, thread]() -> ErrorType {
         callbackError = network().acceptConnection(_listenerSocket, socket, timeout);
 
         if (ErrorType::Success == callbackError) {
@@ -47,6 +52,7 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
         }
 
         acceptConnectionDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -57,7 +63,7 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
     }
 
     while (!acceptConnectionDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -66,8 +72,10 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
 ErrorType IpServer::closeConnection(const Socket socket) {
     bool closeConnectionDone = false;
     ErrorType callbackError = ErrorType::Failure;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto closeConnection = [&, socket]() -> ErrorType {
+    auto closeConnection = [&, thread]() -> ErrorType {
         if (ErrorType::Success == network().closeConnection(socket)) {
             const auto closedSocket = std::find(_connectedSockets.begin(), _connectedSockets.end(), socket);
             if (_connectedSockets.end() != closedSocket) {
@@ -85,6 +93,7 @@ ErrorType IpServer::closeConnection(const Socket socket) {
         }
 
         closeConnectionDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -95,7 +104,7 @@ ErrorType IpServer::closeConnection(const Socket socket) {
     }
 
     while (!closeConnectionDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;

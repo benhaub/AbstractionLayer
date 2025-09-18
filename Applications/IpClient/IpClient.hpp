@@ -101,7 +101,7 @@ class IpClient {
      * @post The callback will be called when the data has been sent. The bytes written is valid if and only if error is equal to ErrorType::Success.
      * @post Ownership of data is moved to this call. No access to data is allowed after this call.
     */
-    virtual ErrorType sendNonBlocking(std::string &data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback);
+    virtual ErrorType sendNonBlocking(const std::string &data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback);
     /**
      * @brief Receives data.
      * @param[out] buffer The buffer to receive the data into.
@@ -183,11 +183,14 @@ class IpClient {
     ErrorType sendBlockingImplementation(Data &data, const Milliseconds timeout) {
         bool doneSending = false;
         ErrorType callbackError = ErrorType::Failure;
+        Id thread;
+        OperatingSystem::Instance().currentThreadId(thread);
 
-        auto tx = [&]() -> ErrorType {
+        auto tx = [&, thread]() -> ErrorType {
             callbackError = network().transmit(data, _socket, timeout);
 
             doneSending = true;
+            OperatingSystem::Instance().unblock(thread);
             return callbackError;
         };
 
@@ -198,7 +201,7 @@ class IpClient {
         }
 
         while (!doneSending) {
-            OperatingSystem::Instance().delay(Milliseconds(1));
+            OperatingSystem::Instance().block();
         }
 
         return callbackError;
@@ -208,12 +211,15 @@ class IpClient {
     ErrorType receiveBlockingImplementation(Buffer &buffer, const Milliseconds timeout) {
         bool doneReceiving = false;
         ErrorType callbackError = ErrorType::Failure;
+        Id thread;
+        OperatingSystem::Instance().currentThreadId(thread);
 
-        auto rx = [&]() -> ErrorType {
+        auto rx = [&, thread]() -> ErrorType {
 
             callbackError = network().receive(buffer, _socket, timeout);
 
             doneReceiving = true;
+            OperatingSystem::Instance().unblock(thread);
             return callbackError;
         };
 
@@ -224,7 +230,7 @@ class IpClient {
         }
 
         while (!doneReceiving) {
-            OperatingSystem::Instance().delay(Milliseconds(1));
+            OperatingSystem::Instance().block();
         }
 
         return callbackError;

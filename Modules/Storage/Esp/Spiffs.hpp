@@ -8,24 +8,6 @@
 //ESP
 #include "sys/stat.h"
 
-namespace Spiffs {
-    std::string toPosixOpenMode(const FileSystemTypes::OpenMode mode, ErrorType &error);
-    ErrorType maxPartitionSize(FileSystem &fs, Bytes &size);
-    ErrorType availablePartition(FileSystem &fs, Bytes &size);
-    ErrorType mount(FileSystem &fs);
-    ErrorType unmount(FileSystem &fs);
-    ErrorType erasePartition(FileSystem &fs);
-    ErrorType size(FileSystemTypes::File &file);
-    ErrorType close(FileSystemTypes::File &file, FILE *spiffsFile);
-    ErrorType open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file, FILE *&spiffsFile);
-    ErrorType remove(FileSystemTypes::File &file, FILE *spiffsFile);
-    ErrorType readBlocking(FILE *spiffsFile, FileSystemTypes::File &file, std::string &buffer);
-    ErrorType writeBlocking(FILE *spiffsFile, FileSystemTypes::File &file, std::string_view data);
-    ErrorType synchronize(FILE *spiffsFile);
-}
-
-#if ESP_FILE_SYSTEM_ENABLE_SPIFFS
-
 /**
  * @namespace Spiffs
  * @brief SPIFFS storage.
@@ -235,5 +217,4 @@ namespace Spiffs {
     }
 }
 
-#endif // ESP_FILE_SYSTEM_ENABLE_SPIFFS
 #endif /* __SPIFFS_HPP__ */

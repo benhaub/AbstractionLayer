@@ -40,13 +40,17 @@ ErrorType Storage::init() {
 ErrorType Storage::deinit() {
     bool deinitializationDone = false;
     ErrorType callbackError = ErrorType::Failure;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto deinitializedCallback = [&]() -> ErrorType {
+    auto deinitializedCallback = [&, thread]() -> ErrorType {
         signed short result = sl_Stop(0xFFFF);
         if (0 == result) {
             _status.isInitialized = false;
         }
 
+        deinitializationDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return fromPlatformError(result);
     };
 
@@ -57,7 +61,7 @@ ErrorType Storage::deinit() {
     }
 
     while (!deinitializationDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;

@@ -6,23 +6,6 @@
 //ESP
 #include "nvs_flash.h"
 
-namespace KeyValue {
-    ErrorType mount(FileSystem &fs, const FileSystemTypes::PartitionName &nameSpace, std::unique_ptr<nvs::NVSHandle> &_handle);
-    ErrorType unmount(FileSystem &fs, std::unique_ptr<nvs::NVSHandle> &_handle);
-    ErrorType maxPartitionSize(FileSystem &fs, Bytes &size);
-    ErrorType availablePartition(FileSystem &fs, Bytes &size);
-    ErrorType erasePartition(FileSystem &fs);
-    ErrorType open(FileSystem &fs, std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file );
-    ErrorType synchronize(std::unique_ptr<nvs::NVSHandle> &_handle);
-    ErrorType close(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file);
-    ErrorType remove(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file);
-    ErrorType readBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, std::string &buffer);
-    ErrorType writeBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, std::string_view data);
-    ErrorType size(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file);
-}
-
-#if ESP_FILE_SYSTEM_ENABLE_NVS
-
 /**
  * @namespace KeyValue
  * @brief Key Value NVS storage.
@@ -171,5 +154,4 @@ namespace KeyValue {
     }
 };
 
-#endif //ESP_FILE_SYSTEM_ENABLE_NVS
 #endif /* __KEY_VALUE_HPP__ */

@@ -4,15 +4,17 @@
 ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, const Milliseconds timeout) {
     bool doneConnecting = false;
     ErrorType callbackError = ErrorType::Failure;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-
-    auto connectCb = [&]() -> ErrorType {
+    auto connectCb = [&, thread]() -> ErrorType {
         // Ensure any existing connection is properly closed
         disconnect();
 
         callbackError = network().connectTo(hostname, port, protocol, version, _socket, timeout);
-        doneConnecting = true;
 
+        doneConnecting = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -24,7 +26,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
     }
 
     while (!doneConnecting) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -41,7 +43,7 @@ ErrorType IpClient::disconnect() {
     return error;
 }
 
-ErrorType IpClient::sendNonBlocking(std::string &data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+ErrorType IpClient::sendNonBlocking(const std::string &data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
     auto tx = [&, callback, data = std::move(data), timeout]() -> ErrorType {
         ErrorType error = ErrorType::Failure;
 

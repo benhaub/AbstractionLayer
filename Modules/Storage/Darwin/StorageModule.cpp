@@ -53,17 +53,3 @@ ErrorType Storage::deinit() {
 ErrorType Storage::mainLoop() {
     return runNextEvent();
 }
-
-ErrorType Storage::getEnvironment(std::string variable, ErrorType &error, std::array<char, 32> &expandedVariable) {
-    
-    const char *environmentVariable = std::getenv(variable.data());
-    if (nullptr == environmentVariable) {
-        error = ErrorType::Failure;
-    }
-    else {
-        strncpy(expandedVariable.data(), environmentVariable, expandedVariable.size());
-        error = ErrorType::Success;
-    }
-
-    return error;
-}

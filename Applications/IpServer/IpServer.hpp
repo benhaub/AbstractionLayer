@@ -167,11 +167,14 @@ class IpServer {
     ErrorType sendBlockingImplementation(Data &data, const Milliseconds timeout, const Socket socket) {
         bool sent = false;
         ErrorType callbackError = ErrorType::Failure;
+        Id thread;
+        OperatingSystem::Instance().currentThreadId(thread);
 
-        auto tx = [&]() -> ErrorType {
+        auto tx = [&, thread]() -> ErrorType {
             callbackError = network().transmit(data, socket, timeout);
 
             sent = true;
+            OperatingSystem::Instance().unblock(thread);
             return callbackError;
         };
 
@@ -182,7 +185,7 @@ class IpServer {
         }
 
         while (!sent) {
-            OperatingSystem::Instance().delay(Milliseconds(1));
+            OperatingSystem::Instance().block();
         }
 
         return callbackError;
@@ -192,8 +195,10 @@ class IpServer {
     ErrorType receiveBlockingImplementation(Buffer &buffer, const Milliseconds timeout, Socket &socket) {
         bool received = false;
         ErrorType callbackError = ErrorType::NoData;
+        Id thread;
+        OperatingSystem::Instance().currentThreadId(thread);
 
-        auto rx = [&]() -> ErrorType {
+        auto rx = [&, thread]() -> ErrorType {
             if (-1 == socket) {
                 for (size_t i = 0; i < _connectedSockets.size(); i++) {
                     callbackError = network().receive(buffer, _connectedSockets[i], timeout);
@@ -208,6 +213,7 @@ class IpServer {
             }
 
             received = true;
+            OperatingSystem::Instance().unblock(thread);
             return callbackError;
         };
 
@@ -218,7 +224,7 @@ class IpServer {
         }
 
         while (!received) {
-            OperatingSystem::Instance().delay(Milliseconds(1));
+            OperatingSystem::Instance().block();
         }
 
         return callbackError;

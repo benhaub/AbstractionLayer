@@ -27,6 +27,7 @@ ErrorType EventQueue::addEvent(Event &event) {
             //_eventsReady is not a function because it needs to be evaluated at specific points in the code. We can't let runNextEvent try to run an
             //event while we are still in the middle of adding an event to the queue.
             _eventsReady = true;
+            OperatingSystem::Instance().unblock(_ownerThreadId);
             error = ErrorType::Success;
     }
     else {

@@ -115,11 +115,12 @@ class EventQueue {
      * @brief Adds an event to the to the queue.
      * @details Interrupt and thread safe.
      * @param[in] event The event to add.
-     * @post The event is added to a FIFO queue and will be executed when it reaches the first position in the queue and this thread
-     *       is running.
      * @returns ErrorType::Success if the event was added
      * @returns ErrorType::LimitReached if the maximum number of events has been reached.
      * @returns the result of the event callback if the event is being added to from the same thread in which the event queue is run.
+     * @post The event is added to a FIFO queue and will be executed when it reaches the first position in the queue and this thread
+     *       is running.
+     * @post If the owner of the event queue is blocked when the event is added, it will become unblocked after this call.
     */
     ErrorType addEvent(Event &event);
 
@@ -128,6 +129,8 @@ class EventQueue {
      * @sa runNextEvent
      * @returns ErrorType::NoData if there are no events to process.
      * @returns The error codes of any functions called by runNextEvent.
+     * @post If you don't have any other processing to do outside of the event queue, you may choose to call OperatingSystem::block
+     *       after this call returns since addEvent will unblock.
     */
     virtual ErrorType mainLoop() { return runNextEvent(); }
 

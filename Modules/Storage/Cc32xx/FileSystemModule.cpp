@@ -16,8 +16,10 @@ ErrorType FileSystem::unmount() {
 ErrorType FileSystem::maxPartitionSize(Bytes &size) {
     bool maxStorageQueryDone = false;
     ErrorType callbackError = ErrorType::Failure;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto maxStorageQueryCallback = [&]() -> ErrorType {
+    auto maxStorageQueryCallback = [&, thread]() -> ErrorType {
         SlFsControlGetStorageInfoResponse_t storageInfo;
         _i32 slRetVal;
 
@@ -29,17 +31,18 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
         size = storageInfo.DeviceUsage.DeviceBlocksCapacity * storageInfo.DeviceUsage.DeviceBlockSize;
 
         maxStorageQueryDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(maxStorageQueryCallback));
+    EventQueue::Event event = EventQueue::Event(maxStorageQueryCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!maxStorageQueryDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -48,8 +51,10 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
 ErrorType FileSystem::availablePartition(Bytes &size) {
     bool availableStorageQueryDone = false;
     ErrorType callbackError = ErrorType::Failure;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto availableStorageQueryCallback = [&]() -> ErrorType {
+    auto availableStorageQueryCallback = [&, thread]() -> ErrorType {
         SlFsControlGetStorageInfoResponse_t storageInfo;
         _i32 slRetVal;
 
@@ -61,17 +66,18 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
         size = storageInfo.DeviceUsage.NumOfAvailableBlocksForUserFiles * storageInfo.DeviceUsage.DeviceBlockSize;
 
         availableStorageQueryDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(availableStorageQueryCallback));
+    EventQueue::Event event = EventQueue::Event(availableStorageQueryCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!availableStorageQueryDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -84,9 +90,11 @@ ErrorType FileSystem::erasePartition(){
 ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
     bool openDone = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
     assert(path.size() > 0);
 
-    auto openCallback = [&]() -> ErrorType {
+    auto openCallback = [&, thread]() -> ErrorType {
         _u32 token = 0;
         _i32 retval = 0;
         //Comes from the Host driver documentation. Not sure how to query for this or if there is a constant somewhere.
@@ -96,15 +104,18 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
         assert(maxSize <= maxFileSize);
 
         const bool fileIsNotOpen = !openFiles.contains(path);
+
         if (fileIsNotOpen) {
             retval = sl_FsOpen(reinterpret_cast<const _u8 *>(path.data()), toCc32xxAccessMode(mode, callbackError) | maxSize, &token);
-            if (retval >= 0) {
+
+            if (retval >= 0 || SL_ERROR_FS_FILE_HAS_NOT_BEEN_CLOSE_CORRECTLY == retval || SL_ERROR_FS_FILE_IS_ALREADY_OPENED == retval) {
                 file.path->assign(path);
                 file.isOpen = true;
                 file.openMode = mode;
                 file.filePointer = 0;
                 openFiles[path] = retval;
                 _status.openedFiles = openFiles.size();
+
                 if (fileShouldBeTruncated(mode)) {
                     file.size = 0;
                 }
@@ -119,17 +130,18 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
         }
 
         openDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(openCallback));
+    EventQueue::Event event = EventQueue::Event(openCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!openDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -138,8 +150,10 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
 ErrorType FileSystem::close(FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
     bool closeDone = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto closeCallback = [&]() -> ErrorType {
+    auto closeCallback = [&, thread]() -> ErrorType {
         const bool fileIsOpen = openFiles.contains(file.path->c_str());
         if (fileIsOpen) {
             _i32 retval = sl_FsClose(openFiles[file.path->c_str()], NULL, NULL, 0);
@@ -157,17 +171,18 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
         }
 
         closeDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(closeCallback));
+    EventQueue::Event event = EventQueue::Event(closeCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!closeDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -176,8 +191,10 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
 ErrorType FileSystem::remove(FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
     bool removeDone = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto removeCallback = [&]() -> ErrorType {
+    auto removeCallback = [&, thread]() -> ErrorType {
         if (file.isOpen) {
             if (ErrorType::Success == (callbackError = close(file))) {
                 _i32 retval = sl_FsDel(reinterpret_cast<const unsigned char *>(file.path->c_str()), 0);
@@ -190,18 +207,18 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
         }
 
         removeDone = true;
-        callbackError =  ErrorType::Success;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(removeCallback));
+    EventQueue::Event event = EventQueue::Event(removeCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!removeDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -210,8 +227,10 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
 ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buffer) {
     ErrorType callbackError = ErrorType::Failure;
     bool readDone = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    auto readCallback = [&]() -> ErrorType {
+    auto readCallback = [&, thread]() -> ErrorType {
         _i32 retval = sl_FsRead(openFiles[file.path->c_str()], file.filePointer, reinterpret_cast<_u8 *>(buffer.data()), buffer.size());
         if (retval > 0) {
             file.filePointer += static_cast<FileOffset>(retval);
@@ -223,18 +242,19 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
             buffer.resize(0);
         }
 
+        OperatingSystem::Instance().unblock(thread);
         readDone = true;
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(readCallback));
+    EventQueue::Event event = EventQueue::Event(readCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!readDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;
@@ -255,36 +275,37 @@ ErrorType FileSystem::readNonBlocking(FileSystemTypes::File &file, std::shared_p
 ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_view data) {
     ErrorType callbackError = ErrorType::Failure;
     bool writeDone = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
 
-    //SimpleLink write function does not accept a constant string.
-    std::string_view dataToWrite(data);
-
-    auto writeCallback = [&]() -> ErrorType {
+    auto writeCallback = [&, thread]() -> ErrorType {
         //DO NOT try to edit data. Only casting away constness because FsWrite does not take a const parameter.
         //It's UB to edit a string_view.
-        char *data = const_cast<char *>(dataToWrite.data());
-        _i32 retval = sl_FsWrite(openFiles[file.path->c_str()], file.filePointer, reinterpret_cast<_u8 *>(data), dataToWrite.size());
+        char *dataToWrite = const_cast<char *>(data.data());
+        _i32 retval = sl_FsWrite(openFiles[file.path->c_str()], file.filePointer, reinterpret_cast<_u8 *>(dataToWrite), data.size());
         if (retval >= 0) {
-            writeDone = true;
+            //writeDone = true;
+            OperatingSystem::Instance().unblock(thread);
             callbackError = ErrorType::Success;
-            file.size += dataToWrite.size();
+            file.size += data.size();
         }
         else {
             callbackError = fromPlatformError(retval);
         }
 
         writeDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(writeCallback));
+    EventQueue::Event event = EventQueue::Event(writeCallback);
     ErrorType error = _storage.addEvent(event);
     if (ErrorType::Success != error) {
         return error;
     }
 
     while (!writeDone) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        error = OperatingSystem::Instance().block();
     }
 
     return error;
