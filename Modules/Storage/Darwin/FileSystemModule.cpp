@@ -43,8 +43,8 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
     auto maxStorageQueryCallback = [&, thread]() -> ErrorType {
         std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefix());
         size = spaceInfo.capacity;
-        OperatingSystem::Instance().unblock(thread);
         maxStorageQueryDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -70,8 +70,8 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
     auto availableStorageQueryCallback = [&, thread]() -> ErrorType {
         std::filesystem::space_info spaceInfo = std::filesystem::space(mountPrefix());
         size = spaceInfo.available;
-        OperatingSystem::Instance().unblock(thread);
         availableStorageQueryDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -202,8 +202,8 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
             }
         }
 
-        OperatingSystem::Instance().unblock(thread);
         removeDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -250,8 +250,8 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
             }
         }
 
-        OperatingSystem::Instance().unblock(thread);
         readDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -302,8 +302,8 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_vie
             }
         }
 
-        OperatingSystem::Instance().unblock(thread);
         writeDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -353,8 +353,8 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
             }
         }
 
-        OperatingSystem::Instance().unblock(thread);
         synchronizeDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -389,8 +389,8 @@ ErrorType FileSystem::size(FileSystemTypes::File &file) {
             openFiles[file.path->data()].clear();
         }
 
-        OperatingSystem::Instance().unblock(thread);
         sizeQueryDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 

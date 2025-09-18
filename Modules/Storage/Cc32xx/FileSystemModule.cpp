@@ -199,9 +199,7 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
             if (ErrorType::Success == (callbackError = close(file))) {
                 _i32 retval = sl_FsDel(reinterpret_cast<const unsigned char *>(file.path->c_str()), 0);
                 if (SL_FS_OK == retval) {
-                    removeDone = true;
                     callbackError = fromPlatformError(retval);
-                    return callbackError;
                 }
             }
         }
@@ -242,8 +240,8 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
             buffer.resize(0);
         }
 
-        OperatingSystem::Instance().unblock(thread);
         readDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -284,8 +282,6 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_vie
         char *dataToWrite = const_cast<char *>(data.data());
         _i32 retval = sl_FsWrite(openFiles[file.path->c_str()], file.filePointer, reinterpret_cast<_u8 *>(dataToWrite), data.size());
         if (retval >= 0) {
-            //writeDone = true;
-            OperatingSystem::Instance().unblock(thread);
             callbackError = ErrorType::Success;
             file.size += data.size();
         }

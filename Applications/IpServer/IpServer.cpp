@@ -18,8 +18,8 @@ ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Ve
         }
 
         _status.listening = callbackError == ErrorType::Success;
-        OperatingSystem::Instance().unblock(thread);
         doneListening = true;
+        OperatingSystem::Instance().unblock(thread);
 
         return callbackError;
     };

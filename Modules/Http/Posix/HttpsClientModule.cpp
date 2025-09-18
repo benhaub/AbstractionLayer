@@ -72,8 +72,8 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
         }
 
         callbackError == ErrorType::Success ? _connected = true : _connected = false;
-        OperatingSystem::Instance().unblock(thread);
         doneConnecting = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -84,7 +84,7 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
     }
 
     while (!doneConnecting) {
-        OperatingSystem::Instance().delay(Milliseconds(1));
+        OperatingSystem::Instance().block();
     }
 
     return callbackError;

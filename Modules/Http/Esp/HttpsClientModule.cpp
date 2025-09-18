@@ -63,8 +63,8 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
         }
 
         callbackError == ErrorType::Success ? _connected = true : _connected = false;
-        OperatingSystem::Instance().unblock(thread);
         doneConnecting = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -99,8 +99,8 @@ ErrorType HttpsClient::disconnect() {
             freeSslContexts();
 
             _connected = false;
-            OperatingSystem::Instance().unblock(thread);
             doneDisconnecting = true;
+            OperatingSystem::Instance().unblock(thread);
             return callbackError;
         };
 
@@ -170,8 +170,8 @@ ErrorType HttpsClient::sendBlocking(const HttpTypes::Request &request, const Mil
         } while (needToTryAgain || (noFatalErrorsOccured && frameNotFullyWritten));
 
         noFatalErrorsOccured ? callbackError = ErrorType::Success : callbackError = ErrorType::Failure;
-        OperatingSystem::Instance().unblock(thread);
         doneSending = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -273,8 +273,8 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
             response.messageBody.resize(read);
         }
 
-        OperatingSystem::Instance().unblock(thread);
         doneReceiving = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 

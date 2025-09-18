@@ -70,8 +70,8 @@ ErrorType FileSystem::unmount() {
             _status.mounted = false;
         }
 
-        OperatingSystem::Instance().unblock(thread);
         unmountDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -108,8 +108,8 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
             }
         }
 
-        OperatingSystem::Instance().unblock(thread);
         maxStorageQueryDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -146,8 +146,8 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
             }
         }
 
-        OperatingSystem::Instance().unblock(thread);
         availableStorageQueryDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -184,8 +184,8 @@ ErrorType FileSystem::erasePartition() {
             }
         }
 
-        OperatingSystem::Instance().unblock(thread);
         erasePartitionDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -233,8 +233,8 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
             }
         }
 
-        OperatingSystem::Instance().unblock(thread);
         openDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -275,8 +275,8 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
             }
         }
 
-        OperatingSystem::Instance().unblock(thread);
         closeDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -314,8 +314,8 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
             }
         }
 
-        OperatingSystem::Instance().unblock(thread);
         removeDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -352,8 +352,8 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
             }
         }
 
-        OperatingSystem::Instance().unblock(thread);
         readDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -402,8 +402,8 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_vie
             }
         }
 
-        OperatingSystem::Instance().unblock(thread);
         writeDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
@@ -451,8 +451,8 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
             }
         }
 
-        OperatingSystem::Instance().unblock(thread);
         syncDone = true;
+        OperatingSystem::Instance().unblock(thread);
         return callbackError;
     };
 
