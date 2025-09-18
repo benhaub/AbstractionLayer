@@ -81,8 +81,11 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
 
     Thread newThread = {
         .name = name,
-        .threadId = nextThreadId++
+        .threadId = nextThreadId++,
+        .isBlocked = false
     };
+    pthread_mutex_init(&(newThread.mutex), nullptr);
+    pthread_cond_init(&(newThread.conditionVariable), nullptr);
 
     if (threads.size() < _MaxThreads) {
         threads[name] = newThread;
@@ -592,6 +595,53 @@ ErrorType OperatingSystem::enableAllInterrupts() {
 
     _interruptsDisabled = false;
     return ErrorType::Success;
+}
+
+ErrorType OperatingSystem::block() {
+    Id task;
+    ErrorType error = currentThreadId(task);
+
+    for (auto &[name, threadStruct] : threads) {
+
+        if (threadStruct.threadId == task) {
+            threadStruct.isBlocked = true;
+
+            //pthread_cond_wait will unlock the mutex and lock it again when it returns.
+            //The loop is only to protect against spurious wakeups. It's not common to return before the task has been unblocked.
+            pthread_mutex_lock(&(threadStruct.mutex));
+            while (threadStruct.isBlocked) {
+                pthread_cond_wait(&threadStruct.conditionVariable, &(threadStruct.mutex));
+            }
+            pthread_mutex_unlock(&(threadStruct.mutex));
+            
+            error = ErrorType::Success;
+            break;
+        }
+    }
+
+    return error;
+}
+
+ErrorType OperatingSystem::unblock(const Id task) {
+    ErrorType error = ErrorType::NoData;
+
+    for (auto &[name, threadStruct] : threads) {
+
+        if (threadStruct.threadId == task) {
+
+            if (threadStruct.isBlocked) {
+                pthread_mutex_lock(&(threadStruct.mutex));
+                threadStruct.isBlocked = false;
+                pthread_mutex_unlock(&(threadStruct.mutex));
+                pthread_cond_signal(&(threadStruct.conditionVariable));
+            }
+
+            error = ErrorType::Success;
+            break;
+        }
+    }
+
+    return error;
 }
 
 void OperatingSystem::callTimerCallback(timer_t *const posixTimerId) {

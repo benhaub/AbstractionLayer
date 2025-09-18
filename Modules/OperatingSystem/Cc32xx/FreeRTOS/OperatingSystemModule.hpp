@@ -9,6 +9,7 @@
 #include <map>
 //Posix
 #include <semaphore.h>
+#include <pthread.h>
 //FreeRTOS
 #include "FreeRTOS.h"
 #include "task.h"
@@ -64,6 +65,8 @@ class OperatingSystem final: public OperatingSystemAbstraction, public Global<Op
     ErrorType uptime(Seconds &uptime) override;
     ErrorType disableAllInterrupts() override;
     ErrorType enableAllInterrupts() override;
+    ErrorType block() override;
+    ErrorType unblock(const Id task) override;
 
     void callTimerCallback(TimerHandle_t timer);
 
@@ -89,6 +92,9 @@ class OperatingSystem final: public OperatingSystemAbstraction, public Global<Op
         pthread_t cc32xxThreadId;
         std::array<char, OperatingSystemTypes::MaxThreadNameLength> name;
         Id threadId;
+        bool isBlocked;
+        pthread_mutex_t mutex;
+        pthread_cond_t conditionVariable;
     };
 
     struct Timer {

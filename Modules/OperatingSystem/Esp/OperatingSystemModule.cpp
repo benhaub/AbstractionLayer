@@ -443,6 +443,37 @@ ErrorType OperatingSystem::enableAllInterrupts() {
     return ErrorType::Success;
 }
 
+ErrorType OperatingSystem::block() {
+    Id task;
+    ErrorType error = currentThreadId(task);
+
+    for (auto &[name, threadStruct] : threads) {
+
+        if (threadStruct.threadId == task) {
+            vTaskSuspend(threadStruct.espThreadId);
+            error = ErrorType::Success;
+            break;
+        }
+    }
+
+    return error;
+}
+
+ErrorType OperatingSystem::unblock(const Id task) {
+    ErrorType error = ErrorType::NoData;
+
+    for (auto &[name, threadStruct] : threads) {
+
+        if (threadStruct.threadId == task) {
+            vTaskResume(threadStruct.espThreadId);
+            error = ErrorType::Success;
+            break;
+        }
+    }
+
+    return error;
+}
+
 void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
     if (timers.contains(timer)) {
         timers[timer].callback();

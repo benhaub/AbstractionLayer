@@ -70,6 +70,8 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     ErrorType uptime(Seconds &uptime) override;
     ErrorType disableAllInterrupts() override;
     ErrorType enableAllInterrupts() override;
+    ErrorType block() override;
+    ErrorType unblock(const Id task) override;
 
     void callTimerCallback(TimerHandle_t timer);
 

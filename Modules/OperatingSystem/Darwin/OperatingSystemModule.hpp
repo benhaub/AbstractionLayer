@@ -64,6 +64,8 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     ErrorType uptime(Seconds &uptime) override;
     ErrorType disableAllInterrupts() override;
     ErrorType enableAllInterrupts() override;
+    ErrorType block() override;
+    ErrorType unblock(const Id task) override;
 
     int toPosixPriority(OperatingSystemTypes::Priority priority) {
         switch (priority) {
@@ -94,6 +96,9 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
         pthread_t posixThreadId;
         std::array<char, OperatingSystemTypes::MaxThreadNameLength> name;
         Id threadId;
+        bool isBlocked;
+        pthread_mutex_t mutex;
+        pthread_cond_t conditionVariable;
     };
 
     struct Timer {

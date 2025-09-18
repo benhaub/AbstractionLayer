@@ -426,6 +426,20 @@ class OperatingSystemAbstraction {
      */
     virtual ErrorType enableAllInterrupts() = 0;
     /**
+     * @brief Block the task who calls this function.
+     * @returns ErrorType::Success if the task was blocked
+     * @returns ErrorType::Failure if the task was not blocked
+     */
+    virtual ErrorType block() = 0;
+    /**
+     * @brief Unblock a task
+     * @param task The Id of the task to unblock
+     * @returns ErrorType::Success if the task was unblocked or not blocked previously
+     * @returns ErrorType::NoData if the task ID was not found.
+     * @returns ErrorType::Failure if the task was not unblocked
+     */
+    virtual ErrorType unblock(const Id task) = 0;
+    /**
      * @brief Get the status of the operatings system as a const reference.
      * @returns The status of the operating system.
     */
