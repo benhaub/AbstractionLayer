@@ -113,9 +113,9 @@ class CellularAbstraction : public NetworkAbstraction {
 
     void printStatus() {
         status();
-        PLT_LOGI(TAG, "<CellularStatus> <Technology:%u, isUp:%s, Signal Strength (dBm):%d> <Pie, Line>",
+        PLT_LOGI(TAG, "<CellularStatus> <Technology:%u, isUp:%d, Signal Strength (dBm):%d> <Omit, Pie, Line>",
         static_cast<uint8_t>(NetworkAbstraction::_status.technology),
-                             NetworkAbstraction::_status.isUp ? "yes" : "no",
+                             NetworkAbstraction::_status.isUp,
                              _status.signalStrength);
         }
 

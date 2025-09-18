@@ -102,7 +102,7 @@ class OperatingSystemAbstraction {
     void printStatus() {
         status(true);
 
-        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time (s):%d, System UnixTime:%u> <Line, Line, Omit, Omit>",
+        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time (s):%d, System UnixTime:%u> <Stairs, Line, Omit, Omit>",
         status().threadCount, status().idle, status().upTime, status().systemTime);
         for (const auto &memoryRegion : status().memoryRegion) {
             PLT_LOGI(TAG, "<Memory Region:%s> <Free (%%):%.1f> <Line>",
