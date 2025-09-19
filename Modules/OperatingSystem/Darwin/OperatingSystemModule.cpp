@@ -499,11 +499,11 @@ ErrorType OperatingSystem::block() {
     for (auto &[name, threadStruct] : threads) {
 
         if (threadStruct.threadId == task) {
+            pthread_mutex_lock(&(threadStruct.mutex));
             threadStruct.isBlocked = true;
 
             //pthread_cond_wait will unlock the mutex and lock it again when it returns.
             //The loop is only to protect against spurious wakeups. It's not common to return before the task has been unblocked.
-            pthread_mutex_lock(&(threadStruct.mutex));
             while (threadStruct.isBlocked) {
                 pthread_cond_wait(&threadStruct.conditionVariable, &(threadStruct.mutex));
             }
@@ -523,14 +523,14 @@ ErrorType OperatingSystem::unblock(const Id task) {
     for (auto &[name, threadStruct] : threads) {
 
         if (threadStruct.threadId == task) {
+            pthread_mutex_lock(&(threadStruct.mutex));
 
             if (threadStruct.isBlocked) {
-                pthread_mutex_lock(&(threadStruct.mutex));
                 threadStruct.isBlocked = false;
-                pthread_mutex_unlock(&(threadStruct.mutex));
                 pthread_cond_signal(&(threadStruct.conditionVariable));
             }
 
+            pthread_mutex_unlock(&(threadStruct.mutex));
             error = ErrorType::Success;
             break;
         }
