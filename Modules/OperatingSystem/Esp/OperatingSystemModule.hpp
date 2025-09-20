@@ -120,10 +120,14 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
             case ESP_RST_POWERON:
                 return OperatingSystemTypes::ResetReason::PowerOn;
             case ESP_RST_EXT:
+            case ESP_RST_USB:
+            case ESP_RST_JTAG:
                 return OperatingSystemTypes::ResetReason::ExternalPin;
             case ESP_RST_SW:
                 return OperatingSystemTypes::ResetReason::Software;
             case ESP_RST_PANIC:
+            case ESP_RST_PWR_GLITCH:
+            case ESP_RST_CPU_LOCKUP:
                 return OperatingSystemTypes::ResetReason::Exception;
             case ESP_RST_INT_WDT:
             case ESP_RST_TASK_WDT:
