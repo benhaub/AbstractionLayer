@@ -8,26 +8,10 @@
 
 ErrorType Wifi::init() {
     Spi spi;
-    Id thread;
     ErrorType error = spi.init();
+
     if (ErrorType::Success == error) {
-        constexpr Bytes kilobyte = 1024;
-        //SIMPLELINK_THREAD_NAME is defined at compile time in cc32xx.cmake. Both Wifi and storage must create this thread in order to access the
-        //API for Wifi and storage and may do so independently of each other. The Operating System must be check for this presence of this thread
-        //before attempting to start it. Checking the return value of sl_start() is not sufficient since the wifi radio can be turned on or off at
-        //any time.
-        constexpr std::array<char, OperatingSystemTypes::MaxThreadNameLength> simplelinkThreadName = {SIMPLELINK_THREAD_NAME};
-        if (ErrorType::NoData == OperatingSystem::Instance().threadId(simplelinkThreadName, thread)) {
-            
-            error = OperatingSystem::Instance().createThread(OperatingSystemTypes::Priority::High,
-                                                    simplelinkThreadName,
-                                                    nullptr,
-                                                    2*kilobyte,
-                                                    sl_Task,
-                                                    thread);
-            
-            assert(ErrorType::Success == error);
-        }
+        error = OperatingSystem::Instance().startSimpleLinkTask();
 
         if (ErrorType::Success == (error = radioOn())) {
             //Enable DHCP client
@@ -56,9 +40,9 @@ ErrorType Wifi::init() {
             sl_WlanSet(SL_WLAN_RX_FILTERS_ID, SL_WLAN_RX_FILTER_REMOVE, sizeof(rxFilterIdMask), (uint8_t *)&rxFilterIdMask);
 
             //Reconfigure
-            configure(_params);
+            error = configure(_params);
 
-            //Turn off and on for changes to take affect.
+            //Reset the NWP for the changes to take effect.
             if (ErrorType::Success == (error = radioOff())) {
                 error = radioOn();
             }

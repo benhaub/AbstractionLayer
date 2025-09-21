@@ -5,9 +5,9 @@
 //C++
 #include <ctime>
 //Posix
-#include <unistd.h>
-#include <sys/times.h>
-#include <signal.h> //For timers
+#include <pthread.h>
+//TI driverlib
+#include "ti/drivers/net/wifi/device.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,79 +37,68 @@ ErrorType OperatingSystem::startScheduler() {
 }
 
 ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority priority, const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
-    pthread_attr_t attrs;
-    struct sched_param priParam;
-    int retc;
-    ErrorType error = ErrorType::Failure;
+    ErrorType error = ErrorType::LimitReached;
     static Id nextThreadId = 1;
 
-    /* Initialize the attributes structure with default values */
-    pthread_attr_init(&attrs);
-
-    /* Set priority, detach state, and stack size attributes */
-    priParam.sched_priority = toCc32xxPriority(priority);
-    retc = pthread_attr_setschedparam(&attrs, &priParam);
-    retc |= pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_DETACHED);
-    retc |= pthread_attr_setstacksize(&attrs, stackSize);
-    if (retc != 0) {
-        return fromPlatformError(retc);
-    }
+    struct InitThreadArgs {
+        void *arguments;
+        void *(*startFunction)(void *);
+    };
+    auto initThread = [](void *arguments) -> void {
+        InitThreadArgs *initThreadArgs = static_cast<InitThreadArgs *>(arguments);
+        void *threadArguments = initThreadArgs->arguments;
+        void *(*startFunction)(void *) = initThreadArgs->startFunction;
+        delete initThreadArgs;
+        initThreadArgs = nullptr;
+        (startFunction)(threadArguments);
+        return;
+    };
 
     Thread newThread = {
         .name = name,
-        .threadId = nextThreadId++,
-        .isBlocked = false
+        .threadId = nextThreadId++
     };
-    pthread_mutex_init(&(newThread.mutex), nullptr);
-    pthread_cond_init(&(newThread.conditionVariable), nullptr);
 
-    if (threads.size() < _MaxThreads) {
+    InitThreadArgs *initThreadArgs = new InitThreadArgs {
+        .arguments = arguments,
+        .startFunction = startFunction,
+    };
+
+    TaskHandle_t thread;
+    const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, initThreadArgs, toCc32xxPriority(priority), &thread));
+
+    if (threadWasCreated && threads.size() < _MaxThreads) {
+        newThread.cc32xxThreadId = thread;
         threads[name] = newThread;
-    }
-    else {
-        return ErrorType::LimitReached;
-    }
-
-    number = newThread.threadId;
-
-    pthread_t thread;
-    const bool threadWasCreated = (0 == (retc = pthread_create(&thread, &attrs, startFunction, arguments)));
-    if (threadWasCreated) {
+        _status.threadCount = threads.size();
+        number = newThread.threadId;
         error = ErrorType::Success;
-        threads[name].cc32xxThreadId = thread;
     }
     else {
         deleteThread(name);
-        error = fromPlatformError(retc);
+        error = ErrorType::Failure;
     }
-
-    _status.threadCount = threads.size();
 
     return error;
 }
 
-//I want to use pthreads since I like the portability of them, however, ESP does not implement pthread_kill.
-//The work around is to set the thread in the deatched state and then have the main loops of each thread regularly check their status
-//to see if they have been terminated by the operating system, which will set isTerminated when the thread is detached.
 ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
     ErrorType error = ErrorType::NoData;
 
     if (threads.contains(name)) {
         threads.erase(name);
+        _status.threadCount = threads.size();
     }
 
     return error;
 }
 
 ErrorType OperatingSystem::joinThread(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
-    Id thread;
-    int ret;
-    if (ErrorType::NoData == threadId(name, thread)) {
-        return ErrorType::NoData;
+    while (ErrorType::NoData != isDeleted(name)) {
+        delay(Milliseconds(1));
     }
 
-    ret = pthread_join(threads[name].cc32xxThreadId, nullptr);
-    return fromPlatformError(ret);
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::threadId(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name, Id &thread) {
@@ -122,8 +111,9 @@ ErrorType OperatingSystem::threadId(const std::array<char, OperatingSystemTypes:
 }
 
 ErrorType OperatingSystem::currentThreadId(Id &thread) const {
-    pthread_t task = pthread_self();
-    auto it = std::find_if(threads.begin(), threads.end(), [task](const auto &pair) { return pair.second.cc32xxThreadId == task; });
+    const TaskHandle_t threadId = xTaskGetCurrentTaskHandle();
+
+    auto it = std::find_if(threads.begin(), threads.end(), [threadId](const auto &pair) { return pair.second.cc32xxThreadId == threadId; });
     if (threads.end() == it) {
         return ErrorType::NoData;
     }
@@ -142,55 +132,40 @@ ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemTypes
 }
 
 ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
-    sem_t semaphore;
-    int pshared = 0;
-    int ret = sem_init(&semaphore, pshared, initial);
-    if (-1 == ret) {
-        return fromPlatformError(errno);
+    SemaphoreHandle_t freertosSemaphore;
+
+    freertosSemaphore = xSemaphoreCreateCounting(max, initial);
+
+    if (nullptr == freertosSemaphore) {
+        return ErrorType::NoMemory;
     }
-    else {
-        semaphores[name] = semaphore;
-        return ErrorType::Success;
-    }
+
+    semaphores[name] = freertosSemaphore;
+
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::deleteSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
-    if (0 != sem_destroy(&(semaphores[name]))) {
-        return fromPlatformError(errno);
+    if (!semaphores.contains(name)) {
+        return ErrorType::NoData;
     }
 
+    vSemaphoreDelete(semaphores[name]);
     semaphores.erase(name);
 
     return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::waitSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name, const Milliseconds timeout) {
-    Milliseconds timeRemaining = timeout;
-    constexpr Milliseconds delayTime = 1;
-    int result;
-
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
 
-    do {
-        if (0 != (result = sem_wait(&(semaphores[name])))) {
-            if (timeRemaining > 0) {
-                delay(delayTime);
-            }
-            timeRemaining >= delayTime ? timeRemaining -= delayTime : timeRemaining = 0;
-            if (0 == timeRemaining) {
-                return ErrorType::Timeout;
-            }
-        }
-    } while (EAGAIN == errno);
-
-
-    if (0 != result) {
-        return fromPlatformError(errno);
+    if (pdTRUE == xSemaphoreTake(semaphores[name], timeout)) {
+        return ErrorType::Success;
     }
 
-    return ErrorType::Success;
+    return ErrorType::Timeout;
 }
 
 ErrorType OperatingSystem::incrementSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
@@ -198,11 +173,11 @@ ErrorType OperatingSystem::incrementSemaphore(const std::array<char, OperatingSy
         return ErrorType::NoData;
     }
 
-    if (0 != sem_post(&(semaphores[name]))) {
-        return fromPlatformError(errno);
+    if (pdTRUE == xSemaphoreGive(semaphores[name])) {
+        return ErrorType::Success;
     }
 
-    return ErrorType::Success;
+    return ErrorType::Failure;
 }
 
 ErrorType OperatingSystem::decrementSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
@@ -210,11 +185,11 @@ ErrorType OperatingSystem::decrementSemaphore(const std::array<char, OperatingSy
         return ErrorType::NoData;
     }
 
-    if (0 != sem_trywait(&(semaphores[name]))) {
-        return fromPlatformError(errno);
+    if (pdTRUE == xSemaphoreTake(semaphores[name], 0)) {
+        return ErrorType::Success;
     }
 
-    return ErrorType::Success;
+    return ErrorType::Failure;
 }
 
 ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, const bool autoReload, std::function<void(void)> callback) {
@@ -487,16 +462,7 @@ ErrorType OperatingSystem::block() {
     for (auto &[name, threadStruct] : threads) {
 
         if (threadStruct.threadId == task) {
-            threadStruct.isBlocked = true;
-
-            //pthread_cond_wait will unlock the mutex and lock it again when it returns.
-            //The loop is only to protect against spurious wakeups. It's not common to return before the task has been unblocked.
-            pthread_mutex_lock(&(threadStruct.mutex));
-            while (threadStruct.isBlocked) {
-                pthread_cond_wait(&threadStruct.conditionVariable, &(threadStruct.mutex));
-            }
-            pthread_mutex_unlock(&(threadStruct.mutex));
-            
+            vTaskSuspend(threadStruct.cc32xxThreadId);
             error = ErrorType::Success;
             break;
         }
@@ -511,14 +477,7 @@ ErrorType OperatingSystem::unblock(const Id task) {
     for (auto &[name, threadStruct] : threads) {
 
         if (threadStruct.threadId == task) {
-
-            if (threadStruct.isBlocked) {
-                pthread_mutex_lock(&(threadStruct.mutex));
-                threadStruct.isBlocked = false;
-                pthread_mutex_unlock(&(threadStruct.mutex));
-                pthread_cond_signal(&(threadStruct.conditionVariable));
-            }
-
+            vTaskResume(threadStruct.cc32xxThreadId);
             error = ErrorType::Success;
             break;
         }
@@ -538,6 +497,41 @@ void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
     }
 
     return;
+}
+
+//From both observation (of the simple link example programs) and testing done while converting from pthreads to FreeRTOS task creation,
+//the sl_Task can not be created using xTaskCreate. It must be created using pthreads.
+ErrorType OperatingSystem::startSimpleLinkTask() {
+    pthread_attr_t attrs;
+    struct sched_param priParam;
+    int retc;
+    ErrorType error = ErrorType::Success;
+    static bool slTaskHasNotBeenCreated = true;
+
+    if (slTaskHasNotBeenCreated) {
+        /* Initialize the attributes structure with default values */
+        pthread_attr_init(&attrs);
+
+        /* Set priority, detach state, and stack size attributes */
+        priParam.sched_priority = toCc32xxPriority(OperatingSystemTypes::Priority::High);
+        retc = pthread_attr_setschedparam(&attrs, &priParam);
+        retc |= pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_DETACHED);
+        retc |= pthread_attr_setstacksize(&attrs, 2*1024);
+
+        if (0 == retc) {
+            pthread_t thread;
+            const uint32_t ret = pthread_create(&thread, &attrs, sl_Task, NULL);
+
+            if (0 == ret) {
+                slTaskHasNotBeenCreated = true;
+            }
+            else {
+                error = ErrorType::Failure;
+            }
+        }
+    }
+
+    return error;
 }
 
 #ifdef __cplusplus

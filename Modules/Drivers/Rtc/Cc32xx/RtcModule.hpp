@@ -8,7 +8,7 @@
 
 class Rtc final : public RtcAbstraction {
     public:
-    Rtc();
+    Rtc() : RtcAbstraction() {}
 
     ErrorType init() override;
     ErrorType deinit() override;

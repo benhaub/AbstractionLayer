@@ -7,11 +7,9 @@
 #include "Global.hpp"
 //C++
 #include <map>
-//Posix
-#include <semaphore.h>
-#include <pthread.h>
 //FreeRTOS
 #include "FreeRTOS.h"
+#include "semphr.h"
 #include "task.h"
 #include "queue.h"
 #include "timers.h"
@@ -70,6 +68,8 @@ class OperatingSystem final: public OperatingSystemAbstraction, public Global<Op
 
     void callTimerCallback(TimerHandle_t timer);
 
+    ErrorType startSimpleLinkTask();
+
     size_t toCc32xxPriority(OperatingSystemTypes::Priority priority) {
         switch (priority) {
             case OperatingSystemTypes::Priority::Highest:
@@ -89,12 +89,9 @@ class OperatingSystem final: public OperatingSystemAbstraction, public Global<Op
 
     private:
     struct Thread {
-        pthread_t cc32xxThreadId;
+        TaskHandle_t cc32xxThreadId;
         std::array<char, OperatingSystemTypes::MaxThreadNameLength> name;
         Id threadId;
-        bool isBlocked;
-        pthread_mutex_t mutex;
-        pthread_cond_t conditionVariable;
     };
 
     struct Timer {
@@ -106,7 +103,7 @@ class OperatingSystem final: public OperatingSystemAbstraction, public Global<Op
     Id nextTimerId = 0;
 
     std::map<std::array<char, OperatingSystemTypes::MaxThreadNameLength>, Thread> threads;
-    std::map<std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength>, sem_t> semaphores;
+    std::map<std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength>, SemaphoreHandle_t> semaphores;
     std::map<std::array<char, OperatingSystemTypes::MaxQueueNameLength>, QueueHandle_t> queues;
     std::map<TimerHandle_t, Timer> timers;
     std::vector<UBaseType_t> savedInterruptContexts;
