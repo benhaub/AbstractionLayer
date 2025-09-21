@@ -21,7 +21,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
     ErrorType error = ErrorType::Failure;
     EventQueue::Event event = EventQueue::Event(connectCb);
     if (ErrorType::Success != (error = network().addEvent(event))) {
-        PLT_LOGW(TAG, "Could not add connection event to network");
+        PLT_LOGW(TAG, "Could not add connection event to network <error:%u>", (uint8_t)error);
         return error;
     }
 
