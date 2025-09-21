@@ -59,20 +59,23 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
         pthread_mutex_init(&(newThread.mutex), nullptr);
         pthread_cond_init(&(newThread.conditionVariable), nullptr);
 
-        number = newThread.threadId;
 
         if (threads.size() < _MaxThreads) {
             threads[name] = newThread;
-            return ErrorType::Success;
+            number = newThread.threadId;
+            _status.threadCount = threads.size();
+            error = ErrorType::Success;
         }
         else {
             deleteThread(name);
-            return ErrorType::LimitReached;
+            error = ErrorType::LimitReached;
         }
     }
     else {
-        return fromPlatformError(res);
+        error = fromPlatformError(res);
     }
+
+    return error;
 }
 
 ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
@@ -80,6 +83,7 @@ ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemTy
 
     if (threads.contains(name)) {
         threads.erase(name);
+        _status.threadCount = threads.size();
     }
 
     return error;

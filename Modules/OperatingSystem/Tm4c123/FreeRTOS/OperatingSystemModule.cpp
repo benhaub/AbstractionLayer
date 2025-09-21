@@ -32,23 +32,20 @@ ErrorType OperatingSystem::startScheduler() {
 }
 
 ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority priority, const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
-    ErrorType error = ErrorType::Failure;
+    ErrorType error = ErrorType::LimitReached;
     static Id nextThreadId = 1;
 
-    //On Tm4c123, the start function is called before pthread_create returns so we have to add in an init function to make sure
-    //that the details of thread are properly saved before the thread code runs. For example, if a thread calls currentThreadId,
-    //the posix ID will not be saved yet because pthread_create has not returned and so this function will fail even though the thread
-    //exists and has an ID.
     struct InitThreadArgs {
         void *arguments;
         void *(*startFunction)(void *);
-        TaskHandle_t *threadId;
     };
     auto initThread = [](void *arguments) -> void {
         InitThreadArgs *initThreadArgs = static_cast<InitThreadArgs *>(arguments);
-        *(initThreadArgs->threadId) = xTaskGetCurrentTaskHandle();
-        (initThreadArgs->startFunction)(initThreadArgs->arguments);
+        void *threadArguments = initThreadArgs->arguments;
+        void *(*startFunction)(void *) = initThreadArgs->startFunction;
         delete initThreadArgs;
+        initThreadArgs = nullptr;
+        (startFunction)(threadArguments);
         return;
     };
 
@@ -57,39 +54,29 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
         .threadId = nextThreadId++
     };
 
-    if (threads.size() < _MaxThreads) {
-        threads[name] = newThread;
-    }
-    else {
-        return ErrorType::LimitReached;
-    }
-
-    number = newThread.threadId;
-
     InitThreadArgs *initThreadArgs = new InitThreadArgs {
         .arguments = arguments,
         .startFunction = startFunction,
-        .threadId = &threads[name].tm4c123ThreadId,
     };
 
     TaskHandle_t thread;
     const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, initThreadArgs, toTm4c123Priority(priority), &thread));
-    if (threadWasCreated) {
+
+    if (threadWasCreated && threads.size() < _MaxThreads) {
+        newThread.tm4c123ThreadId = thread;
+        threads[name] = newThread;
+        _status.threadCount = threads.size();
+        number = newThread.threadId;
         error = ErrorType::Success;
     }
     else {
         deleteThread(name);
-        return ErrorType::Failure;
+        error = ErrorType::Failure;
     }
-
-    _status.threadCount = threads.size();
 
     return error;
 }
 
-//I want to use pthreads since I like the portability of them, however, ESP does not implement pthread_kill.
-//The work around is to set the thread in the deatched state and then have the main loops of each thread regularly check their status
-//to see if they have been terminated by the operating system, which will set isTerminated when the thread is detached.
 ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
     ErrorType error = ErrorType::NoData;
 
@@ -101,7 +88,11 @@ ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemTy
 }
 
 ErrorType OperatingSystem::joinThread(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
-    return ErrorType::NotImplemented;
+    while (ErrorType::NoData != isDeleted(name)) {
+        delay(Milliseconds(1));
+    }
+
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::threadId(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name, Id &thread) {
@@ -154,6 +145,7 @@ ErrorType OperatingSystem::deleteSemaphore(const std::array<char, OperatingSyste
     }
 
     vSemaphoreDelete(semaphores[name]);
+    semaphores.erase(name);
 
     return ErrorType::Success;
 }

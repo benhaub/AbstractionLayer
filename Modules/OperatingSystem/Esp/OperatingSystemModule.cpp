@@ -64,23 +64,20 @@ ErrorType OperatingSystem::startScheduler() {
 }
 
 ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority priority, const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
-    ErrorType error = ErrorType::Failure;
+    ErrorType error = ErrorType::LimitReached;
     static Id nextThreadId = 1;
 
-    //On ESP, the start function is called before pthread_create returns so we have to add in an init function to make sure
-    //that the details of thread are properly saved before the thread code runs. For example, if a thread calls currentThreadId,
-    //the posix ID will not be saved yet because pthread_create has not returned and so this function will fail even though the thread
-    //exists and has an ID.
     struct InitThreadArgs {
         void *arguments;
         void *(*startFunction)(void *);
-        TaskHandle_t *threadId;
     };
     auto initThread = [](void *arguments) -> void {
         InitThreadArgs *initThreadArgs = static_cast<InitThreadArgs *>(arguments);
-        *(initThreadArgs->threadId) = xTaskGetCurrentTaskHandle();
-        (initThreadArgs->startFunction)(initThreadArgs->arguments);
+        void *threadArguments = initThreadArgs->arguments;
+        void *(*startFunction)(void *) = initThreadArgs->startFunction;
         delete initThreadArgs;
+        initThreadArgs = nullptr;
+        (startFunction)(threadArguments);
         return;
     };
 
@@ -89,32 +86,25 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
         .threadId = nextThreadId++
     };
 
-    if (threads.size() < _MaxThreads) {
-        threads[name] = newThread;
-    }
-    else {
-        return ErrorType::LimitReached;
-    }
-
-    number = newThread.threadId;
-
     InitThreadArgs *initThreadArgs = new InitThreadArgs {
         .arguments = arguments,
         .startFunction = startFunction,
-        .threadId = &threads[name].espThreadId,
     };
 
     TaskHandle_t thread;
     const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, initThreadArgs, toEspPriority(priority), &thread));
-    if (threadWasCreated) {
+
+    if (threadWasCreated && threads.size() < _MaxThreads) {
+        newThread.espThreadId = thread;
+        threads[name] = newThread;
+        _status.threadCount = threads.size();
+        number = newThread.threadId;
         error = ErrorType::Success;
     }
     else {
         deleteThread(name);
-        return ErrorType::Failure;
+        error = ErrorType::Failure;
     }
-
-    _status.threadCount = threads.size();
 
     return error;
 }
@@ -124,9 +114,9 @@ ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemTy
 
     if (threads.contains(name)) {
         threads.erase(name);
+        _status.threadCount = threads.size();
     }
 
-    _status.threadCount = threads.size();
 
     return error;
 }
@@ -171,7 +161,12 @@ ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemTypes
 
 ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
     SemaphoreHandle_t freertosSemaphore;
+
     freertosSemaphore = xSemaphoreCreateCounting(max, initial);
+
+    if (nullptr == freertosSemaphore) {
+        return ErrorType::NoMemory;
+    }
 
     semaphores[name] = freertosSemaphore;
 
@@ -184,6 +179,7 @@ ErrorType OperatingSystem::deleteSemaphore(const std::array<char, OperatingSyste
     }
 
     vSemaphoreDelete(semaphores[name]);
+    semaphores.erase(name);
 
     return ErrorType::Success;
 }
