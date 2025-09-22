@@ -67,16 +67,21 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     ErrorType error = ErrorType::LimitReached;
     static Id nextThreadId = 1;
 
+    //On ESP, the start function is called before xTaskCreate returns so we have to make sure
+    //that the details of thread are properly saved before the thread code runs. For example, if a thread calls currentThreadId,
+    //the posix ID will not be saved yet because xTaskCreate has not returned and so this function will fail even though the thread
+    //exists and has an ID.
     struct InitThreadArgs {
         void *arguments;
         void *(*startFunction)(void *);
+        TaskHandle_t *threadId;
     };
     auto initThread = [](void *arguments) -> void {
         InitThreadArgs *initThreadArgs = static_cast<InitThreadArgs *>(arguments);
         void *threadArguments = initThreadArgs->arguments;
         void *(*startFunction)(void *) = initThreadArgs->startFunction;
+        *(initThreadArgs->threadId) = xTaskGetCurrentTaskHandle();
         delete initThreadArgs;
-        initThreadArgs = nullptr;
         (startFunction)(threadArguments);
         return;
     };
@@ -86,19 +91,25 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
         .threadId = nextThreadId++
     };
 
+    if (threads.size() < _MaxThreads) {
+        threads[name] = newThread;
+        number = newThread.threadId;
+        _status.threadCount = threads.size();
+    }
+    else {
+        return ErrorType::LimitReached;
+    }
+
     InitThreadArgs *initThreadArgs = new InitThreadArgs {
         .arguments = arguments,
         .startFunction = startFunction,
+        .threadId = &threads[name].espThreadId,
     };
 
     TaskHandle_t thread;
     const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, initThreadArgs, toEspPriority(priority), &thread));
 
-    if (threadWasCreated && threads.size() < _MaxThreads) {
-        newThread.espThreadId = thread;
-        threads[name] = newThread;
-        _status.threadCount = threads.size();
-        number = newThread.threadId;
+    if (threadWasCreated) {
         error = ErrorType::Success;
     }
     else {
