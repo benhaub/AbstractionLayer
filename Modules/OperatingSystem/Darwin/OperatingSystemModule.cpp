@@ -70,7 +70,6 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
         }
         else {
             deleteThread(name);
-            error = ErrorType::LimitReached;
         }
     }
     else {
