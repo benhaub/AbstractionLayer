@@ -53,7 +53,7 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     ErrorType getSoftwareVersion(std::string &softwareVersion) override;
     ErrorType getResetReason(OperatingSystemTypes::ResetReason &resetReason) override;
     ErrorType reset() override;
-    ErrorType setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) override;
+    ErrorType setTimeOfDay(const UnixTime utc, const int16_t timeZoneDifferenceUtc) override;
     ErrorType idlePercentage(Percent &idlePercent) override;
     ErrorType maxHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) override;
     ErrorType availableHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) override;

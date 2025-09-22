@@ -345,7 +345,7 @@ ErrorType OperatingSystem::reset() {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) {
+ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const int16_t timeZoneDifferenceUtc) {
     struct timeval tv;
     tv.tv_sec = utc + timeZoneDifferenceUtc;
     tv.tv_usec = 0;

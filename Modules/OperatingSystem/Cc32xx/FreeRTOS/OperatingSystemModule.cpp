@@ -386,7 +386,7 @@ ErrorType OperatingSystem::reset() {
     return ErrorType::NotAvailable;
 }
 
-ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) {
+ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const int16_t timeZoneDifferenceUtc) {
     struct timespec timeSpec;
     timeSpec.tv_sec = utc + timeZoneDifferenceUtc;
     timeSpec.tv_nsec = 0;

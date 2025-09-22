@@ -381,7 +381,7 @@ ErrorType OperatingSystem::reset() {
     return ErrorType::NotAvailable;
 }
 
-ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) {
+ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const int16_t timeZoneDifferenceUtc) {
     return ErrorType::NotImplemented;
 }
 

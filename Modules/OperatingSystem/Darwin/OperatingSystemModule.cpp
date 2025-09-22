@@ -373,7 +373,7 @@ ErrorType OperatingSystem::reset() {
     return ErrorType::NotAvailable;
 }
 
-ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) {
+ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const int16_t timeZoneDifferenceUtc) {
     //On systems that use Posix, you shouldn't attempt to set the time of day, and the time that can be obtained
     //using the posix API will already be the correct time that you need as soon as you start your application.
     return ErrorType::NotAvailable;

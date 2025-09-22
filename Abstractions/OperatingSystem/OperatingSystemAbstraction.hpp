@@ -367,7 +367,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NotAvailable if setting the time of day is not available on the host system.
      * @returns ErrorType::Failure if an error occurred while setting the time of day.
     */
-    virtual ErrorType setTimeOfDay(const UnixTime utc, const Seconds timeZoneDifferenceUtc) = 0;
+    virtual ErrorType setTimeOfDay(const UnixTime utc, const int16_t timeZoneDifferenceUtc) = 0;
     /**
      * @brief Get the percentage of time that the Operating system is idle.
      * @details Differs for Darwin and Linux. This percentage is how often we used the CPU vs how much we've been running.
