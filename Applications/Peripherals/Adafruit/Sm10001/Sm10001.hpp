@@ -259,9 +259,9 @@ class Sm10001 {
     }
 
     /// @brief Get the minimum voltage as a constant reference
-    constexpr Volts &minVoltage() const { return _MinVoltageDrop; }
+    constexpr T minVoltage() const { return _MinVoltageDrop; }
     /// @brief Get the maximum voltage as a constant reference
-    constexpr Volts &maxVoltage() const { return _MaxVoltageDrop; }
+    constexpr T maxVoltage() const { return _MaxVoltageDrop; }
     /// @brief Get the speed as a constant reference
     const Percent &speed() const { return _speed; }
     /// @brief Get the minimum forward slide time as a constant reference
