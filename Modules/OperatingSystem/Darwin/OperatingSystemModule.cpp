@@ -47,8 +47,10 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     pthread_attr_setschedparam(&attr, &param);
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 
+    ErrorType error = ErrorType::LimitReached;
     const bool threadWasCreated = (0 == (res = pthread_create(&thread, &attr, startFunction, arguments)));
     pthread_attr_destroy(&attr);
+
     if (threadWasCreated) {
         Thread newThread = {
             .posixThreadId = thread,

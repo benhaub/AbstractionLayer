@@ -49,7 +49,6 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     sched_param param;
     int res;
     static Id nextThreadId = 1;
-    ErrorType error = ErrorType::Failure;
 
     res = pthread_attr_init(&attr);
     assert(0 == res);
@@ -79,41 +78,39 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
         return nullptr;
     };
 
-    Thread newThread = {
-        .name = name,
-        .threadId = nextThreadId++,
-        .isBlocked = false
-    };
-    pthread_mutex_init(&(newThread.mutex), nullptr);
-    pthread_cond_init(&(newThread.conditionVariable), nullptr);
+    ErrorType error = ErrorType::LimitReached;
 
     if (threads.size() < _MaxThreads) {
+        Thread newThread = {
+            .name = name,
+            .threadId = nextThreadId++,
+            .isBlocked = false
+        };
+        pthread_mutex_init(&(newThread.mutex), nullptr);
+        pthread_cond_init(&(newThread.conditionVariable), nullptr);
+
         threads[name] = newThread;
-    }
-    else {
-        return ErrorType::LimitReached;
-    }
+        number = newThread.threadId;
 
-    number = newThread.threadId;
+        InitThreadArgs *initThreadArgs = new InitThreadArgs {
+            .arguments = arguments,
+            .startFunction = startFunction,
+            .threadId = &threads[name].posixThreadId,
+        };
 
-    InitThreadArgs *initThreadArgs = new InitThreadArgs {
-        .arguments = arguments,
-        .startFunction = startFunction,
-        .threadId = &threads[name].posixThreadId,
-    };
+        pthread_t thread;
+        const bool threadWasCreated = (0 == (res = pthread_create(&thread, &attr, initThread, initThreadArgs)));
+        if (threadWasCreated) {
+            error = ErrorType::Success;
+        }
+        else {
+            deleteThread(name);
+            error = fromPlatformError(res);
+        }
 
-    pthread_t thread;
-    const bool threadWasCreated = (0 == (res = pthread_create(&thread, &attr, initThread, initThreadArgs)));
-    if (threadWasCreated) {
-        error = ErrorType::Success;
+        _status.threadCount = threads.size();
+        pthread_attr_destroy(&attr);
     }
-    else {
-        deleteThread(name);
-        error = fromPlatformError(res);
-    }
-
-    _status.threadCount = threads.size();
-    pthread_attr_destroy(&attr);
 
     return error;
 }
