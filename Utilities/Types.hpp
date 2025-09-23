@@ -61,8 +61,8 @@ struct DateTime {
      * @brief Convert the DateTime to a string
      * @return The DateTime as a string
      */
-    std::array<char, 20> toString() const {
-        std::array<char, 20> string;
+    std::array<char, 21> toString() const {
+        std::array<char, 21> string;
         snprintf(string.data(), string.size(), "%u-%u-%u %u:%u:%u", _year, _month, _day, _hour, _minute, _second);
         return string;
     }
