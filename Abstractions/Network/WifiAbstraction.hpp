@@ -264,11 +264,7 @@ class WifiAbstraction : public NetworkAbstraction {
 
     const WifiTypes::Status &status(const bool updateStatus = true) {
         if (updateStatus) {
-            //Not only does it not really make sense to want to know the signal strength if you aren't connected to anything,
-            //but some platforms will not allow this and may event crash if you ask for the status before the network is initialized.
-            if (NetworkAbstraction::_status.isUp) {
-                getSignalStrength(_status.signalStrength);
-            }
+            getSignalStrength(_status.signalStrength);
         }
 
         return _status;

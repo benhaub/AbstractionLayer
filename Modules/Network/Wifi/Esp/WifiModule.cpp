@@ -471,13 +471,15 @@ ErrorType Wifi::getMacAddress(std::array<char, NetworkTypes::MacAddressStringSiz
 ErrorType Wifi::getSignalStrength(DecibelMilliWatts &signalStrength) {
     int signalStrengthRssi;
 
-    esp_wifi_sta_get_rssi(&signalStrengthRssi);
-
-    signalStrength = DecibelMilliWatts(signalStrengthRssi);
- 
-    _status.signalStrength = signalStrength;
-
-    return ErrorType::Success;
+    if (NetworkAbstraction::_status.isUp) {
+        esp_wifi_sta_get_rssi(&signalStrengthRssi);
+        signalStrength = DecibelMilliWatts(signalStrengthRssi);
+        _status.signalStrength = signalStrength;
+        return ErrorType::Success;
+    }
+    else {
+        return ErrorType::PrerequisitesNotMet;
+    }
 }
 
 ErrorType Wifi::setSsid(WifiTypes::Mode mode, const StaticString::Data<WifiTypes::MaxSsidLength> &ssid) {
