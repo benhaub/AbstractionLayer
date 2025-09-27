@@ -88,7 +88,8 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
 
     Thread newThread = {
         .name = name,
-        .threadId = nextThreadId++
+        .threadId = nextThreadId++,
+        .maxStackSize = stackSize
     };
 
     if (threads.size() < _MaxThreads) {
@@ -110,6 +111,8 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, initThreadArgs, toEspPriority(priority), &thread));
 
     if (threadWasCreated) {
+        OperatingSystemTypes::MemoryRegionInfo stackRegion = {name};
+        _status.memoryRegion.push_back(stackRegion);
         error = ErrorType::Success;
     }
     else {
@@ -124,8 +127,17 @@ ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemTy
     ErrorType error = ErrorType::NoData;
 
     if (threads.contains(name)) {
+        // Remove thread stack from memory regions
+        _status.memoryRegion.erase(
+            std::remove_if(_status.memoryRegion.begin(), _status.memoryRegion.end(),
+                [&name](const OperatingSystemTypes::MemoryRegionInfo &region) {
+                    return 0 == strncmp(region.name.data(), name.data(), OperatingSystemTypes::MaxMemoryRegionNameLength);
+                }),
+            _status.memoryRegion.end());
+        
         threads.erase(name);
         _status.threadCount = threads.size();
+        error = ErrorType::Success;
     }
 
 
@@ -371,38 +383,39 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) {
+ErrorType OperatingSystem::memoryRegionUsage(OperatingSystemTypes::MemoryRegionInfo &region) {
+    ErrorType error = ErrorType::NoData;
     constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> dram = {"DRAM"};
     constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> spiram = {"SPIRAM"};
 
-    if (memoryRegionName.empty()) {
-        return ErrorType::InvalidParameter;
+    if (0 == strncmp(region.name.data(), dram.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
+        Bytes totalSize = heap_caps_get_total_size(MALLOC_CAP_8BIT);
+        Bytes freeSize = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+        region.free = (totalSize > 0) ? ((float)freeSize / totalSize) * 100.0f : 0.0f;
     }
-    else if (0 == strncmp(memoryRegionName.data(), dram.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
-        size = heap_caps_get_total_size(MALLOC_CAP_8BIT);
+    else if (0 == strncmp(region.name.data(), spiram.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
+        Bytes totalSize = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
+        Bytes freeSize = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+        region.free = (totalSize > 0) ? ((float)freeSize / totalSize) * 100.0f : 0.0f;
     }
-    else if (0 == strncmp(memoryRegionName.data(), spiram.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
-        size = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
-    }
+#if INCLUDE_uxTaskGetStackHighWaterMark
+    else {
+        for (const auto &[threadName, thread] : threads) {
 
-    return ErrorType::Success;
-}
+            if (0 == strncmp(region.name.data(), threadName.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
 
-ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) {
-    constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> dram = {"DRAM"};
-    constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> spiram = {"SPIRAM"};
+                if (thread.espThreadId != nullptr) {
+                    UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(thread.espThreadId) * 4;
+                    region.free = (thread.maxStackSize > 0) ? (Percent(stackHighWaterMark) / thread.maxStackSize) * 100.0f : 0.0f;
+                }
 
-    if (memoryRegionName.empty()) {
-        return ErrorType::InvalidParameter;
+                error = ErrorType::Success;
+            }
+        }
     }
-    else if (0 == strncmp(memoryRegionName.data(), dram.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
-        size = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-    }
-    else if (0 == strncmp(memoryRegionName.data(), spiram.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
-        size = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
-    }
+#endif
 
-    return ErrorType::Success;
+    return error;
 }
 
 ErrorType OperatingSystem::uptime(Seconds &uptime) {

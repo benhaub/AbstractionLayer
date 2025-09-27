@@ -85,6 +85,7 @@ ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemTy
     if (threads.contains(name)) {
         threads.erase(name);
         _status.threadCount = threads.size();
+        error = ErrorType::Success;
     }
 
     return error;
@@ -412,63 +413,65 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     return error;
 }
 
-ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) {
+ErrorType OperatingSystem::memoryRegionUsage(OperatingSystemTypes::MemoryRegionInfo &region) {
     ErrorType error = ErrorType::Failure;
 
-    //Will return the size of RAM in GB.
-    std::array<char, 128> commandFinal("system_profiler SPMemoryDataType | egrep Memory | tail -2 | tr -s \" \" | cut -d \" \" -f3 | tail -1");
+    // Get total RAM size in GB
+    constexpr std::array<char, 128> commandTotal("system_profiler SPMemoryDataType | egrep Memory | tail -2 | tr -s \" \" | cut -d \" \" -f3 | tail -1");
     std::array<char, 4> ramSize;
     
-    FILE* pipe = popen(commandFinal.data(), "r");
-    if (nullptr != pipe) {
-        size_t bytesRead = fread(ramSize.data(), sizeof(uint8_t), ramSize.max_size(), pipe);
-        if (feof(pipe) || bytesRead == ramSize.max_size()) {
+    FILE* totalPipe = popen(commandTotal.data(), "r");
+
+    if (nullptr != totalPipe) {
+        const size_t bytesRead = fread(ramSize.data(), sizeof(uint8_t), ramSize.max_size(), totalPipe);
+
+        if (feof(totalPipe) || bytesRead == ramSize.max_size()) {
+
             error = ErrorType::Success;
             for (int i = ramSize.max_size()-1; i >= 0; i--) {
                 if (ramSize[i] == '\n') {
                     ramSize[i] = '\0';
                 }
             }
-        }
-        else if (ferror(pipe)) {
-            pclose(pipe);
-            error = ErrorType::Failure;
-        }
-    }
-    size = std::strtoul(ramSize.data(), nullptr, 10);
-    size = size * 1024 * 1024;
 
-    return error;
-}
+            const Bytes totalRam = std::strtoul(ramSize.data(), nullptr, 10) * 1024 * 1024;
+            
+            // Get used RAM in kilobytes
+            constexpr std::array<char, 64> usedCommand = {"ps -o rss | awk '{sum += $1} END {print sum}'"};
+            std::array<char, 6> ramUsed;
+            
+            FILE* usedPipe = popen(usedCommand.data(), "r");
 
-ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) {
-    ErrorType error = ErrorType::Failure;
+            if (nullptr != usedPipe) {
+                const size_t usedBytesRead = fread(ramUsed.data(), sizeof(uint8_t), ramUsed.max_size(), usedPipe);
 
-    //Will return the size of RAM used in kilobytes
-    std::array<char, 64> commandFinal = {"ps -o rss | awk '{sum += $1} END {print sum}'"};
-    std::array<char, 6> ramUsed;
-    
-    FILE* pipe = popen(commandFinal.data(), "r");
-    if (nullptr != pipe) {
-        size_t bytesRead = fread(ramUsed.data(), sizeof(uint8_t), ramUsed.max_size(), pipe);
-        if (feof(pipe) || bytesRead == ramUsed.max_size()) {
-            error = ErrorType::Success;
-            for (int i = ramUsed.max_size()-1; i >= 0; i--) {
-                if (ramUsed[i] == '\n') {
-                    ramUsed[i] = '\0';
+                if (feof(usedPipe) || usedBytesRead == ramUsed.max_size()) {
+
+                    for (int i = ramUsed.max_size()-1; i >= 0; i--) {
+
+                        if (ramUsed[i] == '\n') {
+                            ramUsed[i] = '\0';
+                        }
+                    }
+                    
+                    const Bytes usedRam = std::strtoul(ramUsed.data(), nullptr, 10) * 1024; // Convert KB to bytes
+                    const Bytes freeRam = totalRam - usedRam;
+                    region.free = (totalRam > 0) ? (Percent(freeRam) / totalRam) * 100.0f : 0.0f;
                 }
+                else if (ferror(usedPipe)) {
+                    error = ErrorType::Failure;
+                }
+
+                pclose(usedPipe);
             }
+
         }
-        else if (ferror(pipe)) {
-            pclose(pipe);
+        else if (ferror(totalPipe)) {
             error = ErrorType::Failure;
         }
+
+        pclose(totalPipe);
     }
-
-    Bytes totalRam;
-    maxHeapSize(totalRam, memoryRegionName);
-
-    size = totalRam - std::strtoul(ramUsed.data(), nullptr, 10);
 
     return error;
 }

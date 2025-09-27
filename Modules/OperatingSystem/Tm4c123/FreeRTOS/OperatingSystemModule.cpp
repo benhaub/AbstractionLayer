@@ -4,6 +4,7 @@
 #include "ProcessorModule.hpp"
 //C++
 #include <ctime>
+#include <cstring>
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,7 +52,8 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
 
     Thread newThread = {
         .name = name,
-        .threadId = nextThreadId++
+        .threadId = nextThreadId++,
+        .maxStackSize = stackSize
     };
 
     InitThreadArgs *initThreadArgs = new InitThreadArgs {
@@ -67,6 +69,8 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
         threads[name] = newThread;
         _status.threadCount = threads.size();
         number = newThread.threadId;
+        OperatingSystemTypes::MemoryRegionInfo stackRegion = {name};
+        _status.memoryRegion.push_back(stackRegion);
         error = ErrorType::Success;
     }
     else {
@@ -390,14 +394,33 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     return ErrorType::Success;
 }
 
-ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) {
-    size = configTOTAL_HEAP_SIZE;
-    return ErrorType::Success;
-}
+ErrorType OperatingSystem::memoryRegionUsage(OperatingSystemTypes::MemoryRegionInfo &region) {
+    constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> heap = {"Heap"};
+    ErrorType error = ErrorType::NoData;
 
-ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) {
-    size = xPortGetFreeHeapSize();
-    return ErrorType::Success;
+    if (0 == strncmp(region.name.data(), heap.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
+        Bytes totalHeap = configTOTAL_HEAP_SIZE;
+        Bytes freeHeap = xPortGetFreeHeapSize();
+        region.free = (totalHeap > 0) ? ((float)freeHeap / totalHeap) * 100.0f : 0.0f;
+    }
+#if INCLUDE_uxTaskGetStackHighWaterMark
+    else {
+        for (const auto &[threadName, thread] : threads) {
+
+            if (0 == strncmp(region.name.data(), threadName.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
+
+                if (thread.tm4c123ThreadId != nullptr) {
+                    UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(thread.tm4c123ThreadId) * 4;
+                    region.free = (thread.maxStackSize > 0) ? (Percent(stackHighWaterMark) / thread.maxStackSize) * 100.0f : 0.0f;
+                }
+
+                error = ErrorType::Success;
+            }
+        }
+    }
+#endif
+
+    return error;
 }
 
 ErrorType OperatingSystem::uptime(Seconds &uptime) {

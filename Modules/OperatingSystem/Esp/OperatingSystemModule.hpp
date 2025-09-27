@@ -22,7 +22,16 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     public:
     OperatingSystem() : OperatingSystemAbstraction(), Global<OperatingSystem>() {
         static_assert(1 == configUSE_TIMERS);
-        memoryRegions(_status.memoryRegion);
+        
+        // Add DRAM memory region
+        constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> dram = {"DRAM"};
+        _status.memoryRegion.emplace_back(dram);
+        
+#ifdef CONFIG_SPIRAM
+        // Add SPIRAM memory region
+        constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> spiram = {"SPIRAM"};
+        _status.memoryRegion.emplace_back(spiram);
+#endif
     }
 
     ErrorType delay(const Milliseconds delay) override;
@@ -56,17 +65,7 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     ErrorType reset() override;
     ErrorType setTimeOfDay(const UnixTime utc, const int16_t timeZoneDifferenceUtc) override;
     ErrorType idlePercentage(Percent &idlePercent) override;
-    ErrorType maxHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) override;
-    ErrorType availableHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) override;
-    ErrorType memoryRegions(std::vector<OperatingSystemTypes::MemoryRegionInfo> &memoryRegions) override {
-        constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> dram = {"DRAM"};
-        memoryRegions.emplace_back(dram, 0);
-#ifdef CONFIG_SPIRAM
-        constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> spiram = {"SPIRAM"};
-        memoryRegions.emplace_back(spiram, 0);
-#endif
-        return ErrorType::Success;
-    }
+    ErrorType memoryRegionUsage(OperatingSystemTypes::MemoryRegionInfo &region) override;
     ErrorType uptime(Seconds &uptime) override;
     ErrorType disableAllInterrupts() override;
     ErrorType enableAllInterrupts() override;
@@ -80,6 +79,7 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
         TaskHandle_t espThreadId;
         std::array<char, OperatingSystemTypes::MaxThreadNameLength> name;
         Id threadId;
+        Bytes maxStackSize;
     };
 
     struct Timer {

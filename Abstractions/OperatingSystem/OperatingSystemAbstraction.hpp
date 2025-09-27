@@ -58,13 +58,30 @@ namespace OperatingSystemTypes {
     };
 
     /**
+     * @brief MemoryRegionName
+     * @brief The name of a memory region.
+     */
+    enum class MemoryRegionName : uint8_t {
+        Unknown,
+        Heap,
+        Stack
+    };
+
+    /**
+     * @brief MemoryRegionInfo
+     */
+
+    /**
      * @struct MemoryRegionInfo
      * @brief The free memory in each memory region.
      */
     struct MemoryRegionInfo {
-        const std::array<char, MaxThreadNameLength> name; ///< The name of the memory region
+        std::array<char, MaxMemoryRegionNameLength> name; ///< The name of the memory region
         Percent free;                                     ///< The free memory in the region
+
+        MemoryRegionInfo(const std::array<char, MaxMemoryRegionNameLength> &name) : name(name), free(0) {}
     };
+
 
     /**
      * @struct Status
@@ -102,7 +119,7 @@ class OperatingSystemAbstraction {
     void printStatus() {
         status(true);
 
-        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time (s):%d, System UnixTime:%u> <Stairs, Line, Omit, Omit>",
+        PLT_LOGI(TAG, "<OperatingSystemStatus> <Thread Count:%d, Idle (%%):%.1f, Up Time (s):%d, System UnixTime (UTC):%u> <Stairs, Line, Omit, Omit>",
         status().threadCount, status().idle, status().upTime, status().systemTime);
         for (const auto &memoryRegion : status().memoryRegion) {
             PLT_LOGI(TAG, "<Memory Region:%s> <Free (%%):%.1f> <Line>",
@@ -379,32 +396,13 @@ class OperatingSystemAbstraction {
      */
     virtual ErrorType idlePercentage(Percent &idlePercent) = 0;
     /**
-     * @brief get the size of the heap that's been allocated
-     * @param[out] size The size of the heap that's been allocated
-     * @param[in] memoryRegionName The name of the memory region to get the heap size from.
-     * @returns ErrorType::Success if the size was obtained
-     * @returns ErrorType::NotImplemented if getting the heap size is not implemented
+     * @brief Get the memory usage for a specific memory region
+     * @param[in,out] region The memory region to get usage for (name should be set, free will be updated)
+     * @returns ErrorType::Success if the memory region usage was obtained
+     * @returns ErrorType::NotImplemented if getting memory region usage is not implemented
      * @returns ErrorType::Failure otherwise
      */
-    virtual ErrorType maxHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) = 0;
-    /**
-     * @brief Get the amount of heap that is allocatable
-     * @param[out] size The amount of heap that is allocatable
-     * @param[in] memoryRegionName The name of the memory region to get the heap size from.
-     * @returns ErrorType::Success if the size was obtained
-     * @returns ErrorType::NotImplemented if getting the heap size is not implemented
-     * @returns ErrorType::Failure otherwise
-     */
-    virtual ErrorType availableHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) = 0;
-    /**
-     * @brief Get the names of all the memory regions
-     * @param[out] memoryRegions The names of all the memory regions
-     * @returns ErrorType::Success if the memory regions were obtained
-     * @returns ErrorType::NotImplemented if getting the memory regions is not implemented
-     * @returns ErrorType::Failure otherwise
-     * @post If there are no memory regions, memoryRegions will be empty and the return type is ErrorType::Success.
-     */
-    virtual ErrorType memoryRegions(std::vector<OperatingSystemTypes::MemoryRegionInfo> &memoryRegions) = 0;
+    virtual ErrorType memoryRegionUsage(OperatingSystemTypes::MemoryRegionInfo &region) = 0;
     /**
      * @brief The amount of time the system has been running for since the last reset.
      * @returns ErrorType::Success if the uptime was obtained.
@@ -449,31 +447,10 @@ class OperatingSystemAbstraction {
             getSystemTime(_status.systemTime);
             idlePercentage(_status.idle);
             uptime(_status.upTime);
-            if (_status.memoryRegion.empty()) {
-                Bytes maxHeap;
-                maxHeapSize(maxHeap, {});
-                Bytes availableHeap;
-                availableHeapSize(availableHeap, {});
-                Percent free = 0;
-                if (0 != maxHeap) {
-                    free = ((float)availableHeap / maxHeap) * 100.0f;
-                }
-                constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> memoryRegionName = {"Heap"};
-                OperatingSystemTypes::MemoryRegionInfo memoryRegion = {memoryRegionName, free};
-                _status.memoryRegion.push_back(memoryRegion);
-            }
-            else {
-                for (auto &memoryRegion : _status.memoryRegion) {
-                    Bytes maxHeap;
-                    if (ErrorType::Success == maxHeapSize(maxHeap, memoryRegion.name)) {
-                        Bytes availableHeap;
-                        if (ErrorType::Success == availableHeapSize(availableHeap, memoryRegion.name)) {
-                            if (0 != maxHeap) {
-                                memoryRegion.free = ((float)availableHeap / maxHeap) * 100.0f;
-                            }
-                        }
-                    }
-                }
+            
+            // Update memory region usage
+            for (auto &memoryRegion : _status.memoryRegion) {
+                memoryRegionUsage(memoryRegion);
             }
         }
 

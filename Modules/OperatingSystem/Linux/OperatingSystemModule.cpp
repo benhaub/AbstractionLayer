@@ -122,7 +122,16 @@ ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemTy
     ErrorType error = ErrorType::NoData;
 
     if (threads.contains(name)) {
+        // Remove thread stack from memory regions
+        _status.memoryRegion.erase(
+            std::remove_if(_status.memoryRegion.begin(), _status.memoryRegion.end(),
+                [&name](const OperatingSystemTypes::MemoryRegionInfo &region) {
+                    return 0 == strncmp(region.name.data(), name.data(), OperatingSystemTypes::MaxMemoryRegionNameLength);
+                }),
+            _status.memoryRegion.end());
+        
         threads.erase(name);
+        error = ErrorType::Success;
     }
 
     return error;
@@ -514,58 +523,59 @@ ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
     return error;
 }
 
-ErrorType OperatingSystem::maxHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) {
+ErrorType OperatingSystem::memoryRegionUsage(OperatingSystemTypes::MemoryRegionInfo &region) {
     ErrorType error = ErrorType::Failure;
 
-    //Will return the size of RAM in bytes.
-    const char commandFinal[] = "free -b | egrep Mem | tr -s \" \" | cut -d \" \" -f2";
-    std::string ramSize(16, 0);
+    // Get total RAM size in bytes
+    constexpr std::array<char, 49> totalCommand = {"free -b | egrep Mem | tr -s \" \" | cut -d \" \" -f2"};
+    std::array<char, 16> totalRamStr;
     
-    FILE* pipe = popen(commandFinal, "r");
-    if (nullptr != pipe) {
-        size_t bytesRead = fread(ramSize.data(), sizeof(uint8_t), ramSize.capacity(), pipe);
-        if (feof(pipe) || bytesRead == ramSize.capacity()) {
-            error = ErrorType::Success;
-            ramSize.resize(bytesRead);
-            while (ramSize.back() == '\n') {
-                ramSize.pop_back();
+    FILE* totalPipe = popen(totalCommand.data(), "r");
+    if (nullptr != totalPipe) {
+
+        size_t bytesRead = fread(totalRamStr.data(), sizeof(uint8_t), totalRamStr.size(), totalPipe);
+
+        if (feof(totalPipe) || bytesRead == totalRamStr.size()) {
+
+            for (int i = totalRamStr.max_size()-1; i >= 0; i--) {
+
+                if (totalRamStr[i] == '\n') {
+                    totalRamStr[i] = '\0';
+                }
+            }
+            
+            const Bytes totalRam = std::strtoul(totalRamStr.data(), nullptr, 10);
+            
+            // Get available RAM in bytes
+            constexpr char availableCommand[] = "free -b | egrep Mem | tr -s \" \" | cut -d \" \" -f7";
+            std::array<char, 16> availableRamStr;
+            
+            FILE* availablePipe = popen(availableCommand, "r");
+
+            if (nullptr != availablePipe) {
+
+                const size_t availableBytesRead = fread(availableRamStr.data(), sizeof(uint8_t), availableRamStr.size(), availablePipe);
+
+                if (feof(availablePipe) || availableBytesRead == availableRamStr.size()) {
+
+                    for (int i = availableRamStr.max_size()-1; i >= 0; i--) {
+
+                        if (availableRamStr[i] == '\n') {
+                            availableRamStr[i] = '\0';
+                        }
+                    }
+                    
+                    const Bytes availableRam = std::strtoul(availableRamStr.data(), nullptr, 10);
+                    region.free = (totalRam > 0) ? (Percent(availableRam) / totalRam) * 100.0f : 0.0f;
+                    error = ErrorType::Success;
+                }
+
+                pclose(availablePipe);
             }
         }
-        else if (ferror(pipe)) {
-            pclose(pipe);
-            error = ErrorType::Failure;
-        }
+
+        pclose(totalPipe);
     }
-
-    size = std::strtoul(ramSize.c_str(), nullptr, 10);
-
-    return error;
-}
-
-ErrorType OperatingSystem::availableHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) {
-    ErrorType error = ErrorType::Failure;
-
-    //Will return the size of available RAM in bytes.
-    const char commandFinal[] = "free -b | egrep Mem | tr -s \" \" | cut -d \" \" -f7";
-    std::string ramSize(16, 0);
-    
-    FILE* pipe = popen(commandFinal, "r");
-    if (nullptr != pipe) {
-        size_t bytesRead = fread(ramSize.data(), sizeof(uint8_t), ramSize.capacity(), pipe);
-        if (feof(pipe) || bytesRead == ramSize.capacity()) {
-            error = ErrorType::Success;
-            ramSize.resize(bytesRead);
-            while (ramSize.back() == '\n') {
-                ramSize.pop_back();
-            }
-        }
-        else if (ferror(pipe)) {
-            pclose(pipe);
-            error = ErrorType::Failure;
-        }
-    }
-
-    size = std::strtoul(ramSize.c_str(), nullptr, 10);
 
     return error;
 }

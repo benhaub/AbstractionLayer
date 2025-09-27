@@ -17,8 +17,11 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
 
     public:
     OperatingSystem() : OperatingSystemAbstraction(), Global<OperatingSystem>() {
-        memoryRegions(_status.memoryRegion);
         _startTime = std::chrono::steady_clock::now();
+
+        // Add Heap memory region
+        constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> heap = {"Heap"};
+        _status.memoryRegion.emplace_back(heap);
     }
 
     ErrorType delay(const Milliseconds delay) override;
@@ -52,12 +55,7 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     ErrorType reset() override;
     ErrorType setTimeOfDay(const UnixTime utc, const int16_t timeZoneDifferenceUtc) override;
     ErrorType idlePercentage(Percent &idlePercent) override;
-    ErrorType maxHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) override;
-    ErrorType availableHeapSize(Bytes &size, const std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> &memoryRegionName) override;
-    ErrorType memoryRegions(std::vector<OperatingSystemTypes::MemoryRegionInfo> &memoryRegions) override {
-        memoryRegions.clear();
-        return ErrorType::Success;
-    }
+    ErrorType memoryRegionUsage(OperatingSystemTypes::MemoryRegionInfo &region) override;
     ErrorType uptime(Seconds &uptime) override;
     ErrorType disableAllInterrupts() override;
     ErrorType enableAllInterrupts() override;
