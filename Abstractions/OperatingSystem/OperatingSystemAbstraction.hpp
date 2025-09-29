@@ -427,6 +427,10 @@ class OperatingSystemAbstraction {
      * @brief Block the task who calls this function.
      * @returns ErrorType::Success if the task was blocked
      * @returns ErrorType::Failure if the task was not blocked
+     * @returns ErrorType::LimitReached If the task was previously unblocked before it called block.
+     * @post You should always check the return value of block for ErrorType::LimitReached. You may need to call block again if the task
+     *       has had unbalanced calls to block and unblock. If ErrorType::LimitReached is returned twice in a row, the second time indicates
+     *       that unblock was called before the task had a chance to block itself and the task can safely proceed.
      */
     virtual ErrorType block() = 0;
     /**

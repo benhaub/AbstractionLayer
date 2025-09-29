@@ -39,7 +39,7 @@ ErrorType FileSystem::mount() {
         return error;
     }
 
-    if (!mountDone) {
+    if (!mountDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -81,7 +81,7 @@ ErrorType FileSystem::unmount() {
         return error;
     }
 
-    while (!unmountDone) {
+    while (!unmountDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -119,7 +119,7 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
         return error;
     }
 
-    if (!maxStorageQueryDone) {
+    if (!maxStorageQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -157,7 +157,7 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
         return error;
     }   
 
-    if (!availableStorageQueryDone) {
+    if (!availableStorageQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -195,7 +195,7 @@ ErrorType FileSystem::erasePartition() {
         return error;
     }
 
-    if (!erasePartitionDone) {
+    if (!erasePartitionDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -244,7 +244,7 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
         return error;
     }
 
-    if (!openDone) {
+    if (!openDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -286,7 +286,7 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
         return error;
     }
 
-    if (!closeDone) {
+    if (!closeDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -325,7 +325,7 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
         return error;
     }
 
-    if (!removeDone) {
+    if (!removeDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -363,7 +363,7 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
         return error;
     }
 
-    if (!readDone) {
+    if (!readDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -413,7 +413,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_vie
         return error;
     }
 
-    if (!writeDone) {
+    if (!writeDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -462,7 +462,7 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
         return error;
     }
 
-    if (!syncDone) {
+    if (!syncDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -500,7 +500,7 @@ ErrorType FileSystem::size(FileSystemTypes::File &file) {
         return error;
     }
 
-    if (!sizeQueryDone) {
+    if (!sizeQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 

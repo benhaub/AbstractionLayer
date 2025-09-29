@@ -612,17 +612,29 @@ ErrorType OperatingSystem::block() {
 
         if (threadStruct.threadId == task) {
             pthread_mutex_lock(&(threadStruct.mutex));
-            threadStruct.isBlocked = true;
+                
+            if (threadStruct.blockCount > -1) {
+                threadStruct.blockCount++;
+                threadStruct.isBlocked = true;
 
-            //pthread_cond_wait will unlock the mutex and lock it again when it returns.
-            //The loop is only to protect against spurious wakeups. It's not common to return before the task has been unblocked.
-            while (threadStruct.isBlocked) {
-                pthread_cond_wait(&threadStruct.conditionVariable, &(threadStruct.mutex));
+                //pthread_cond_wait will unlock the mutex and lock it again when it returns.
+                //The loop is only to protect against spurious wakeups. It's not common to return before the task has been unblocked.
+                while (threadStruct.isBlocked) {
+                    assert(ErrorType::Success == fromPlatformError(pthread_cond_wait(&threadStruct.conditionVariable, &(threadStruct.mutex))));
+                }
             }
+            else {
+                error = ErrorType::LimitReached;
+                threadStruct.blockCount = 0;
+            }
+
             pthread_mutex_unlock(&(threadStruct.mutex));
             
             error = ErrorType::Success;
             break;
+        }
+        else {
+            error = ErrorType::NoData;
         }
     }
 
@@ -636,15 +648,19 @@ ErrorType OperatingSystem::unblock(const Id task) {
 
         if (threadStruct.threadId == task) {
             pthread_mutex_lock(&(threadStruct.mutex));
+            threadStruct.blockCount--;
 
             if (threadStruct.isBlocked) {
                 threadStruct.isBlocked = false;
-                pthread_cond_signal(&(threadStruct.conditionVariable));
+                assert(ErrorType::Success == fromPlatformError(pthread_cond_signal(&(threadStruct.conditionVariable))));
             }
 
             pthread_mutex_unlock(&(threadStruct.mutex));
             error = ErrorType::Success;
             break;
+        }
+        else {
+            error = ErrorType::NoData;
         }
     }
 

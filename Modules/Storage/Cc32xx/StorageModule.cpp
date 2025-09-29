@@ -51,7 +51,7 @@ ErrorType Storage::deinit() {
         return error;
     }
 
-    if (!deinitializationDone) {
+    if (!deinitializationDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 

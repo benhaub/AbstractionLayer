@@ -74,7 +74,7 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
         return error;
     }
 
-    if (!doneConnecting) {
+    if (!doneConnecting && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -110,7 +110,7 @@ ErrorType HttpsClient::disconnect() {
             return error;
         }
 
-        if (!doneDisconnecting) {
+        if (!doneDisconnecting && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
             OperatingSystem::Instance().block();
         }
 
@@ -181,7 +181,7 @@ ErrorType HttpsClient::sendBlocking(const HttpTypes::Request &request, const Mil
         return error;
     }
 
-    if (!doneSending) {
+    if (!doneSending && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -284,7 +284,7 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
         return error;
     }
 
-    if (!doneReceiving) {
+    if (!doneReceiving && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 

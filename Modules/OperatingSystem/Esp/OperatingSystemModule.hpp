@@ -16,6 +16,7 @@
 #include "esp_system.h"
 //C++
 #include <map>
+#include <atomic>
 
 class OperatingSystem final : public OperatingSystemAbstraction, public Global<OperatingSystem> {
 
@@ -80,6 +81,7 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
         std::array<char, OperatingSystemTypes::MaxThreadNameLength> name;
         Id threadId;
         Bytes maxStackSize;
+        std::atomic<int> blockCounter;
     };
 
     struct Timer {

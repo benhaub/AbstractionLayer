@@ -86,18 +86,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
         return;
     };
 
-    Thread newThread = {
-        .name = name,
-        .threadId = nextThreadId++,
-        .maxStackSize = stackSize
-    };
-
-    if (threads.size() < _MaxThreads) {
-        threads[name] = newThread;
-        number = newThread.threadId;
-        _status.threadCount = threads.size();
-    }
-    else {
+    if (threads.size() > _MaxThreads) {
         return ErrorType::LimitReached;
     }
 
@@ -111,8 +100,16 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, initThreadArgs, toEspPriority(priority), &thread));
 
     if (threadWasCreated) {
+#if INCLUDE_uxTaskGetStackHighWaterMark
         OperatingSystemTypes::MemoryRegionInfo stackRegion = {name};
         _status.memoryRegion.push_back(stackRegion);
+#endif
+        threads[name].name = name;
+        threads[name].threadId = nextThreadId++;
+        threads[name].maxStackSize = stackSize;
+        threads[name].blockCounter.store(0);
+        number = threads[name].threadId;
+        _status.threadCount = threads.size();
         error = ErrorType::Success;
     }
     else {
@@ -470,8 +467,16 @@ ErrorType OperatingSystem::block() {
     for (auto &[name, threadStruct] : threads) {
 
         if (threadStruct.threadId == task) {
-            vTaskSuspend(threadStruct.espThreadId);
-            error = ErrorType::Success;
+
+            if (threadStruct.blockCounter.fetch_add(1, std::memory_order_relaxed) > -1) {
+                vTaskSuspend(threadStruct.espThreadId);
+                error = ErrorType::Success;
+            }
+            else {
+                error = ErrorType::LimitReached;
+                threadStruct.blockCounter.store(0);
+            }
+
             break;
         }
     }
@@ -485,8 +490,10 @@ ErrorType OperatingSystem::unblock(const Id task) {
     for (auto &[name, threadStruct] : threads) {
 
         if (threadStruct.threadId == task) {
+            threadStruct.blockCounter.fetch_sub(1, std::memory_order_relaxed);
             vTaskResume(threadStruct.espThreadId);
             error = ErrorType::Success;
+
             break;
         }
     }

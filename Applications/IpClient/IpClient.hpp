@@ -200,7 +200,7 @@ class IpClient {
             return error;
         }
 
-        if (!doneSending) {
+        if (!doneSending && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
             OperatingSystem::Instance().block();
         }
 
@@ -229,7 +229,7 @@ class IpClient {
             return error;
         }
 
-        if (!doneReceiving) {
+        if (!doneReceiving && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
             OperatingSystem::Instance().block();
         }
 

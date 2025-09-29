@@ -180,6 +180,7 @@ class IpServer {
 
         EventQueue::Event event = EventQueue::Event(tx);
         ErrorType error = network().addEvent(event);
+
         if (ErrorType::Success != error) {
             return error;
         }
@@ -200,10 +201,12 @@ class IpServer {
 
         auto rx = [&, thread]() -> ErrorType {
             if (-1 == socket) {
+
                 for (size_t i = 0; i < _connectedSockets.size(); i++) {
                     callbackError = network().receive(buffer, _connectedSockets[i], timeout);
-                    socket = _connectedSockets[i];
+
                     if (ErrorType::Success == callbackError) {
+                        socket = _connectedSockets[i];
                         break;
                     }
                 }
@@ -219,12 +222,13 @@ class IpServer {
 
         EventQueue::Event event = EventQueue::Event(rx);
         ErrorType error = network().addEvent(event);
+
         if (ErrorType::Success != error) {
             return error;
         }
 
-        if (!received) {
-            OperatingSystem::Instance().block();
+        if (!received && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
+            error = OperatingSystem::Instance().block();
         }
 
         return callbackError;

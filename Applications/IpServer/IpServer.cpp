@@ -29,7 +29,7 @@ ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Ve
         return ErrorType::Failure;
     }
 
-    if (!doneListening) {
+    if (!doneListening && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -62,7 +62,7 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
         return error;
     }
 
-    if (!acceptConnectionDone) {
+    if (!acceptConnectionDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -86,7 +86,6 @@ ErrorType IpServer::closeConnection(const Socket socket) {
             else {
                 callbackError = ErrorType::NoData;
             }
-
         }
         else {
             callbackError = fromPlatformError(errno);
@@ -103,7 +102,7 @@ ErrorType IpServer::closeConnection(const Socket socket) {
         return error;
     }
 
-    if (!closeConnectionDone) {
+    if (!closeConnectionDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
@@ -127,7 +126,7 @@ ErrorType IpServer::sendNonBlocking(const std::shared_ptr<std::string> data, con
         return error;
     };
 
-    EventQueue::Event event = EventQueue::Event(std::bind(tx));
+    EventQueue::Event event = EventQueue::Event(tx);
     return network().addEvent(event);
 }
 

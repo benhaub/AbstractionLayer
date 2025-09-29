@@ -92,6 +92,7 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
         std::array<char, OperatingSystemTypes::MaxThreadNameLength> name;
         Id threadId;
         bool isBlocked;
+        int blockCount;
         pthread_mutex_t mutex;
         pthread_cond_t conditionVariable;
     };

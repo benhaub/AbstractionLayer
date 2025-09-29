@@ -253,12 +253,9 @@ ErrorType Wifi::receive(char *frameBuffer, const size_t bufferSize, const Socket
     FD_SET(socket, &readfds);
 
     //Wait for input from the socket until the timeout
-    {
-    int ret;
-    ret = select(socket + 1, &readfds, NULL, NULL, &timeoutval);
+    int ret = select(socket + 1, &readfds, NULL, NULL, &timeoutval);
     if (ret < 0) {
         return fromPlatformError(errno);
-    }
     }
 
     if (FD_ISSET(socket, &readfds)) {

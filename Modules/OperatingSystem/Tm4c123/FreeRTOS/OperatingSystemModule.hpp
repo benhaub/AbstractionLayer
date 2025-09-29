@@ -7,6 +7,7 @@
 #include "Global.hpp"
 //C++
 #include <map>
+#include <atomic>
 //FreeRTOS
 #include "FreeRTOS.h"
 #include "semphr.h"
@@ -89,6 +90,7 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
         std::array<char, OperatingSystemTypes::MaxThreadNameLength> name;
         Id threadId;
         Bytes maxStackSize;
+        std::atomic<int> blockCounter;
     };
 
     struct Timer {

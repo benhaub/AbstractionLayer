@@ -25,7 +25,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
         return error;
     }
 
-    if (!doneConnecting) {
+    if (!doneConnecting && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
         OperatingSystem::Instance().block();
     }
 
