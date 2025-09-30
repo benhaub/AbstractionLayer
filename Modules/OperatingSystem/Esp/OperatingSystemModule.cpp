@@ -96,6 +96,12 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
         .threadId = &threads[name].espThreadId,
     };
 
+    //Since initThread (and the associated startFunction) is called before xTaskCreate returns, we have to set the thread details of the thread now.
+    threads[name].name = name;
+    threads[name].threadId = nextThreadId++;
+    threads[name].maxStackSize = stackSize;
+    threads[name].blockCounter.store(0);
+
     TaskHandle_t thread;
     const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, initThreadArgs, toEspPriority(priority), &thread));
 
@@ -104,10 +110,6 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
         OperatingSystemTypes::MemoryRegionInfo stackRegion = {name};
         _status.memoryRegion.push_back(stackRegion);
 #endif
-        threads[name].name = name;
-        threads[name].threadId = nextThreadId++;
-        threads[name].maxStackSize = stackSize;
-        threads[name].blockCounter.store(0);
         number = threads[name].threadId;
         _status.threadCount = threads.size();
         error = ErrorType::Success;

@@ -185,7 +185,7 @@ class IpServer {
             return error;
         }
 
-        if (!sent) {
+        if if (!sent && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
             OperatingSystem::Instance().block();
         }
 

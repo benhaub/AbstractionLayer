@@ -57,7 +57,8 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
             .posixThreadId = thread,
             .name = name,
             .threadId = nextThreadId++,
-            .isBlocked = false
+            .isBlocked = false,
+            .blockCount = 0
         };
         pthread_mutex_init(&(newThread.mutex), nullptr);
         pthread_cond_init(&(newThread.conditionVariable), nullptr);
