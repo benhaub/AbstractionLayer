@@ -82,6 +82,7 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
         Id threadId;
         Bytes maxStackSize;
         std::atomic<int> blockCounter;
+        OperatingSystemTypes::ThreadStatus status;
     };
 
     struct Timer {
@@ -90,7 +91,7 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
         bool autoReload;
     };
 
-    std::map<std::array<char, OperatingSystemTypes::MaxThreadNameLength>, Thread> threads;
+    std::array<Thread, APP_MAX_NUMBER_OF_THREADS> threads;
     std::map<std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength>, SemaphoreHandle_t> semaphores;
     std::map<TimerHandle_t, Timer> timers;
     Id nextTimerId = 0;
@@ -144,6 +145,10 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
                 error = ErrorType::Failure;
                 return OperatingSystemTypes::ResetReason::Unknown;
         }
+    }
+
+    int toThreadIndex(Id thread) {
+        return thread - 1;
     }
 };
 

@@ -92,6 +92,7 @@ class OperatingSystem final: public OperatingSystemAbstraction, public Global<Op
         std::array<char, OperatingSystemTypes::MaxThreadNameLength> name;
         Id threadId;
         Bytes maxStackSize;
+        OperatingSystemTypes::ThreadStatus status;
         std::atomic<int> blockCounter;
     };
 
@@ -103,11 +104,15 @@ class OperatingSystem final: public OperatingSystemAbstraction, public Global<Op
 
     Id nextTimerId = 0;
 
-    std::map<std::array<char, OperatingSystemTypes::MaxThreadNameLength>, Thread> threads;
+    std::array<Thread, APP_MAX_NUMBER_OF_THREADS> threads;
     std::map<std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength>, SemaphoreHandle_t> semaphores;
     std::map<std::array<char, OperatingSystemTypes::MaxQueueNameLength>, QueueHandle_t> queues;
     std::map<TimerHandle_t, Timer> timers;
     std::vector<UBaseType_t> savedInterruptContexts;
+
+    int toThreadIndex(const Id thread) {
+        return thread - 1;
+    }
 };
 
 #endif // __OPERATING_SYSTEM_HPP__

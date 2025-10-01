@@ -36,6 +36,9 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     ErrorType error = ErrorType::LimitReached;
     static Id nextThreadId = 1;
 
+    //Unlike other modules which use InitThreadArgs and initThread as a means to fully register the thread with the operating system before
+    //the start function is called, this module uses the lambda as a wrapper for the function pointer since there is a conflict in the types
+    //that the abstraction layer uses vs. what FreeRTOS expects.
     struct InitThreadArgs {
         void *arguments;
         void *(*startFunction)(void *);
@@ -50,10 +53,6 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
         return;
     };
 
-    if (threads.size() > _MaxThreads) {
-        return ErrorType::LimitReached;
-    }
-
     InitThreadArgs *initThreadArgs = new InitThreadArgs {
         .arguments = arguments,
         .startFunction = startFunction,
@@ -62,18 +61,20 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     TaskHandle_t thread;
     const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, initThreadArgs, toTm4c123Priority(priority), &thread));
 
-    if (threadWasCreated && threads.size() < _MaxThreads) {
+    if (threadWasCreated) {
 #if INCLUDE_uxTaskGetStackHighWaterMark
         OperatingSystemTypes::MemoryRegionInfo stackRegion = {name};
         _status.memoryRegion.push_back(stackRegion);
 #endif
-        threads[name].name  = name;
-        threads[name].threadId = nextThreadId++;
-        threads[name].maxStackSize = stackSize;
-        threads[name].tm4c123ThreadId = thread;
-        threads[name].blockCounter.store(0);
-        number = threads[name].threadId;
-        _status.threadCount = threads.size();
+        threads.at(toThreadIndex(nextThreadId)).name = name;
+        threads.at(toThreadIndex(nextThreadId)).threadId = nextThreadId;
+        threads.at(toThreadIndex(nextThreadId)).maxStackSize = stackSize;
+        threads.at(toThreadIndex(nextThreadId)).tm4c123ThreadId = thread;
+        threads.at(toThreadIndex(nextThreadId)).blockCounter.store(0);
+        threads.at(toThreadIndex(nextThreadId)).status = OperatingSystemTypes::ThreadStatus::Active;
+        number = threads.at(toThreadIndex(nextThreadId)).threadId;
+        _status.threadCount++;
+        nextThreadId++;
         error = ErrorType::Success;
     }
     else {
@@ -87,8 +88,22 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
 ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
     ErrorType error = ErrorType::NoData;
 
-    if (threads.contains(name)) {
-        threads.erase(name);
+    auto it = std::find_if(threads.begin(), threads.end(), [name](const auto &thread) { return 0 == strncmp(thread.name.data(), name.data(), OperatingSystemTypes::MaxThreadNameLength); });
+    if (threads.end() == it) {
+        return ErrorType::NoData;
+    }
+    else {
+        it->status = OperatingSystemTypes::ThreadStatus::Terminated;
+        // Remove thread stack from memory regions
+        _status.memoryRegion.erase(
+            std::remove_if(_status.memoryRegion.begin(), _status.memoryRegion.end(),
+                [&name](const OperatingSystemTypes::MemoryRegionInfo &region) {
+                    return 0 == strncmp(region.name.data(), name.data(), OperatingSystemTypes::MaxMemoryRegionNameLength);
+                }),
+            _status.memoryRegion.end());
+        
+        _status.threadCount--;
+        error = ErrorType::Success;
     }
 
     return error;
@@ -103,29 +118,31 @@ ErrorType OperatingSystem::joinThread(const std::array<char, OperatingSystemType
 }
 
 ErrorType OperatingSystem::threadId(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name, Id &thread) {
-    if (threads.contains(name)) {
-        thread = threads[name].threadId;
-        return ErrorType::Success;
+    auto it = std::find_if(threads.begin(), threads.end(), [name](const auto &thread) { return 0 == strncmp(thread.name.data(), name.data(), OperatingSystemTypes::MaxThreadNameLength); });
+    if (threads.end() == it) {
+        return ErrorType::NoData;
     }
 
-    return ErrorType::NoData;
+    thread = it->threadId;
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::currentThreadId(Id &thread) const {
     const TaskHandle_t threadId = xTaskGetCurrentTaskHandle();
 
-    auto it = std::find_if(threads.begin(), threads.end(), [threadId](const auto &pair) { return pair.second.tm4c123ThreadId == threadId; });
+    auto it = std::find_if(threads.begin(), threads.end(), [threadId](const auto &thread) { return thread.tm4c123ThreadId == threadId; });
     if (threads.end() == it) {
         return ErrorType::NoData;
     }
 
-    thread = it->second.threadId;
+    thread = it->threadId;
 
     return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
-    if (threads.contains(name)) {
+    auto it = std::find_if(threads.begin(), threads.end(), [](const auto &thread) { return thread.status == OperatingSystemTypes::ThreadStatus::Terminated; });
+    if (threads.end() == it) {
         return ErrorType::Success;
     }
 
@@ -408,9 +425,9 @@ ErrorType OperatingSystem::memoryRegionUsage(OperatingSystemTypes::MemoryRegionI
     }
 #if INCLUDE_uxTaskGetStackHighWaterMark
     else {
-        for (const auto &[threadName, thread] : threads) {
+        for (const auto &thread : threads) {
 
-            if (0 == strncmp(region.name.data(), threadName.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
+            if (0 == strncmp(region.name.data(), thread.name.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
 
                 if (thread.tm4c123ThreadId != nullptr) {
                     UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(thread.tm4c123ThreadId) * 4;
@@ -475,7 +492,7 @@ ErrorType OperatingSystem::block() {
     Id task;
     ErrorType error = currentThreadId(task);
 
-    for (auto &[name, threadStruct] : threads) {
+    for (auto &threadStruct : threads) {
 
         if (threadStruct.threadId == task) {
 
@@ -498,7 +515,7 @@ ErrorType OperatingSystem::block() {
 ErrorType OperatingSystem::unblock(const Id task) {
     ErrorType error = ErrorType::NoData;
 
-    for (auto &[name, threadStruct] : threads) {
+    for (auto &threadStruct : threads) {
 
         if (threadStruct.threadId == task) {
             threadStruct.blockCounter.fetch_sub(1, std::memory_order_relaxed);

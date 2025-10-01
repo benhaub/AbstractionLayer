@@ -56,22 +56,18 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
         Thread newThread = {
             .posixThreadId = thread,
             .name = name,
-            .threadId = nextThreadId++,
-            .isBlocked = false,
+            .threadId = nextThreadId,
+            .status = OperatingSystemTypes::ThreadStatus::Active,
             .blockCount = 0
         };
         pthread_mutex_init(&(newThread.mutex), nullptr);
         pthread_cond_init(&(newThread.conditionVariable), nullptr);
 
-        if (threads.size() < _MaxThreads) {
-            threads[name] = newThread;
-            number = newThread.threadId;
-            _status.threadCount = threads.size();
-            error = ErrorType::Success;
-        }
-        else {
-            deleteThread(name);
-        }
+        threads.at(toThreadIndex(nextThreadId)) = newThread;
+        number = newThread.threadId;
+        _status.threadCount++;
+        nextThreadId++;
+        error = ErrorType::Success;
     }
     else {
         error = fromPlatformError(res);
@@ -83,9 +79,21 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
 ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
     ErrorType error = ErrorType::NoData;
 
-    if (threads.contains(name)) {
-        threads.erase(name);
-        _status.threadCount = threads.size();
+    auto it = std::find_if(threads.begin(), threads.end(), [name](const auto &thread) { return 0 == strncmp(thread.name.data(), name.data(), OperatingSystemTypes::MaxThreadNameLength); });
+    if (threads.end() == it) {
+        return ErrorType::NoData;
+    }
+    else {
+        it->status = OperatingSystemTypes::ThreadStatus::Terminated;
+        // Remove thread stack from memory regions
+        _status.memoryRegion.erase(
+            std::remove_if(_status.memoryRegion.begin(), _status.memoryRegion.end(),
+                [&name](const OperatingSystemTypes::MemoryRegionInfo &region) {
+                    return 0 == strncmp(region.name.data(), name.data(), OperatingSystemTypes::MaxMemoryRegionNameLength);
+                }),
+            _status.memoryRegion.end());
+        
+        _status.threadCount--;
         error = ErrorType::Success;
     }
 
@@ -98,32 +106,34 @@ ErrorType OperatingSystem::joinThread(const std::array<char, OperatingSystemType
         return ErrorType::NoData;
     }
 
-    return fromPlatformError(pthread_join(threads[name].posixThreadId, nullptr));
+    return fromPlatformError(pthread_join(threads[toThreadIndex(thread)].posixThreadId, nullptr));
 }
 
 ErrorType OperatingSystem::threadId(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name, Id &thread) {
-    if (threads.contains(name)) {
-        thread = threads[name].threadId;
-        return ErrorType::Success;
-    }
-
-    return ErrorType::NoData;
-}
-
-ErrorType OperatingSystem::currentThreadId(Id &thread) const {
-    pthread_t task = pthread_self();
-    auto it = std::find_if(threads.begin(), threads.end(), [task](const auto &pair) { return pair.second.posixThreadId == task; });
+    auto it = std::find_if(threads.begin(), threads.end(), [name](const auto &thread) { return 0 == strncmp(thread.name.data(), name.data(), OperatingSystemTypes::MaxThreadNameLength); });
     if (threads.end() == it) {
         return ErrorType::NoData;
     }
 
-    thread = it->second.threadId;
+    thread = it->threadId;
+    return ErrorType::Success;
+}
+
+ErrorType OperatingSystem::currentThreadId(Id &thread) const {
+    pthread_t task = pthread_self();
+    auto it = std::find_if(threads.begin(), threads.end(), [task](const auto &thread) { return thread.posixThreadId == task; });
+    if (threads.end() == it) {
+        return ErrorType::NoData;
+    }
+
+    thread = it->threadId;
 
     return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
-    if (threads.contains(name)) {
+    auto it = std::find_if(threads.begin(), threads.end(), [](const auto &thread) { return thread.status == OperatingSystemTypes::ThreadStatus::Terminated; });
+    if (threads.end() == it) {
         return ErrorType::Success;
     }
 
@@ -505,18 +515,18 @@ ErrorType OperatingSystem::block() {
     Id task;
     ErrorType error = currentThreadId(task);
 
-    for (auto &[name, threadStruct] : threads) {
+    for (auto &threadStruct : threads) {
 
         if (threadStruct.threadId == task) {
             pthread_mutex_lock(&(threadStruct.mutex));
                 
             if (threadStruct.blockCount > -1) {
                 threadStruct.blockCount++;
-                threadStruct.isBlocked = true;
+                threadStruct.status = OperatingSystemTypes::ThreadStatus::Blocked;
 
                 //pthread_cond_wait will unlock the mutex and lock it again when it returns.
                 //The loop is only to protect against spurious wakeups. It's not common to return before the task has been unblocked.
-                while (threadStruct.isBlocked) {
+                while (threadStruct.status == OperatingSystemTypes::ThreadStatus::Blocked) {
                     assert(ErrorType::Success == fromPlatformError(pthread_cond_wait(&threadStruct.conditionVariable, &(threadStruct.mutex))));
                 }
             }
@@ -541,14 +551,14 @@ ErrorType OperatingSystem::block() {
 ErrorType OperatingSystem::unblock(const Id task) {
     ErrorType error = ErrorType::NoData;
 
-    for (auto &[name, threadStruct] : threads) {
+    for (auto &threadStruct : threads) {
 
         if (threadStruct.threadId == task) {
             pthread_mutex_lock(&(threadStruct.mutex));
             threadStruct.blockCount--;
 
-            if (threadStruct.isBlocked) {
-                threadStruct.isBlocked = false;
+            if (threadStruct.status == OperatingSystemTypes::ThreadStatus::Blocked) {
+                threadStruct.status = OperatingSystemTypes::ThreadStatus::Active;
                 assert(ErrorType::Success == fromPlatformError(pthread_cond_signal(&(threadStruct.conditionVariable))));
             }
 

@@ -94,8 +94,8 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
         pthread_t posixThreadId;
         std::array<char, OperatingSystemTypes::MaxThreadNameLength> name;
         Id threadId;
-        bool isBlocked;
         int blockCount;
+        OperatingSystemTypes::ThreadStatus status;
         pthread_mutex_t mutex;
         pthread_cond_t conditionVariable;
     };
@@ -112,12 +112,16 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     std::map<dispatch_source_t, Timer> timers;
     Id nextTimerId = 0;
 
-    std::map<std::array<char, OperatingSystemTypes::MaxThreadNameLength>, Thread> threads;
+    std::array<Thread, APP_MAX_NUMBER_OF_THREADS> threads;
     std::map<std::array<char, OperatingSystemTypes::MaxThreadNameLength>, sem_t *> semaphores;
 
     bool _interruptsDisabled = false;
 
     std::chrono::steady_clock::time_point _startTime;
+
+    int toThreadIndex(Id thread) {
+        return thread - 1;
+    }
 };
 
 #endif // __OPERATING_SYSTEM_HPP__

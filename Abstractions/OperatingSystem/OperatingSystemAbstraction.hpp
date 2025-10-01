@@ -17,6 +17,10 @@
 #include <algorithm>
 #include <cassert>
 
+#ifndef APP_MAX_NUMBER_OF_THREADS
+#error APP_MAX_NUMBER_OF_THREADS must be defined so that the list of threads is large enough.
+#endif
+
 /**
  * @namespace OperatingSystemTypes
  * @brief Types for the operating system
@@ -58,13 +62,24 @@ namespace OperatingSystemTypes {
     };
 
     /**
-     * @brief MemoryRegionName
+     * @enum MemoryRegionName
      * @brief The name of a memory region.
      */
     enum class MemoryRegionName : uint8_t {
         Unknown,
         Heap,
         Stack
+    };
+
+    /**
+     * @enum ThreadStatus
+     * @brief The status of a thread.
+     */
+    enum class ThreadStatus : uint8_t {
+        Unknown,    ///< The status of the thread is unknown.
+        Blocked,    ///< The thread is blocked.
+        Terminated, ///< The thread is terminated.
+        Active      ///< The thread is active.
     };
 
     /**
@@ -108,8 +123,6 @@ class OperatingSystemAbstraction {
     /// @brief Default destructor
     virtual ~OperatingSystemAbstraction() = default;
 
-    /// @brief The maximum number of threads
-    static constexpr Count _MaxThreads = 256;
     /// @brief The tag for logging.
     static constexpr char TAG[] = "OperatingSystem";
     /// @brief The maximum value for a counting semaphore.
