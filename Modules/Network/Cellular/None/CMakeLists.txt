@@ -18,5 +18,5 @@ target_compile_options(NoneCellular PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${E
 target_compile_definitions(NoneCellular PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)
 
 if (ESP_PLATFORM)
-  target_include_directories(__idf_main PUBLIC $<TARGET_PROPERTY:Network,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:Network,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
