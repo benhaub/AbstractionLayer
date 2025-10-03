@@ -164,7 +164,7 @@ class IpServer {
 
     /// @copydoc sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket)
     template <typename Data>
-    ErrorType sendBlockingImplementation(Data &data, const Milliseconds timeout, const Socket socket) {
+    ErrorType sendBlockingImplementation(const Data &data, const Milliseconds timeout, const Socket socket) {
         bool sent = false;
         ErrorType callbackError = ErrorType::Failure;
         Id thread;

@@ -180,7 +180,7 @@ class IpClient {
 
     /// @copydoc sendBlocking(const std::string &data, const Milliseconds timeout)
     template <typename Data>
-    ErrorType sendBlockingImplementation(Data &data, const Milliseconds timeout) {
+    ErrorType sendBlockingImplementation(const Data &data, const Milliseconds timeout) {
         bool doneSending = false;
         ErrorType callbackError = ErrorType::Failure;
         Id thread;
