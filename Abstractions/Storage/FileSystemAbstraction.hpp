@@ -80,10 +80,13 @@ namespace FileSystemTypes {
      */
     struct File {
         StaticString::Container path; ///< The name of the file.
-        Bytes size;             ///< The size of the file.
-        FileOffset filePointer; ///< Current offset into the file.
-        OpenMode openMode;      ///< The open mode of the file.
-        bool isOpen;            ///< True if the file is open, false otherwise.
+        Bytes size;                   ///< The size of the file.
+        FileOffset filePointer;       ///< Current offset into the file.
+        OpenMode openMode;            ///< The open mode of the file.
+        bool isOpen;                  ///< True if the file is open, false otherwise.
+        
+        /// @brief Default constructor
+        File() : size(0), filePointer(0), openMode(OpenMode::Unknown), isOpen(false) {}
     };
 }
 
