@@ -30,7 +30,8 @@ class Uart : public UartAbstraction {
 
     private:
     /// @brief The discovered serial device path
-    StaticString::Container _devicePath;
+    /// @details The size is big enough to support the largest path. Change as needed.
+    std::array<char, 32> _devicePath = {0};
     /// @brief The file descriptor
     int _fileDescriptor = -1;
 
@@ -42,30 +43,42 @@ class Uart : public UartAbstraction {
      * @param peripheralNumber The peripheral number to convert
      * @returns The device path
      */
-    StaticString::Container toDevicePath(const PeripheralNumber peripheralNumber) {
+    std::array<char, 32> toDevicePath(const PeripheralNumber peripheralNumber) {
+        std::array<char, 32> _devicePath = {0};
+
         switch (peripheralNumber) {
             case PeripheralNumber::Zero:
-                return StaticString::Data("/dev/cu.usbserial-10");
+                assert(sizeof("/dev/cu.usbserial-10") <= _devicePath.size());
+                strncpy(_devicePath.data(), "/dev/cu.usbserial-10", _devicePath.size());
             case PeripheralNumber::One:
-                return StaticString::Data("/dev/tty.usbserial-10");
+                assert(sizeof("/dev/tty.usbserial-10") <= _devicePath.size());
+                strncpy(_devicePath.data(), "/dev/tty.usbserial-10", _devicePath.size());
             case PeripheralNumber::Two:
-                return StaticString::Data("/dev/tty.usbmodem-101");
+                assert(sizeof("/dev/tty.usbmodem-101") <= _devicePath.size());
+                strncpy(_devicePath.data(), "/dev/tty.usbmodem-101", _devicePath.size());
             case PeripheralNumber::Three:
-                return StaticString::Data("/dev/tty.usbserial-1110");
+                assert(sizeof("/dev/tty.usbserial-1110") <= _devicePath.size());
+                strncpy(_devicePath.data(), "/dev/tty.usbserial-1110", _devicePath.size());
             case PeripheralNumber::Four:
-                return StaticString::Data("/dev/ttyUSB0");
+                assert(sizeof("/dev/ttyUSB0") <= _devicePath.size());
+                strncpy(_devicePath.data(), "/dev/ttyUSB0", _devicePath.size());
             case PeripheralNumber::Five:
-                return StaticString::Data("/dev/ttyUSB1");
+                assert(sizeof("/dev/ttyUSB1") <= _devicePath.size());
+                strncpy(_devicePath.data(), "/dev/ttyUSB1", _devicePath.size());
             case PeripheralNumber::Six:
-                return StaticString::Data("/dev/ttyUSB2");
+                assert(sizeof("/dev/ttyUSB2") <= _devicePath.size());
+                strncpy(_devicePath.data(), "/dev/ttyUSB2", _devicePath.size());
             case PeripheralNumber::Seven:
-                return StaticString::Data("/dev/ttyACM0");
+                assert(sizeof("/dev/ttyACM0") <= _devicePath.size());
+                strncpy(_devicePath.data(), "/dev/ttyACM0", _devicePath.size());
             case PeripheralNumber::Eight:
-                return StaticString::Data("/dev/ttyACM1");
+                assert(sizeof("/dev/ttyACM1") <= _devicePath.size());
+                strncpy(_devicePath.data(), "/dev/ttyACM1", _devicePath.size());
             case PeripheralNumber::Nine:
-                return StaticString::Data("/dev/ttyACM2");
+                assert(sizeof("/dev/ttyACM2") <= _devicePath.size());
+                strncpy(_devicePath.data(), "/dev/ttyACM2", _devicePath.size());
             default:
-                return StaticString::Data("");
+                return _devicePath;
         }
     }
 

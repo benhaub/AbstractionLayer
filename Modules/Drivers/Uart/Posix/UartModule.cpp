@@ -8,8 +8,8 @@ ErrorType Uart::init() {
 
     _devicePath = toDevicePath(uartParams().hardwareConfig.peripheralNumber);
 
-    if (!_devicePath->empty()) {
-        _fileDescriptor = open(_devicePath->c_str(), O_RDWR | O_NONBLOCK);
+    if (0 > strlen(_devicePath.data())) {
+        _fileDescriptor = open(_devicePath.data(), O_RDWR | O_NONBLOCK);
 
         if (-1 != _fileDescriptor) {
             struct termios tty;
