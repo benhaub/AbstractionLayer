@@ -162,7 +162,11 @@ namespace StaticString {
         Container(const Data<_n> &other) {
             set(other);
         }
-
+        
+        /// @brief Deleted because the container does not store the template type of the data and we can't use any_cast
+        /// to store the new pointer.
+        Container(const Container &other) = delete;
+        
         private:
         /// @brief The pure virtual interface that the container returns.
         using Interface = StandardStringInterface;
@@ -231,6 +235,10 @@ namespace StaticString {
             set(other);
             return *this;
         }
+        
+        /// @copydoc Container(const Container &other)
+        Container &operator=(const Container &other) = delete;
+        
         /// @brief Array access. No bounds checking
         char &operator[](const size_t pos) {
             return get()->data()[pos];
