@@ -33,11 +33,6 @@ template<typename T, Bytes _numberOfBlocks>
 class MemoryPool {
 
     public:
-    /// @brief Default constructor
-    constexpr MemoryPool() {
-        _blockAllocationMap.fill(0);
-    }
-
     /// @brief Return the size of the memory pool
     static constexpr Bytes poolSize() { return _numberOfBlocks * sizeof(T); }
     /// @brief Return the size of a block in the memory pool
@@ -127,7 +122,7 @@ class MemoryPool {
     /// @brief The pool of memory
     std::array<uint8_t, poolSize()> _pool;
     /// @brief A map of which blocks are available.
-    std::array<uint8_t, _numberOfBlocks> _blockAllocationMap;
+    std::array<uint8_t, _numberOfBlocks> _blockAllocationMap = {0};
 
     /**
      * @brief Check if a block is available.

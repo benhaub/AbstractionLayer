@@ -1,5 +1,10 @@
 //AbstractionLayer
 #include "IpClient.hpp"
+#include "MemoryPool.hpp"
+
+namespace {
+    MemoryPool<StaticString::Container, 10> sendReceivePool;
+}
 
 ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, const Milliseconds timeout) {
     bool doneConnecting = false;
@@ -59,6 +64,29 @@ ErrorType IpClient::sendNonBlocking(const std::string &data, const Milliseconds 
     return network().addEvent(event);
 }
 
+ErrorType IpClient::sendNonBlocking(StaticString::Container &data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
+    ErrorType error = ErrorType::NoMemory;
+    StaticString::Container* poolBuffer = nullptr;
+
+    if (ErrorType::Success == sendReceivePool.allocate(poolBuffer)) {
+        *poolBuffer = std::move(data);
+
+        auto tx = [&, callback, poolBuffer, timeout]() -> ErrorType {
+            ErrorType callbackError = sendBlocking(*poolBuffer, timeout);
+            callback(callbackError, poolBuffer->getConst()->size());
+
+            return sendReceivePool.deallocate(poolBuffer);
+        };
+
+        EventQueue::Event event = EventQueue::Event(tx);
+        [[unlikely]] if (ErrorType::Success != (error = network().addEvent(event))) {
+            sendReceivePool.deallocate(poolBuffer);
+        }
+    }
+
+    return error;
+}
+
 ErrorType IpClient::receiveNonBlocking(std::string &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string_view buffer)> callback) {
     auto rx = [&, callback, buffer = std::move(buffer), timeout]() mutable -> ErrorType {
         ErrorType error = ErrorType::Failure;
@@ -73,4 +101,27 @@ ErrorType IpClient::receiveNonBlocking(std::string &buffer, const Milliseconds t
 
     EventQueue::Event event = EventQueue::Event(rx);
     return network().addEvent(event);
+}
+
+ErrorType IpClient::receiveNonBlocking(StaticString::Container &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string_view buffer)> callback) {
+    ErrorType error = ErrorType::NoMemory;
+    StaticString::Container* poolBuffer = nullptr;
+
+    if (sendReceivePool.allocate(poolBuffer) == ErrorType::Success) {
+        *poolBuffer = std::move(buffer);
+        
+        auto rx = [&, callback, poolBuffer, timeout]() mutable -> ErrorType {
+            ErrorType callbackError = receiveBlocking(*poolBuffer, timeout);
+            callback(callbackError, std::string_view(poolBuffer->getConst()->c_str(), poolBuffer->getConst()->size()));
+            
+            return sendReceivePool.deallocate(poolBuffer);
+        };
+
+        EventQueue::Event event = EventQueue::Event(rx);
+       [[unlikely]] if (ErrorType::Success != (error = network().addEvent(event))) {
+            sendReceivePool.deallocate(poolBuffer);
+        }
+    }
+
+    return error;
 }

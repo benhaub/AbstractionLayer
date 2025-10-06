@@ -167,6 +167,12 @@ namespace StaticString {
         /// to store the new pointer.
         Container(const Container &other) = delete;
         
+        /// @brief Move constructor
+        Container(Container &&other) noexcept : _data(std::move(other._data)), _dataPtr(other._dataPtr) {
+            other._data.reset();
+            other._dataPtr = nullptr;
+        }
+        
         private:
         /// @brief The pure virtual interface that the container returns.
         using Interface = StandardStringInterface;
@@ -238,6 +244,18 @@ namespace StaticString {
         
         /// @copydoc Container(const Container &other)
         Container &operator=(const Container &other) = delete;
+        
+        /// @brief Move assignment operator
+        constexpr Container &operator=(Container &&other) noexcept {
+            if (this != &other) {
+                _data = std::move(other._data);
+                _dataPtr = other._dataPtr;
+                other._data.reset();
+                other._dataPtr = nullptr;
+            }
+
+            return *this;
+        }
         
         /// @brief Array access. No bounds checking
         char &operator[](const size_t pos) {

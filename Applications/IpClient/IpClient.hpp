@@ -102,6 +102,8 @@ class IpClient {
      * @post Ownership of data is moved to this call. No access to data is allowed after this call.
     */
     virtual ErrorType sendNonBlocking(const std::string &data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback);
+    /// @copydoc ErrorType sendNonBlocking(const std::string &data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback)
+    virtual ErrorType sendNonBlocking(StaticString::Container &data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback);
     /**
      * @brief Receives data.
      * @param[out] buffer The buffer to receive the data into.
@@ -131,6 +133,8 @@ class IpClient {
      * @post Ownership of buffer is moved to this call. No access to buffer is allowed after this call. The buffer will be available again in the callback.
     */
     ErrorType receiveNonBlocking(std::string &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string_view buffer)> callback);
+    /// @copydoc ErrorType receiveNonBlocking(std::string &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string_view buffer)> callback)
+    ErrorType receiveNonBlocking(StaticString::Container &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string_view buffer)> callback);
 
     /// @brief Get the socket as a constant reference
     const Socket &sockConst() const { return _socket; }

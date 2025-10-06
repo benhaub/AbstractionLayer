@@ -23,7 +23,7 @@ ErrorType EventQueue::addEvent(Event &event) {
             while (!(_currentEventQueueIndexLast.compare_exchange_weak(currentEventQueueIndexLast, (currentEventQueueIndexLast + 1) % _events.max_size())));
 
             //If the last index is the size of the array, then we know that what is stored in memory is now zero.
-            _events[currentEventQueueIndexLast] = event;
+            _events[currentEventQueueIndexLast] = std::move(event);
             //_eventsReady is not a function because it needs to be evaluated at specific points in the code. We can't let runNextEvent try to run an
             //event while we are still in the middle of adding an event to the queue.
             _eventsReady = true;
