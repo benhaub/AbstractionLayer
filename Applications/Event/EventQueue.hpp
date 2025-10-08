@@ -135,11 +135,9 @@ class EventQueue {
     virtual ErrorType mainLoop() { return runNextEvent(); }
 
     /**
-     * @brief If the event queue is not full, atomically increments the number of events queued.
-     * @returns true if the event was added to the queue.
-     * @returns false if the event queue is full.
+     * @brief true if there are events ready, false otherwise
      */
-    bool addEventIfNotFull();
+    bool eventsReady() { return _eventsReady; }
 
     protected: 
     /**
@@ -148,6 +146,8 @@ class EventQueue {
      * @returns The error code of the callback function pointed to by the Event.
      * @note This function is not thread safe and should not be called from an interrupt context not only because it is not reentrant but also because
      *       there is never a guarentee on whether the event will block or not.
+     * @post Callers may block themselves if ErrorType::NoData is returned. EventQueue::addEvent will unblock the caller when the next event is added.
+     * @sa OperatingSystemAbstraction::block
     */
     ErrorType runNextEvent();
 
@@ -172,6 +172,13 @@ class EventQueue {
      *          Instead of pushing the event on the queue for the mainLoop to run, just run it right away.
      */
     bool _addEventOptimizationsEnabled = false;
+
+    /**
+     * @brief If the event queue is not full, atomically increments the number of events queued.
+     * @returns true if the event was added to the queue.
+     * @returns false if the event queue is full.
+     */
+    bool addEventIfNotFull();
 };
 
 #endif //__EVENT_QUEUE_HPP__
