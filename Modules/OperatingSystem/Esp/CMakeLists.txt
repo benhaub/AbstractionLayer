@@ -9,8 +9,6 @@ OBJECT
 )
 
 target_include_directories(OperatingSystem INTERFACE ${CMAKE_CURRENT_LIST_DIR})
-target_include_directories(OperatingSystem INTERFACE $<TARGET_PROPERTY:__idf_main,INCLUDE_DIRECTORIES>)
-target_include_directories(OperatingSystem INTERFACE $<TARGET_PROPERTY:Utilities,INTERFACE_INCLUDE_DIRECTORIES>)
 target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:OperatingSystem,INTERFACE_INCLUDE_DIRECTORIES>)
 
 target_link_libraries(EspOperatingSystem PRIVATE abstractionLayer)

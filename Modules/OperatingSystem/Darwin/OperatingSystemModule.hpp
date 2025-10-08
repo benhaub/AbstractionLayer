@@ -64,6 +64,7 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
     ErrorType enableAllInterrupts() override;
     ErrorType block() override;
     ErrorType unblock(const Id task) override;
+    ErrorType getSystemMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) override;
 
     int toPosixPriority(OperatingSystemTypes::Priority priority) {
         switch (priority) {

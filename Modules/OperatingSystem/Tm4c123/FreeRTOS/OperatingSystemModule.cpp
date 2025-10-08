@@ -542,6 +542,10 @@ void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
     return;
 }
 
+ErrorType OperatingSystem::getSystemMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) {
+    return ErrorType::NotAvailable;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif

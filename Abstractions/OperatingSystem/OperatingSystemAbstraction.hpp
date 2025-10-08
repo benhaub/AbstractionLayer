@@ -11,6 +11,7 @@
 #include "Types.hpp"
 #include "Error.hpp"
 #include "Log.hpp"
+#include "NetworkTypes.hpp"
 //C++
 #include <functional>
 #include <string>
@@ -380,6 +381,15 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NotImplemented if getting the reset reason is not implemented
     */
     virtual ErrorType getResetReason(OperatingSystemTypes::ResetReason &resetReason) = 0;
+    /**
+     * @brief Get the system MAC address.
+     * @details Useful if you want to have access to a consistent MAC address if you're using multiple network interfaces.
+     * @param[out] macAddress The system MAC address.
+     * @returns ErrorType::Success if the system MAC address was obtained
+     * @returns ErrorType::NotImplemented if getting the system MAC address is not implemented
+     * @returns ErrorType::Failure if the system MAC address could not be obtained
+     */
+    virtual ErrorType getSystemMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) = 0;
     /**
      * @brief Perform a soft reset of the processor.
      * @returns ErrorType::Success if the processor was reset

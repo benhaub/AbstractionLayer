@@ -12,6 +12,8 @@
 #include "esp_app_desc.h"
 #include "esp_heap_caps.h"
 #include "esp_timer.h"
+#include "esp_efuse.h"
+#include "esp_mac.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -549,6 +551,20 @@ void vApplicationIdleHook() {
     numberOfTimesIdleHookHasBeenCalled++;
 
     timeOfLastIdleHookCall = timeNow;
+}
+
+ErrorType OperatingSystem::getSystemMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) {
+    uint8_t macAddressByteArray[6];
+    esp_err_t err;
+
+    err = esp_efuse_mac_get_default(macAddressByteArray);
+    if (ESP_OK != err) {
+        return fromPlatformError(err);
+    }
+
+    assert(snprintf(macAddress.data(), macAddress.size(), MACSTR, MAC2STR(macAddressByteArray)) > 0);
+
+    return ErrorType::Success;
 }
 
 #ifdef __cplusplus
