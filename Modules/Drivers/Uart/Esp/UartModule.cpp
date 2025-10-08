@@ -4,33 +4,36 @@
 #include "hal/uart_hal.h"
 
 ErrorType Uart::init() {
-    ErrorType error;
+    ErrorType error = ErrorType::Success;
     const uart_port_t uartPort = toEspPeripheralNumber(uartParams().hardwareConfig.peripheralNumber, error);
 
-    if (ErrorType::Success == error) {
+    if (false == uart_is_driver_installed(uartPort)) {
 
-        if (ESP_OK == uart_driver_install(uartPort, uartParams().firmwareConfig.receiveBufferSize, uartParams().firmwareConfig.transmitBufferSize, 0, nullptr, 0)) {
-            uart_config_t uartConfig;
-            uartConfig.baud_rate = uartParams().driverConfig.baudRate;
-            uartConfig.rx_flow_ctrl_thresh = 0;
-            uartConfig.source_clk = UART_SCLK_DEFAULT;
-            uartConfig.data_bits = toEspWordLength(uartParams().driverConfig.dataBits, error);
+        if (ErrorType::Success == error) {
 
-            uartConfig.parity = toEspUartParity(uartParams().driverConfig.parity, error);
+            if (ESP_OK == uart_driver_install(uartPort, uartParams().firmwareConfig.receiveBufferSize, uartParams().firmwareConfig.transmitBufferSize, 0, nullptr, 0)) {
+                uart_config_t uartConfig;
+                uartConfig.baud_rate = uartParams().driverConfig.baudRate;
+                uartConfig.rx_flow_ctrl_thresh = 0;
+                uartConfig.source_clk = UART_SCLK_DEFAULT;
+                uartConfig.data_bits = toEspWordLength(uartParams().driverConfig.dataBits, error);
 
-            if (ErrorType::Success == error) {
-                uartConfig.stop_bits = toEspStopBits(uartParams().driverConfig.stopBits, error);
+                uartConfig.parity = toEspUartParity(uartParams().driverConfig.parity, error);
 
                 if (ErrorType::Success == error) {
-                    uartConfig.flow_ctrl = toEspFlowControl(uartParams().driverConfig.flowControl, error);
+                    uartConfig.stop_bits = toEspStopBits(uartParams().driverConfig.stopBits, error);
 
-                    uartConfig.flags.allow_pd = 0;
-                    uartConfig.flags.backup_before_sleep = 0;
+                    if (ErrorType::Success == error) {
+                        uartConfig.flow_ctrl = toEspFlowControl(uartParams().driverConfig.flowControl, error);
 
-                    if (ESP_OK == uart_param_config(uartPort, &uartConfig)) {
+                        uartConfig.flags.allow_pd = 0;
+                        uartConfig.flags.backup_before_sleep = 0;
 
-                        if (ESP_OK == uart_set_pin(uartPort, uartParams().hardwareConfig.tx, uartParams().hardwareConfig.rx, uartParams().hardwareConfig.rts, uartParams().hardwareConfig.cts)) {
-                            error = ErrorType::Success;
+                        if (ESP_OK == uart_param_config(uartPort, &uartConfig)) {
+
+                            if (ESP_OK == uart_set_pin(uartPort, uartParams().hardwareConfig.tx, uartParams().hardwareConfig.rx, uartParams().hardwareConfig.rts, uartParams().hardwareConfig.cts)) {
+                                error = ErrorType::Success;
+                            }
                         }
                     }
                 }
