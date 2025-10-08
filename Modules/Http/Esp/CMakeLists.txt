@@ -18,6 +18,7 @@ target_include_directories(__idf_main PRIVATE $<TARGET_PROPERTY:Http,INTERFACE_I
 
 target_link_libraries(EspIpClient PRIVATE abstractionLayer)
 target_link_libraries(EspIpClient PRIVATE Http)
+target_link_libraries(EspIpClient PRIVATE OperatingSystem)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE EspIpClient)
 
 target_compile_options(EspIpClient PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
