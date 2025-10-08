@@ -18,79 +18,79 @@
 #endif
 
 #ifdef CONFIG_LOG_COLORS
-/// @def LOG_COLOR_BLACK
+/// @def APP_LOG_COLOR_BLACK
 /// @brief The color black
-#define LOG_COLOR_BLACK   "30"
-/// @def LOG_COLOR_RED
+#define APP_LOG_COLOR_BLACK   "30"
+/// @def APP_LOG_COLOR_RED
 /// @brief The color red
-#define LOG_COLOR_RED     "31"
-/// @def LOG_COLOR_GREEN
+#define APP_LOG_COLOR_RED     "31"
+/// @def APP_LOG_COLOR_GREEN
 /// @brief The color green
-#define LOG_COLOR_GREEN   "32"
-/// @def LOG_COLOR_BROWN
+#define APP_LOG_COLOR_GREEN   "32"
+/// @def APP_LOG_COLOR_BROWN
 /// @brief The color brown
-#define LOG_COLOR_BROWN   "33"
-/// @def LOG_COLOR_BLUE
+#define APP_LOG_COLOR_BROWN   "33"
+/// @def APP_LOG_COLOR_BLUE
 /// @brief The color blue
-#define LOG_COLOR_BLUE    "34"
-/// @def LOG_COLOR_PURPLE
+#define APP_LOG_COLOR_BLUE    "34"
+/// @def APP_LOG_COLOR_PURPLE
 /// @brief The color purple
-#define LOG_COLOR_PURPLE  "35"
-/// @def LOG_COLOR_CYAN
+#define APP_LOG_COLOR_PURPLE  "35"
+/// @def APP_LOG_COLOR_CYAN
 /// @brief The color cyan
-#define LOG_COLOR_CYAN    "36"
-/// @def LOG_COLOR(COLOR)
+#define APP_LOG_COLOR_CYAN    "36"
+/// @def APP_LOG_COLOR(COLOR)
 /// @brief Used to make text colored.
-#define LOG_COLOR(COLOR)  "\033[0;" COLOR "m"
-/// @def LOG_BOLD(COLOR)
+#define APP_LOG_COLOR(COLOR)  "\033[0;" COLOR "m"
+/// @def APP_LOG_BOLD(COLOR)
 /// @brief Used to make text bold and colored.
-#define LOG_BOLD(COLOR)   "\033[1;" COLOR "m"
-/// @def LOG_RESET_COLOR
+#define APP_LOG_BOLD(COLOR)   "\033[1;" COLOR "m"
+/// @def APP_LOG_RESET_COLOR
 /// @brief Used to stop writing text that is coloured.
-#define LOG_RESET_COLOR   "\033[0m"
-/// @def LOG_COLOR_E
+#define APP_LOG_RESET_COLOR   "\033[0m"
+/// @def APP_LOG_COLOR_E
 /// @brief The color for error messages
-#define LOG_COLOR_E       LOG_COLOR(LOG_COLOR_RED)
-/// @def LOG_COLOR_W
+#define APP_LOG_COLOR_E       APP_LOG_COLOR(APP_LOG_COLOR_RED)
+/// @def APP_LOG_COLOR_W
 /// @brief The color for warnings
-#define LOG_COLOR_W       LOG_COLOR(LOG_COLOR_BROWN)
-/// @def LOG_COLOR_I
+#define APP_LOG_COLOR_W       APP_LOG_COLOR(APP_LOG_COLOR_BROWN)
+/// @def APP_LOG_COLOR_I
 /// @brief The color for information messages
-#define LOG_COLOR_I       LOG_COLOR(LOG_COLOR_GREEN)
-/// @def LOG_COLOR_D
+#define APP_LOG_COLOR_I       APP_LOG_COLOR(APP_LOG_COLOR_GREEN)
+/// @def APP_LOG_COLOR_D
 /// @brief The color for debugging messages
-#define LOG_COLOR_D       LOG_COLOR(LOG_COLOR_PURPLE)
-/// @def LOG_COLOR_V
+#define APP_LOG_COLOR_D       APP_LOG_COLOR(APP_LOG_COLOR_PURPLE)
+/// @def APP_LOG_COLOR_V
 /// @brief The color for verbose messages
-#define LOG_COLOR_V       LOG_COLOR(LOG_COLOR_CYAN)
+#define APP_LOG_COLOR_V       APP_LOG_COLOR(APP_LOG_COLOR_CYAN)
 #else //CONFIG_LOG_COLORS
-/// @def LOG_COLOR_E
+/// @def APP_LOG_COLOR_E
 /// @brief The color for error messages
-#define LOG_COLOR_E
-/// @def LOG_COLOR_W
+#define APP_LOG_COLOR_E
+/// @def APP_LOG_COLOR_W
 /// @brief The color for warnings
-#define LOG_COLOR_W
-/// @def LOG_COLOR_I
+#define APP_LOG_COLOR_W
+/// @def APP_LOG_COLOR_I
 /// @brief The color for information messages
-#define LOG_COLOR_I
-/// @def LOG_COLOR_D
+#define APP_LOG_COLOR_I
+/// @def APP_LOG_COLOR_D
 /// @brief The color for debugging messages
-#define LOG_COLOR_D
-/// @def LOG_COLOR_V
+#define APP_LOG_COLOR_D
+/// @def APP_LOG_COLOR_V
 /// @brief The color for verbose messages
-#define LOG_COLOR_V
-/// @def LOG_RESET_COLOR
+#define APP_LOG_COLOR_V
+/// @def APP_LOG_RESET_COLOR
 /// @brief Used to stop writing text that is coloured.
-#define LOG_RESET_COLOR
+#define APP_LOG_RESET_COLOR
 #endif //CONFIG_LOG_COLORS
 
 /**
- * @def LOG_FORMAT
+ * @def APP_LOG_FORMAT
  * @brief The format of a log message
  * @param letter The letter that represents the type of the log (warning, info, debug, etc.)
  * @param format The format of the log. Format is a printf-style format
  */
-#define LOG_FORMAT(letter, format)  LOG_COLOR_## letter #letter " %s: " format LOG_RESET_COLOR "\n"
+#define APP_LOG_FORMAT(letter, format)  APP_LOG_COLOR_## letter #letter " %s: " format APP_LOG_RESET_COLOR "\n"
 
 /**
  * @def PLT_LOG_LEVEL
@@ -103,10 +103,10 @@
  * @param[in] ... The arguments to the format string
  */
 #define PLT_LOG_LEVEL(type, tag, format, ...) do { \
-    if      (type == LogType::Error)   { Logger::Instance().log(type, tag, LOG_FORMAT(E, format), tag, ##__VA_ARGS__); } \
-    else if (type == LogType::Warning) { Logger::Instance().log(type, tag, LOG_FORMAT(W, format), tag, ##__VA_ARGS__); } \
-    else if (type == LogType::Info)    { Logger::Instance().log(type, tag, LOG_FORMAT(I, format), tag, ##__VA_ARGS__); } \
-    else if (type == LogType::Debug)   { Logger::Instance().log(type, tag, LOG_FORMAT(D, format), tag, ##__VA_ARGS__); } \
+    if      (type == LogType::Error)   { Logger::Instance().log(type, tag, APP_LOG_FORMAT(E, format), tag, ##__VA_ARGS__); } \
+    else if (type == LogType::Warning) { Logger::Instance().log(type, tag, APP_LOG_FORMAT(W, format), tag, ##__VA_ARGS__); } \
+    else if (type == LogType::Info)    { Logger::Instance().log(type, tag, APP_LOG_FORMAT(I, format), tag, ##__VA_ARGS__); } \
+    else if (type == LogType::Debug)   { Logger::Instance().log(type, tag, APP_LOG_FORMAT(D, format), tag, ##__VA_ARGS__); } \
 } while(0)
 
 /**
