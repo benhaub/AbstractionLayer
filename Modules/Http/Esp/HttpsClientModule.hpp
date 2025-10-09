@@ -4,15 +4,22 @@
 //AbstractionLayer
 #include "HttpClientAbstraction.hpp"
 #include "IpClient.hpp"
-//MbedTLS
+//Esp
 #include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/net_sockets.h"
+#include "esp_netif.h"
+#include "esp_event.h"
 
 class HttpsClient final : public HttpClientAbstraction {
 
     public:
+    HttpsClient() : HttpClientAbstraction() {
+        esp_netif_init();
+        esp_event_loop_create_default();
+    }
+
     ~HttpsClient() {
         freeSslContexts();
     }
