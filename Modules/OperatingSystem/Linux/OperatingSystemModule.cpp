@@ -625,7 +625,7 @@ ErrorType OperatingSystem::block() {
                 //pthread_cond_wait will unlock the mutex and lock it again when it returns.
                 //The loop is only to protect against spurious wakeups. It's not common to return before the task has been unblocked.
                 while (threadStruct.status == OperatingSystemTypes::ThreadStatus::Blocked) {
-                    assert(ErrorType::Success == fromPlatformError(pthread_cond_wait(&threadStruct.conditionVariable, &(threadStruct.mutex))));
+                    assert(ErrorType::Success == (error = fromPlatformError(pthread_cond_wait(&threadStruct.conditionVariable, &(threadStruct.mutex)))));
                 }
             }
             else {
@@ -635,7 +635,6 @@ ErrorType OperatingSystem::block() {
 
             pthread_mutex_unlock(&(threadStruct.mutex));
             
-            error = ErrorType::Success;
             break;
         }
         else {
