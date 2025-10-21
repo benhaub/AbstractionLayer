@@ -34,7 +34,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     sched_param param;
     int res;
     pthread_t thread;
-    static Id nextThreadId = 1;
+    static Id nextThreadId = OperatingSystemTypes::NullId + 1;
 
     res = pthread_attr_init(&attr);
     assert(0 == res);
@@ -132,12 +132,20 @@ ErrorType OperatingSystem::currentThreadId(Id &thread) const {
 }
 
 ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
-    auto it = std::find_if(threads.begin(), threads.end(), [](const auto &thread) { return thread.status == OperatingSystemTypes::ThreadStatus::Terminated; });
-    if (threads.end() == it) {
-        return ErrorType::Success;
+    Id thread;
+
+    if (ErrorType::NoData != threadId(name, thread)) {
+        auto it = std::find_if(threads.begin(), threads.end(), [&](const auto &thread) {
+            return thread.status == OperatingSystemTypes::ThreadStatus::Terminated &&
+            thread.name == name; 
+        });
+
+        if (threads.end() == it) {
+            return ErrorType::Negative;
+        }
     }
 
-    return ErrorType::NoData;
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {

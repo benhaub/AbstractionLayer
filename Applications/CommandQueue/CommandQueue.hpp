@@ -71,7 +71,7 @@ class CommandQueue {
      * @returns ErrorType::Success if the command was added to the queue
      * @returns ErrorType::LimitReached if the queue is full
      */
-    ErrorType addToQueue() {
+    ErrorType addToQueue(T &commandData) {
         ErrorType error = ErrorType::Failure;
 
         if (addCommandIfNotFull()) {
@@ -79,7 +79,7 @@ class CommandQueue {
 
             while (!(_CurrentCommandQueueIndexLast.compare_exchange_weak(currentCommandQueueIndexLast, (currentCommandQueueIndexLast + 1) % _Commands.max_size())));
 
-            _Commands[currentCommandQueueIndexLast] = _data;
+            _Commands[currentCommandQueueIndexLast] = std::move(commandData);
             _CommandsReady = true;
             error = ErrorType::Success;
         }
@@ -106,7 +106,7 @@ class CommandQueue {
             while ((_CommandsReady = (currentCommandQueueIndexFirst != _CurrentCommandQueueIndexLast.load())) && !(_CurrentCommandQueueIndexFirst.compare_exchange_weak(currentCommandQueueIndexFirst, (currentCommandQueueIndexFirst + 1) % _Commands.max_size())));
 
             if (_CommandsReady) {
-                commandData = _Commands[currentCommandQueueIndexFirst];
+                commandData = std::move(_Commands[currentCommandQueueIndexFirst]);
                 _CommandsClaimed.fetch_sub(1, std::memory_order_relaxed);
 
                 error = ErrorType::Success;
@@ -121,16 +121,15 @@ class CommandQueue {
      * @param error The error that occurred while peaking the next command.
      * @returns The next command in th queue.
      * @post The returned command is valid only if error is ErrorType::Success
-     * @post error == ErrorType::NoData if there are no commands in the queue to peak.
+     * @post error == ErrorType::NoData if there are no commands in the queue to peak. The data returns will be whatever is in the current index.
      */
     const T &peakNextInQueue(ErrorType &error) {
         const Count currentCommandQueueIndexFirst = _CurrentCommandQueueIndexFirst.load();
         if (currentCommandQueueIndexFirst != _CurrentCommandQueueIndexLast.load()) {
             error = ErrorType::Success;
-            return _Commands[currentCommandQueueIndexFirst];
         }
 
-        return _data;
+        return _Commands[currentCommandQueueIndexFirst];
     }
 
     /**
@@ -145,10 +144,6 @@ class CommandQueue {
         return _CurrentCommandQueueIndexFirst.load() != _CurrentCommandQueueIndexLast.load();
     }
 
-    /// @brief Get a mutable reference to the data
-    T &data() { return _data; }
-    /// @brief Get a constant reference to the data
-    const T &dataConst() const { return _data; }
     /// @brief Get the status as a constant reference
     const CommandQueueTypes::Status &status() const {
         _Status.commandsQueued = _CommandsClaimed.load();
@@ -168,8 +163,6 @@ class CommandQueue {
     inline static CommandQueueTypes::Status _Status = {
         0
     };
-    /// @brief The data stored in the command
-    T _data;
     inline static bool _CommandsReady = false;
 
     bool addCommandIfNotFull() {

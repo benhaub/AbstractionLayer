@@ -3,6 +3,7 @@
 #include "OperatingSystemModule.hpp"
 
 EventQueue::EventQueue() {
+    _ownerThreadId = OperatingSystemTypes::NullId;
     //If the optimizations are disabled, the thread is not known to the OperatingSystem. It only knows about threads that it explicitely creates.
     //e.g. You create an event queue in main.cpp. This thread is not known to the OperatingSystem.
     _addEventOptimizationsEnabled = (ErrorType::Success == OperatingSystem::Instance().currentThreadId(_ownerThreadId));
@@ -10,10 +11,15 @@ EventQueue::EventQueue() {
 
 ErrorType EventQueue::addEvent(Event &event) {
     Id currentThreadId = 0;
-    ErrorType error = ErrorType::Failure;
-    OperatingSystem::Instance().currentThreadId(currentThreadId);
+    ErrorType error = OperatingSystem::Instance().currentThreadId(currentThreadId);
 
+    //The event is being run from the same context as the thread that runs the mainLoop so we can skip the queue and run it immediately.
     if (_ownerThreadId == currentThreadId && _addEventOptimizationsEnabled) {
+        error = event.run();
+    }
+    //Neither the caller nor the owner of the event queue are known to the operating system. Queuing would result in the event waiting in the queue forever
+    //and the caller can not be blocked. Run the event immediately.
+    else if (ErrorType::NoData == error && OperatingSystemTypes::NullId == _ownerThreadId) {
         error = event.run();
     }
     else if (addEventIfNotFull()) {

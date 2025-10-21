@@ -28,10 +28,11 @@
  */
 namespace OperatingSystemTypes {
 
-    constexpr char MaxThreadNameLength = 16;       ///< The maximum length of a thread name
-    constexpr char MaxSemaphoreNameLength = 16;    ///< The maximum length of a semaphore name
-    constexpr char MaxQueueNameLength = 16;        ///< The maximum length of a queue name
-    constexpr char MaxMemoryRegionNameLength = 16; ///< The maximum length of a memory region name
+    constexpr Bytes MaxThreadNameLength = 16;       ///< The maximum length of a thread name
+    constexpr Bytes MaxSemaphoreNameLength = 16;    ///< The maximum length of a semaphore name
+    constexpr Bytes MaxQueueNameLength = 16;        ///< The maximum length of a queue name
+    constexpr Bytes MaxMemoryRegionNameLength = 16; ///< The maximum length of a memory region name
+    constexpr Id NullId = 0;                        ///< The null id that will never be used to identify a thread.
 
     /**
      * @enum Priority
@@ -213,9 +214,9 @@ class OperatingSystemAbstraction {
      *          it is not able to delete threads directly since it's not possible to tell when it is safe to delete a thread. Instead, it marks the thread as deleted
      *          so that the main application can check if it's been deleted and then delete the thread when it's safe to do so.
      * @param[in] name The name of the thread.
-     * @returns ErrorType::Success if the thread has been not deleted.
+     * @returns ErrorType::Success if the thread has been deleted.
      * @returns ErrorType::NotImplemented if isDeleted is not implemented.
-     * @returns ErrorType::NoData if no thread with the name given is deleted.
+     * @returns ErrorType::Negative if the thread has not been deleted.
     */
     virtual ErrorType isDeleted(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) = 0;
     /**

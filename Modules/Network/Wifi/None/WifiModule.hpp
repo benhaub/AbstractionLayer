@@ -11,7 +11,9 @@
 class Wifi final : public WifiAbstraction {
 
     public:
-    Wifi() : WifiAbstraction() {}
+    Wifi() : WifiAbstraction() {
+        NetworkAbstraction::_status.technology = NetworkTypes::Technology::Unknown;
+    }
 
     ErrorType init() override;
     ErrorType networkUp() override;

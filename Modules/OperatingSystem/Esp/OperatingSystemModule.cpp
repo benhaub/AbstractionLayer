@@ -67,7 +67,7 @@ ErrorType OperatingSystem::startScheduler() {
 
 ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority priority, const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
     ErrorType error = ErrorType::LimitReached;
-    static Id nextThreadId = 1;
+    static Id nextThreadId = OperatingSystemTypes::NullId + 1;
 
     //On ESP, the start function is called before xTaskCreate returns so we have to make sure
     //that the details of thread are properly saved before the thread code runs. For example, if a thread calls currentThreadId,
@@ -179,12 +179,20 @@ ErrorType OperatingSystem::currentThreadId(Id &thread) const {
 }
 
 ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
-    auto it = std::find_if(threads.begin(), threads.end(), [](const auto &thread) { return thread.status == OperatingSystemTypes::ThreadStatus::Terminated; });
-    if (threads.end() == it) {
-        return ErrorType::Success;
+    Id thread;
+
+    if (ErrorType::NoData != threadId(name, thread)) {
+        auto it = std::find_if(threads.begin(), threads.end(), [&](const auto &thread) {
+            return thread.status == OperatingSystemTypes::ThreadStatus::Terminated &&
+            thread.name == name; 
+        });
+
+        if (threads.end() == it) {
+            return ErrorType::Negative;
+        }
     }
 
-    return ErrorType::NoData;
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
