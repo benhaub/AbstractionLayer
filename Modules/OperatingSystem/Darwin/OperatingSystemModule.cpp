@@ -123,6 +123,7 @@ ErrorType OperatingSystem::currentThreadId(Id &thread) const {
     pthread_t task = pthread_self();
     auto it = std::find_if(threads.begin(), threads.end(), [task](const auto &thread) { return thread.posixThreadId == task; });
     if (threads.end() == it) {
+        thread = OperatingSystemTypes::NullId;
         return ErrorType::NoData;
     }
 
@@ -523,32 +524,35 @@ ErrorType OperatingSystem::block() {
     Id task;
     ErrorType error = currentThreadId(task);
 
-    for (auto &threadStruct : threads) {
+    if (OperatingSystemTypes::NullId != task) {
 
-        if (threadStruct.threadId == task) {
-            pthread_mutex_lock(&(threadStruct.mutex));
-                
-            if (threadStruct.blockCount > -1) {
-                threadStruct.blockCount++;
-                threadStruct.status = OperatingSystemTypes::ThreadStatus::Blocked;
+        for (auto &threadStruct : threads) {
 
-                //pthread_cond_wait will unlock the mutex and lock it again when it returns.
-                //The loop is only to protect against spurious wakeups. It's not common to return before the task has been unblocked.
-                while (threadStruct.status == OperatingSystemTypes::ThreadStatus::Blocked) {
-                    assert(ErrorType::Success == (error = fromPlatformError(pthread_cond_wait(&threadStruct.conditionVariable, &(threadStruct.mutex)))));
+            if (threadStruct.threadId == task) {
+                pthread_mutex_lock(&(threadStruct.mutex));
+                    
+                if (threadStruct.blockCount > -1) {
+                    threadStruct.blockCount++;
+                    threadStruct.status = OperatingSystemTypes::ThreadStatus::Blocked;
+
+                    //pthread_cond_wait will unlock the mutex and lock it again when it returns.
+                    //The loop is only to protect against spurious wakeups. It's not common to return before the task has been unblocked.
+                    while (threadStruct.status == OperatingSystemTypes::ThreadStatus::Blocked) {
+                        assert(ErrorType::Success == (error = fromPlatformError(pthread_cond_wait(&threadStruct.conditionVariable, &(threadStruct.mutex)))));
+                    }
                 }
+                else {
+                    error = ErrorType::LimitReached;
+                    threadStruct.blockCount = 0;
+                }
+
+                pthread_mutex_unlock(&(threadStruct.mutex));
+                
+                break;
             }
             else {
-                error = ErrorType::LimitReached;
-                threadStruct.blockCount = 0;
+                error = ErrorType::NoData;
             }
-
-            pthread_mutex_unlock(&(threadStruct.mutex));
-            
-            break;
-        }
-        else {
-            error = ErrorType::NoData;
         }
     }
 
@@ -558,23 +562,26 @@ ErrorType OperatingSystem::block() {
 ErrorType OperatingSystem::unblock(const Id task) {
     ErrorType error = ErrorType::NoData;
 
-    for (auto &threadStruct : threads) {
+    if (OperatingSystemTypes::NullId != task) {
 
-        if (threadStruct.threadId == task) {
-            pthread_mutex_lock(&(threadStruct.mutex));
-            threadStruct.blockCount--;
+        for (auto &threadStruct : threads) {
 
-            if (threadStruct.status == OperatingSystemTypes::ThreadStatus::Blocked) {
-                threadStruct.status = OperatingSystemTypes::ThreadStatus::Active;
-                assert(ErrorType::Success == fromPlatformError(pthread_cond_signal(&(threadStruct.conditionVariable))));
+            if (threadStruct.threadId == task) {
+                pthread_mutex_lock(&(threadStruct.mutex));
+                threadStruct.blockCount--;
+
+                if (threadStruct.status == OperatingSystemTypes::ThreadStatus::Blocked) {
+                    threadStruct.status = OperatingSystemTypes::ThreadStatus::Active;
+                    assert(ErrorType::Success == fromPlatformError(pthread_cond_signal(&(threadStruct.conditionVariable))));
+                }
+
+                pthread_mutex_unlock(&(threadStruct.mutex));
+                error = ErrorType::Success;
+                break;
             }
-
-            pthread_mutex_unlock(&(threadStruct.mutex));
-            error = ErrorType::Success;
-            break;
-        }
-        else {
-            error = ErrorType::NoData;
+            else {
+                error = ErrorType::NoData;
+            }
         }
     }
 
@@ -597,7 +604,28 @@ void OperatingSystem::callTimerCallback(const dispatch_source_t macOsTimerId) {
 }
 
 ErrorType OperatingSystem::getSystemMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) {
-    return ErrorType::NotAvailable;
+    //The command extracts just the mac address from the output.
+    constexpr char command[] = "sh -c \"networksetup -getmacaddress Wi-Fi | cut -f 3 -d' ' \"";
+    ErrorType error = ErrorType::Failure;
+    
+    FILE* pipe = popen(command, "r");
+    if (nullptr != pipe) {
+        const size_t bytesRead = fread(macAddress.data(), sizeof(uint8_t), macAddress.max_size(), pipe);
+        if (feof(pipe) || bytesRead == macAddress.max_size()) {
+            error = ErrorType::Success;
+            for (size_t i = 0; i < bytesRead; i++) {
+                if (macAddress.at(i) == '\n') {
+                    macAddress.at(i) = '\0';
+                }
+            }
+        }
+        else {
+            pclose(pipe);
+            error = ErrorType::Failure;
+        }
+    }
+
+    return error;
 }
 
 #ifdef __cplusplus

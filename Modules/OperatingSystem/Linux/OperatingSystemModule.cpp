@@ -165,6 +165,7 @@ ErrorType OperatingSystem::currentThreadId(Id &thread) const {
     pthread_t task = pthread_self();
     auto it = std::find_if(threads.begin(), threads.end(), [task](const auto &thread) { return thread.posixThreadId == task; });
     if (threads.end() == it) {
+        thread = OperatingSystemTypes::NullId;
         return ErrorType::NoData;
     }
 
@@ -193,7 +194,7 @@ ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemTypes
 ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
     //The internal name is the name with a leading / to make it a valid semaphore name on POSIX systems.
     //For all other purposes inside this operating system abstraction, the name should be used directly.
-    std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> internalName = {'/'};
+    std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength+1> internalName = {'/'};
     strncat(internalName.data(), name.data(), OperatingSystemTypes::MaxSemaphoreNameLength);
 
     if (internalName.size() > NAME_MAX-4) {
@@ -214,7 +215,7 @@ ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial,
 }
 
 ErrorType OperatingSystem::deleteSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
-    std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> internalName = {'/'};
+    std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength+1> internalName = {'/'};
     strncat(internalName.data(), name.data(), OperatingSystemTypes::MaxSemaphoreNameLength);
 
     if (0 != sem_unlink(internalName.data())) {
@@ -260,7 +261,7 @@ ErrorType OperatingSystem::incrementSemaphore(const std::array<char, OperatingSy
         return ErrorType::NoData;
     }
 
-    std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> internalName = {'/'};
+    std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength+1> internalName = {'/'};
     strncat(internalName.data(), name.data(), OperatingSystemTypes::MaxSemaphoreNameLength);
 
     if (0 != sem_post(semaphores[name])) {
@@ -621,32 +622,35 @@ ErrorType OperatingSystem::block() {
     Id task;
     ErrorType error = currentThreadId(task);
 
-    for (auto &threadStruct : threads) {
+    if (OperatingSystemTypes::NullId != task) {
 
-        if (threadStruct.threadId == task) {
-            pthread_mutex_lock(&(threadStruct.mutex));
-                
-            if (threadStruct.blockCount > -1) {
-                threadStruct.blockCount++;
-                threadStruct.status = OperatingSystemTypes::ThreadStatus::Blocked;
+        for (auto &threadStruct : threads) {
 
-                //pthread_cond_wait will unlock the mutex and lock it again when it returns.
-                //The loop is only to protect against spurious wakeups. It's not common to return before the task has been unblocked.
-                while (threadStruct.status == OperatingSystemTypes::ThreadStatus::Blocked) {
-                    assert(ErrorType::Success == (error = fromPlatformError(pthread_cond_wait(&threadStruct.conditionVariable, &(threadStruct.mutex)))));
+            if (threadStruct.threadId == task) {
+                pthread_mutex_lock(&(threadStruct.mutex));
+                    
+                if (threadStruct.blockCount > -1) {
+                    threadStruct.blockCount++;
+                    threadStruct.status = OperatingSystemTypes::ThreadStatus::Blocked;
+
+                    //pthread_cond_wait will unlock the mutex and lock it again when it returns.
+                    //The loop is only to protect against spurious wakeups. It's not common to return before the task has been unblocked.
+                    while (threadStruct.status == OperatingSystemTypes::ThreadStatus::Blocked) {
+                        assert(ErrorType::Success == (error = fromPlatformError(pthread_cond_wait(&threadStruct.conditionVariable, &(threadStruct.mutex)))));
+                    }
                 }
+                else {
+                    error = ErrorType::LimitReached;
+                    threadStruct.blockCount = 0;
+                }
+
+                pthread_mutex_unlock(&(threadStruct.mutex));
+                
+                break;
             }
             else {
-                error = ErrorType::LimitReached;
-                threadStruct.blockCount = 0;
+                error = ErrorType::NoData;
             }
-
-            pthread_mutex_unlock(&(threadStruct.mutex));
-            
-            break;
-        }
-        else {
-            error = ErrorType::NoData;
         }
     }
 
@@ -656,23 +660,26 @@ ErrorType OperatingSystem::block() {
 ErrorType OperatingSystem::unblock(const Id task) {
     ErrorType error = ErrorType::NoData;
 
-    for (auto &threadStruct : threads) {
+    if (OperatingSystemTypes::NullId != task) {
 
-        if (threadStruct.threadId == task) {
-            pthread_mutex_lock(&(threadStruct.mutex));
-            threadStruct.blockCount--;
+        for (auto &threadStruct : threads) {
 
-            if (threadStruct.status == OperatingSystemTypes::ThreadStatus::Blocked) {
-                threadStruct.status = OperatingSystemTypes::ThreadStatus::Active;
-                assert(ErrorType::Success == fromPlatformError(pthread_cond_signal(&(threadStruct.conditionVariable))));
+            if (threadStruct.threadId == task) {
+                pthread_mutex_lock(&(threadStruct.mutex));
+                threadStruct.blockCount--;
+
+                if (threadStruct.status == OperatingSystemTypes::ThreadStatus::Blocked) {
+                    threadStruct.status = OperatingSystemTypes::ThreadStatus::Active;
+                    assert(ErrorType::Success == fromPlatformError(pthread_cond_signal(&(threadStruct.conditionVariable))));
+                }
+
+                pthread_mutex_unlock(&(threadStruct.mutex));
+                error = ErrorType::Success;
+                break;
             }
-
-            pthread_mutex_unlock(&(threadStruct.mutex));
-            error = ErrorType::Success;
-            break;
-        }
-        else {
-            error = ErrorType::NoData;
+            else {
+                error = ErrorType::NoData;
+            }
         }
     }
 

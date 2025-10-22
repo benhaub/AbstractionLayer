@@ -206,6 +206,7 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::NotImplemented if threadId is not implemented.
      * @returns ErrorType::NoData if no thread with the name given has been created.
      * @returns ErrorType::Failure otherwise.
+     * @post If the id is not found, id is set to OperatingSystemTypes::NullId.
     */
     virtual ErrorType currentThreadId(Id &id) const = 0;
     /**
