@@ -50,36 +50,48 @@ class Uart : public UartAbstraction {
             case PeripheralNumber::Zero:
                 assert(sizeof("/dev/cu.usbserial-10") <= _devicePath.size());
                 strncpy(_devicePath.data(), "/dev/cu.usbserial-10", _devicePath.size());
+                break;
             case PeripheralNumber::One:
                 assert(sizeof("/dev/tty.usbserial-10") <= _devicePath.size());
                 strncpy(_devicePath.data(), "/dev/tty.usbserial-10", _devicePath.size());
+                break;
             case PeripheralNumber::Two:
                 assert(sizeof("/dev/tty.usbmodem-101") <= _devicePath.size());
                 strncpy(_devicePath.data(), "/dev/tty.usbmodem-101", _devicePath.size());
+                break;
             case PeripheralNumber::Three:
                 assert(sizeof("/dev/tty.usbserial-1110") <= _devicePath.size());
                 strncpy(_devicePath.data(), "/dev/tty.usbserial-1110", _devicePath.size());
+                break;
             case PeripheralNumber::Four:
                 assert(sizeof("/dev/ttyUSB0") <= _devicePath.size());
                 strncpy(_devicePath.data(), "/dev/ttyUSB0", _devicePath.size());
+                break;
             case PeripheralNumber::Five:
                 assert(sizeof("/dev/ttyUSB1") <= _devicePath.size());
                 strncpy(_devicePath.data(), "/dev/ttyUSB1", _devicePath.size());
+                break;
             case PeripheralNumber::Six:
                 assert(sizeof("/dev/ttyUSB2") <= _devicePath.size());
                 strncpy(_devicePath.data(), "/dev/ttyUSB2", _devicePath.size());
+                break;
             case PeripheralNumber::Seven:
                 assert(sizeof("/dev/ttyACM0") <= _devicePath.size());
                 strncpy(_devicePath.data(), "/dev/ttyACM0", _devicePath.size());
+                break;
             case PeripheralNumber::Eight:
                 assert(sizeof("/dev/ttyACM1") <= _devicePath.size());
                 strncpy(_devicePath.data(), "/dev/ttyACM1", _devicePath.size());
+                break;
             case PeripheralNumber::Nine:
                 assert(sizeof("/dev/ttyACM2") <= _devicePath.size());
                 strncpy(_devicePath.data(), "/dev/ttyACM2", _devicePath.size());
+                break;
             default:
                 return _devicePath;
         }
+
+        return _devicePath;
     }
 
     /**

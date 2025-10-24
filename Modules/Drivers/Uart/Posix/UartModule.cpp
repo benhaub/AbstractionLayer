@@ -8,7 +8,7 @@ ErrorType Uart::init() {
 
     _devicePath = toDevicePath(uartParams().hardwareConfig.peripheralNumber);
 
-    if (0 > strlen(_devicePath.data())) {
+    if (strlen(_devicePath.data()) > 0) {
         _fileDescriptor = open(_devicePath.data(), O_RDWR | O_NONBLOCK);
 
         if (-1 != _fileDescriptor) {
