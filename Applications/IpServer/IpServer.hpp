@@ -165,7 +165,7 @@ class IpServer {
     /// @copydoc sendBlocking(const std::string &data, const Milliseconds timeout, const Socket socket)
     template <typename Data>
     ErrorType sendBlockingImplementation(const Data &data, const Milliseconds timeout, const Socket socket) {
-        bool sent = false;
+        volatile bool sent = false;
         ErrorType callbackError = ErrorType::Failure;
         Id thread;
         OperatingSystem::Instance().currentThreadId(thread);
@@ -185,16 +185,14 @@ class IpServer {
             return error;
         }
 
-        if (!sent && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-            OperatingSystem::Instance().block();
-        }
+        while (!sent && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
         return callbackError;
     }
     /// @copydoc receiveBlocking(std::string &buffer, const Milliseconds timeout, Socket &socket)
     template <typename Buffer>
     ErrorType receiveBlockingImplementation(Buffer &buffer, const Milliseconds timeout, Socket &socket) {
-        bool received = false;
+        volatile bool received = false;
         ErrorType callbackError = ErrorType::NoData;
         Id thread;
         OperatingSystem::Instance().currentThreadId(thread);
@@ -227,9 +225,7 @@ class IpServer {
             return error;
         }
 
-        if (!received && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-            error = OperatingSystem::Instance().block();
-        }
+        while (!received && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
         return callbackError;
     }

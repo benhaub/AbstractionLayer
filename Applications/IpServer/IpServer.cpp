@@ -2,7 +2,7 @@
 #include "IpServer.hpp"
 
 ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Version version, const Port port) {
-    bool doneListening = false;
+    volatile bool doneListening = false;
     ErrorType callbackError = ErrorType::Failure;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -29,15 +29,13 @@ ErrorType IpServer::listenTo(const IpTypes::Protocol protocol, const IpTypes::Ve
         return ErrorType::Failure;
     }
 
-    if (!doneListening && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!doneListening && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout) {
-    bool acceptConnectionDone = false;
+    volatile bool acceptConnectionDone = false;
     ErrorType callbackError = ErrorType::Failure;
     socket = -1;
     Id thread;
@@ -62,15 +60,13 @@ ErrorType IpServer::acceptConnection(Socket &socket, const Milliseconds timeout)
         return error;
     }
 
-    if (!acceptConnectionDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!acceptConnectionDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType IpServer::closeConnection(const Socket socket) {
-    bool closeConnectionDone = false;
+    volatile bool closeConnectionDone = false;
     ErrorType callbackError = ErrorType::Failure;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -102,9 +98,7 @@ ErrorType IpServer::closeConnection(const Socket socket) {
         return error;
     }
 
-    if (!closeConnectionDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!closeConnectionDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }

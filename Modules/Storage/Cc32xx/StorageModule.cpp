@@ -29,7 +29,7 @@ ErrorType Storage::init() {
 } 
 
 ErrorType Storage::deinit() {
-    bool deinitializationDone = false;
+    volatile bool deinitializationDone = false;
     ErrorType callbackError = ErrorType::Failure;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -51,9 +51,7 @@ ErrorType Storage::deinit() {
         return error;
     }
 
-    if (!deinitializationDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!deinitializationDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }

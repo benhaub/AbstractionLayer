@@ -7,7 +7,7 @@ namespace {
 }
 
 ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, const Milliseconds timeout) {
-    bool doneConnecting = false;
+    volatile bool doneConnecting = false;
     ErrorType callbackError = ErrorType::Failure;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -30,9 +30,7 @@ ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const 
         return error;
     }
 
-    if (!doneConnecting && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!doneConnecting && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }

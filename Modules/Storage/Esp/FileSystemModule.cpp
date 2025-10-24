@@ -5,7 +5,7 @@
 #include "KeyValue.hpp"
 
 ErrorType FileSystem::mount() {
-    bool mountDone = false;
+    volatile bool mountDone = false;
     ErrorType callbackError = ErrorType::NotSupported;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -39,15 +39,13 @@ ErrorType FileSystem::mount() {
         return error;
     }
 
-    if (!mountDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!mountDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType FileSystem::unmount() {
-    bool unmountDone = false;
+    volatile bool unmountDone = false;
     ErrorType callbackError = ErrorType::NotSupported;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -119,15 +117,13 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
         return error;
     }
 
-    if (!maxStorageQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!maxStorageQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType FileSystem::availablePartition(Bytes &size) {
-    bool availableStorageQueryDone = false;
+    volatile bool availableStorageQueryDone = false;
     ErrorType callbackError = ErrorType::NotSupported;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -157,15 +153,13 @@ ErrorType FileSystem::availablePartition(Bytes &size) {
         return error;
     }   
 
-    if (!availableStorageQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!availableStorageQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType FileSystem::erasePartition() {
-    bool erasePartitionDone = false;
+    volatile bool erasePartitionDone = false;
     ErrorType callbackError = ErrorType::NotSupported;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -195,16 +189,14 @@ ErrorType FileSystem::erasePartition() {
         return error;
     }
 
-    if (!erasePartitionDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!erasePartitionDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
     assert(path.size() > 0);
-    bool openDone = false;
+    volatile bool openDone = false;
     ErrorType callbackError = ErrorType::NotSupported;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -244,15 +236,13 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
         return error;
     }
 
-    if (!openDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!openDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType FileSystem::close(FileSystemTypes::File &file) {
-    bool closeDone = false;
+    volatile bool closeDone = false;
     ErrorType callbackError = ErrorType::NotSupported;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -286,15 +276,13 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
         return error;
     }
 
-    if (!closeDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!closeDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType FileSystem::remove(FileSystemTypes::File &file) {
-    bool removeDone = false;
+    volatile bool removeDone = false;
     ErrorType callbackError = ErrorType::NotSupported;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -325,15 +313,13 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
         return error;
     }
 
-    if (!removeDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!removeDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buffer) {
-    bool readDone = false;
+    volatile bool readDone = false;
     ErrorType callbackError = ErrorType::NotSupported;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -363,9 +349,7 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
         return error;
     }
 
-    if (!readDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!readDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
@@ -383,7 +367,7 @@ ErrorType FileSystem::readNonBlocking(FileSystemTypes::File &file, std::shared_p
 }
 
 ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_view data) {
-    bool writeDone = false;
+    volatile bool writeDone = false;
     ErrorType callbackError = ErrorType::NotSupported;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -413,9 +397,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_vie
         return error;
     }
 
-    if (!writeDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!writeDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
@@ -432,7 +414,7 @@ ErrorType FileSystem::writeNonBlocking(FileSystemTypes::File &file, const std::s
 }
 
 ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
-    bool syncDone = false;
+    volatile bool syncDone = false;
     ErrorType callbackError = ErrorType::NotSupported;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -462,15 +444,13 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
         return error;
     }
 
-    if (!syncDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!syncDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType FileSystem::size(FileSystemTypes::File &file) {
-    bool sizeQueryDone = false;
+    volatile bool sizeQueryDone = false;
     ErrorType callbackError = ErrorType::NotSupported;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -500,9 +480,7 @@ ErrorType FileSystem::size(FileSystemTypes::File &file) {
         return error;
     }
 
-    if (!sizeQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!sizeQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }

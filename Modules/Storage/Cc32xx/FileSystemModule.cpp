@@ -14,7 +14,7 @@ ErrorType FileSystem::unmount() {
 }
 
 ErrorType FileSystem::maxPartitionSize(Bytes &size) {
-    bool maxStorageQueryDone = false;
+    volatile bool maxStorageQueryDone = false;
     ErrorType callbackError = ErrorType::Failure;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -41,15 +41,13 @@ ErrorType FileSystem::maxPartitionSize(Bytes &size) {
         return error;
     }
 
-    if (!maxStorageQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!maxStorageQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType FileSystem::availablePartition(Bytes &size) {
-    bool availableStorageQueryDone = false;
+    volatile bool availableStorageQueryDone = false;
     ErrorType callbackError = ErrorType::Failure;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
@@ -89,7 +87,7 @@ ErrorType FileSystem::erasePartition(){
 
 ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
-    bool openDone = false;
+    volatile bool openDone = false;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
     assert(path.size() > 0);
@@ -140,16 +138,14 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
         return error;
     }
 
-    if (!openDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!openDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType FileSystem::close(FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
-    bool closeDone = false;
+    volatile bool closeDone = false;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
 
@@ -181,16 +177,14 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
         return error;
     }
 
-    if (!closeDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!closeDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType FileSystem::remove(FileSystemTypes::File &file) {
     ErrorType callbackError = ErrorType::Failure;
-    bool removeDone = false;
+    volatile bool removeDone = false;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
 
@@ -215,16 +209,14 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
         return error;
     }
 
-    if (!removeDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!removeDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
 
 ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buffer) {
     ErrorType callbackError = ErrorType::Failure;
-    bool readDone = false;
+    volatile bool readDone = false;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
 
@@ -251,9 +243,7 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
         return error;
     }
 
-    if (!readDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!readDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
@@ -272,7 +262,7 @@ ErrorType FileSystem::readNonBlocking(FileSystemTypes::File &file, std::shared_p
 
 ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_view data) {
     ErrorType callbackError = ErrorType::Failure;
-    bool writeDone = false;
+    volatile bool writeDone = false;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
 
@@ -300,9 +290,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_vie
         return error;
     }
 
-    if (!writeDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        error = OperatingSystem::Instance().block();
-    }
+    while (!writeDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return error;
 }

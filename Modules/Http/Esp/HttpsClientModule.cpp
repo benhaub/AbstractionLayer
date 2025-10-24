@@ -10,7 +10,7 @@
 ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, const Milliseconds timeout) {
     assert(nullptr != _network);
     ErrorType callbackError = ErrorType::Failure;
-    bool doneConnecting = false;
+    volatile bool doneConnecting = false;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
 
@@ -74,9 +74,7 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
         return error;
     }
 
-    if (!doneConnecting && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!doneConnecting && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
@@ -86,7 +84,7 @@ ErrorType HttpsClient::disconnect() {
 
     if (_connected) {
         ErrorType callbackError = ErrorType::Failure;
-        bool doneDisconnecting = false;
+        volatile bool doneDisconnecting = false;
         Id thread;
         OperatingSystem::Instance().currentThreadId(thread);
 
@@ -110,9 +108,7 @@ ErrorType HttpsClient::disconnect() {
             return error;
         }
 
-        if (!doneDisconnecting && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-            OperatingSystem::Instance().block();
-        }
+        while (!doneDisconnecting && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
         return callbackError;
     }
@@ -124,7 +120,7 @@ ErrorType HttpsClient::disconnect() {
 ErrorType HttpsClient::sendBlocking(const HttpTypes::Request &request, const Milliseconds timeout) {
     assert(nullptr != _network);
     ErrorType callbackError = ErrorType::Failure;;
-    bool doneSending = false;
+    volatile bool doneSending = false;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
 
@@ -181,9 +177,7 @@ ErrorType HttpsClient::sendBlocking(const HttpTypes::Request &request, const Mil
         return error;
     }
 
-    if (!doneSending && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!doneSending && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }
@@ -194,7 +188,7 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
     assert(messageBodySize > 0);
     ErrorType callbackError = ErrorType::Success;
     Bytes read = 0;
-    bool doneReceiving = false;
+    volatile bool doneReceiving = false;
     Id thread;
     OperatingSystem::Instance().currentThreadId(thread);
 
@@ -284,9 +278,7 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
         return error;
     }
 
-    if (!doneReceiving && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-        OperatingSystem::Instance().block();
-    }
+    while (!doneReceiving && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
     return callbackError;
 }

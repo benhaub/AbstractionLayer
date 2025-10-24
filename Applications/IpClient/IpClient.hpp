@@ -185,7 +185,7 @@ class IpClient {
     /// @copydoc sendBlocking(const std::string &data, const Milliseconds timeout)
     template <typename Data>
     ErrorType sendBlockingImplementation(const Data &data, const Milliseconds timeout) {
-        bool doneSending = false;
+        volatile bool doneSending = false;
         ErrorType callbackError = ErrorType::Failure;
         Id thread;
         OperatingSystem::Instance().currentThreadId(thread);
@@ -204,16 +204,14 @@ class IpClient {
             return error;
         }
 
-        if (!doneSending && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-            OperatingSystem::Instance().block();
-        }
+        while (!doneSending && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
         return callbackError;
     }
     /// @copydoc ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout)
     template <typename Buffer>
     ErrorType receiveBlockingImplementation(Buffer &buffer, const Milliseconds timeout) {
-        bool doneReceiving = false;
+        volatile bool doneReceiving = false;
         ErrorType callbackError = ErrorType::Failure;
         Id thread;
         OperatingSystem::Instance().currentThreadId(thread);
@@ -233,9 +231,7 @@ class IpClient {
             return error;
         }
 
-        if (!doneReceiving && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
-            OperatingSystem::Instance().block();
-        }
+        while (!doneReceiving && ErrorType::LimitReached == OperatingSystem::Instance().block());
 
         return callbackError;
     }
