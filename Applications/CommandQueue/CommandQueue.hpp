@@ -13,7 +13,6 @@
 #include "Math.hpp"
 //C++
 #include <atomic>
-#include <cassert>
 
 /**
  * @namespace CommandQueueTypes
@@ -123,7 +122,7 @@ class CommandQueue {
      * @post The returned command is valid only if error is ErrorType::Success
      * @post error == ErrorType::NoData if there are no commands in the queue to peak. The data returns will be whatever is in the current index.
      */
-    const T &peakNextInQueue(ErrorType &error) {
+    const T &peakNextInQueue(ErrorType &error) const {
         const Count currentCommandQueueIndexFirst = _CurrentCommandQueueIndexFirst.load();
         if (currentCommandQueueIndexFirst != _CurrentCommandQueueIndexLast.load()) {
             error = ErrorType::Success;
@@ -140,7 +139,7 @@ class CommandQueue {
      * @returns true if there are commands in the queue
      * @returns false otherwise.
      */
-    bool commandsReady() {
+    bool commandsReady() const {
         return _CurrentCommandQueueIndexFirst.load() != _CurrentCommandQueueIndexLast.load();
     }
 
