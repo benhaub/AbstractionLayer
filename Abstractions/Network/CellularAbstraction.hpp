@@ -31,7 +31,7 @@ namespace CellularTypes {
         UtranHsupa,       ///< Universal Terrestrial Radio Access Network - High-Speed Uplink Packet Access (3G)
         UtranHsdpaHsupa,  ///< Universal Terrestrial Radio Access Network - High-Speed Downlink and Uplink Packet Access (3G)
         Eutran,           ///< Evolved Universal Terrestrial Radio Access Network (4G)
-        EutranHsupaPlus,  ///< Evolved Universal Terrestrial Radio Access Network - High-Speed Uplink Packet Access Plus (4G)
+        UtranHsupaPlus,   ///< Universal Terrestrial Radio Access Network - High-Speed Uplink Packet Access Plus (4G)
         UtranAndEutran    ///< Universal Terrestrial Radio Access Network and Evolved Universal Terrestrial Radio Access Network (3G/4G)
     };
 
