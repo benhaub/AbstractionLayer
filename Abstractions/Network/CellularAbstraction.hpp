@@ -119,7 +119,7 @@ class CellularAbstraction : public NetworkAbstraction {
 
     void printStatus() {
         status();
-        PLT_LOGI(TAG, "<CellularStatus> <Carrier:%s, isUp:%d, Signal Strength (dBm):%d> <Omit, Pie, Line>",
+        PLT_LOGI(TAG, "<CellularStatus> <Carrier:%s, isUp:%d, Signal Strength (dBm):%d> <Pie, Pie, Line>",
                  _status.carrier->c_str(),
                  NetworkAbstraction::_status.isUp,
                  _status.signalStrength);
