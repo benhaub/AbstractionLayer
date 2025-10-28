@@ -23,14 +23,16 @@ namespace CellularTypes {
     */
     enum class RadioAccessTechnology : uint8_t {
         Unknown = 0,      ///< Unknown
-        Gsm,              ///< Global System for Mobile
-        Cdma,             ///< Code-devision multiple access
-        Lte,              ///< Long Term Evolution (4G)
-        NbIoT,            ///< Narrowband IoT
-        GsmAndCdma,       ///< Global System for Mobile and Code-devision multiple access
-        GsmAndLte,        ///< Global System for Mobile and Long Term Evolution (3G and 4G)
-        CdmaAndLte,       ///< Code-devision multiple access and Long Term Evolution
-        GsmAndCdmaAndLte  ///< Global System for Mobile and Code-devision multiple access and Long Term Evolution
+        Gsm,              ///< Global System for Mobile Commmunication (2G)
+        GsmCompact,       ///< Global System for Mobile Commmunication Compact (2G)
+        Utran,            ///< Universal Terrestrial Radio Access Network (3G)
+        GsmEgprs,         ///< Global System for Mobile Communications - Enhanced Packet Radio Service
+        UtranHsdpa,       ///< Universal Terrestrial Radio Access Network - High-Speed Downlink Packet Access (3G)
+        UtranHsupa,       ///< Universal Terrestrial Radio Access Network - High-Speed Uplink Packet Access (3G)
+        UtranHsdpaHsupa,  ///< Universal Terrestrial Radio Access Network - High-Speed Downlink and Uplink Packet Access (3G)
+        Eutran,           ///< Evolved Universal Terrestrial Radio Access Network (4G)
+        EutranHsupaPlus,  ///< Evolved Universal Terrestrial Radio Access Network - High-Speed Uplink Packet Access Plus (4G)
+        UtranAndEutran    ///< Universal Terrestrial Radio Access Network and Evolved Universal Terrestrial Radio Access Network (3G/4G)
     };
 
     /**
