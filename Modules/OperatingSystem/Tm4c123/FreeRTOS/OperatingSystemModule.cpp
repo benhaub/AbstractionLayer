@@ -516,9 +516,8 @@ ErrorType OperatingSystem::block() {
                 if (threadHasBeenPreviouslyUnblocked) {
                     error = ErrorType::LimitReached;
                 }
-                else {
-                    threadStruct.status = OperatingSystemTypes::ThreadStatus::Blocked;
-                }
+
+                threadStruct.status = OperatingSystemTypes::ThreadStatus::Active;
 
                 break;
             }
