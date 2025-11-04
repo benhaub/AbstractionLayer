@@ -488,6 +488,7 @@ ErrorType OperatingSystem::block() {
                 constexpr BaseType_t clearCountOnReturn = pdTRUE;
                 constexpr BaseType_t waitForever = portMAX_DELAY;
 
+                threadStruct.status = OperatingSystemTypes::ThreadStatus::Blocked;
 
                 const BaseType_t numberOfTimsPerviouslyUnblocked = ulTaskNotifyTake(clearCountOnReturn, waitForever);
                 const bool threadHasBeenPreviouslyUnblocked = numberOfTimsPerviouslyUnblocked >= 1;

@@ -77,7 +77,8 @@ ErrorType IpClient::sendNonBlocking(StaticString::Container &data, const Millise
         };
 
         EventQueue::Event event = EventQueue::Event(tx);
-        [[unlikely]] if (ErrorType::Success != (error = network().addEvent(event))) {
+
+        if (ErrorType::Success != (error = network().addEvent(event))) {
             sendReceivePool.deallocate(poolBuffer);
         }
     }
@@ -116,7 +117,8 @@ ErrorType IpClient::receiveNonBlocking(StaticString::Container &buffer, const Mi
         };
 
         EventQueue::Event event = EventQueue::Event(rx);
-       [[unlikely]] if (ErrorType::Success != (error = network().addEvent(event))) {
+
+        if (ErrorType::Success != (error = network().addEvent(event))) {
             sendReceivePool.deallocate(poolBuffer);
         }
     }
