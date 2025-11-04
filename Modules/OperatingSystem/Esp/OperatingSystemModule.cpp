@@ -99,7 +99,6 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     threads.at(threadIndex).threadId = nextThreadId;
     threads.at(threadIndex).name = name;
     threads.at(threadIndex).maxStackSize = stackSize;
-    threads.at(threadIndex).blockCounter.store(0);
     threads.at(threadIndex).status = OperatingSystemTypes::ThreadStatus::Active;
 
     TaskHandle_t thread;
@@ -486,15 +485,16 @@ ErrorType OperatingSystem::block() {
         for (auto &threadStruct : threads) {
 
             if (threadStruct.threadId == task) {
+                constexpr BaseType_t clearCountOnReturn = pdTRUE;
+                constexpr BaseType_t waitForever = portMAX_DELAY;
+                constexpr bool weWereOnlyBlockedOncePreviously = 1;
 
-                if (threadStruct.blockCounter.fetch_add(1, std::memory_order_relaxed) > -1) {
-                    threadStruct.status = OperatingSystemTypes::ThreadStatus::Blocked;
-                    vTaskSuspend(threadStruct.espThreadId);
-                    error = ErrorType::Success;
+                threadStruct.status = OperatingSystemTypes::ThreadStatus::Blocked;
+                if (ulTaskNotifyTake(clearCountOnReturn, waitForever) == weWereOnlyBlockedOncePreviously) {
+                    threadStruct.status = OperatingSystemTypes::ThreadStatus::Active;
                 }
                 else {
                     error = ErrorType::LimitReached;
-                    threadStruct.blockCounter.store(0);
                 }
 
                 break;
@@ -513,9 +513,15 @@ ErrorType OperatingSystem::unblock(const Id task) {
         for (auto &threadStruct : threads) {
 
             if (threadStruct.threadId == task) {
-                threadStruct.blockCounter.fetch_sub(1, std::memory_order_relaxed);
-                vTaskResume(threadStruct.espThreadId);
-                threadStruct.status = OperatingSystemTypes::ThreadStatus::Active;
+
+                if (Processor::Instance().isInterruptContext() == ErrorType::Success) {
+                    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+                    vTaskNotifyGiveFromISR(threadStruct.espThreadId, &xHigherPriorityTaskWoken);
+                }
+                else {
+                    xTaskNotifyGive(threadStruct.espThreadId);
+                }
+
                 error = ErrorType::Success;
 
                 break;

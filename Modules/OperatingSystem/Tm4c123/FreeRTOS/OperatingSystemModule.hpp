@@ -92,7 +92,6 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
         Id threadId;
         Bytes maxStackSize;
         OperatingSystemTypes::ThreadStatus status;
-        std::atomic<int> blockCounter;
     };
 
     struct Timer {

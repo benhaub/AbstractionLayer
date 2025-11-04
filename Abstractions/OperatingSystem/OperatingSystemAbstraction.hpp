@@ -450,6 +450,7 @@ class OperatingSystemAbstraction {
     virtual ErrorType enableAllInterrupts() = 0;
     /**
      * @brief Block the task who calls this function.
+     * @details Thread safe but not interrupt safe. Should only be called by the task who wants to block itself.
      * @returns ErrorType::Success if the task was blocked
      * @returns ErrorType::Failure if the task was not blocked
      * @returns ErrorType::LimitReached If the task was previously unblocked before it called block.
@@ -460,6 +461,7 @@ class OperatingSystemAbstraction {
     virtual ErrorType block() = 0;
     /**
      * @brief Unblock a task
+     * @details Interrupt and thread safe.
      * @param task The Id of the task to unblock
      * @returns ErrorType::Success if the task was unblocked or not blocked previously
      * @returns ErrorType::NoData if the task ID was not found.

@@ -82,7 +82,6 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
         std::array<char, OperatingSystemTypes::MaxThreadNameLength> name;
         Id threadId;
         Bytes maxStackSize;
-        std::atomic<int> blockCounter;
         OperatingSystemTypes::ThreadStatus status;
     };
 
