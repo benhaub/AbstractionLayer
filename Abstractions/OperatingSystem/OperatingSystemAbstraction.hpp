@@ -454,9 +454,13 @@ class OperatingSystemAbstraction {
      * @returns ErrorType::Success if the task was blocked
      * @returns ErrorType::Failure if the task was not blocked
      * @returns ErrorType::LimitReached If the task was previously unblocked before it called block.
-     * @post You should always check the return value of block for ErrorType::LimitReached. You may need to call block again if the task
-     *       has had unbalanced calls to block and unblock. If ErrorType::LimitReached is returned twice in a row, the second time indicates
-     *       that unblock was called before the task had a chance to block itself and the task can safely proceed.
+     * @code{.cpp}
+     * // If you are expecting to be unblocked following your call to block, then it's a good idea to call in a loop
+     * // with a condition variable so that the unblocking task can set so that if you are unblocked by something else
+     * // you can check the condition variable. Condition variables should be volatile so that the value can always be read
+     * // from memory.
+     * while(!conditionVariable && ErrorType::LimitReached == OperatingSystem::Instance().block());
+     * @endcode
      */
     virtual ErrorType block() = 0;
     /**

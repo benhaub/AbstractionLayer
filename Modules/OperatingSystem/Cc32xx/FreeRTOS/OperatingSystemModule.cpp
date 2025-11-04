@@ -515,14 +515,16 @@ ErrorType OperatingSystem::block() {
             if (threadStruct.threadId == task) {
                 constexpr BaseType_t clearCountOnReturn = pdTRUE;
                 constexpr BaseType_t waitForever = portMAX_DELAY;
-                constexpr bool weWereOnlyBlockedOncePreviously = 1;
 
-                threadStruct.status = OperatingSystemTypes::ThreadStatus::Blocked;
-                if (ulTaskNotifyTake(clearCountOnReturn, waitForever) == weWereOnlyBlockedOncePreviously) {
-                    threadStruct.status = OperatingSystemTypes::ThreadStatus::Active;
+
+                const BaseType_t numberOfTimsPerviouslyUnblocked = ulTaskNotifyTake(clearCountOnReturn, waitForever);
+                const bool threadHasBeenPreviouslyUnblocked = numberOfTimsPerviouslyUnblocked >= 1;
+
+                if (threadHasBeenPreviouslyUnblocked) {
+                    error = ErrorType::LimitReached;
                 }
                 else {
-                    error = ErrorType::LimitReached;
+                    threadStruct.status = OperatingSystemTypes::ThreadStatus::Blocked;
                 }
 
                 break;
@@ -549,6 +551,8 @@ ErrorType OperatingSystem::unblock(const Id task) {
                 else {
                     xTaskNotifyGive(threadStruct.cc32xxThreadId);
                 }
+
+                threadStruct.status = OperatingSystemTypes::ThreadStatus::Active;
 
                 error = ErrorType::Success;
 
