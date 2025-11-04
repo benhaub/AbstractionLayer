@@ -111,7 +111,7 @@ ErrorType Wifi::initStation() {
 }
 
 ErrorType Wifi::networkUp() {
-    ErrorType error = ErrorType::InvalidParameter;
+    ErrorType error = ErrorType::Success;
 
     if (WifiTypes::Mode::Unknown != _params.mode && WifiTypes::AuthMode::Unknown != _params.authMode) {
         esp_wifi_set_mode(toEspWifiMode(_params.mode));
