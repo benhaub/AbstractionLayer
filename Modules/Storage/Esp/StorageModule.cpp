@@ -10,7 +10,3 @@ ErrorType Storage::deinit() {
     _status.isInitialized = false;
     return ErrorType::NotAvailable;
 }
-
-ErrorType Storage::mainLoop() {
-    return runNextEvent();
-}

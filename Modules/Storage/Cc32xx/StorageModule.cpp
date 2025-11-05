@@ -55,7 +55,3 @@ ErrorType Storage::deinit() {
 
     return callbackError;
 }
-
-ErrorType Storage::mainLoop() {
-    return runNextEvent();
-}

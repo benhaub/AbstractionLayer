@@ -13,7 +13,3 @@ ErrorType Storage::init() {
 ErrorType Storage::deinit() {
     return ErrorType::NotImplemented;
 } 
-
-ErrorType Storage::mainLoop() {
-    return ErrorType::NotImplemented;
-}

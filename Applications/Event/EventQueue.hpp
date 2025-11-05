@@ -12,10 +12,15 @@
 //AbstractionLayer
 #include "Error.hpp"
 #include "Types.hpp"
+#include "OperatingSystemTypes.hpp"
 //C++
 #include <array>
 #include <functional>
 #include <atomic>
+
+#ifndef APP_MAX_NUMBER_OF_THREADS
+#error APP_MAX_NUMBER_OF_THREADS must be defined so that the list of waiting threads is properly sized.
+#endif
 
 /**
  * @class EventQueue
@@ -35,6 +40,18 @@ class EventQueue {
 
     /// @brief Tag for logging.
     static constexpr char TAG[] = "EventQueue";
+
+    /// @brief The list of threads waiting for commands to be added.
+    using WaitingThreads = std::array<Id, APP_MAX_NUMBER_OF_THREADS>;
+    /**
+     * @enum LoopMode
+     * @brief The mode in which the event queue runs.
+     */
+    enum class LoopMode : uint8_t {
+        Unknown = 0, ///< Unknown mode
+        Polling = 1, ///< The event queue polls for events and runs them if they are ready.
+        Blocking = 2 ///< The event queue blocks until an event is added and then runs it.
+    };
 
     /**
      * @class Event
@@ -132,24 +149,36 @@ class EventQueue {
      * @post If you don't have any other processing to do outside of the event queue, you may choose to call OperatingSystem::block
      *       after this call returns since addEvent will unblock.
     */
-    virtual ErrorType mainLoop() { return runNextEvent(); }
+    virtual ErrorType mainLoop(const LoopMode loopMode) { return runNextEvent(loopMode); }
 
     /**
      * @brief true if there are events ready, false otherwise
+     * @returns true if there are events ready
+     * @returns false otherwise
      */
     bool eventsReady() { return _eventsReady; }
+
+    /**
+     * @brief Wait for the next event to be added to the queue.
+     * @details Blocking call. Not interrupt safe.
+     * @returns ErrorType::Success if one or more events are in the queue.
+     * @returns ErrorType::Failure if an error occurred while waiting.
+     */
+    ErrorType waitForEvents();
 
     protected: 
     /**
      * @brief Runs the next event in the queue.
+     * @param loopMode The mode in which to run the event queue.
      * @returns ErrorType::NoData if the queue is empty.
      * @returns The error code of the callback function pointed to by the Event.
      * @note This function is not thread safe and should not be called from an interrupt context not only because it is not reentrant but also because
      *       there is never a guarentee on whether the event will block or not.
-     * @post Callers may block themselves if ErrorType::NoData is returned. EventQueue::addEvent will unblock the caller when the next event is added.
+     * @post If loopMode is Blocking and there are no events in the queue, the calling thread will be blocked until an event is added.
+     *       If loopMode is Polling and there are no events in the queue, ErrorType::NoData is returned immediately.
      * @sa OperatingSystemAbstraction::block
     */
-    ErrorType runNextEvent();
+    ErrorType runNextEvent(const LoopMode loopMode);
 
     private:
     /// @brief The maximum number of events that can be queued.
@@ -172,6 +201,8 @@ class EventQueue {
      *          Instead of pushing the event on the queue for the mainLoop to run, just run it right away.
      */
     bool _addEventOptimizationsEnabled = false;
+    /// @brief The list of threads waiting for events to be added.
+    WaitingThreads _waitingThreads = {OperatingSystemTypes::NullId};
 
     /**
      * @brief If the event queue is not full, atomically increments the number of events queued.

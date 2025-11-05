@@ -33,7 +33,14 @@ ErrorType EventQueue::addEvent(Event &event) {
             //_eventsReady is not a function because it needs to be evaluated at specific points in the code. We can't let runNextEvent try to run an
             //event while we are still in the middle of adding an event to the queue.
             _eventsReady = true;
-            OperatingSystem::Instance().unblock(_ownerThreadId);
+
+            for (auto &waitingThread : _waitingThreads) {
+                if (waitingThread != OperatingSystemTypes::NullId) {
+                    OperatingSystem::Instance().unblock(waitingThread);
+                    waitingThread = OperatingSystemTypes::NullId;
+                }
+            }
+
             error = ErrorType::Success;
     }
     else {
@@ -43,8 +50,33 @@ ErrorType EventQueue::addEvent(Event &event) {
     return error;
 }
 
-ErrorType EventQueue::runNextEvent() {
+ErrorType EventQueue::waitForEvents() {
+    Id thread = OperatingSystemTypes::NullId;
+    ErrorType threadIdError = OperatingSystem::Instance().currentThreadId(thread);
+    ErrorType error = ErrorType::LimitReached;
+
+    if (ErrorType::Success == threadIdError) {
+
+        for (auto &waitingThread : _waitingThreads) {
+            if (waitingThread == OperatingSystemTypes::NullId) {
+                waitingThread = thread;
+
+                if (!eventsReady()) {
+                    error = OperatingSystem::Instance().block();
+                }
+            }
+        }
+    }
+
+    return error;
+}
+
+ErrorType EventQueue::runNextEvent(const LoopMode loopMode) {
     ErrorType error = ErrorType::NoData;
+
+    if (loopMode == LoopMode::Blocking) {
+        error = waitForEvents();
+    }
 
     if (_eventsReady) {
         error = _events[_currentEventQueueIndexFirst].run();

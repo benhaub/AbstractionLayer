@@ -37,7 +37,3 @@ ErrorType Storage::init() {
 ErrorType Storage::deinit() {
     return ErrorType::NotAvailable;
 } 
-
-ErrorType Storage::mainLoop() {
-    return runNextEvent();
-}

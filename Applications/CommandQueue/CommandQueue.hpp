@@ -11,8 +11,13 @@
 #include "Error.hpp"
 #include "Types.hpp"
 #include "Math.hpp"
+#include "OperatingSystemModule.hpp"
 //C++
 #include <atomic>
+
+#ifndef APP_MAX_NUMBER_OF_THREADS
+#error APP_MAX_NUMBER_OF_THREADS must be defined so that the list of waiting threads is properly sized.
+#endif
 
 /**
  * @namespace CommandQueueTypes
@@ -32,6 +37,9 @@ namespace CommandQueueTypes {
     static constexpr Count MaxCommandQueueSize = 8;
     /// @brief Tag for logging
     static constexpr char TAG[] = "CommandQueue";
+
+    /// @brief The list of threads waiting for commands to be added.
+    using WaitingThreads = std::array<Id, APP_MAX_NUMBER_OF_THREADS>;
 }
 
 /**
@@ -80,6 +88,14 @@ class CommandQueue {
 
             _Commands[currentCommandQueueIndexLast] = std::move(commandData);
             _CommandsReady = true;
+
+            for (auto &waitingThread : _WaitingThreads) {
+                if (waitingThread != OperatingSystemTypes::NullId) {
+                    OperatingSystem::Instance().unblock(waitingThread);
+                    waitingThread = OperatingSystemTypes::NullId;
+                }
+            }
+
             error = ErrorType::Success;
         }
         else {
@@ -143,6 +159,35 @@ class CommandQueue {
         return _CurrentCommandQueueIndexFirst.load() != _CurrentCommandQueueIndexLast.load();
     }
 
+    /**
+     * @brief Wait for one or more commands to be added to the queue.
+     * @details Blocking call. Not interrupt safe.
+     * @returns ErrorType::Success if one or more commands are in the queue.
+     * @returns ErrorType::Failure if an error occurred while waiting.
+     */
+    ErrorType waitForCommands() const {
+        Id thread = OperatingSystemTypes::NullId;
+        ErrorType threadIdError = OperatingSystem::Instance().currentThreadId(thread);
+        ErrorType error = ErrorType::LimitReached;
+
+        if (ErrorType::Success == threadIdError) {
+
+            for (auto &waitingThread : _WaitingThreads) {
+                if (waitingThread == OperatingSystemTypes::NullId) {
+                    waitingThread = thread;
+                    while (!commandsReady()) {
+                        error = OperatingSystem::Instance().block();
+                    }
+                }
+            }
+        }
+        else {
+            error = threadIdError;
+        }
+
+        return error;
+    }
+
     /// @brief Get the status as a constant reference
     const CommandQueueTypes::Status &status() const {
         _Status.commandsQueued = _CommandsClaimed.load();
@@ -163,6 +208,8 @@ class CommandQueue {
         0
     };
     inline static bool _CommandsReady = false;
+    /// @brief List of waiting threads
+    inline static CommandQueueTypes::WaitingThreads _WaitingThreads = {OperatingSystemTypes::NullId};
 
     bool addCommandIfNotFull() {
         //The only other thing that can happen to _eventsClaimed in the time after we load it is that it could be decremented by runNextEvent() so if we pass
