@@ -14,8 +14,6 @@ class Storage final : public StorageAbstraction, public Global<Storage, StorageT
 
     ErrorType init() override;
     ErrorType deinit() override;
-
-    ErrorType mainLoop() override;
 };
 
 #endif //__STORAGE_MODULE_HPP__
