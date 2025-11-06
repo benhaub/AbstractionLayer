@@ -158,14 +158,6 @@ class EventQueue {
      */
     bool eventsReady() { return _eventsReady; }
 
-    /**
-     * @brief Wait for the next event to be added to the queue.
-     * @details Blocking call. Not interrupt safe.
-     * @returns ErrorType::Success if one or more events are in the queue.
-     * @returns ErrorType::Failure if an error occurred while waiting.
-     */
-    ErrorType waitForEvents();
-
     protected: 
     /**
      * @brief Runs the next event in the queue.
@@ -210,6 +202,16 @@ class EventQueue {
      * @returns false if the event queue is full.
      */
     bool addEventIfNotFull();
+
+    /**
+     * @brief Wait for the next event to be added to the queue.
+     * @details Blocking call. Not interrupt safe.
+     * @returns ErrorType::Success if one or more events are in the queue.
+     * @returns ErrorType::Failure if an error occurred while waiting.
+     * @returns ErrorType::LimitReached if the wait could not be performed because there are too many waiting threads.
+     * @returns ErrorType::LimitReached because the thread was previously unblocked.
+     */
+    ErrorType waitForEvents();
 };
 
 #endif //__EVENT_QUEUE_HPP__

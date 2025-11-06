@@ -510,8 +510,8 @@ ErrorType OperatingSystem::block() {
 
                 threadStruct.status = OperatingSystemTypes::ThreadStatus::Blocked;
 
-                const BaseType_t numberOfTimsPerviouslyUnblocked = ulTaskNotifyTake(clearCountOnReturn, waitForever);
-                const bool threadHasBeenPreviouslyUnblocked = numberOfTimsPerviouslyUnblocked >= 1;
+                const BaseType_t numberOfTimesPerviouslyUnblocked = ulTaskNotifyTake(clearCountOnReturn, waitForever);
+                const bool threadHasBeenPreviouslyUnblocked = numberOfTimesPerviouslyUnblocked > 1;
 
                 if (threadHasBeenPreviouslyUnblocked) {
                     error = ErrorType::LimitReached;

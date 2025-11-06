@@ -37,7 +37,6 @@ ErrorType EventQueue::addEvent(Event &event) {
             for (auto &waitingThread : _waitingThreads) {
                 if (waitingThread != OperatingSystemTypes::NullId) {
                     OperatingSystem::Instance().unblock(waitingThread);
-                    waitingThread = OperatingSystemTypes::NullId;
                 }
             }
 
@@ -58,12 +57,12 @@ ErrorType EventQueue::waitForEvents() {
     if (ErrorType::Success == threadIdError) {
 
         for (auto &waitingThread : _waitingThreads) {
+
             if (waitingThread == OperatingSystemTypes::NullId) {
                 waitingThread = thread;
-
-                if (!eventsReady()) {
-                    error = OperatingSystem::Instance().block();
-                }
+                error = OperatingSystem::Instance().block();
+                waitingThread = OperatingSystemTypes::NullId;
+                break;
             }
         }
     }
@@ -73,10 +72,6 @@ ErrorType EventQueue::waitForEvents() {
 
 ErrorType EventQueue::runNextEvent(const LoopMode loopMode) {
     ErrorType error = ErrorType::NoData;
-
-    if (loopMode == LoopMode::Blocking) {
-        error = waitForEvents();
-    }
 
     if (_eventsReady) {
         error = _events[_currentEventQueueIndexFirst].run();
@@ -93,6 +88,9 @@ ErrorType EventQueue::runNextEvent(const LoopMode loopMode) {
         //addEvent() is trying to update _eventsReady. We can either keep _eventsReady set to true, or set it to false and disable ourselves from running
         //attempting to run more events.
         _eventsReady = _currentEventQueueIndexFirst != _currentEventQueueIndexLast.load();
+    }
+    else if (loopMode == LoopMode::Blocking) {
+        error = waitForEvents();
     }
 
     return error;
