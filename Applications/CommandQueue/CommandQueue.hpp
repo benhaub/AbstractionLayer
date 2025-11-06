@@ -92,7 +92,6 @@ class CommandQueue {
             for (auto &waitingThread : _WaitingThreads) {
                 if (waitingThread != OperatingSystemTypes::NullId) {
                     OperatingSystem::Instance().unblock(waitingThread);
-                    waitingThread = OperatingSystemTypes::NullId;
                 }
             }
 
@@ -160,29 +159,42 @@ class CommandQueue {
     }
 
     /**
-     * @brief Wait for one or more commands to be added to the queue.
-     * @details Blocking call. Not interrupt safe.
-     * @returns ErrorType::Success if one or more commands are in the queue.
-     * @returns ErrorType::Failure if an error occurred while waiting.
+     * @brief add the thread Id given to this command queues waiting list.
+     * @param thread The id of the thread to add to the waiting list.
+     * @returns ErrorType::Success if the thread was added to the waiting list.
+     * @returns ErrorType::LimitReached if the maximum number of waiting threads has been reached
      */
-    ErrorType waitForCommands() const {
-        Id thread = OperatingSystemTypes::NullId;
-        ErrorType threadIdError = OperatingSystem::Instance().currentThreadId(thread);
+    ErrorType addToWaitingList(const Id thread) {
         ErrorType error = ErrorType::LimitReached;
 
-        if (ErrorType::Success == threadIdError) {
+        for (auto &waitingThread : _WaitingThreads) {
 
-            for (auto &waitingThread : _WaitingThreads) {
-                if (waitingThread == OperatingSystemTypes::NullId) {
-                    waitingThread = thread;
-                    while (!commandsReady()) {
-                        error = OperatingSystem::Instance().block();
-                    }
-                }
+            if (waitingThread == OperatingSystemTypes::NullId) {
+                waitingThread = thread;
+                error = ErrorType::Success;
+                break;
             }
         }
-        else {
-            error = threadIdError;
+
+        return error;
+    }
+    
+    /**
+     * @brief Remove the thread Id given from this command queues waiting list.
+     * @param threadId The id of the thread to remove from the waiting list.
+     * @returns ErrorType::Success if the thread was removed from the waiting list.
+     * @returns ErrorType::NoData if the thread was not found in the waiting list
+     */
+    ErrorType removeFromWaitingList(const Id threadId) {
+        ErrorType error = ErrorType::NoData;
+
+        for (auto &waitingThread : _WaitingThreads) {
+
+            if (waitingThread == threadId) {
+                waitingThread = OperatingSystemTypes::NullId;
+                error = ErrorType::Success;
+                break;
+            }
         }
 
         return error;
@@ -223,5 +235,60 @@ class CommandQueue {
         return false;
     }
 };
+
+namespace {
+    template <typename ...T>
+    inline ErrorType AddToWaitingList(const Id thread) {
+        bool success = (... && (CommandQueue<T::Name, typename T::DataType>().addToWaitingList(thread) == ErrorType::Success));
+
+        return success ? ErrorType::Success : ErrorType::LimitReached;
+    }
+}
+
+namespace CommandQueueTypes {
+    /**
+     * @brief Block until a command has been added to any of the given command queues.
+     * @tparam A structure that contains the name of the command and the data type.
+     * @returns Any errors returned by CommandQueue::addToWaitingList()
+     * @post The thread will be removed from the waiting list after it has been unblocked.
+     * @code{.cpp}
+     * struct SomeCommand1 {
+     *    static constexpr char Name[] = "SomeCommand1"
+     *    using DataType = uint32_t;
+     * };
+     * 
+     * struct SomeCommand2 {
+     *   static constexpr char Name[] = "SomeCommand2"
+     *   using DataType = float;
+     * };
+     * 
+     * waitForCommands<SomeCommand1, SomeCommand2>();
+     * 
+     * SomeCommand1::DataType data1;
+     * SomeCommand2::DataType data2;
+     * 
+     * if (ErrorType::Success == command1.getNextInQueue(data1)) {
+     *    //Process command1 data
+     * }
+     * else if (ErrorType::Success == command2.getNextInQueue(data2)) {
+     *   //Process command2 data
+     * }
+     * @endcode
+     */
+    template <typename ...T>
+    inline ErrorType WaitForCommands() {
+        Id thread = OperatingSystemTypes::NullId;
+        ErrorType error = OperatingSystem::Instance().currentThreadId(thread);
+
+        if (ErrorType::Success == error) {
+
+            AddToWaitingList<T...>(thread);
+            OperatingSystem::Instance().block();
+            (((CommandQueue<T::Name, typename T::DataType>().removeFromWaitingList(thread)), ...));
+        }
+
+        return error;
+    }
+}
 
 #endif // __COMMAND_OBJECT_HPP__
