@@ -485,13 +485,20 @@ ErrorType OperatingSystem::block() {
         for (auto &threadStruct : threads) {
 
             if (threadStruct.threadId == task) {
-                constexpr BaseType_t clearCountOnReturn = pdTRUE;
-                constexpr BaseType_t waitForever = portMAX_DELAY;
-
                 threadStruct.status = OperatingSystemTypes::ThreadStatus::Blocked;
 
-                const BaseType_t numberOfTimesPerviouslyUnblocked = ulTaskNotifyTake(clearCountOnReturn, waitForever);
-                const bool threadHasBeenPreviouslyUnblocked = numberOfTimesPerviouslyUnblocked > 1;
+                auto peekBlockCount = []() -> BaseType_t {
+                    uint32_t notificationValue = 0;
+                    xTaskNotifyWait(0, 0, &notificationValue, 0);
+                    return notificationValue;
+                };
+
+                const uint32_t numberOfTimesPreviouslyUnblocked = peekBlockCount();
+                const bool threadHasBeenPreviouslyUnblocked = numberOfTimesPreviouslyUnblocked >= 1;
+
+                constexpr BaseType_t clearCountOnReturn = pdTRUE;
+                constexpr BaseType_t waitForever = portMAX_DELAY;
+                ulTaskNotifyTake(clearCountOnReturn, waitForever);
 
                 if (threadHasBeenPreviouslyUnblocked) {
                     error = ErrorType::LimitReached;
