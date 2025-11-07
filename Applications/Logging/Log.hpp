@@ -102,12 +102,12 @@
  * @param[in] format The format of the log. Format is a printf-style format string
  * @param[in] ... The arguments to the format string
  */
-#define PLT_LOG_LEVEL(type, tag, format, ...) do { \
+#define PLT_LOG_LEVEL(type, tag, format, ...) [&]() -> void {\
     if      (type == LogType::Error)   { Logger::Instance().log(type, tag, APP_LOG_FORMAT(E, format), tag, ##__VA_ARGS__); } \
     else if (type == LogType::Warning) { Logger::Instance().log(type, tag, APP_LOG_FORMAT(W, format), tag, ##__VA_ARGS__); } \
     else if (type == LogType::Info)    { Logger::Instance().log(type, tag, APP_LOG_FORMAT(I, format), tag, ##__VA_ARGS__); } \
     else if (type == LogType::Debug)   { Logger::Instance().log(type, tag, APP_LOG_FORMAT(D, format), tag, ##__VA_ARGS__); } \
-} while(0)
+}()
 
 /**
  * @def PLT_LOGE(tag, format, ...)
@@ -154,8 +154,8 @@
  * @param[in] buff_len The length of the buffer
  * @param[in] type The type of the log
 */
-#define PLT_LOG_BUFFER_HEXDUMP(tag, buffer, buff_len, type) do { \
+#define PLT_LOG_BUFFER_HEXDUMP(tag, buffer, buff_len, type) [&]() -> void {\
     Logger::Instance().logBuffer(type, tag, buffer, buff_len); \
-} while(0);
+}()
 
 #endif // __LOG_HPP__
