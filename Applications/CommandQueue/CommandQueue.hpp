@@ -239,7 +239,7 @@ class CommandQueue {
 namespace {
     template <typename ...T>
     inline ErrorType AddToWaitingList(const Id thread) {
-        bool success = (... && (CommandQueue<T::Name, typename T::DataType>().addToWaitingList(thread) == ErrorType::Success));
+        const bool success = (... && (CommandQueue<T::Name, typename T::DataType>().addToWaitingList(thread) == ErrorType::Success));
 
         return success ? ErrorType::Success : ErrorType::LimitReached;
     }
@@ -249,8 +249,11 @@ namespace CommandQueueTypes {
     /**
      * @brief Block until a command has been added to any of the given command queues.
      * @tparam A structure that contains the name of the command and the data type.
-     * @returns Any errors returned by CommandQueue::addToWaitingList()
-     * @post The thread will be removed from the waiting list after it has been unblocked.
+     * @returns Any errors returned by AddToWaitingList()
+     * @returns Any errors returned by OperatingSystem::currentThreadId()
+     * @returns Any errors returned by OperatingSystem::block()
+     * @returns ErrorType::Success when commands are ready.
+     * @post The thread will be removed from all waiting lists after it has been unblocked.
      * @code{.cpp}
      * struct SomeCommand1 {
      *    static constexpr char Name[] = "SomeCommand1"
@@ -277,14 +280,22 @@ namespace CommandQueueTypes {
      */
     template <typename ...T>
     inline ErrorType WaitForCommands() {
-        Id thread = OperatingSystemTypes::NullId;
-        ErrorType error = OperatingSystem::Instance().currentThreadId(thread);
+        ErrorType error = ErrorType::Success;
 
-        if (ErrorType::Success == error) {
+        const bool noCommandsWaitingInQueues = (... && (CommandQueue<T::Name, typename T::DataType>().commandsReady() == false));
 
-            AddToWaitingList<T...>(thread);
-            OperatingSystem::Instance().block();
-            (((CommandQueue<T::Name, typename T::DataType>().removeFromWaitingList(thread)), ...));
+        if (noCommandsWaitingInQueues) {
+            Id thread = OperatingSystemTypes::NullId;
+            error = OperatingSystem::Instance().currentThreadId(thread);
+
+            if (ErrorType::Success == error) {
+                error = AddToWaitingList<T...>(thread);
+
+                if (ErrorType::Success == error) {
+                    error = OperatingSystem::Instance().block();
+                    (((CommandQueue<T::Name, typename T::DataType>().removeFromWaitingList(thread)), ...));
+                }
+            }
         }
 
         return error;
