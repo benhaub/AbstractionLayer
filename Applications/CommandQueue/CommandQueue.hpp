@@ -247,6 +247,16 @@ namespace {
 
 namespace CommandQueueTypes {
     /**
+     * @brief Concept to ensure that a type has the required Name and DataType members.
+     * @tparam T The type to check.
+     */
+    template <typename T>
+    concept HasNameAndDataType = requires {
+        typename T::DataType;
+
+        requires std::is_convertible_v<decltype(T::Name), const char *>;
+    };
+    /**
      * @brief Block until a command has been added to any of the given command queues.
      * @tparam A structure that contains the name of the command and the data type.
      * @returns Any errors returned by AddToWaitingList()
@@ -279,6 +289,7 @@ namespace CommandQueueTypes {
      * @endcode
      */
     template <typename ...T>
+    requires (... && HasNameAndDataType<T>)
     inline ErrorType WaitForCommands() {
         ErrorType error = ErrorType::Success;
 
