@@ -293,8 +293,9 @@ namespace CommandQueueTypes {
 
                 if (ErrorType::Success == error) {
                     error = OperatingSystem::Instance().block();
-                    (((CommandQueue<T::Name, typename T::DataType>().removeFromWaitingList(thread)), ...));
                 }
+
+                (((CommandQueue<T::Name, typename T::DataType>().removeFromWaitingList(thread)), ...));
             }
         }
 
