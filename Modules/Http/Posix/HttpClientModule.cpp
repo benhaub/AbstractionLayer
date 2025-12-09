@@ -20,7 +20,7 @@ ErrorType HttpClient::sendBlocking(const HttpTypes::Request &request, const Mill
     std::string frame(headerSize + request.messageBody.size(), 0);
 
     const Bytes initialCapacity = frame.capacity();
-    HttpTypes::fromHttpRequest(request, frame);
+    HttpTypes::FromHttpRequest(request, frame);
 
     if (initialCapacity > frame.capacity()) {
         PLT_LOGW(TAG, "frame size had to be increased from %u to %u", initialCapacity, frame.capacity());

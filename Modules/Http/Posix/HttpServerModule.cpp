@@ -53,7 +53,7 @@ ErrorType HttpServer::sendNonBlocking(const std::shared_ptr<HttpTypes::Response>
     std::shared_ptr<std::string> frame = std::make_shared<std::string>(headerSize + data->messageBody.size(), 0);
 
     const Bytes initialCapacity = frame->capacity();
-    toHttpResponse(*data, *frame);
+    ToHttpResponse(*data, *frame);
 
     if (initialCapacity > frame->capacity()) {
         PLT_LOGW(TAG, "frame size had to be increased from %u to %u", initialCapacity, frame->capacity());
@@ -72,7 +72,7 @@ ErrorType HttpServer::receiveNonBlocking(std::shared_ptr<HttpTypes::Request> buf
 
     auto receiveCallback = [&, callback](ErrorType error, const Socket socket, std::shared_ptr<std::string> frameBuffer) -> ErrorType {
         std::shared_ptr<HttpTypes::Request> request = std::make_shared<HttpTypes::Request>();
-        toHttpRequest(*frameBuffer, *request);
+        ToHttpRequest(*frameBuffer, *request);
         callback(error, socket, request);
 
         return error;

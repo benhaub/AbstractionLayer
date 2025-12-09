@@ -146,7 +146,7 @@ class HttpServerAbstraction {
         std::string lastPartialHeader;
 
         buffer.insert(0, lastPartialHeader);
-        error = toHttpRequest(buffer, request);
+        error = ToHttpRequest(buffer, request);
 
         if (ErrorType::Success == error) {
 
