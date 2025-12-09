@@ -381,6 +381,16 @@ namespace HttpTypes {
     };
 
     /**
+     * @struct Url
+     * @brief A url broken down into its components
+     */
+    struct Url {
+        std::string_view scheme;     ///< The scheme of the url
+        std::string_view domainName; ///< The domain name of the url
+        std::string_view path;       ///< The path of the url
+    };
+
+    /**
      * @brief Search a raw http request for the specified header.
      * @param[in] request The raw http request.
      * @param[in] headerName The header to serach for
@@ -1256,6 +1266,16 @@ namespace HttpTypes {
 
         error = ErrorType::NotSupported;
         return HttpTypes::Type::Unknown;
+    }
+
+    inline ErrorType DisectUrl(std::string_view url, HttpTypes::Url &disectedUrl) {
+        size_t endOfScheme = url.find_first_of(':');
+        disectedUrl.scheme = url.substr(0, endOfScheme);
+        std::string_view startOfDomainName = url.substr(endOfScheme + sizeof("//"));
+        size_t endOfDomainName = startOfDomainName.rfind('/');
+        disectedUrl.domainName = startOfDomainName.substr(0, endOfDomainName);
+        disectedUrl.path = startOfDomainName.substr(endOfDomainName);
+        return ErrorType::Success;
     }
 };
 
