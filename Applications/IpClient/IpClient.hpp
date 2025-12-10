@@ -137,25 +137,15 @@ class IpClient {
     ErrorType receiveNonBlocking(StaticString::Container &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string_view buffer)> callback);
 
     /// @brief Get the socket as a constant reference
-    const Socket &sockConst() const { return _socket; }
-    /// @brief Get the socket as a mutable reference
-    Socket &sock() { return _socket; }
+    const Socket &sock() const { return _socket; }
     /// @brief Get the protocol as a constant reference
-    const IpTypes::Protocol &protocolConst() const { return _protocol; }
-    /// @brief Get the protocol as a mutable reference
-    IpTypes::Protocol &protocol() { return _protocol; }
+    const IpTypes::Protocol &protocol() const { return _protocol; }
     /// @brief Get the version as a constant reference
-    const IpTypes::Version &versionConst() const { return _version; }
-    /// @brief Get the version as a mutable reference
-    IpTypes::Version &version() { return _version; }
+    const IpTypes::Version &version() const { return _version; }
     /// @brief Get the hostname as a constant reference
-    const std::string &hostnameConst() const { return _hostname; }
-    /// @brief Get the hostname as a mutable reference
-    std::string &hostname() { return _hostname; }
+    const std::string &hostname() const { return _hostname; }
     /// @brief Get the port as a constant reference
-    const Port &portConst() const { return _port; }
-    /// @brief Get the port as a mutable reference
-    Port &port() { return _port; }
+    const Port &port() const { return _port; }
     /// @brief Get the network abstraction that this client communicates on as a mutable reference
     NetworkAbstraction &network() { assert(nullptr != _network); return *_network; }
     /// @brief Get the network abstraction that this client communicates on as a constant reference
