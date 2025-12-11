@@ -1,26 +1,45 @@
-target_sources(${PROJECT_NAME}${EXECUTABLE_SUFFIX}
-PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
-  MbedTlsSendReceive.hpp
-)
+#Espressif has an mbedtls component.
+if (NOT ESP_PLATFORM)
+  set(MBEDTLS_BUILD_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/mbedtls/build_mbedtls.sh")
+  file(WRITE "${MBEDTLS_BUILD_SCRIPT}" "
+  #!/bin/bash
+  python3 -m venv .venv
+  source .venv/bin/activate
+  pip install -r scripts/basic.requirements.txt
+  python scripts/config.py unset MBEDTLS_NET_C
+  mkdir -p mbedtls_Build
+  cd mbedtls_Build
+  cmake -DENABLE_TESTING=OFF -DENABLE_PROGRAMS=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=OFF -DUSE_STATIC_MBEDTLS_LIBRARY=ON -DCMAKE_BUILD_TYPE=Release ..
+  cmake --build .
+  deactivate
+  ")
+  execute_process(
+    COMMAND
+      chmod +x "${MBEDTLS_BUILD_SCRIPT}"
+    COMMAND
+      bash "${MBEDTLS_BUILD_SCRIPT}"
+    WORKING_DIRECTORY
+      "${CMAKE_CURRENT_LIST_DIR}/mbedtls"
+    OUTPUT_QUIET
+    COMMAND_ERROR_IS_FATAL
+      ANY
+  )
+  file(REMOVE "${MBEDTLS_BUILD_SCRIPT}")
 
-add_library(MbedTlsSendReceive
-OBJECT
-  MbedTlsSendReceive.cpp
-)
+  add_library(MbedTls INTERFACE)
 
-target_include_directories(MbedTlsSendReceive PRIVATE ${CMAKE_CURRENT_LIST_DIR})
-target_include_directories(abstractionLayer INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+  target_include_directories(MbedTls
+  INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}/mbedtls/include
+    ${CMAKE_CURRENT_LIST_DIR}/mbedtls/tf-psa-crypto/include
+  )
 
-target_link_libraries(MbedTlsSendReceive PRIVATE Utilities)
-target_link_libraries(MbedTlsSendReceive PRIVATE Network)
-target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE MbedTlsSendReceive)
-
-target_compile_options(MbedTlsSendReceive PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
-target_compile_definitions(MbedTlsSendReceive PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)
-
-if (ESP_PLATFORM)
-  target_include_directories(__idf_main PRIVATE ${CMAKE_CURRENT_LIST_DIR})
-else()
-  #Espressif has an mbedtls component.
-  target_link_libraries(MbedTlsSendReceive PUBLIC MbedTls)
+  set(MbedTLS_DIR ${CMAKE_CURRENT_LIST_DIR}/mbedtls/mbedtls_Build/cmake)
+  find_package(MbedTLS)
+  target_link_libraries(MbedTls
+  INTERFACE
+    MbedTLS::tfpsacrypto
+    MbedTLS::mbedtls
+    MbedTLS::mbedx509
+  )
 endif()

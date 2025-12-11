@@ -3,12 +3,14 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
   HttpServerModule.hpp
   HttpClientModule.hpp
   HttpsClientModule.hpp
+  MbedTlsCompatibility/SendReceive.hpp
 )
 #Client
 add_library(EspIpClient
 OBJECT
   HttpClientModule.cpp
   HttpsClientModule.cpp
+  MbedTlsCompatibility/SendReceive.cpp
 )
 
 target_include_directories(Http INTERFACE ${CMAKE_CURRENT_LIST_DIR})

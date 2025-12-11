@@ -4,7 +4,7 @@
 //AbstractionLayer
 #include "HttpClientAbstraction.hpp"
 #include "IpClient.hpp"
-#include "MbedTlsSendReceive.hpp"
+#include "MbedTlsCompatibility/SendReceive.hpp"
 //MbedTLS
 #include "mbedtls/ssl.h"
 #include "mbedtls/private/entropy.h"

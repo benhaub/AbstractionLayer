@@ -9,6 +9,6 @@
 	url = https://github.com/boostorg/static_string.git
   ignore = all
 [submodule "Utilities/mbedtls"]
-	path = Utilities/MbedTls/mbedtls
+	path = Modules/Http/Posix/MbedTls/mbedtls
   url = https://github.com/Mbed-TLS/mbedtls.git
   ignore = all

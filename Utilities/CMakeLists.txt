@@ -14,5 +14,3 @@ target_include_directories(Utilities INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(Utilities INTERFACE ${CMAKE_CURRENT_LIST_DIR}/static_string/include)
 
 target_link_libraries(abstractionLayer INTERFACE Utilities)
-
-add_subdirectory(MbedTls)
