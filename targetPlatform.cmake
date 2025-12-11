@@ -35,6 +35,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Processor/${PROCESSOR_MODULE_
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Utilities)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Logging)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Event)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/MbedTlsCompatibility)
 if (ENABLE_COMMAND_QUEUE)
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/CommandQueue)
 endif()

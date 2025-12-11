@@ -33,10 +33,9 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
                 mbedtls_x509_crt_init(&_cacert);
 
                 if (0 == mbedtls_x509_crt_parse_file(&_cacert, CA_CERT)) {
-                    mbedtls_net_init(&_serverFd);
-                    std::string portString = std::to_string(port);
 
-                    if (0 == mbedtls_net_connect(&_serverFd, hostname.data(), portString.c_str(), MBEDTLS_NET_PROTO_TCP)) {
+                    if (ErrorType::Success == (callbackError = _ipClient.connectTo(hostname, port, protocol, version, timeout))) {
+                        _context.sock = _ipClient.sock();
                         mbedtls_ssl_config_init(&_conf);
 
                         if ((0 == mbedtls_ssl_config_defaults(&_conf,MBEDTLS_SSL_IS_CLIENT, MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT))) {
@@ -45,11 +44,15 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
                             mbedtls_ssl_init(&_ssl);
 
                             if ((0 == mbedtls_ssl_setup(&_ssl, &_conf))) {
+
                                 if ((0 == mbedtls_ssl_set_hostname(&_ssl, hostname.data()))) {
-                                    mbedtls_ssl_set_bio(&_ssl, &_serverFd, mbedtls_net_send, mbedtls_net_recv, NULL);
+                                    mbedtls_ssl_set_user_data_p(&_ssl, &_ipClient.network());
+                                    _context.sslContext = &_ssl;
+                                    mbedtls_ssl_set_bio(&_ssl, &_context, MbedTlsCompatible::Send, MbedTlsCompatible::Receive, NULL);
                                     
                                     bool needToTryAgain = false;
                                     bool handshakeFailed = false;
+
                                     do {
                                         const int ret = mbedtls_ssl_handshake(&_ssl);
                                         needToTryAgain = (ret == MBEDTLS_ERR_SSL_WANT_READ ||
@@ -60,6 +63,7 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
                                     } while (needToTryAgain && !handshakeFailed);
 
                                     const uint32_t flags = mbedtls_ssl_get_verify_result(&_ssl);
+
                                     if (0 == flags) {
                                         callbackError = ErrorType::Success;
                                     }
@@ -158,7 +162,7 @@ ErrorType HttpsClient::sendBlocking(const HttpTypes::Request &request, const Mil
                             ret == MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS ||
                             ret == MBEDTLS_ERR_SSL_CRYPTO_IN_PROGRESS);
                                 
-            noFatalErrorsOccured = ret > 0;
+            noFatalErrorsOccured = ret >= 0;
 
             if (noFatalErrorsOccured) {
                 written += ret;
@@ -201,7 +205,7 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
     auto receiveCallback = [&, thread]() -> ErrorType {
         auto networkReceiveFunction = [&](std::string &buffer, const Milliseconds timeout) -> ErrorType {
             int ret = mbedtls_ssl_read(&_ssl, reinterpret_cast<uint8_t *>(&buffer[0]), buffer.size());
-            if (ret <= 0) {
+            if (ret < 0) {
                 if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
                     // Need more data or write buffer full - retry
                     return ErrorType::Success; // Indicate we need to retry
@@ -248,7 +252,7 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
         do {
             ret = mbedtls_ssl_read(&_ssl, reinterpret_cast<uint8_t *>(&response.messageBody[read]), response.messageBody.size() - read);
 
-            if (ret <= 0) {
+            if (ret < 0) {
                 if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
                     // Need more data or write buffer full - continue loop
                     continue;

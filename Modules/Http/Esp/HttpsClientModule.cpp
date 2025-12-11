@@ -2,6 +2,7 @@
 #include "HttpsClientModule.hpp"
 #include "OperatingSystemModule.hpp"
 #include "NetworkAbstraction.hpp"
+#include "MbedTlsSendReceive.hpp"
 //MBedTLS
 #include "psa/crypto.h"
 //ESP
@@ -39,10 +40,12 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
                             mbedtls_ssl_conf_rng(&_conf, mbedtls_ctr_drbg_random, &_ctrDrbg);
 
                             if (0 == mbedtls_ssl_setup(&_ssl, &_conf)) {
-                                mbedtls_net_init(&_serverFd);
 
-                                if (0 == mbedtls_net_connect(&_serverFd, hostname.data(), std::to_string(port).c_str(), MBEDTLS_NET_PROTO_TCP)) {
-                                    mbedtls_ssl_set_bio(&_ssl, &_serverFd, mbedtls_net_send, mbedtls_net_recv, NULL);
+                                if (ErrorType::Success == (callbackError = _ipClient.connectTo(hostname, port, protocol, version, timeout))) {
+                                    _context.sock = _ipClient.sock();
+                                    mbedtls_ssl_set_user_data_p(&_ssl, &_ipClient.network());
+                                    _context.sslContext = &_ssl;
+                                    mbedtls_ssl_set_bio(&_ssl, &_context, MbedTlsCompatible::Send, MbedTlsCompatible::Receive, NULL);
 
                                     int ret;
                                     while ((ret = mbedtls_ssl_handshake(&_ssl)) != 0) {

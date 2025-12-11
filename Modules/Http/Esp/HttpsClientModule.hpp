@@ -4,22 +4,15 @@
 //AbstractionLayer
 #include "HttpClientAbstraction.hpp"
 #include "IpClient.hpp"
+#include "MbedTlsSendReceive.hpp"
 //Esp
 #include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
-#include "mbedtls/net_sockets.h"
-#include "esp_netif.h"
-#include "esp_event.h"
 
 class HttpsClient final : public HttpClientAbstraction {
 
     public:
-    HttpsClient() : HttpClientAbstraction() {
-        esp_netif_init();
-        esp_event_loop_create_default();
-    }
-
     ~HttpsClient() {
         freeSslContexts();
     }
@@ -45,7 +38,7 @@ class HttpsClient final : public HttpClientAbstraction {
     mbedtls_ctr_drbg_context _ctrDrbg;
     mbedtls_ssl_config _conf;
     mbedtls_x509_crt _cacert;
-    mbedtls_net_context _serverFd;
+    MbedTlsCompatible::BioContext _context;
 
     void freeSslContexts() {
         mbedtls_ssl_free(&_ssl);
@@ -53,7 +46,6 @@ class HttpsClient final : public HttpClientAbstraction {
         mbedtls_ctr_drbg_free(&_ctrDrbg);
         mbedtls_ssl_config_free(&_conf);
         mbedtls_x509_crt_free(&_cacert);
-        mbedtls_net_free(&_serverFd);
     }
 };
 

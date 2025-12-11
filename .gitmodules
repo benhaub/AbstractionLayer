@@ -4,11 +4,11 @@
 [submodule "Modules/Processor/Tm4c123/CMSIS_6"]
 	path = Modules/Processor/Tm4c123/CMSIS_6
 	url = https://github.com/ARM-software/CMSIS_6.git
-[submodule "Modules/Ip/Posix/mbedtls"]
-	path = Modules/Http/Posix/mbedtls
-  url = https://github.com/Mbed-TLS/mbedtls.git
-  ignore = untracked
 [submodule "Utilities/static_string"]
 	path = Utilities/static_string
 	url = https://github.com/boostorg/static_string.git
+  ignore = all
+[submodule "Utilities/mbedtls"]
+	path = Utilities/MbedTls/mbedtls
+  url = https://github.com/Mbed-TLS/mbedtls.git
   ignore = all
