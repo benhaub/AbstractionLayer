@@ -23,6 +23,8 @@ constexpr unsigned int wifiApStartedBit = BIT0;
 constexpr unsigned int wifiStaStartedBit = BIT1;
 //Wait for both to connect
 constexpr unsigned int wifiApAndStaStartedBit = BIT2;
+//Wait for DHCP to assign us an IP address
+constexpr unsigned int wifiDhcpCompleteBit = BIT3;
 #ifdef __cplusplus
 }
 #endif
@@ -35,7 +37,7 @@ ErrorType Wifi::init() {
     if (ESP_OK == (err = esp_netif_init())) {
         err = esp_event_loop_create_default();
 
-        const bool isNotCriticalErrror = (err = ESP_ERR_INVALID_STATE);
+        const bool isNotCriticalErrror = (ESP_ERR_INVALID_STATE == err);
         if (isNotCriticalErrror) {
             err = ESP_OK;
         }
@@ -47,10 +49,7 @@ ErrorType Wifi::init() {
 
                 if (ESP_ERR_WIFI_NOT_INIT == esp_wifi_get_mode(&mode)) {
                     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-
-                    if (ESP_OK == (err = esp_wifi_init(&cfg))) {
-                        return radioOn();
-                    }
+                    err = esp_wifi_init(&cfg);
                 }
                 else {
                     PLT_LOGW(TAG, "Wifi already initialized.");
@@ -135,29 +134,47 @@ ErrorType Wifi::networkUp() {
         }
 
         if (ErrorType::Success == error) {
-            constexpr Milliseconds timeout = 10000;
-            PLT_LOGI(TAG, "Waiting at most %us for wifi to be ready", timeout / 1000);
-            EventBits_t bits = xEventGroupWaitBits(wifiEventGroup,
-                                                eventBitsToWaitFor,
-                                                pdFALSE,
-                                                pdFALSE,
-                                                pdMS_TO_TICKS(timeout));
+            error = radioOn();
 
-            if (bits & eventBitsToWaitFor) {
-                esp_err_t err = esp_wifi_connect();
+            if (ErrorType::Success == error) {
+                constexpr Milliseconds timeout = 10*1000;
+                constexpr BaseType_t waitForAllBits = pdTRUE;
+                constexpr BaseType_t doNotClearBits = pdFALSE;
+                PLT_LOGI(TAG, "Waiting at most %us for wifi to be ready", timeout / 1000);
+                EventBits_t bits = xEventGroupWaitBits(wifiEventGroup,
+                                                    eventBitsToWaitFor,
+                                                    doNotClearBits,
+                                                    waitForAllBits,
+                                                    pdMS_TO_TICKS(timeout));
 
-                if (ESP_OK == err) {
-                    NetworkAbstraction::_status.isUp = true;
+                if ((bits & eventBitsToWaitFor) == eventBitsToWaitFor) {
+                    esp_err_t err = ESP_OK;
+
+                    if (WifiTypes::Mode::AccessPointAndStation == _params.mode || WifiTypes::Mode::Station == _params.mode) {
+                        err = esp_wifi_connect();
+
+                        if (ESP_OK == err) {
+                            bits = xEventGroupWaitBits(wifiEventGroup,
+                                                    wifiDhcpCompleteBit,
+                                                    doNotClearBits,
+                                                    waitForAllBits,
+                                                    pdMS_TO_TICKS(timeout));
+
+                            if ((bits & wifiDhcpCompleteBit) != wifiDhcpCompleteBit) {
+                                PLT_LOGW(TAG, "DHCP timeout");
+                                error = ErrorType::Timeout;
+                            }
+                        }
+                    }
+
+                    if (ESP_OK != err) {
+                        PLT_LOGW(TAG, "Failed to bring up wifi network <error:%s>", esp_err_to_name(err));
+                        error = fromPlatformError(err);
+                    }
                 }
                 else {
-                    PLT_LOGW(TAG, "Failed to bring up wifi network <Error:%s>", esp_err_to_name(err));
-                    error = fromPlatformError(err);
+                    error = ErrorType::Timeout;
                 }
-
-                error = ErrorType::Success;
-            }
-            else {
-                error = ErrorType::Timeout;
             }
         }
     }
@@ -198,6 +215,7 @@ ErrorType Wifi::connectTo(std::string_view hostname, const Port port, const IpTy
             dest_ip.sin_port = htons(port);
 
             if (-1 != (sock = socket(toPosixFamily(version), toPosixSocktype(protocol), IPPROTO_IP))) {
+
                 if (0 == connect(sock, (struct sockaddr *)&dest_ip, sizeof(dest_ip))) {
                     fd_set fdset;
                     FD_ZERO(&fdset);
@@ -205,10 +223,12 @@ ErrorType Wifi::connectTo(std::string_view hostname, const Port port, const IpTy
 
                     Microseconds tvUsec = timeout * 1000;
                     struct timeval timeoutval;
+
                     if (tvUsec > std::numeric_limits<decltype(timeoutval.tv_usec)>::max()) {
                         PLT_LOGW(TAG, "Truncating microseconds because it is bigger than the type used by this platform.");
                         tvUsec = std::numeric_limits<decltype(timeoutval.tv_usec)>::max();
                     }
+
                     //Try to use seconds if possible. Some systems don't like very large usec timeouts.
                     if (timeout >= 1000) {
                         timeoutval.tv_sec = timeout / 1000;
@@ -221,6 +241,7 @@ ErrorType Wifi::connectTo(std::string_view hostname, const Port port, const IpTy
 
                     // Connection in progress -> have to wait until the connecting socket is marked as writable, i.e. connection completes
                     int res = select(sock+1, NULL, &fdset, NULL, &timeoutval);
+
                     if (res < 0) {
                         PLT_LOGE(TAG, "Error during connection: select for socket to be writable %s", strerror(errno));
                         error = ErrorType::Failure;
@@ -529,7 +550,6 @@ extern "C" {
 #endif
 
 static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData) {
-    //This is here just to inform you of what arg is.
     Wifi *self = reinterpret_cast<Wifi *>(arg);
 
     if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_AP_START) {
@@ -538,9 +558,11 @@ static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t even
             xEventGroupSetBits(wifiEventGroup, wifiApAndStaStartedBit);
         }
 
-        const_cast<NetworkTypes::Status &>(self->NetworkAbstraction::status()).isUp = true;
+        if (self->params().mode == WifiTypes::Mode::AccessPoint) {
+            const_cast<NetworkTypes::Status &>(self->NetworkAbstraction::status()).isUp = true;
+        }
     }
-    if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_AP_STACONNECTED) {
+    else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_AP_STACONNECTED) {
         wifi_event_ap_staconnected_t *event = (wifi_event_ap_staconnected_t *) eventData;
         PLT_LOGI(Wifi::TAG, "Station " MACSTR " joined, AID=%d",
                  MAC2STR(event->mac), event->aid);
@@ -564,12 +586,12 @@ static void WifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t even
         if (xEventGroupGetBits(wifiEventGroup) & wifiApStartedBit) {
             xEventGroupSetBits(wifiEventGroup, wifiApAndStaStartedBit);
         }
-
-        const_cast<NetworkTypes::Status &>(self->NetworkAbstraction::status()).isUp = true;
     }
     else if (eventBase == IP_EVENT && eventId == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *) eventData;
         PLT_LOGI(Wifi::TAG, "Got IP:" IPSTR, IP2STR(&event->ip_info.ip));
+        xEventGroupSetBits(wifiEventGroup, wifiDhcpCompleteBit);
+        const_cast<NetworkTypes::Status &>(self->NetworkAbstraction::status()).isUp = true;
     }
 }
 

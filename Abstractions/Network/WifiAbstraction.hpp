@@ -270,6 +270,8 @@ class WifiAbstraction : public NetworkAbstraction {
         return _status;
     }
 
+    const WifiTypes::Params &params() const { return _params; }
+
     protected:
     /// @brief
     WifiTypes::Params _params;
