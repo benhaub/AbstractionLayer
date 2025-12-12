@@ -46,16 +46,23 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
                                     _context.sslContext = &_ssl;
                                     mbedtls_ssl_set_bio(&_ssl, &_context, MbedTlsCompatible::Send, MbedTlsCompatible::Receive, NULL);
 
-                                    int ret;
-                                    while ((ret = mbedtls_ssl_handshake(&_ssl)) != 0) {
-                                        if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
-                                            PLT_LOGW(TAG, "mbedtls_ssl_handshake returned -0x%x", -ret);
-                                            doneConnecting = true;
-                                            return callbackError;
-                                        }
-                                    }
+                                    bool needToTryAgain = false;
+                                    bool handshakeFailed = false;
 
-                                    callbackError = ErrorType::Success;
+                                    do {
+                                        const int ret = mbedtls_ssl_handshake(&_ssl);
+                                        needToTryAgain = (ret == MBEDTLS_ERR_SSL_WANT_READ ||
+                                                            ret == MBEDTLS_ERR_SSL_WANT_WRITE ||
+                                                            ret == MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS ||
+                                                            ret == MBEDTLS_ERR_SSL_CRYPTO_IN_PROGRESS);
+                                        handshakeFailed = !needToTryAgain;
+                                    } while (needToTryAgain && !handshakeFailed);
+
+                                    const uint32_t flags = mbedtls_ssl_get_verify_result(&_ssl);
+
+                                    if (0 == flags) {
+                                        callbackError = ErrorType::Success;
+                                    }
                                 }
                             }
                         }
