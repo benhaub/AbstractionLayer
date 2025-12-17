@@ -12,13 +12,13 @@ static void *allocate(size_t size) {
     void *ptr = nullptr;
 
     if (size <= spiramThreshold) {
-        if (nullptr == (ptr = heap_caps_malloc(size, MALLOC_CAP_8BIT))) {
+        if (nullptr == (ptr = heap_caps_malloc(size, MALLOC_CAP_INTERNAL))) {
             return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
         }
     }
     else {
         if (nullptr == (ptr = heap_caps_malloc(size, MALLOC_CAP_SPIRAM))) {
-            return heap_caps_malloc(size, MALLOC_CAP_8BIT);
+            return heap_caps_malloc(size, MALLOC_CAP_INTERNAL);
         }
     }
 
