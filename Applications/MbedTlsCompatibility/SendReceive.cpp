@@ -16,7 +16,7 @@ namespace MbedTlsCompatible {
         const ErrorType error = network->transmit(std::string_view(buffer, len), context->sock, Milliseconds(0));
 
         if (ErrorType::Timeout == error) {
-            return MBEDTLS_ERR_SSL_WANT_WRITE;
+            return MBEDTLS_ERR_SSL_TIMEOUT;
         }
         else if (ErrorType::Success == error) {
             return len;
@@ -37,7 +37,7 @@ namespace MbedTlsCompatible {
         const ErrorType error = network->receive(buffer, len, context->sock, received, Milliseconds(timeout));
 
         if (ErrorType::Timeout == error) {
-            return MBEDTLS_ERR_SSL_WANT_READ;
+            return MBEDTLS_ERR_SSL_TIMEOUT;
         }
         else if (ErrorType::Success == error) {
             return received;
