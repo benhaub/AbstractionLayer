@@ -26,7 +26,7 @@ namespace MbedTlsCompatible {
         }
     }
 
-    int Receive(void *ctx, unsigned char *buf, size_t len) {
+    int Receive(void *ctx, unsigned char *buf, size_t len, uint32_t timeout) {
         BioContext *context = ((BioContext *) ctx);
         assert(context != nullptr);
         NetworkAbstraction *network = reinterpret_cast<NetworkAbstraction *>(mbedtls_ssl_get_user_data_p(context->sslContext));
@@ -34,7 +34,7 @@ namespace MbedTlsCompatible {
 
         char *buffer = reinterpret_cast<char *>(buf);
         Bytes received = 0;
-        const ErrorType error = network->receive(buffer, len, context->sock, received, Milliseconds(0));
+        const ErrorType error = network->receive(buffer, len, context->sock, received, Milliseconds(timeout));
 
         if (ErrorType::Timeout == error) {
             return MBEDTLS_ERR_SSL_WANT_READ;

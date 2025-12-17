@@ -24,7 +24,7 @@ namespace MbedTlsCompatible {
     };
 
     int Send(void *ctx, const unsigned char *buf, size_t len);
-    int Receive(void *ctx, unsigned char *buf, size_t len);
+    int Receive(void *ctx, unsigned char *buf, size_t len, uint32_t timeout);
 }
 
 #endif // __MBEDTLS_SEND_RECEIVE_HPP__

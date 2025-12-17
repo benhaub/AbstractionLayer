@@ -111,6 +111,7 @@ class CellularAbstraction : public NetworkAbstraction {
     CellularAbstraction() : NetworkAbstraction() {
         NetworkAbstraction::_status.technology = NetworkTypes::Technology::Cellular;
     }
+
     /// @brief Default destructor
     virtual ~CellularAbstraction() = default;
 

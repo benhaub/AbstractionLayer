@@ -48,7 +48,7 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
                                 if ((0 == mbedtls_ssl_set_hostname(&_ssl, hostname.data()))) {
                                     mbedtls_ssl_set_user_data_p(&_ssl, &_ipClient.network());
                                     _context.sslContext = &_ssl;
-                                    mbedtls_ssl_set_bio(&_ssl, &_context, MbedTlsCompatible::Send, MbedTlsCompatible::Receive, NULL);
+                                    mbedtls_ssl_set_bio(&_ssl, &_context, MbedTlsCompatible::Send, NULL, MbedTlsCompatible::Receive);
                                     
                                     bool needToTryAgain = false;
                                     bool handshakeFailed = false;
@@ -64,8 +64,8 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
 
                                     const uint32_t flags = mbedtls_ssl_get_verify_result(&_ssl);
 
-                                    if (0 == flags) {
-                                        callbackError = ErrorType::Success;
+                                    if (0 != flags) {
+                                        callbackError = ErrorType::Failure;
                                     }
                                 }
                             }
@@ -204,7 +204,9 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
 
     auto receiveCallback = [&, thread]() -> ErrorType {
         auto networkReceiveFunction = [&](std::string &buffer, const Milliseconds timeout) -> ErrorType {
+            mbedtls_ssl_conf_read_timeout(&_conf, timeout);
             int ret = mbedtls_ssl_read(&_ssl, reinterpret_cast<uint8_t *>(&buffer[0]), buffer.size());
+
             if (ret < 0) {
                 if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
                     // Need more data or write buffer full - retry
@@ -229,6 +231,7 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
         };
 
         if (0 == response.representationHeaders.contentLength) {
+
             do {
                 response.messageBody.resize(messageBodySize);
 
@@ -253,6 +256,7 @@ ErrorType HttpsClient::receiveBlocking(HttpTypes::Response &response, const Mill
             ret = mbedtls_ssl_read(&_ssl, reinterpret_cast<uint8_t *>(&response.messageBody[read]), response.messageBody.size() - read);
 
             if (ret < 0) {
+
                 if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
                     // Need more data or write buffer full - continue loop
                     continue;
