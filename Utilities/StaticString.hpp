@@ -169,8 +169,7 @@ namespace StaticString {
         
         /// @brief Move constructor
         Container(Container &&other) noexcept : _data(std::move(other._data)), _dataPtr(other._dataPtr) {
-            other._data.reset();
-            other._dataPtr = nullptr;
+            other.reset();
         }
         
         private:
@@ -225,6 +224,12 @@ namespace StaticString {
         /// @brief Iterator support for range-based for loops (const)
         const char* end() const {
             return getConst()->end();
+        }
+
+        /// @brief Reset the container to an empty state.
+        void reset() {
+            _data.reset();
+            _dataPtr = nullptr;
         }
 
         /// @brief Shorthand operator for Container::get
