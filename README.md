@@ -4,6 +4,8 @@ An abstraction layer for building cross-platform, [component-based](https://en.w
 ## How to include Abstraction Layer in your project
 https://github.com/benhaub/sm10001slidePotentiometer
 
+https://github.com/benhaub/EdgeInference
+
 ## Helpful boilerplates
 https://github.com/benhaub/vscode
 
@@ -68,6 +70,9 @@ We say almost because it can be challenging to develop an abstraction layer that
 An abstraction layer increases your ability to [defer implementation details](https://youtu.be/2dKZ-dWaCiU?t=3612)
 - You could develop the code for the processor you have immediately available, get a sense of it's memory requirements, performance, and required features and port the code later to a more suitable processor. Remember from point 1 that once your application is working, porting the code will not effect it's correctness. If something goes wrong you know it's not at the application level.
 
+### 5. Isolate your business logic from supporting software
+The AbstractionLayer encourages [Hexagonal Architecture](https://en.wikipedia.org/wiki/Hexagonal_architecture_(software)). This means that you can clearly write, separate, and communicate the core goals of your software as it relates to the business without having to sift through infrastructure code that indirectly supports it.
+
 ## Factors that will complicate cross-platform design
 
 Complicate does not mean prohibit. It is still possible to manage these complications but there may not be an elegant solution.
@@ -81,4 +86,6 @@ Using some vendor tools (like flashers or partition managers) might not have a p
 ### 4. Hardware dependant values
 Depending on your hardware, some values like pin numbers may need to change from platform to platform. The best way to handle this is to use compile time macros to change the constants depending on the platform you are compiling for.
 ### 5. Generality
-The goal of the AbstractionLayer is to easily support multiple devices with firmware authoured by varying vendors. In order to achieve this the abstractions only include APIs for the most common use cases. Some vendors may offer hardware IP with proprietary functionality that is not found on other devices. If you use the AbstractionLayer you will not have access to these features since it would cause too many inconsistencies between which functions are and are not available when switching from platform to platform. While a main goal is only for the AbstractionLayer to be able to compile and at least run in a limited fashion when switching to a device the application is not directly intended to use, having to return `ErrorType::NotAvailable` and `ErrorType::NotSupported` is desired to be at a minimum. It is suggested to fork the repository and add features to a module without modiyfying the abstraction if you need advanced functionality not offered by the Abstraction API by using private functions.
+In order to achieve portability the abstractions only include APIs for the most common use cases. Some vendors may offer hardware IP with proprietary functionality that is not found on other devices. If you use the AbstractionLayer you will not have access to these features since it would make the abstractions not portable. It is suggested to fork the repository and add features to a module without modifying the abstraction if you need advanced functionality by using private functions to maintain portability.
+### 6. Efficiency
+The Abstraction will add a layer of indirection to your application. Sometimes this means that context available in the target software needs to be saved again in order to be accessible (like have to store thread IDs in the OperatingSystemAbstraction that are already available in the target OS). The AbstractionLayer may perform slower and use more memory for the benefit of easier testing, better debugging, and highly adaptable software which are all top concerns for long life-cycle projects.
