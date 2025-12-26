@@ -1,3 +1,4 @@
 Modules/**/*libsodium*
 .DS_Store
 Doxygen/html/**
+Modules/MachineLearning/Inference/Any/TensorFlowLite/TensorFlowLiteTree/
