@@ -9,9 +9,14 @@ file(WRITE "${TFLITE_CREATE_TREE_SCRIPT}" "
   #!/bin/bash
   if [ ! -d ../TensorFlowLiteTree ]; then
       echo \"Creating TensorFlowLite tree\"
+      python3 -m venv .venv
+      source .venv/bin/activate
+      pip install -r third_party/python_requirements.txt
       python3 tensorflow/lite/micro/tools/project_generation/create_tflm_tree.py -e hello_world -e micro_speech -e person_detection ../TensorFlowLiteTree 
       cp tensorflow/lite/array.* ../TensorFlowLiteTree/tensorflow/lite/
       cp -r third_party/ruy ../TensorFlowLiteTree/third_party/ruy
+      deactivate
+      rm -rf .venv
   fi
 ")
 execute_process(
