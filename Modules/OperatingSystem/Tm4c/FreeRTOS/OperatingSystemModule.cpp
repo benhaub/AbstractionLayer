@@ -2,18 +2,9 @@
 #include "OperatingSystemModule.hpp"
 #include "Math.hpp"
 #include "ProcessorModule.hpp"
-//Posix
-#include <pthread.h>
-#include <unistd.h>
 //C++
+#include <ctime>
 #include <cstring>
-//ESP
-#include "esp_pthread.h"
-#include "esp_app_desc.h"
-#include "esp_heap_caps.h"
-#include "esp_timer.h"
-#include "esp_efuse.h"
-#include "esp_mac.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,90 +17,61 @@ void TimerCallback(TimerHandle_t timer);
 #endif
 
 ErrorType OperatingSystem::delay(const Milliseconds delay) {
-    //https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/pthread.html#rtos-integration
-    //See Note. If the delay is less than the tick period then the new thread will never block. At startup this is a
-    //big problem because the main thread will always be lower priority and never be scheduled again as soon as we
-    //create the first thread so if the first thread blocks waiting for other threads it will starve the main thread
-    //and it will not be able to create the other threads.
-
-    //The default tick rate is 100Hz, so trying to delay for a thousandth of a second is 10 times shorter than the
-    //minimum needed to block.
-    #if configTICK_RATE_HZ < 1000
-        #warning "If you have delays of 1ms or less the block time will be increased to ensure FreeRTOS actually blocks the task."
-    #endif
-    const Milliseconds minimumDelayToBlock = delay * (1000 / configTICK_RATE_HZ);
-    usleep(minimumDelayToBlock * 1000);
+    vTaskDelay(delay);
     return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::delay(const Microseconds delay) {
-    ErrorType error = ErrorType::Failure;
-
-    if (delay < 1000) {
-        Microseconds expirationTime = Microseconds(esp_timer_get_time()) + delay;
-
-        while (Microseconds(esp_timer_get_time()) <= expirationTime);
-
-        error = ErrorType::Success;
-    }
-    else {
-        error = this->delay(Milliseconds(delay / 1000));
-    }
-
-    return error;
+    return ErrorType::NotImplemented;
 }
 
-
-//ESP will handle starting FreeRTOS for you by the time you get to app_main
 ErrorType OperatingSystem::startScheduler() {
-    return ErrorType::NotAvailable;
+    vTaskStartScheduler();
+
+    //Never returns
+    return ErrorType::Failure;
 }
 
 ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority priority, const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name, void * arguments, const Bytes stackSize, void *(*startFunction)(void *), Id &number) {
     ErrorType error = ErrorType::LimitReached;
     static Id nextThreadId = OperatingSystemTypes::NullId + 1;
 
-    //On ESP, the start function is called before xTaskCreate returns so we have to make sure
-    //that the details of thread are properly saved before the thread code runs. For example, if a thread calls currentThreadId,
-    //the posix ID will not be saved yet because xTaskCreate has not returned and so this function will fail even though the thread
-    //exists and has an ID.
+    //Unlike other modules which use InitThreadArgs and initThread as a means to fully register the thread with the operating system before
+    //the start function is called, this module uses the lambda as a wrapper for the function pointer since there is a conflict in the types
+    //that the abstraction layer uses vs. what FreeRTOS expects.
     struct InitThreadArgs {
         void *arguments;
         void *(*startFunction)(void *);
-        TaskHandle_t *threadId;
     };
     auto initThread = [](void *arguments) -> void {
         InitThreadArgs *initThreadArgs = static_cast<InitThreadArgs *>(arguments);
         void *threadArguments = initThreadArgs->arguments;
         void *(*startFunction)(void *) = initThreadArgs->startFunction;
-        *(initThreadArgs->threadId) = xTaskGetCurrentTaskHandle();
         delete initThreadArgs;
+        initThreadArgs = nullptr;
         (startFunction)(threadArguments);
         return;
     };
 
-    const int threadIndex = toThreadIndex(nextThreadId);
     InitThreadArgs *initThreadArgs = new InitThreadArgs {
         .arguments = arguments,
         .startFunction = startFunction,
-        .threadId = &threads.at(threadIndex).espThreadId,
     };
 
-    //Since initThread (and the associated startFunction) is called before xTaskCreate returns, we have to set the thread details of the thread now.
-    threads.at(threadIndex).threadId = nextThreadId;
-    threads.at(threadIndex).name = name;
-    threads.at(threadIndex).maxStackSize = stackSize;
-    threads.at(threadIndex).status = OperatingSystemTypes::ThreadStatus::Active;
-
     TaskHandle_t thread;
-    const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, initThreadArgs, toEspPriority(priority), &thread));
+    const bool threadWasCreated = (pdPASS == xTaskCreate(initThread, name.data(), stackSize/4, initThreadArgs, toTm4c123Priority(priority), &thread));
 
     if (threadWasCreated) {
 #if INCLUDE_uxTaskGetStackHighWaterMark
         OperatingSystemTypes::MemoryRegionInfo stackRegion = {name};
         _status.memoryRegion.push_back(stackRegion);
 #endif
-        number = threads.at(threadIndex).threadId;
+        threads.at(toThreadIndex(nextThreadId)).name = name;
+        threads.at(toThreadIndex(nextThreadId)).threadId = nextThreadId;
+        threads.at(toThreadIndex(nextThreadId)).maxStackSize = stackSize;
+        threads.at(toThreadIndex(nextThreadId)).tm4c123ThreadId = thread;
+        threads.at(toThreadIndex(nextThreadId)).status = OperatingSystemTypes::ThreadStatus::Active;
+        number = threads.at(toThreadIndex(nextThreadId)).threadId;
         _status.threadCount++;
         nextThreadId++;
         error = ErrorType::Success;
@@ -167,7 +129,7 @@ ErrorType OperatingSystem::threadId(const std::array<char, OperatingSystemTypes:
 ErrorType OperatingSystem::currentThreadId(Id &thread) const {
     const TaskHandle_t threadId = xTaskGetCurrentTaskHandle();
 
-    auto it = std::find_if(threads.begin(), threads.end(), [threadId](const auto &thread) { return thread.espThreadId == threadId; });
+    auto it = std::find_if(threads.begin(), threads.end(), [threadId](const auto &thread) { return thread.tm4c123ThreadId == threadId; });
     if (threads.end() == it) {
         thread = OperatingSystemTypes::NullId;
         return ErrorType::NoData;
@@ -278,7 +240,7 @@ ErrorType OperatingSystem::decrementSemaphore(const std::array<char, OperatingSy
 
 ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, const bool autoReload, std::function<void(void)> callback) {
 #if configUSE_TIMERS == 1
-    TimerHandle_t timerHandle;
+    TimerHandle_t timerHandle = nullptr;
     Timer newTimer = {
         .callback = callback,
         .id = nextTimerId++,
@@ -354,24 +316,108 @@ ErrorType OperatingSystem::stopTimer(const Id timer, const Milliseconds timeout)
 }
 
 ErrorType OperatingSystem::createQueue(const std::array<char, OperatingSystemTypes::MaxQueueNameLength> &name, const Bytes size, const Count length) {
-    return ErrorType::NotImplemented;
+    QueueHandle_t handle = nullptr;
+
+    handle = xQueueCreate(length, size);
+
+    if (nullptr == handle) {
+        return ErrorType::NoMemory;
+    }
+
+    queues[name] = handle;
+
+    return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::sendToQueue(const std::array<char, OperatingSystemTypes::MaxQueueNameLength> &name, const void *data, const Milliseconds timeout, const bool toFront, const bool fromIsr) {
-    return ErrorType::NotImplemented;
+    if (!queues.contains(name)) {
+        return ErrorType::NoData;
+    }
+
+    BaseType_t sent = pdTRUE;
+
+    if (toFront) {
+        if (fromIsr) {
+            sent = xQueueSendToFrontFromISR(queues[name], data, NULL);
+        }
+        else {
+            Ticks ticks;
+            millisecondsToTicks(timeout, ticks);
+            sent = xQueueSendToFront(queues[name], data, ticks);
+        }
+    }
+    else {
+        if (fromIsr) {
+            sent = xQueueSendFromISR(queues[name], data, NULL);
+        }
+        else {
+            Ticks ticks;
+            millisecondsToTicks(timeout, ticks);
+            sent = xQueueSend(queues[name], data, ticks);
+        }
+    }
+
+    if (pdTRUE == sent) {
+        return ErrorType::Success;
+    }
+    else {
+        return ErrorType::Failure;
+    }
 }
 
 ErrorType OperatingSystem::receiveFromQueue(const std::array<char, OperatingSystemTypes::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
-    return ErrorType::NotImplemented;
+    if (!queues.contains(name)) {
+        return ErrorType::NoData;
+    }
+
+    BaseType_t sent = pdTRUE;
+
+    if (fromIsr) {
+        sent = xQueueReceiveFromISR(queues[name], buffer, NULL);
+    }
+    else {
+        Ticks ticks;
+        millisecondsToTicks(timeout, ticks);
+        sent = xQueueReceive(queues[name], buffer, ticks);
+    }
+
+    if (pdTRUE == sent) {
+        return ErrorType::Success;
+    }
+    else if (uxQueueMessagesWaiting(queues[name]) > 0) {
+        return ErrorType::Failure;
+    }
+    else {
+        return ErrorType::Timeout;
+    }
 }
 
 ErrorType OperatingSystem::peekFromQueue(const std::array<char, OperatingSystemTypes::MaxQueueNameLength> &name, void *buffer, const Milliseconds timeout, const bool fromIsr) {
-    return ErrorType::NotImplemented;
+    if (!queues.contains(name)) {
+        return ErrorType::NoData;
+    }
+
+    BaseType_t sent = pdTRUE;
+
+    if (fromIsr) {
+        sent = xQueuePeekFromISR(queues[name], buffer);
+    }
+    else {
+        Ticks ticks;
+        millisecondsToTicks(timeout, ticks);
+        sent = xQueuePeek(queues[name], buffer, ticks);
+    }
+
+    if (pdTRUE == sent) {
+        return ErrorType::Success;
+    }
+    else {
+        return ErrorType::Failure;
+    }
 }
 
 ErrorType OperatingSystem::getSystemTime(UnixTime &currentSystemUnixTime) {
-    currentSystemUnixTime = static_cast<UnixTime>(time(nullptr));
-    return ErrorType::Success;
+    return ErrorType::NotImplemented;
 }
 
 ErrorType OperatingSystem::getSystemTick(Ticks &currentSystemTick) {
@@ -390,62 +436,36 @@ ErrorType OperatingSystem::millisecondsToTicks(const Milliseconds milli, Ticks &
 }
 
 ErrorType OperatingSystem::getSoftwareVersion(std::string &softwareVersion) {
-    //app_get_description is in the format of "git describe --tag". So will stop when it encounters a '-'
-    //https://docs.espressif.com/projects/esp-idf/en/v5.1.1/esp32/api-reference/system/misc_system_api.html
-    const esp_app_desc_t *appDescription = esp_app_get_description();
-
-    for (size_t i = 0; i < strlen(appDescription->version) && appDescription->version[i] != '-'; i++) {
-        if (appDescription->version[i] == '.') {
-            softwareVersion.push_back('.');
-            continue;
-        }
-
-        softwareVersion.push_back(appDescription->version[i]);
-    }
-
-    return ErrorType::Success;
+    return ErrorType::NotImplemented;
 }
 
 ErrorType OperatingSystem::getResetReason(OperatingSystemTypes::ResetReason &resetReason) {
-    ErrorType error;
-    resetReason = toPlatformResetReason(esp_reset_reason(), error);
-    return error;
-}
-
-ErrorType OperatingSystem::reset() {
-    esp_restart();
+    //There isn't really such thing as a reset reason for most posix systems, so we'll just call it power-on.
+    resetReason = OperatingSystemTypes::ResetReason::PowerOn;
     return ErrorType::Success;
 }
 
+ErrorType OperatingSystem::reset() {
+    return ErrorType::NotAvailable;
+}
+
 ErrorType OperatingSystem::setTimeOfDay(const UnixTime utc, const int16_t timeZoneDifferenceUtc) {
-    struct timeval tv;
-    tv.tv_sec = utc + timeZoneDifferenceUtc;
-    tv.tv_usec = 0;
-    return fromPlatformError(settimeofday(&tv, nullptr));
+    return ErrorType::NotImplemented;
 }
 
 ErrorType OperatingSystem::idlePercentage(Percent &idlePercent) {
-#if configUSE_IDLE_HOOK != 1
-#warning "configUSE_IDLE_HOOK is not enabled. Idle percentage will not be updated."
-#endif
     _status.idle = idlePercent;
     return ErrorType::Success;
 }
 
 ErrorType OperatingSystem::memoryRegionUsage(OperatingSystemTypes::MemoryRegionInfo &region) {
+    constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> heap = {"Heap"};
     ErrorType error = ErrorType::NoData;
-    constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> dram = {"DRAM"};
-    constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> spiram = {"SPIRAM"};
 
-    if (0 == strncmp(region.name.data(), dram.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
-        Bytes totalSize = heap_caps_get_total_size(MALLOC_CAP_8BIT);
-        Bytes freeSize = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-        region.free = (totalSize > 0) ? ((float)freeSize / totalSize) * 100.0f : 0.0f;
-    }
-    else if (0 == strncmp(region.name.data(), spiram.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
-        Bytes totalSize = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
-        Bytes freeSize = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
-        region.free = (totalSize > 0) ? ((float)freeSize / totalSize) * 100.0f : 0.0f;
+    if (0 == strncmp(region.name.data(), heap.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
+        Bytes totalHeap = configTOTAL_HEAP_SIZE;
+        Bytes freeHeap = xPortGetFreeHeapSize();
+        region.free = (totalHeap > 0) ? ((float)freeHeap / totalHeap) * 100.0f : 0.0f;
     }
 #if INCLUDE_uxTaskGetStackHighWaterMark
     else {
@@ -453,8 +473,8 @@ ErrorType OperatingSystem::memoryRegionUsage(OperatingSystemTypes::MemoryRegionI
 
             if (0 == strncmp(region.name.data(), thread.name.data(), OperatingSystemTypes::MaxMemoryRegionNameLength)) {
 
-                if (thread.espThreadId != nullptr) {
-                    UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(thread.espThreadId) * 4;
+                if (thread.tm4c123ThreadId != nullptr) {
+                    UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(thread.tm4c123ThreadId) * 4;
                     region.free = (thread.maxStackSize > 0) ? (Percent(stackHighWaterMark) / thread.maxStackSize) * 100.0f : 0.0f;
                 }
 
@@ -488,14 +508,13 @@ ErrorType OperatingSystem::uptime(Seconds &uptime) {
     return ErrorType::Success;
 }
 
-//https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/freertos_idf.html#critical-sections
-//These are specific to ESP_IDF version of FreeRTOS
 ErrorType OperatingSystem::disableAllInterrupts() {
     if (ErrorType::Success == Processor::Instance().isInterruptContext()) {
-        taskENTER_CRITICAL_ISR(&_interruptSpinlock);
+        assert(savedInterruptContexts.size() < savedInterruptContexts.capacity() && "Can not allocate memory from interrupt context");
+        savedInterruptContexts.push_back(taskENTER_CRITICAL_FROM_ISR());
     }
     else {
-        taskENTER_CRITICAL(&_interruptSpinlock);
+        taskENTER_CRITICAL();
     }
 
     return ErrorType::Success;
@@ -503,10 +522,11 @@ ErrorType OperatingSystem::disableAllInterrupts() {
 
 ErrorType OperatingSystem::enableAllInterrupts() {
     if (ErrorType::Success == Processor::Instance().isInterruptContext()) {
-        taskEXIT_CRITICAL_ISR(&_interruptSpinlock);
+        taskEXIT_CRITICAL_FROM_ISR(savedInterruptContexts.back());
+        savedInterruptContexts.pop_back();
     }
     else {
-        taskEXIT_CRITICAL(&_interruptSpinlock);
+        taskEXIT_CRITICAL();
     }
 
     return ErrorType::Success;
@@ -561,10 +581,10 @@ ErrorType OperatingSystem::unblock(const Id task) {
 
                 if (Processor::Instance().isInterruptContext() == ErrorType::Success) {
                     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-                    vTaskNotifyGiveFromISR(threadStruct.espThreadId, &xHigherPriorityTaskWoken);
+                    vTaskNotifyGiveFromISR(threadStruct.tm4c123ThreadId, &xHigherPriorityTaskWoken);
                 }
                 else {
-                    xTaskNotifyGive(threadStruct.espThreadId);
+                    xTaskNotifyGive(threadStruct.tm4c123ThreadId);
                 }
 
                 threadStruct.status = OperatingSystemTypes::ThreadStatus::Active;
@@ -590,6 +610,10 @@ void OperatingSystem::callTimerCallback(TimerHandle_t timer) {
     }
 
     return;
+}
+
+ErrorType OperatingSystem::getSystemMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) {
+    return ErrorType::NotAvailable;
 }
 
 #ifdef __cplusplus
@@ -619,20 +643,6 @@ void vApplicationIdleHook() {
     numberOfTimesIdleHookHasBeenCalled++;
 
     timeOfLastIdleHookCall = timeNow;
-}
-
-ErrorType OperatingSystem::getSystemMacAddress(std::array<char, NetworkTypes::MacAddressStringSize> &macAddress) {
-    uint8_t macAddressByteArray[6];
-    esp_err_t err;
-
-    err = esp_efuse_mac_get_default(macAddressByteArray);
-    if (ESP_OK != err) {
-        return fromPlatformError(err);
-    }
-
-    assert(snprintf(macAddress.data(), macAddress.size(), MACSTR, MAC2STR(macAddressByteArray)) > 0);
-
-    return ErrorType::Success;
 }
 
 #ifdef __cplusplus

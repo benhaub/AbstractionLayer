@@ -12,7 +12,7 @@ ErrorType Gpio::init() {
     return error;
 }
 
-ErrorType Gpio::pinWrite(const GpioTypes::LogicLevel &logicLevel) {
+ErrorType Gpio::pinWrite(const GpioTypes::LogicLevel &logicLevel) const {
     if (GpioTypes::LogicLevel::High == logicLevel) {
         return fromPlatformError(gpio_set_level(toEspPinNumber(gpioParams().hardwareConfig.pinNumber), 1));
     }
@@ -26,7 +26,7 @@ ErrorType Gpio::pinWrite(const GpioTypes::LogicLevel &logicLevel) {
     return ErrorType::Success;
 }
 
-ErrorType Gpio::pinRead(GpioTypes::LogicLevel &logicLevel) {
+ErrorType Gpio::pinRead(GpioTypes::LogicLevel &logicLevel) const {
     if (1 == gpio_get_level(toEspPinNumber(gpioParams().hardwareConfig.pinNumber))) {
         logicLevel = GpioTypes::LogicLevel::High;
     }

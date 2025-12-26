@@ -9,15 +9,20 @@ ErrorType Uart::init() {
     ErrorType error = ErrorType::PrerequisitesNotMet;
 
     if (PeripheralNumber::Unknown != uartParams().hardwareConfig.peripheralNumber) {
-        const uint32_t tm4c123UartSysCtlPeripheralNumber = toTm4c123SysCtlPeripheralNumber(uartParams().hardwareConfig.peripheralNumber, error);
+        const uint32_t tm4cUartSysCtlPeripheralNumber = toTm4cSysCtlPeripheralNumber(uartParams().hardwareConfig.peripheralNumber, error);
+
         if (ErrorType::Success == error) {
-            SysCtlPeripheralEnable(tm4c123UartSysCtlPeripheralNumber);
-            while(!SysCtlPeripheralReady(tm4c123UartSysCtlPeripheralNumber));
-            Register tm4c123UartBaseRegister = toTm4c123PeripheralBaseRegister(uartParams().hardwareConfig.peripheralNumber, error);
+            SysCtlPeripheralEnable(tm4cUartSysCtlPeripheralNumber);
+
+            while(!SysCtlPeripheralReady(tm4cUartSysCtlPeripheralNumber));
+
+            Register tm4cUartBaseRegister = toTm4cPeripheralBaseRegister(uartParams().hardwareConfig.peripheralNumber, error);
+
             if (ErrorType::Success == error) {
-                UARTConfigSetExpClk(reinterpret_cast<uint32_t>(tm4c123UartBaseRegister), SysCtlClockGet(), uartParams().driverConfig.baudRate, toTm4c123UartConfigBits(uartParams().driverConfig.dataBits, uartParams().driverConfig.stopBits, uartParams().driverConfig.parity, error));
+                UARTConfigSetExpClk(reinterpret_cast<uint32_t>(tm4cUartBaseRegister), SysCtlClockGet(), uartParams().driverConfig.baudRate, toTm4cUartConfigBits(uartParams().driverConfig.dataBits, uartParams().driverConfig.stopBits, uartParams().driverConfig.parity, error));
+
                 if (ErrorType::Success == error) {
-                    UARTFlowControlSet(reinterpret_cast<uint32_t>(tm4c123UartBaseRegister), toTm4c123UartFlowControl(uartParams().driverConfig.flowControl, error));
+                    UARTFlowControlSet(reinterpret_cast<uint32_t>(tm4cUartBaseRegister), toTm4cUartFlowControl(uartParams().driverConfig.flowControl, error));
                 }
             }
         }
@@ -58,7 +63,7 @@ ErrorType Uart::txBlocking(std::string_view data, const Milliseconds timeout, co
 }
 ErrorType Uart::txBlocking(const char c) {
     ErrorType error = ErrorType::Failure;
-    const Register tm4c123UartBaseRegister = toTm4c123PeripheralBaseRegister(uartParams().hardwareConfig.peripheralNumber, error);
+    const Register tm4c123UartBaseRegister = toTm4cPeripheralBaseRegister(uartParams().hardwareConfig.peripheralNumber, error);
 
     if (ErrorType::Success == error) {
         UARTCharPut(reinterpret_cast<uint32_t>(tm4c123UartBaseRegister), c);
@@ -95,7 +100,7 @@ ErrorType Uart::flushRxBuffer() {
     return ErrorType::NotImplemented;
 }
 
-uint32_t Uart::toTm4c123SysCtlPeripheralNumber(PeripheralNumber peripheralNumber, ErrorType &error) {
+uint32_t Uart::toTm4cSysCtlPeripheralNumber(PeripheralNumber peripheralNumber, ErrorType &error) {
     error = ErrorType::Success;
 
     switch (peripheralNumber) {
@@ -121,7 +126,7 @@ uint32_t Uart::toTm4c123SysCtlPeripheralNumber(PeripheralNumber peripheralNumber
     }
 }
 
-Register Uart::toTm4c123PeripheralBaseRegister(PeripheralNumber peripheralNumber, ErrorType &error) {
+Register Uart::toTm4cPeripheralBaseRegister(PeripheralNumber peripheralNumber, ErrorType &error) {
     error = ErrorType::Success;
 
     switch (peripheralNumber) {
@@ -147,7 +152,7 @@ Register Uart::toTm4c123PeripheralBaseRegister(PeripheralNumber peripheralNumber
     }
 }
 
-uint32_t Uart::toTm4c123UartConfigBits(const uint32_t dataBits, const uint32_t stopBits, const char parity, ErrorType &error) {
+uint32_t Uart::toTm4cUartConfigBits(const uint32_t dataBits, const uint32_t stopBits, const char parity, ErrorType &error) {
     error = ErrorType::Success;
     uint32_t configBits = 0;
 
@@ -202,7 +207,7 @@ uint32_t Uart::toTm4c123UartConfigBits(const uint32_t dataBits, const uint32_t s
     return configBits;
 }
 
-uint32_t Uart::toTm4c123UartFlowControl(const UartTypes::FlowControl flowControl, ErrorType &error) {
+uint32_t Uart::toTm4cUartFlowControl(const UartTypes::FlowControl flowControl, ErrorType &error) {
     error = ErrorType::Success;
 
     switch (flowControl) {

@@ -1,9 +1,6 @@
 [submodule "Modules/Processor/Cc32xx/CMSIS_6"]
 	path = Modules/Processor/Cc32xx/CMSIS_6
 	url = https://github.com/ARM-software/CMSIS_6.git
-[submodule "Modules/Processor/Tm4c123/CMSIS_6"]
-	path = Modules/Processor/Tm4c123/CMSIS_6
-	url = https://github.com/ARM-software/CMSIS_6.git
 [submodule "Utilities/static_string"]
 	path = Utilities/static_string
 	url = https://github.com/boostorg/static_string.git
@@ -12,3 +9,6 @@
 	path = Modules/Http/Posix/MbedTls/mbedtls
   url = https://github.com/Mbed-TLS/mbedtls.git
   ignore = all
+[submodule "Modules/Processor/Tm4c/CMSIS_6"]
+	path = Modules/Processor/Tm4c/CMSIS_6
+	url = https://github.com/ARM-software/CMSIS_6.git

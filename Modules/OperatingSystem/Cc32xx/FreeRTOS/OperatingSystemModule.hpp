@@ -19,7 +19,6 @@ class OperatingSystem final: public OperatingSystemAbstraction, public Global<Op
 
     public:
     OperatingSystem() : OperatingSystemAbstraction(), Global<OperatingSystem>() {
-        static_assert(1 == configUSE_TIMERS);
         savedInterruptContexts.reserve(2);
 
         // Add heap memory region

@@ -4,6 +4,7 @@ PRIVATE FILE_SET headers TYPE HEADERS BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
   IcCommFactory.hpp
   HBridgeFactory.hpp
   DarlingtonArrayFactory.hpp
+  LcdFactory.hpp
 )
 
 if (ESP_PLATFORM)

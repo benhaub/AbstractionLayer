@@ -72,12 +72,12 @@ namespace UartTypes {
          * @brief Contains the hardware configuration for the UART.
          */
         struct HardwareConfig {
-            UartTypes::Line line;               ///< The line to use for the uart
-            PinNumber tx;                       ///< The tx pin to use for the uart
-            PinNumber rx;                       ///< The rx pin to use for the uart
-            PinNumber rts;                      ///< The request to send pin to use for the uart
-            PinNumber cts;                      ///< The clear to send pin to use for the uart
-            PeripheralNumber peripheralNumber;  ///< The peripheral number to use for the uart
+            UartTypes::Line line;              ///< The line to use for the uart
+            PinNumber tx;                      ///< The tx pin to use for the uart
+            PinNumber rx;                      ///< The rx pin to use for the uart
+            PinNumber rts;                     ///< The request to send pin to use for the uart
+            PinNumber cts;                     ///< The clear to send pin to use for the uart
+            PeripheralNumber peripheralNumber; ///< The peripheral number to use for the uart
 
             HardwareConfig() : line(UartTypes::Line::Unknown), tx(-1), rx(-1), rts(-1), cts(-1), peripheralNumber(PeripheralNumber::Unknown) {}
 
@@ -87,11 +87,11 @@ namespace UartTypes {
          * @brief Contains the driver configuration for the UART.
          */
         struct DriverConfig {
-            uint32_t baudRate;                   ///< The baud rate to use for the uart
-            uint8_t dataBits;                    ///< The data bits to use for the uart
-            char parity;                         ///< The parity to use for the uart
-            uint8_t stopBits;                    ///< The stop bits to use for the uart
-            UartTypes::FlowControl flowControl;  ///< The flow control to use for the uart
+            uint32_t baudRate;                  ///< The baud rate to use for the uart
+            uint8_t dataBits;                   ///< The data bits to use for the uart
+            char parity;                        ///< The parity to use for the uart
+            uint8_t stopBits;                   ///< The stop bits to use for the uart
+            UartTypes::FlowControl flowControl; ///< The flow control to use for the uart
 
             DriverConfig() : baudRate(0), dataBits(0), parity('N'), stopBits(0), flowControl(UartTypes::FlowControl::Unknown) {}
 
@@ -101,8 +101,8 @@ namespace UartTypes {
          * @brief Contains the firmware configuration for the UART.
          */
         struct FirmwareConfig {
-            Bytes receiveBufferSize;             ///< The receive buffer size to use for the uart
-            Bytes transmitBufferSize;            ///< The transmit buffer size to use for the uart
+            Bytes receiveBufferSize;  ///< The receive buffer size to use for the uart
+            Bytes transmitBufferSize; ///< The transmit buffer size to use for the uart
 
             FirmwareConfig() : receiveBufferSize(0), transmitBufferSize(0) {}
 

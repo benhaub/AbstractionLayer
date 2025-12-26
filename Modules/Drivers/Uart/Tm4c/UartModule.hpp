@@ -25,10 +25,10 @@ class Uart : public UartAbstraction {
     ErrorType txBlocking(const char c);
     ErrorType rxBlocking(char *buffer, const size_t bufferSize, size_t &bytesRead, const Milliseconds timeout);
 
-    uint32_t toTm4c123SysCtlPeripheralNumber(PeripheralNumber peripheralNumber, ErrorType &error);
-    Register toTm4c123PeripheralBaseRegister(PeripheralNumber peripheralNumber, ErrorType &error);
-    uint32_t toTm4c123UartConfigBits(const uint32_t dataBits, const uint32_t stopBits, const char parity, ErrorType &error);
-    uint32_t toTm4c123UartFlowControl(const UartTypes::FlowControl flowControl, ErrorType &error);
+    uint32_t toTm4cSysCtlPeripheralNumber(PeripheralNumber peripheralNumber, ErrorType &error);
+    Register toTm4cPeripheralBaseRegister(PeripheralNumber peripheralNumber, ErrorType &error);
+    uint32_t toTm4cUartConfigBits(const uint32_t dataBits, const uint32_t stopBits, const char parity, ErrorType &error);
+    uint32_t toTm4cUartFlowControl(const UartTypes::FlowControl flowControl, ErrorType &error);
 };
 
 #endif // __UART_MODULE_HPP__

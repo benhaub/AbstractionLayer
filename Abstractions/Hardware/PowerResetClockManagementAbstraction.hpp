@@ -12,6 +12,15 @@
 #include "Types.hpp"
 
 /**
+ * @namespace PoweResetClockManagementTypes
+ * @brief Types for the PowerResetClockManagement
+ */
+namespace PowerResetClockManagementTypes {
+    /// @brief The clock frequency of the system.
+    inline Hertz SystemClockFrequency = 0;
+}
+
+/**
  * @class PowerResetClockManagementAbstraction
  * @brief Abstraction layer for power, reset, and clock management
  */

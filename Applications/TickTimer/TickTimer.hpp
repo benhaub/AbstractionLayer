@@ -21,6 +21,7 @@ namespace TickTimer {
 
     /**
      * @brief Start the tick timer
+     * @details Rollovers are handled by this function.
      * @param startTime The time at which the timer started
      * @param duration The duration for which the timer should run
      * @returns ErrorType::Success if the difference between the current timer and the provided start time has been reached
@@ -44,7 +45,7 @@ namespace TickTimer {
      * }
      * @endcode
      */
-    ErrorType Timer(const Ticks startTime, const Ticks duration) {
+    inline ErrorType Timer(const Ticks startTime, const Ticks duration) {
         const Ticks timeoutTime = startTime + duration;
 
         Ticks rolloverCompensation = 0;

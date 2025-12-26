@@ -162,6 +162,7 @@ ErrorType OperatingSystem::isDeleted(const std::array<char, OperatingSystemTypes
 }
 
 ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial, const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
+#if configUSE_COUNTING_SEMAPHORES 
     SemaphoreHandle_t freertosSemaphore;
 
     freertosSemaphore = xSemaphoreCreateCounting(max, initial);
@@ -173,9 +174,13 @@ ErrorType OperatingSystem::createSemaphore(const Count max, const Count initial,
     semaphores[name] = freertosSemaphore;
 
     return ErrorType::Success;
+#else
+    return ErrorType::NotSupported;
+#endif
 }
 
 ErrorType OperatingSystem::deleteSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
+#if configUSE_COUNTING_SEMAPHORES 
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -184,9 +189,13 @@ ErrorType OperatingSystem::deleteSemaphore(const std::array<char, OperatingSyste
     semaphores.erase(name);
 
     return ErrorType::Success;
+#else
+    return ErrorType::NotSupported;
+#endif
 }
 
 ErrorType OperatingSystem::waitSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name, const Milliseconds timeout) {
+#if configUSE_COUNTING_SEMAPHORES 
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -196,9 +205,13 @@ ErrorType OperatingSystem::waitSemaphore(const std::array<char, OperatingSystemT
     }
 
     return ErrorType::Timeout;
+#else
+    return ErrorType::NotSupported;
+#endif
 }
 
 ErrorType OperatingSystem::incrementSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
+#if configUSE_COUNTING_SEMAPHORES 
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -208,9 +221,13 @@ ErrorType OperatingSystem::incrementSemaphore(const std::array<char, OperatingSy
     }
 
     return ErrorType::Failure;
+#else
+    return ErrorType::NotSupported;
+#endif
 }
 
 ErrorType OperatingSystem::decrementSemaphore(const std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength> &name) {
+#if configUSE_COUNTING_SEMAPHORES 
     if (!semaphores.contains(name)) {
         return ErrorType::NoData;
     }
@@ -220,9 +237,14 @@ ErrorType OperatingSystem::decrementSemaphore(const std::array<char, OperatingSy
     }
 
     return ErrorType::Failure;
+#else
+    return ErrorType::NotSupported;
+#endif
 }
 
 ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, const bool autoReload, std::function<void(void)> callback) {
+#if configUSE_TIMERS == 1
+
     TimerHandle_t timerHandle = nullptr;
     Timer newTimer = {
         .callback = callback,
@@ -239,9 +261,13 @@ ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, con
         deleteTimer(timer);
         return ErrorType::Failure;
     }
+#else
+    return ErrorType::NotAvailable;
+#endif
 }
 
 ErrorType OperatingSystem::deleteTimer(const Id timer) {
+#if configUSE_TIMERS == 1
    auto itr = timers.begin();
 
     while (itr != timers.end()) {
@@ -253,9 +279,13 @@ ErrorType OperatingSystem::deleteTimer(const Id timer) {
     }
 
     return ErrorType::NoData;
+#else
+    return ErrorType::NotAvailable;
+#endif
 }
 
 ErrorType OperatingSystem::startTimer(const Id timer, const Milliseconds timeout) {
+#if configUSE_TIMERS == 1
     auto itr = timers.begin();
     while(itr != timers.end()) {
         if (itr->second.id == timer) {
@@ -266,9 +296,13 @@ ErrorType OperatingSystem::startTimer(const Id timer, const Milliseconds timeout
     }
 
     return ErrorType::Failure;
+#else
+    return ErrorType::NotAvailable;
+#endif
 }
 
 ErrorType OperatingSystem::stopTimer(const Id timer, const Milliseconds timeout) {
+#if configUSE_TIMERS == 1
     auto itr = timers.begin();
     while(itr != timers.end()) {
         if (itr->second.id == timer) {
@@ -279,6 +313,9 @@ ErrorType OperatingSystem::stopTimer(const Id timer, const Milliseconds timeout)
     }
 
     return ErrorType::Failure;
+#else
+    return ErrorType::NotAvailable;
+#endif
 }
 
 ErrorType OperatingSystem::createQueue(const std::array<char, OperatingSystemTypes::MaxQueueNameLength> &name, const Bytes size, const Count length) {

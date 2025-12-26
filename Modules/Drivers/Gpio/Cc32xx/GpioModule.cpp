@@ -9,10 +9,10 @@ ErrorType Gpio::init() {
     return ErrorType::Success;
 }
 
-ErrorType Gpio::pinWrite(const GpioTypes::LogicLevel &logicLevel) {
+ErrorType Gpio::pinWrite(const GpioTypes::LogicLevel &logicLevel) const {
     return ErrorType::NotImplemented;
 }
 
-ErrorType Gpio::pinRead(GpioTypes::LogicLevel &logicLevel) {
+ErrorType Gpio::pinRead(GpioTypes::LogicLevel &logicLevel) const {
     return ErrorType::NotImplemented;
 }

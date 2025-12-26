@@ -39,7 +39,9 @@ namespace GpioTypes {
     enum class PinDirection : uint8_t {
         DigitalUnknown = 0, ///< Unknown pin direction
         DigitalInput,       ///< Pin is digital input
-        DigitalOutput       ///< Pin is digital output
+        DigitalOutput,      ///< Pin is digital output
+        AnalogOutput,       ///< Pin is analog output
+        AnalogInput         ///< Pin is analog input
     };
 
     /**
@@ -50,6 +52,28 @@ namespace GpioTypes {
         Unknown = 0, ///< Unknown logic level
         Low,         ///< Low logic level
         High         ///< High logic level
+    };
+
+    /**
+     * @enum DriveType
+     * @brief Additional circuitry that is used to drive the pin
+     */
+    enum class DriveType : uint8_t {
+        Unknown = 0, ///< Unknown drive type
+        PushPull,    ///< A CMOS is used to actively push or pull the pin to logic high/low giving fast and sharp transitions.
+        OpenDrain,   ///< Can drive the line(s) low by turning on an N-type transistor. Pull-up required to bring the line back to high.
+    };
+
+    /**
+     * @enum DriveStrength
+     * @brief The drive strength of the pin to control how much current can go through pin while still being able to hold a stable voltage.
+     */
+    enum class DriveStrength : uint8_t {
+        Unknown = 0,    ///< Unknown drive strength
+        TwoMilliAmps,   ///< 2mA
+        FourMilliAmps,  ///< 4mA
+        EightMilliAmps, ///< 8mA
+        TwelveMilliAmps ///< 12mA
     };
 
     /**
@@ -68,9 +92,15 @@ namespace GpioTypes {
             InterruptFlags interruptFlags;     ///< The interrupt flags to use for the GPIO.
             bool pullUpEnable;                 ///< True to enable the pull-up resistor, false otherwise.
             bool pullDownEnable;               ///< True to enable the pull-down resistor, false otherwise.
+            DriveType driveType;               ///< The drive type of the pin
+            DriveStrength driveStrength;       ///< The drive strength of the pin
 
             /// @brief Constructor
-            HardwareConfig() : peripheralNumber(PeripheralNumber::Unknown), pinNumber(-1), direction(GpioTypes::PinDirection::DigitalUnknown), interruptFlags(Interrupts::Disabled), pullUpEnable(false), pullDownEnable(false) {}
+            HardwareConfig() :
+              peripheralNumber(PeripheralNumber::Unknown), pinNumber(-1),
+              direction(GpioTypes::PinDirection::DigitalUnknown),
+              interruptFlags(Interrupts::Disabled), pullUpEnable(false),
+              pullDownEnable(false), driveType(DriveType::Unknown), driveStrength(DriveStrength::Unknown) {}
         } hardwareConfig; ///< The hardware configuration for the GPIO.
 
         /**
@@ -107,6 +137,7 @@ class GpioAbstraction {
 
     /**
      * @brief Init the gpio after configuring.
+     * @details Initialization is idempotent.
      * @pre Call setHardwareConfig first.
      * @returns ErrorType::Success if the GPIO was initialized
      * @returns ErrorType::PrerequisitesNotMet if pinDirection(), interruptMode() or pinNumber() are not valid.
@@ -123,7 +154,7 @@ class GpioAbstraction {
      * @returns ErrorType::InvalidParameter if the logic level is not valid.
      * @post The pin should output a voltage level according to the logic level written.
     */
-    virtual ErrorType pinWrite(const GpioTypes::LogicLevel &logicLevel) = 0;
+    virtual ErrorType pinWrite(const GpioTypes::LogicLevel &logicLevel) const = 0;
     /**
      * @brief Read the logic level of the pin.
      * @param[out] logicLevel The logic level of the pin.
@@ -133,7 +164,7 @@ class GpioAbstraction {
      * @returns ErrorType::NotAvailable if the system does not provide gpio pin reading.
      * @returns ErrorType::InvalidParameter if the logic level is not valid.
      */
-    virtual ErrorType pinRead(GpioTypes::LogicLevel &logicLevel) = 0;
+    virtual ErrorType pinRead(GpioTypes::LogicLevel &logicLevel) const = 0;
 
     /**
      * @brief Configure the GPIO.

@@ -32,6 +32,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Error/${ERROR_MODULE_TYPE})
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Tools/${CRC_MODULE_TYPE}/Crc)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/MemoryManagement/${MEMORY_MANAGEMENT_MODULE_TYPE})
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/Processor/${PROCESSOR_MODULE_TYPE})
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Modules/MachineLearning/Inference/${MACHINE_LEARNING_MODULE_TYPE})
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Utilities)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Logging)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/Event)
@@ -62,6 +63,9 @@ endif()
 if (ENABLE_EXTERNAL_RTC)
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/IntegratedCircuits/Rtc)
 endif()
+if (ENABLE_LCD_SCREEN)
+  add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/IntegratedCircuits/Lcd)
+endif()
 if (ENABLE_RTC_MANAGER)
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/RtcManager)
 endif()
@@ -88,7 +92,7 @@ if (TARGET_PLATFORM STREQUAL "Cc32xx")
   PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-fconcepts>
   )
-elseif(TARGET_PLATFORM STREQUAL "Tm4c123")
+elseif(TARGET_PLATFORM STREQUAL "Tm4c")
   target_compile_options(${PROJECT_NAME}${EXECUTABLE_SUFFIX}
   PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-fconcepts>

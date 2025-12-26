@@ -5,17 +5,18 @@
 #include <cassert>
 
 ErrorType PowerResetClockManagement::init() {
-    return ErrorType::NotImplemented;
+    return ErrorType::NotAvailable;
 }
 
+#if defined(PART_TM4C123GH6PM)
 ErrorType PowerResetClockManagement::setClockFrequency(const Hertz frequency, const Hertz externalCrystalFrequency) {
     ErrorType error = ErrorType::Failure;
 
     if (isValidFrequency(frequency)) {
         uint32_t clockConfig = SYSCTL_USE_PLL | SYSCTL_OSC_MAIN;
 
-        const uint32_t sysCtlClockFrequency = toTm4c123SysCtlClockFrequency(frequency, true, true);
-        const uint32_t sysCtlExternalClockFrequency = toTm4c123SysCtlExternalClockFrequency(externalCrystalFrequency, true);
+        const uint32_t sysCtlClockFrequency = toTm4cSysCtlClockFrequency(frequency, true, true);
+        const uint32_t sysCtlExternalClockFrequency = toTm4cSysCtlExternalClockFrequency(externalCrystalFrequency, true);
 
         const bool frequenciesAreValid = (0 != sysCtlClockFrequency && 0 != sysCtlExternalClockFrequency);
         if (frequenciesAreValid) {
@@ -32,8 +33,34 @@ ErrorType PowerResetClockManagement::setClockFrequency(const Hertz frequency, co
 
     return error;
 }
+#elif defined(PART_TM4C1294NCPDT)
+ErrorType PowerResetClockManagement::setClockFrequency(const Hertz frequency, const Hertz externalCrystalFrequency) {
+    ErrorType error = ErrorType::Failure;
 
-uint32_t PowerResetClockManagement::toTm4c123SysCtlClockFrequency(const Hertz frequency, const bool usePll, const bool useMainOscillator) {
+    if (isValidFrequency(frequency)) {
+        uint32_t clockConfig = SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_CFG_VCO_480;
+        const uint32_t sysCtlExternalClockFrequency = toTm4cSysCtlExternalClockFrequency(externalCrystalFrequency, true);
+
+        const bool frequenciesAreValid = 0 != sysCtlExternalClockFrequency;
+        if (frequenciesAreValid) {
+            clockConfig |= sysCtlExternalClockFrequency;
+
+            PowerResetClockManagementTypes::SystemClockFrequency = SysCtlClockFreqSet(clockConfig, frequency);
+
+            if (PowerResetClockManagementTypes::SystemClockFrequency != 0) {
+                error = ErrorType::Success;
+            }
+        }
+    }
+    else {
+        error = ErrorType::InvalidParameter;
+    }
+
+    return error;
+}
+#endif
+
+uint32_t PowerResetClockManagement::toTm4cSysCtlClockFrequency(const Hertz frequency, const bool usePll, const bool useMainOscillator) {
     if (isValidFrequency(frequency)) {
         if (usePll && useMainOscillator) {
             constexpr int32_t maxPllOutput = 200E6;
@@ -54,13 +81,13 @@ uint32_t PowerResetClockManagement::toTm4c123SysCtlClockFrequency(const Hertz fr
             assert(onlyOneDividerIsMostAccurate);
 
             if (frequencyWithHalfAddedToDividerIsMostAccurate) {
-                return toTm4c123SysCtlDividerPlusHalf(clockDivider);
+                return toTm4cSysCtlDividerPlusHalf(clockDivider);
             }
             else if (frequencyWithHalfSubtractedFromDividerIsMostAccurate) {
-                return toTm4c123SysCtlDividerMinusHalf(clockDivider);
+                return toTm4cSysCtlDividerMinusHalf(clockDivider);
             }
             else if (frequencyWithWholeNumberDividerIsMostAccurate) {
-                return toTm4c123SysCtlDivider(clockDivider);
+                return toTm4cSysCtlDivider(clockDivider);
             }
         }
     }
@@ -68,7 +95,7 @@ uint32_t PowerResetClockManagement::toTm4c123SysCtlClockFrequency(const Hertz fr
     return 0;
 }
 
-uint32_t PowerResetClockManagement::toTm4c123SysCtlExternalClockFrequency(const Hertz externalCrystalFrequency, const bool usePll) {
+uint32_t PowerResetClockManagement::toTm4cSysCtlExternalClockFrequency(const Hertz externalCrystalFrequency, const bool usePll) {
     constexpr float tolerance = 0.01f;
     if (!usePll) {
         if (withinError(static_cast<float>(externalCrystalFrequency), 4E6f, tolerance)) {
@@ -133,7 +160,7 @@ uint32_t PowerResetClockManagement::toTm4c123SysCtlExternalClockFrequency(const 
     return 0;
 }
 
-constexpr uint32_t PowerResetClockManagement::toTm4c123SysCtlDivider(const uint32_t divider) {
+constexpr uint32_t PowerResetClockManagement::toTm4cSysCtlDivider(const uint32_t divider) {
     if (divider <= 2) {
         return SYSCTL_SYSDIV_2_5;
     }
@@ -155,12 +182,12 @@ constexpr uint32_t PowerResetClockManagement::toTm4c123SysCtlDivider(const uint3
     return sysdiv;
 }
 
-constexpr uint32_t PowerResetClockManagement::toTm4c123SysCtlDividerPlusHalf(const uint32_t divider) {
+constexpr uint32_t PowerResetClockManagement::toTm4cSysCtlDividerPlusHalf(const uint32_t divider) {
     if (divider <= 2) {
         return SYSCTL_SYSDIV_2_5;
     }
 
-    const uint32_t wholeNumberDivider = toTm4c123SysCtlDivider(divider) & ~(0xF0 << 24);
+    const uint32_t wholeNumberDivider = toTm4cSysCtlDivider(divider) & ~(0xF0 << 24);
 
     constexpr uint32_t scalar = SYSCTL_SYSDIV_2_5 - SYSCTL_SYSDIV_2;
 
@@ -176,12 +203,12 @@ constexpr uint32_t PowerResetClockManagement::toTm4c123SysCtlDividerPlusHalf(con
     return wholeNumberDivider + scalar;
 }
 
-constexpr uint32_t PowerResetClockManagement::toTm4c123SysCtlDividerMinusHalf(const uint32_t divider) {
+constexpr uint32_t PowerResetClockManagement::toTm4cSysCtlDividerMinusHalf(const uint32_t divider) {
     if (divider <= 2) {
         return SYSCTL_SYSDIV_2_5;
     }
 
     constexpr uint32_t scalar = (SYSCTL_SYSDIV_3_5 - SYSCTL_SYSDIV_2_5);
 
-    return toTm4c123SysCtlDividerPlusHalf(divider) - scalar;
+    return toTm4cSysCtlDividerPlusHalf(divider) - scalar;
 }

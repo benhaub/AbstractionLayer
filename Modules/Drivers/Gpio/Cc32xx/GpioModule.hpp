@@ -10,8 +10,8 @@ class Gpio final : public GpioAbstraction {
     Gpio() : GpioAbstraction() {}
 
     ErrorType init() override;
-    ErrorType pinWrite(const GpioTypes::LogicLevel &logicLevel) override;
-    ErrorType pinRead(GpioTypes::LogicLevel &logicLevel) override;
+    ErrorType pinWrite(const GpioTypes::LogicLevel &logicLevel) const override;
+    ErrorType pinRead(GpioTypes::LogicLevel &logicLevel) const override;
 };
 
 #endif // __GPIO_MODULE_HPP__

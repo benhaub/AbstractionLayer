@@ -286,6 +286,25 @@ namespace IpTypes {
         Udp          ///< User Datagram Protocol
     };
 }
+//-------------------------------Graphics
+///@typedef HexCodeColour
+///Hex code colour
+using HexCodeColour = uint32_t;
+///@struct Coordinate
+///@brief A coordinate that identifies a point on the screen
+struct Coordinate {
+    uint16_t x = 0; ///< The x coordinate
+    uint16_t y = 0; ///< The y coordinate
+};
+/// @struct Area
+/// @brief A rectangular area on the screen
+struct Area {
+    Coordinate origin{0,0}; ///< The top left corner of the area
+    uint16_t width = 0;     ///< The width of the area
+    uint16_t height = 0;    ///< The height of the area
+
+    constexpr uint32_t size() const { return width * height; }
+};
 
 /**
  * @brief Converts a DateTime structure to a Unix time.

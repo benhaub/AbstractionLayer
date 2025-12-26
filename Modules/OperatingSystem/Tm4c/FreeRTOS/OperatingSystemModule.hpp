@@ -5,32 +5,25 @@
 #include "OperatingSystemAbstraction.hpp"
 //Common
 #include "Global.hpp"
-//FreeRtos
-//ESP operating system is a significantly modified version of FreeRTOS
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "FreeRTOSConfig.h"
-#include "freertos/semphr.h"
-#include "freertos/timers.h"
-//ESP
-#include "esp_system.h"
 //C++
 #include <map>
 #include <atomic>
+//FreeRTOS
+#include "FreeRTOS.h"
+#include "semphr.h"
+#include "task.h"
+#include "queue.h"
+#include "timers.h"
 
 class OperatingSystem final : public OperatingSystemAbstraction, public Global<OperatingSystem> {
 
     public:
-    OperatingSystem() : OperatingSystemAbstraction(), Global<OperatingSystem>() { 
-        // Add DRAM memory region
-        constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> dram = {"DRAM"};
-        _status.memoryRegion.emplace_back(dram);
-        
-#ifdef CONFIG_SPIRAM
-        // Add SPIRAM memory region
-        constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> spiram = {"SPIRAM"};
-        _status.memoryRegion.emplace_back(spiram);
-#endif
+    OperatingSystem() : OperatingSystemAbstraction(), Global<OperatingSystem>() {
+        savedInterruptContexts.reserve(2);
+
+        // Add heap memory region
+        constexpr std::array<char, OperatingSystemTypes::MaxMemoryRegionNameLength> heap = {"Heap"};
+        _status.memoryRegion.emplace_back(heap);
     }
 
     ErrorType delay(const Milliseconds delay) override;
@@ -74,31 +67,10 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
 
     void callTimerCallback(TimerHandle_t timer);
 
-    private:
-    struct Thread {
-        TaskHandle_t espThreadId;
-        std::array<char, OperatingSystemTypes::MaxThreadNameLength> name;
-        Id threadId;
-        Bytes maxStackSize;
-        OperatingSystemTypes::ThreadStatus status;
-    };
-
-    struct Timer {
-        std::function<void(void)> callback;
-        Id id;
-        bool autoReload;
-    };
-
-    std::array<Thread, APP_MAX_NUMBER_OF_THREADS> threads;
-    std::map<std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength>, SemaphoreHandle_t> semaphores;
-    std::map<TimerHandle_t, Timer> timers;
-    Id nextTimerId = 0;
-    portMUX_TYPE _interruptSpinlock = portMUX_INITIALIZER_UNLOCKED;
-
-    size_t toEspPriority(OperatingSystemTypes::Priority priority) {
+    size_t toTm4c123Priority(OperatingSystemTypes::Priority priority) {
         switch (priority) {
             case OperatingSystemTypes::Priority::Highest:
-                return configMAX_PRIORITIES-1;
+                return configMAX_PRIORITIES - 1;
             case OperatingSystemTypes::Priority::High:
                 return configMAX_PRIORITIES * 0.8f;
             case OperatingSystemTypes::Priority::Normal:
@@ -112,42 +84,32 @@ class OperatingSystem final : public OperatingSystemAbstraction, public Global<O
         }
     }
 
-    OperatingSystemTypes::ResetReason toPlatformResetReason(uint8_t resetReason, ErrorType &error) {
-        error = ErrorType::Success;
+    private:
+    struct Thread {
+        TaskHandle_t tm4c123ThreadId;
+        std::array<char, OperatingSystemTypes::MaxThreadNameLength> name;
+        Id threadId;
+        Bytes maxStackSize;
+        OperatingSystemTypes::ThreadStatus status;
+    };
 
-        switch (resetReason) {
-            case ESP_RST_UNKNOWN:
-                return OperatingSystemTypes::ResetReason::Unknown;
-            case ESP_RST_POWERON:
-                return OperatingSystemTypes::ResetReason::PowerOn;
-            case ESP_RST_EXT:
-            case ESP_RST_USB:
-            case ESP_RST_JTAG:
-                return OperatingSystemTypes::ResetReason::ExternalPin;
-            case ESP_RST_SW:
-                return OperatingSystemTypes::ResetReason::Software;
-            case ESP_RST_PANIC:
-            case ESP_RST_PWR_GLITCH:
-            case ESP_RST_CPU_LOCKUP:
-                return OperatingSystemTypes::ResetReason::Exception;
-            case ESP_RST_INT_WDT:
-            case ESP_RST_TASK_WDT:
-            case ESP_RST_WDT:
-                return OperatingSystemTypes::ResetReason::Watchdog;
-            case ESP_RST_DEEPSLEEP:
-                return OperatingSystemTypes::ResetReason::DeepSleep;
-            case ESP_RST_BROWNOUT:
-                return OperatingSystemTypes::ResetReason::BrownOut;
-            case ESP_RST_SDIO:
-            default:
-                error = ErrorType::Failure;
-                return OperatingSystemTypes::ResetReason::Unknown;
-        }
-    }
+    struct Timer {
+        std::function<void(void)> callback;
+        Id id;
+        bool autoReload;
+    };
 
-    int toThreadIndex(Id thread) {
-        return thread - 1;
+    Id nextTimerId = 0;
+
+    std::array<Thread, APP_MAX_NUMBER_OF_THREADS> threads;
+    std::map<std::array<char, OperatingSystemTypes::MaxQueueNameLength>, QueueHandle_t> queues;
+    std::map<std::array<char, OperatingSystemTypes::MaxSemaphoreNameLength>, SemaphoreHandle_t> semaphores;
+    std::map<TimerHandle_t, Timer> timers;
+    std::vector<UBaseType_t> savedInterruptContexts;
+
+    int toThreadIndex(const Id threadId) {
+        return (threadId - 1);
     }
 };
 
-#endif // __OPERATING_SYSTEM_MODULE_HPP__
+#endif // __OPERATING_SYSTEM_HPP__

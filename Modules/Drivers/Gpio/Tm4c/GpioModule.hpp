@@ -3,9 +3,6 @@
 
 //AbstractionLayer
 #include "GpioAbstraction.hpp"
-//ESP
-#include "hal/gpio_types.h"
-#include "driver/gpio.h"
 
 class Gpio final : public GpioAbstraction {
 
@@ -16,14 +13,11 @@ class Gpio final : public GpioAbstraction {
     ErrorType pinWrite(const GpioTypes::LogicLevel &logicLevel) const override;
     ErrorType pinRead(GpioTypes::LogicLevel &logicLevel) const override;
 
-    gpio_num_t toEspPinNumber(const PinNumber pinNumber) const {
-        return static_cast<gpio_num_t>(pinNumber);
-    }
-
-    ErrorType toEspGpioConfig(const GpioTypes::GpioParams &params);
-
     private:
-    gpio_config_t _gpioConfig;
+    unsigned long toTm4cPortNumber(const PeripheralNumber number, ErrorType &error) const;
+    unsigned char toTm4cPinNumber(const PinNumber pin, ErrorType &error) const;
+    unsigned long toTm4cDriveStrength(const GpioTypes::DriveStrength driveStrength, ErrorType &error);
+    unsigned long toTm4cPinType(const GpioTypes::DriveType driveType, ErrorType &error);
 };
 
 #endif // __GPIO_MODULE_HPP__
