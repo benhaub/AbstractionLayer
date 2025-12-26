@@ -12,3 +12,6 @@
 [submodule "Modules/Processor/Tm4c/CMSIS_6"]
 	path = Modules/Processor/Tm4c/CMSIS_6
 	url = https://github.com/ARM-software/CMSIS_6.git
+[submodule "Modules/MachineLearning/Inference/Any/TensorFlowLite/tflite-micro"]
+	path = Modules/MachineLearning/Inference/Any/TensorFlowLite/tflite-micro
+	url = https://github.com/tensorflow/tflite-micro.git
