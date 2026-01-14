@@ -259,6 +259,7 @@ ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, con
     };
 
     timers[dispatchTimer] = newTimer;
+    timer = newTimer.id;
     
     dispatch_source_set_event_handler_f(dispatchTimer, TimerCallback);
     dispatch_set_context(dispatchTimer, dispatchTimer);
@@ -275,8 +276,12 @@ ErrorType OperatingSystem::deleteTimer(const Id timer) {
         return ErrorType::NoData;
     }
 
-    //It is not a bug the we have not stopped the timer before deleting.
     //https://developer.apple.com/documentation/dispatch/dispatchobject/suspend()?language=objc
+    //You can not delete a timer that is suspended.
+    if (it->second.isSuspended) {
+        dispatch_resume(it->first);
+    }
+
     dispatch_source_cancel(it->first);
     dispatch_release(it->first);
     timers.erase(it);
