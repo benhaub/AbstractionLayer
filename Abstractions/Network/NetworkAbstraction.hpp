@@ -133,12 +133,13 @@ class NetworkAbstraction : public EventQueue {
     /// @copydoc ErrorType transmit(const std::string &frame, const Socket socket, const Milliseconds timeout)
     virtual ErrorType transmit(std::string_view frame, const Socket socket, const Milliseconds timeout) = 0;
     /**
-     * @brief Receive a frame of data.
+     * @brief Receive a frame of data less than or equal to the buffer size.
      * @param[in] frameBuffer The buffer to store the received frame data.
      * @param[in] socket  The socket to receive from
      * @param[in] timeout The timeout in milliseconds to wait for the transmission to complete
      * @returns ErrorType::Success if the frame was successfully received
      * @returns ErrorType::Failure if the frame was not received
+     * @returns ErrorType::NoData if no data was received. 0 == frameBuffer.size()
      * @post The frameBuffer is not modified in any way unless data is received.
      * @pre init
     */
