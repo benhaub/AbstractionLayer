@@ -45,6 +45,7 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
                                     mbedtls_ssl_set_user_data_p(&_ssl, &_ipClient.network());
                                     _context.sslContext = &_ssl;
                                     mbedtls_ssl_set_bio(&_ssl, &_context, MbedTlsCompatible::Send, NULL, MbedTlsCompatible::Receive);
+                                    mbedtls_ssl_conf_read_timeout(&_conf, timeout);
 
                                     bool needToTryAgain = false;
                                     bool handshakeFailed = false;
@@ -55,12 +56,12 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
                                                             ret == MBEDTLS_ERR_SSL_WANT_WRITE ||
                                                             ret == MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS ||
                                                             ret == MBEDTLS_ERR_SSL_CRYPTO_IN_PROGRESS);
-                                        handshakeFailed = !needToTryAgain;
+                                        handshakeFailed = !needToTryAgain && ret < 0;
                                     } while (needToTryAgain && !handshakeFailed);
 
                                     const uint32_t flags = mbedtls_ssl_get_verify_result(&_ssl);
 
-                                    if (0 != flags) {
+                                    if (0 != flags || handshakeFailed) {
                                         callbackError = ErrorType::Failure;
                                     }
                                 }
