@@ -330,13 +330,14 @@ ErrorType OperatingSystem::deleteTimer(const Id timer) {
 }
 
 ErrorType OperatingSystem::startTimer(const Id timer, const Milliseconds timeout) {
-    struct itimerspec timerSpec;
-    timerSpec.it_value.tv_sec = 0;
     ErrorType error = ErrorType::NoData;
 
     for (const auto &nextTimer : timers) {
+
         if (nextTimer.second.id == timer) {
             const Timer &timer = nextTimer.second;
+            struct itimerspec timerSpec;
+            
             if (timer.autoReload) {
                 //Arm the timer by setting any subfield of it_value to a non-zero value
                 timerSpec.it_value.tv_sec = 1;
@@ -352,23 +353,23 @@ ErrorType OperatingSystem::startTimer(const Id timer, const Milliseconds timeout
                 timerSpec.it_interval.tv_sec = 0;
                 timerSpec.it_interval.tv_nsec = 0;
             }
-        }
 
-        //Must not be greater than this according to the docs. Meaning you can't put more than a second into the nsec member.
-        assert(timerSpec.it_value.tv_nsec <= 999999999);
+            //Must not be greater than this according to the docs. Meaning you can't put more than a second into the nsec member.
+            assert(timerSpec.it_value.tv_nsec <= 999999999);
 
-        //You probably didn't mean to set these to zero. On Linux the posix timer granularity is a second at minimum so if you set timeout
-        //to less than a second the timers will expire right away or never be armed.
-        assert(timerSpec.it_value.tv_sec > 0 || timerSpec.it_value.tv_nsec > 0);
+            //You probably didn't mean to set these to zero. On Linux the posix timer granularity is a second at minimum so if you set timeout
+            //to less than a second the timers will expire right away or never be armed.
+            assert(timerSpec.it_value.tv_sec > 0 || timerSpec.it_value.tv_nsec > 0);
 
-        //The flag is zero so the timer times relatively instead expiring when the system clock reaches the value specified by it_value.
-        //Last argument is nullptr since we don't want the output parameter of old_time which is the itimerspec that new time replaced.
-        if (0 == timer_settime(nextTimer.first, 0, &timerSpec, nullptr)) {
-            return ErrorType::Success;
-        }
-        else {
-            perror("timer_settime");
-            error = fromPlatformError(errno);
+            //The flag is zero so the timer times relatively instead expiring when the system clock reaches the value specified by it_value.
+            //Last argument is nullptr since we don't want the output parameter of old_time which is the itimerspec that new time replaced.
+            if (0 == timer_settime(nextTimer.first, 0, &timerSpec, nullptr)) {
+                return ErrorType::Success;
+            }
+            else {
+                perror("timer_settime");
+                error = fromPlatformError(errno);
+            }
         }
     }
 
