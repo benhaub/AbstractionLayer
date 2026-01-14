@@ -66,8 +66,10 @@ class StatusLogger {
      * @brief Deconstructor
      */
     ~StatusLogger() {
-        OperatingSystem::Instance().stopTimer(_logTimer, 0);
-        OperatingSystem::Instance().deleteTimer(_logTimer);
+        if (OperatingSystemTypes::NullId != _logTimer) {
+            OperatingSystem::Instance().stopTimer(_logTimer, 0);
+            OperatingSystem::Instance().deleteTimer(_logTimer);
+        }
     }
 
     /// @brief Tag for logging
@@ -139,7 +141,7 @@ class StatusLogger {
     /// @brief Interval between logs
     Seconds _interval = 60;
     /// @brief Timer ID
-    Id _logTimer;
+    Id _logTimer = OperatingSystemTypes::NullId;
 
     /// @brief Emits a signal when the logging interval has elapsed so that users can call printLogs periodically.
     void timerElapsed(void) {
@@ -180,4 +182,5 @@ class StatusLogger {
         }
     }
 };
+
 #endif /* __STATUS_LOGGER_HPP__ */
