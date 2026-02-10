@@ -218,7 +218,7 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
                     FILE *spiffsFile = nullptr;
                     callbackError = Spiffs::open(path, mode, file, spiffsFile);
                     if (ErrorType::Success == callbackError) {
-                        spiffsFiles[file.path->c_str()] = spiffsFile;
+                        spiffsFiles[FileSystemTypes::pathKey(std::string_view(file.path->c_str()))] = spiffsFile;
                         _status.openedFiles = spiffsFiles.size();
                     }
                 }
@@ -257,9 +257,11 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
         if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             
             if (FileSystemTypes::Implementation::Spiffs == implementation()) {
-                callbackError = Spiffs::close(file, spiffsFiles[file.path->c_str()]);
+                const uint32_t key = FileSystemTypes::pathKey(std::string_view(file.path->c_str()));
+                callbackError = Spiffs::close(file, spiffsFiles[key]);
+
                 if (callbackError == ErrorType::Success) {
-                    spiffsFiles.erase(file.path->c_str());
+                    spiffsFiles.erase(key);
                     _status.openedFiles = spiffsFiles.size();
                 }
             }
@@ -297,8 +299,9 @@ ErrorType FileSystem::remove(FileSystemTypes::File &file) {
         if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             
             if (FileSystemTypes::Implementation::Spiffs == implementation()) {
-                callbackError = Spiffs::remove(file, spiffsFiles[file.path->c_str()]);
-                spiffsFiles.erase(file.path->c_str());
+                const uint32_t key = FileSystemTypes::pathKey(std::string_view(file.path->c_str()));
+                callbackError = Spiffs::remove(file, spiffsFiles[key]);
+                spiffsFiles.erase(key);
             }
         }
 
@@ -334,7 +337,7 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
         if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             
             if (FileSystemTypes::Implementation::Spiffs == implementation()) {
-                callbackError = Spiffs::readBlocking(spiffsFiles[file.path->c_str()], file, buffer);
+                callbackError = Spiffs::readBlocking(spiffsFiles[FileSystemTypes::pathKey(std::string_view(file.path->c_str()))], file, buffer);
             }
         }
 
@@ -382,7 +385,7 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_vie
         if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
 
             if (FileSystemTypes::Implementation::Spiffs == implementation()) {
-                callbackError = Spiffs::writeBlocking(spiffsFiles[file.path->c_str()], file, data);
+                callbackError = Spiffs::writeBlocking(spiffsFiles[FileSystemTypes::pathKey(std::string_view(file.path->c_str()))], file, data);
             }
         }
 
@@ -429,7 +432,7 @@ ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
         if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
             
             if (FileSystemTypes::Implementation::Spiffs == implementation()) {
-                callbackError = Spiffs::synchronize(spiffsFiles[file.path->c_str()]);
+                callbackError = Spiffs::synchronize(spiffsFiles[FileSystemTypes::pathKey(std::string_view(file.path->c_str()))]);
             }
         }
 

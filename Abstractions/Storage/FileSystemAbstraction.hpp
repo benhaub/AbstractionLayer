@@ -88,6 +88,23 @@ namespace FileSystemTypes {
         /// @brief Default constructor
         File() : size(0), filePointer(0), openMode(OpenMode::Unknown), isOpen(false) {}
     };
+
+    /**
+     * @brief 32-bit hash key for a path (FNV-1a).
+     * @sa https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function#FNV_hash_parameters
+     * @param path The path to the file.
+     * @returns A uint32_t key for use in open-files maps.
+     */
+    inline uint32_t pathKey(std::string_view path) {
+        uint32_t k = 0x811c9dc5u;
+        constexpr uint32_t prime = 0x01000193u;
+        for (unsigned char c : path) {
+            k ^= c;
+            k *= prime;
+        }
+
+        return k;
+    }
 }
 
 /**

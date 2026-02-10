@@ -101,7 +101,8 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
         Bytes maxSize = SL_FS_CREATE_MAX_SIZE(path.size());
         assert(maxSize <= maxFileSize);
 
-        const bool fileIsNotOpen = !openFiles.contains(path);
+        const uint32_t key = FileSystemTypes::pathKey(path);
+        const bool fileIsNotOpen = !openFiles.contains(key);
 
         if (fileIsNotOpen) {
             retval = sl_FsOpen(reinterpret_cast<const _u8 *>(path.data()), toCc32xxAccessMode(mode, callbackError) | maxSize, &token);
@@ -111,7 +112,7 @@ ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMod
                 file.isOpen = true;
                 file.openMode = mode;
                 file.filePointer = 0;
-                openFiles[path] = retval;
+                openFiles[key] = retval;
                 _status.openedFiles = openFiles.size();
 
                 if (fileShouldBeTruncated(mode)) {
@@ -150,11 +151,14 @@ ErrorType FileSystem::close(FileSystemTypes::File &file) {
     OperatingSystem::Instance().currentThreadId(thread);
 
     auto closeCallback = [&, thread]() -> ErrorType {
-        const bool fileIsOpen = openFiles.contains(file.path->c_str());
+        const uint32_t key = FileSystemTypes::pathKey(std::string_view(file.path->c_str()));
+        const bool fileIsOpen = openFiles.contains(key);
+
         if (fileIsOpen) {
-            _i32 retval = sl_FsClose(openFiles[file.path->c_str()], NULL, NULL, 0);
+            _i32 retval = sl_FsClose(openFiles[key], NULL, NULL, 0);
+
             if (SL_FS_OK == retval) {
-                openFiles.erase(file.path->c_str());
+                openFiles.erase(key);
                 file.isOpen = false;
                 file.openMode = FileSystemTypes::OpenMode::Unknown;
                 _status.openedFiles = openFiles.size();
@@ -221,7 +225,8 @@ ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, std::string &buf
     OperatingSystem::Instance().currentThreadId(thread);
 
     auto readCallback = [&, thread]() -> ErrorType {
-        _i32 retval = sl_FsRead(openFiles[file.path->c_str()], file.filePointer, reinterpret_cast<_u8 *>(buffer.data()), buffer.size());
+        _i32 retval = sl_FsRead(openFiles[FileSystemTypes::pathKey(std::string_view(file.path->c_str()))], file.filePointer, reinterpret_cast<_u8 *>(buffer.data()), buffer.size());
+
         if (retval > 0) {
             file.filePointer += static_cast<FileOffset>(retval);
             buffer.resize(retval);
@@ -270,7 +275,8 @@ ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_vie
         //DO NOT try to edit data. Only casting away constness because FsWrite does not take a const parameter.
         //It's UB to edit a string_view.
         char *dataToWrite = const_cast<char *>(data.data());
-        _i32 retval = sl_FsWrite(openFiles[file.path->c_str()], file.filePointer, reinterpret_cast<_u8 *>(dataToWrite), data.size());
+        _i32 retval = sl_FsWrite(openFiles[FileSystemTypes::pathKey(std::string_view(file.path->c_str()))], file.filePointer, reinterpret_cast<_u8 *>(dataToWrite), data.size());
+
         if (retval >= 0) {
             callbackError = ErrorType::Success;
             file.size += data.size();

@@ -32,7 +32,7 @@ class FileSystem final: public FileSystemAbstraction {
     ErrorType size(FileSystemTypes::File &file) override;
 
     private:
-    std::map<std::string_view, _i32> openFiles;
+    std::map<uint32_t, _i32> openFiles;
 
     _u32 toCc32xxAccessMode(const FileSystemTypes::OpenMode mode, ErrorType &error) {
         error = ErrorType::Success;
