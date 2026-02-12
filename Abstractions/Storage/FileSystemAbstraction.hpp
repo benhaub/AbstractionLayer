@@ -205,6 +205,7 @@ class FileSystemAbstraction {
      * @returns ErrorType::Success if the data was read.
      * @returns ErrorType::PrerequisitesNotMet if the mode does not allow a read.
      * @returns ErrorType::PrerequisitesNotMet if the file has not be opened or has been closed.
+     * @post The buffer is not modified in any way if the read fails.
     */
     virtual ErrorType readBlocking(FileSystemTypes::File &file, std::string &buffer) = 0; 
     /**

@@ -70,25 +70,26 @@ namespace KeyValue {
         error = fs.size(file);
 
         if (fs.fileMustExist(mode) && ErrorType::FileNotFound == error) {
-            return ErrorType::FileNotFound;
+            error = ErrorType::FileNotFound;
         }
         else if (fs.fileMustNotExist(mode) && ErrorType::Success == error) {
-            return ErrorType::FileExists;
+            error = ErrorType::FileExists;
         }
         else if (fs.fileShouldBeTruncated(mode)) {
             file.filePointer = 0;
+            error = ErrorType::Success;
         }
         else {
             //The file is either new or it should be appended to.
             file.filePointer = file.size;
+            error = ErrorType::Success;
         }
 
         file.path->assign(path);
         file.isOpen = true;
         file.openMode = mode;
 
-
-        return ErrorType::Success;
+        return error;
     }
 
     ErrorType synchronize(std::unique_ptr<nvs::NVSHandle> &_handle) {
@@ -120,19 +121,16 @@ namespace KeyValue {
     }
 
     ErrorType readBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, std::string &buffer) {
+        ErrorType error = ErrorType::InvalidParameter;
         //If the buffer doesn't have a size, you won't be able to read anything.
         assert(buffer.size() > 0);
 
-        if (nullptr == _handle.get()) {
-            return ErrorType::InvalidParameter;
+        if (nullptr != _handle.get()) {
+            esp_err_t err = _handle->get_blob(file.path->c_str(), buffer.data(), buffer.size());
+            error = fromPlatformError(err);
         }
 
-        esp_err_t err = _handle->get_blob(file.path->c_str(), buffer.data(), buffer.size());
-        if (err != ESP_OK) {
-            buffer.resize(0);
-        }
-
-        return fromPlatformError(err);
+        return error;
     }
 
     ErrorType writeBlocking(std::unique_ptr<nvs::NVSHandle> &_handle, const FileSystemTypes::File &file, std::string_view data) {
