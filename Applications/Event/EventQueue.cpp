@@ -17,7 +17,7 @@ ErrorType EventQueue::addEvent(Event &event) {
     if (_ownerThreadId == currentThreadId && _addEventOptimizationsEnabled) {
         error = event.run();
     }
-    //Either the caller or the owner of the event queue are known to the operating system. Queuing would result in the event waiting in the queue forever
+    //Either the caller or the owner of the event queue are not known to the operating system. Queuing would result in the event waiting in the queue forever
     //and the caller can not be blocked. Run the event immediately.
     else if (OperatingSystemTypes::NullId == currentThreadId || OperatingSystemTypes::NullId == _ownerThreadId) {
         error = event.run();
