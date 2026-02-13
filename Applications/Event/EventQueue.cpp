@@ -17,30 +17,30 @@ ErrorType EventQueue::addEvent(Event &event) {
     if (_ownerThreadId == currentThreadId && _addEventOptimizationsEnabled) {
         error = event.run();
     }
-    //Neither the caller nor the owner of the event queue are known to the operating system. Queuing would result in the event waiting in the queue forever
+    //Either the caller or the owner of the event queue are known to the operating system. Queuing would result in the event waiting in the queue forever
     //and the caller can not be blocked. Run the event immediately.
-    else if (ErrorType::NoData == error && OperatingSystemTypes::NullId == _ownerThreadId) {
+    else if (OperatingSystemTypes::NullId == currentThreadId || OperatingSystemTypes::NullId == _ownerThreadId) {
         error = event.run();
     }
     else if (addEventIfNotFull()) {
-            Count currentEventQueueIndexLast = _currentEventQueueIndexLast.load();
+        Count currentEventQueueIndexLast = _currentEventQueueIndexLast.load();
 
-            //https://youtu.be/kPh8pod0-gk?list=PLc1ANd9mG2dwG-kovSjkjuWq8CpskvEye&t=1128
-            while (!(_currentEventQueueIndexLast.compare_exchange_weak(currentEventQueueIndexLast, (currentEventQueueIndexLast + 1) % _events.max_size())));
+        //https://youtu.be/kPh8pod0-gk?list=PLc1ANd9mG2dwG-kovSjkjuWq8CpskvEye&t=1128
+        while (!(_currentEventQueueIndexLast.compare_exchange_weak(currentEventQueueIndexLast, (currentEventQueueIndexLast + 1) % _events.max_size())));
 
-            //If the last index is the size of the array, then we know that what is stored in memory is now zero.
-            _events[currentEventQueueIndexLast] = std::move(event);
-            //_eventsReady is not a function because it needs to be evaluated at specific points in the code. We can't let runNextEvent try to run an
-            //event while we are still in the middle of adding an event to the queue.
-            _eventsReady = true;
+        //If the last index is the size of the array, then we know that what is stored in memory is now zero.
+        _events[currentEventQueueIndexLast] = std::move(event);
+        //_eventsReady is not a function because it needs to be evaluated at specific points in the code. We can't let runNextEvent try to run an
+        //event while we are still in the middle of adding an event to the queue.
+        _eventsReady = true;
 
-            for (auto &waitingThread : _waitingThreads) {
-                if (waitingThread != OperatingSystemTypes::NullId) {
-                    OperatingSystem::Instance().unblock(waitingThread);
-                }
+        for (auto &waitingThread : _waitingThreads) {
+            if (waitingThread != OperatingSystemTypes::NullId) {
+                OperatingSystem::Instance().unblock(waitingThread);
             }
+        }
 
-            error = ErrorType::Success;
+        error = ErrorType::Success;
     }
     else {
         error = ErrorType::LimitReached;
