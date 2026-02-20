@@ -65,7 +65,7 @@ namespace KeyValue {
         assert(path.length() > 0);
         ErrorType error = ErrorType::Success;
         file.isOpen = false;
-
+        
         //Use the size call to get the size and will also tell use if the file (key) exists.
         error = fs.size(file);
 
@@ -81,6 +81,10 @@ namespace KeyValue {
         }
         else {
             //The file is either new or it should be appended to.
+            if (0 == file.size) {
+                //Write dummy data so that the file exits.
+                error = fs.writeBlocking(file, std::string_view("0"));
+            }
             file.filePointer = file.size;
             error = ErrorType::Success;
         }
@@ -147,7 +151,7 @@ namespace KeyValue {
     ErrorType size(std::unique_ptr<nvs::NVSHandle> &_handle, FileSystemTypes::File &file) {
         size_t size;
         ErrorType error = fromPlatformError(_handle->get_item_size(nvs::ItemType::ANY, file.path->c_str(), size));
-        file.size = size;
+        file.size = ErrorType::Success == error ? size : 0;
         return error;
     }
 };
