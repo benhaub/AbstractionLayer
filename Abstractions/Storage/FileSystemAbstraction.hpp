@@ -300,9 +300,7 @@ class FileSystemAbstraction {
      */
     constexpr inline bool fileMustExist(FileSystemTypes::OpenMode mode) {
         return (FileSystemTypes::OpenMode::ReadWriteAppend == mode ||
-                FileSystemTypes::OpenMode::ReadWriteTruncate == mode ||
-                FileSystemTypes::OpenMode::WriteOnlyAppend == mode ||
-                FileSystemTypes::OpenMode::WriteOnlyTruncate == mode);
+                FileSystemTypes::OpenMode::WriteOnlyAppend == mode);
     }
     /**
      * @brief Check if a file must not exist
