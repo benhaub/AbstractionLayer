@@ -172,6 +172,13 @@ class EventQueue {
     */
     ErrorType runNextEvent(const LoopMode loopMode);
 
+    /**
+     * @brief Change the owner of the event queue
+     * @param[in] newOwnerThreadId The new owner thread id.
+     * @post The owner thread id is set to the new owner thread id.
+     */
+    void changeOwner(const Id newOwnerThreadId) { _ownerThreadId = newOwnerThreadId; }
+
     private:
     /// @brief The maximum number of events that can be queued.
     static constexpr Count _MaxEvents = 10;
