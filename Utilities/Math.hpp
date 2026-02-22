@@ -24,7 +24,7 @@
 */
 template<typename T>
 requires std::is_arithmetic_v<T>
-constexpr inline T runningAverage(const T &currentAverage, const T &newValue, const Count &numValues) {
+constexpr inline T runningAverage(const T currentAverage, const T newValue, const Count numValues) {
     if (numValues > 2) {
         return (currentAverage * (numValues - 1) + newValue) / numValues;
     }
@@ -44,7 +44,7 @@ constexpr inline T runningAverage(const T &currentAverage, const T &newValue, co
  */
 template<typename T>
 requires std::is_unsigned_v<T>
-constexpr inline T differenceBetween(const T &expectedLargerValue, const T &expectedSmallerValue) {
+constexpr inline T differenceBetween(const T expectedLargerValue, const T expectedSmallerValue) {
     const T maxValue = std::numeric_limits<T>::max();
 
     if (expectedSmallerValue > expectedLargerValue) {
@@ -66,7 +66,7 @@ constexpr inline T differenceBetween(const T &expectedLargerValue, const T &expe
  */
 template<typename T>
 requires std::is_unsigned_v<T>
-constexpr inline T differenceBetween(const T &expectedLargerValue, const T &expectedSmallerValue, const T &maxValue) {
+constexpr inline T differenceBetween(const T expectedLargerValue, const T expectedSmallerValue, const T maxValue) {
     if (expectedSmallerValue > expectedLargerValue) {
         //+1 because wrapping to zero counts as an increment (i.e. maxValue + 1 = 0)
         return (maxValue - expectedLargerValue) + (expectedSmallerValue + 1);
@@ -86,7 +86,7 @@ constexpr inline T differenceBetween(const T &expectedLargerValue, const T &expe
  */
 template<typename T>
 requires std::is_signed_v<T>
-constexpr inline bool withinError(const T &value1, const T &value2, const T &error) {
+constexpr inline bool withinError(const T value1, const T value2, const T error) {
     return std::abs(value1 - value2) <= error;
 }
 
@@ -97,8 +97,18 @@ constexpr inline bool withinError(const T &value1, const T &value2, const T &err
  */
 template<typename T>
 requires std::is_arithmetic_v<T>
-constexpr inline T ToBits(const T &numberOfBytes) {
+constexpr inline T ToBits(const T numberOfBytes) {
     return numberOfBytes * 8;
+}
+
+/**
+ * @brief Encode a number as ascii
+ * @param[in] number The number to encode
+ * @returns The ascii encoding of the number
+ */
+constexpr inline char ToAscii(const uint8_t number) {
+    assert(number >= 0 && number <= 9);
+    return static_cast<char>(number + 48);
 }
 
 /**
