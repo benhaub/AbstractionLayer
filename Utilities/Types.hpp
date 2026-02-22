@@ -293,17 +293,41 @@ using HexCodeColour = uint32_t;
 ///@struct Coordinate
 ///@brief A coordinate that identifies a point on the screen
 struct Coordinate {
-    uint16_t x = 0; ///< The x coordinate
-    uint16_t y = 0; ///< The y coordinate
+    uint32_t x = 0; ///< The x coordinate
+    uint32_t y = 0; ///< The y coordinate
 };
 /// @struct Area
 /// @brief A rectangular area on the screen
 struct Area {
     Coordinate origin{0,0}; ///< The top left corner of the area
-    uint16_t width = 0;     ///< The width of the area
-    uint16_t height = 0;    ///< The height of the area
+    uint32_t width = 0;     ///< The width of the area
+    uint32_t height = 0;    ///< The height of the area
 
     constexpr uint32_t size() const { return width * height; }
+    constexpr uint32_t xyToFlatIndex(const Coordinate &xy) const { return std::min(xy.y, height-1) * width + std::min(xy.x, width-1); }
+    constexpr Coordinate flatIndexToXy(const uint32_t flatIndex) const { return {flatIndex % width, flatIndex / width}; }
+    constexpr std::array<uint32_t, 8> getNeighbours(const Coordinate &origin) const {
+        uint32_t x = 0 == origin.x ? 0 : origin.x - 1;
+        uint32_t y = 0 == origin.y ? 0 : origin.y - 1;
+        Coordinate topLeft      = {x, y};
+        Coordinate topMiddle    = {origin.x, y};
+        Coordinate topRight     = {origin.x + 1, y};
+        Coordinate middleLeft   = {x, origin.y};
+        Coordinate middleRight  = {origin.x + 1, origin.y};
+        Coordinate bottomLeft   = {x, origin.y + 1};
+        Coordinate bottomMiddle = {origin.x,origin.y + 1};
+        Coordinate bottomRight  = {origin.x + 1, origin.y + 1};
+        return {
+            xyToFlatIndex(topLeft),
+            xyToFlatIndex(topMiddle),
+            xyToFlatIndex(topRight),
+            xyToFlatIndex(middleLeft),
+            xyToFlatIndex(middleRight),
+            xyToFlatIndex(bottomLeft),
+            xyToFlatIndex(bottomMiddle),
+            xyToFlatIndex(bottomRight)
+        };
+    }
 };
 
 /**
