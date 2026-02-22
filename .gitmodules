@@ -15,3 +15,6 @@
 [submodule "Modules/MachineLearning/Inference/Any/TensorFlowLite/tflite-micro"]
 	path = Modules/MachineLearning/Inference/Any/TensorFlowLite/tflite-micro
 	url = https://github.com/tensorflow/tflite-micro.git
+[submodule "inplace_any"]
+	path = inplace_any
+	url = https://github.com/TieJu/inplace_any.git
