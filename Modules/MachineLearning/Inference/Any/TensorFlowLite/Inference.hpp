@@ -16,7 +16,7 @@ class MachineLearningInference : public InferenceAbstraction {
     /// @brief Default destructor
     ~MachineLearningInference() override = default;
 
-    ErrorType init(const Count inputs) override;
+    ErrorType init() override;
     ErrorType loadModel(std::string_view modelData) override;
     ErrorType setInput(std::string_view inputData, const Count inputNumber) override;
     ErrorType runInference() override;

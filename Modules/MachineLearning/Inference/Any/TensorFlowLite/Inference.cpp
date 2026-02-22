@@ -73,13 +73,10 @@ namespace {
     }
 }
 
-ErrorType MachineLearningInference::init(const Count inputs) {
-    ErrorType error = ErrorType::Success;
-    _inputs = inputs;
-
+ErrorType MachineLearningInference::init() {
     AddFeatures<APP_TFLITE_MODEL_FEATURES>();
 
-    return error;
+    return ErrorType::Success;
 }
 
 ErrorType MachineLearningInference::loadModel(std::string_view modelData) {

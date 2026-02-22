@@ -1,6 +1,6 @@
 #include "Inference.hpp"
 
-ErrorType MachineLearningInference::init(const Count inputs) {
+ErrorType MachineLearningInference::init() {
     return ErrorType::NotImplemented;
 }
 

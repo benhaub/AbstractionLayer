@@ -77,12 +77,11 @@ class InferenceAbstraction {
     virtual ~InferenceAbstraction() = default;
 
     /**
-     * @brief Initialize the inference runtime.
-     * @param[in] numberOfInputs The number of inputs to the model.
+     * @brief Initialize the inference model.
      * @returns ErrorType::Success if initialized successfully.
      * @returns ErrorType::Failure if not initialized.
      */
-    virtual ErrorType init(const Count inputs) = 0;
+    virtual ErrorType init() = 0;
     /**
      * @brief Load a trained model to be used for inference.
      * @param[in] modelData The pre-trained data model.
@@ -115,9 +114,6 @@ class InferenceAbstraction {
     virtual ErrorType getOutput(StaticString::Container &outputData, const Count outputIndex) = 0;
     /// @copydoc getOutput(StaticString::Container &outputData)
     virtual ErrorType getOutput(std::string &outputData, const Count outputIndex) = 0;
-
-    protected:
-    Count _inputs = 0;
 };
 
 #endif // __INFERENCE_ABSTRACTION_HPP__
