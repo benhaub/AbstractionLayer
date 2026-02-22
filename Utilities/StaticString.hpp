@@ -4,8 +4,8 @@
 * @details Wrapper for boost::static_string that is not templated so it does not need a fixed size type.
 * @ingroup Utilities
 *******************************************************************************/
-#ifndef __FIXED_STRING_HPP__
-#define __FIXED_STRING_HPP__
+#ifndef __STATIC_STRING_HPP__
+#define __STATIC_STRING_HPP__
 
 //AbstractionLayer
 #include "Types.hpp"
@@ -52,7 +52,7 @@ namespace StaticString {
         /// @brief Implementation defined.
         virtual bool empty() const = 0;
         /// @brief Implementation defined
-        virtual size_t capacity() const = 0;
+        virtual constexpr size_t capacity() const = 0;
         /// @brief Implementation defined.
         virtual void resize(const size_t n) = 0;
         /// @brief Implementation defined.
@@ -117,7 +117,7 @@ namespace StaticString {
         StandardStringInterface &assign(const Data<_n> &other) { return assign(other.c_str(), other.size()); }
         void clear() override { _str.clear(); }
         bool empty() const override { return _str.empty(); }
-        size_t capacity() const override { return _str.capacity(); }
+        constexpr size_t capacity() const override { return _str.capacity(); }
         void resize(const size_t n) override { _str.resize(n); }
         char &back() override { return _str.back(); }
         void push_back(const char &c) override { return _str.push_back(c); }
@@ -273,4 +273,4 @@ namespace StaticString {
     };
 }
 
-#endif //__FIXED_STRING_HPP__
+#endif //__STATIC_STRING_HPP__
