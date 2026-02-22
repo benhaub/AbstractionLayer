@@ -1,7 +1,7 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
 * @file   Global.hpp
-* @details \b Synopsis: \n Makes a class globally accessible when inherited from
+* @details Makes a class globally accessible when inherited from
 * @ingroup Utilities
 *******************************************************************************/
 #ifndef __GLOBAL_HPP__
