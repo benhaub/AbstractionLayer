@@ -13,7 +13,7 @@
 #include <cstring>
 
 namespace {
-    constexpr inline uint32_t to4ByteBlock(const size_t offset, std::string_view text) {
+    constexpr inline uint32_t To4ByteBlock(const size_t offset, std::string_view text) {
         uint32_t fourByteBlock = 0;
 
         if (offset < text.size()) {
@@ -59,19 +59,28 @@ class Bridgetek81x {
      * @returns Anything returned by writeToCommandBuffer
      */
     template <size_t _TextSize>
-    ErrorType drawText(const Coordinate location, const Bridgetek81xTypes::Font font, const Bridgetek81xTypes::Options options, std::string_view text) {
+    ErrorType drawText(const Coordinate location, const Bridgetek81xTypes::Font font, const HexCodeColour colour, const Bridgetek81xTypes::Options options, std::string_view text) {
+        ErrorType error = ErrorType::InvalidParameter;
+        constexpr Count fourByteBlocks = std::ceil(_TextSize / 4.0f);
 
-        constexpr Count fourByteBlocks = _TextSize / 4;
+        if (font > static_cast<Bridgetek81xTypes::Font>(Bridgetek81xTypes::Font::Unknown) &&
+            font < static_cast<Bridgetek81xTypes::Font>(Bridgetek81xTypes::Font::Font18)) {
+            error = sendDisplayListCommand(Bridgetek81xTypes::DisplayListCommands::ColorRgb(colour));
+            const uint32_t optionValue = options == Bridgetek81xTypes::Options::NoOptions ? 0 : static_cast<uint32_t>(options);
 
-        return [&]<size_t... Is>(std::index_sequence<Is...>) -> ErrorType {
-            return writeToCommandBuffer(Bridgetek81xTypes::Commands::Text,
-                {
-                    (static_cast<uint32_t>(location.y) << 16) | location.x,
-                    (static_cast<uint32_t>(options) << 16) | static_cast<uint32_t>(font),
-                    to4ByteBlock(Is * 4, text)...
-                });
-        }(std::make_index_sequence<fourByteBlocks>{});
+            if (ErrorType::Success == error) {
+                return [&]<size_t... Is>(std::index_sequence<Is...>) -> ErrorType {
+                    return writeToCommandBuffer(Bridgetek81xTypes::Commands::Text,
+                        {
+                            (static_cast<uint32_t>(location.y) << 16) | location.x,
+                            (static_cast<uint32_t>(optionValue) << 16) | static_cast<uint32_t>(font),
+                            To4ByteBlock(Is * 4, text)...
+                        });
+                }(std::make_index_sequence<fourByteBlocks>{});
+            }
+        }
 
+        return error;
     }
     /**
      * @brief Draw a button with a label
@@ -94,7 +103,7 @@ class Bridgetek81x {
                     (static_cast<uint32_t>(area.origin.y) << 16) | area.origin.x,
                     (static_cast<uint32_t>(area.height) << 16) | area.width,
                     (static_cast<uint32_t>(optionValue) << 16) | static_cast<uint32_t>(font),
-                    to4ByteBlock(Is * 4, text)...
+                    To4ByteBlock(Is * 4, text)...
                 });
         }(std::make_index_sequence<fourByteBlocks>{});
     }
@@ -153,8 +162,13 @@ class Bridgetek81x {
     ErrorType setTouchThreshold(const uint16_t threshold);
     /**
      * @brief Calibrate
+     * @param instructionTextLocation The location to draw the instruction text
+     * @returns Anything returned by writeToCommandBuffer
+     * @returns Anything returned by drawText
+     * @returns Anything returned by startDisplayList
+     * @returns Anything returned by sendDisplayListCommand
      */
-    ErrorType calibrate();
+    ErrorType calibrate(const Coordinate &instructionTextLocation);
     /**
      * @brief Start a new display list
      * @returns Anything retruned by writeToCommandBuffer
@@ -166,11 +180,16 @@ class Bridgetek81x {
      */
     ErrorType commitDisplayList();
     /**
-     * @brief Set the touch tag to be used for all following graphics objects.
+     * @brief Enable the touch tag to be set for all following graphics objects.
      * @param[in] tag The tag to set for all following graphics objects
      * @returns Anything returned by writeToCommandBuffer
      */
-    ErrorType setTouchTag(const uint8_t tag);
+    ErrorType enableTouchTag(const uint8_t tag);
+    /**
+     * @brief Disable the touch tag to be set for all following graphics objects.
+     * @returns Anything returned by writeToCommandBuffer
+     */
+    ErrorType disableTouchTag();
     /**
      * @brief Check for screen touches on the provided tag (i.e check that a graphics object was touched)
      * @param[in] tag The tag to check for
@@ -190,7 +209,7 @@ class Bridgetek81x {
      * @param[out] bytesCopied The number of bytes to copy
      * @returns Anything returned by hostMemoryRead
      */
-    ErrorType memoryCopy(const LcdTypes::PixelFormat pixelFormat, const uint32_t address, char *buffer, const size_t bufferSize, size_t &bytesCopied);
+    ErrorType memoryCopy(const PixelFormat pixelFormat, const uint32_t address, char *buffer, const size_t bufferSize, size_t &bytesCopied);
     /**
      * @brief Stop the periodic operation such as sketch, spinner or screensaver
      * @returns Anything returned by writeToCommandBuffer
@@ -206,36 +225,6 @@ class Bridgetek81x {
     uint8_t _pixelClockDivisor = 0;
     /// @brief The buffer of commands to write to the LCD display
     StaticString::Container _commandBuffer = StaticString::Data<512>();
-
-    /**
-     * @brief Write data to the address specified
-     * @tparam _WriteType Any of uint32_t, uint16_t, or uint8_t depending on the amount of bytes you want to write
-     * @param[in] writeTransaction A transaction with the address and data
-     * @sa Bridgetek81xTpyes::MemoryWriteTransaction
-     * @param[in] timeout The amount of time to wait for the write to complete
-     * @returns Anything returned by IcCommunicationProtocol::txBlocking
-     */
-    ErrorType hostMemoryWrite(const uint32_t address, const StaticString::Container &data, const Milliseconds timeout) {
-        StaticString::Container writeTransactionBytes = StaticString::Data<Bridgetek81xTypes::AddressSize>();
-        ErrorType error;
-
-        writeTransactionBytes->push_back(((address >> 16) & 0xBF) | 0x80);
-        writeTransactionBytes->push_back((address >> 8) & 0xFF);
-        writeTransactionBytes->push_back(address & 0xFF);
-
-        if (ErrorType::Success == (error = _chipSelect.pinWrite(GpioTypes::LogicLevel::Low))) {
-            const IcCommunicationProtocolTypes::AdditionalCommunicationParameters additionalParams;
-            error = _spi.txBlocking(writeTransactionBytes, timeout, additionalParams);
-
-            if (ErrorType::Success == error) {
-                error = _spi.txBlocking(data, timeout, additionalParams);
-            }
-        }
-
-        _chipSelect.pinWrite(GpioTypes::LogicLevel::High);
-
-        return error;
-    }
 
     /**
      * @brief Read data from the address specified
@@ -302,6 +291,59 @@ class Bridgetek81x {
     }
 
     /**
+     * @brief Write data to the address specified
+     * @tparam _WriteType Any of uint32_t, uint16_t, or uint8_t depending on the amount of bytes you want to write
+     * @param[in] writeTransaction A transaction with the address and data
+     * @sa Bridgetek81xTpyes::MemoryWriteTransaction
+     * @param[in] timeout The amount of time to wait for the write to complete
+     * @param[in] maxRetries The maximum number of times to retry the write
+     * @param[in] mask The mask to apply to the value read back for comparison agains the value written.
+     *                 Useful if you only care about some of the bits instead of the whole number. Defaults
+     *                 to comparing the whole, exact value.
+     * @returns Anything returned by IcCommunicationProtocol::txBlocking
+     * @returns ErrorType::LimitReached if the data could not be written within the maximum number of retries
+     */
+    ErrorType hostMemoryWrite(const uint32_t address, const StaticString::Container &data, const Milliseconds timeout, const Count maxRetries) {
+        StaticString::Container writeTransactionBytes = StaticString::Data<Bridgetek81xTypes::AddressSize>();
+        ErrorType error = ErrorType::Failure;
+        Count currentRetries = 0;
+
+        writeTransactionBytes->push_back(((address >> 16) & 0xBF) | 0x80);
+        writeTransactionBytes->push_back((address >> 8) & 0xFF);
+        writeTransactionBytes->push_back(address & 0xFF);
+
+        while (ErrorType::Success != error) {
+
+            if (ErrorType::Success == (error = _chipSelect.pinWrite(GpioTypes::LogicLevel::Low))) {
+                const IcCommunicationProtocolTypes::AdditionalCommunicationParameters additionalParams;
+                error = _spi.txBlocking(writeTransactionBytes, timeout, additionalParams);
+
+                if (ErrorType::Success == error) {
+                    error = _spi.txBlocking(data, timeout, additionalParams);
+                }
+            }
+
+            _chipSelect.pinWrite(GpioTypes::LogicLevel::High);
+
+            constexpr uint32_t registersStart = static_cast<uint32_t>(Bridgetek81xTypes::BaseAddresses::Registers);
+            constexpr uint32_t registersEnd = registersStart + static_cast<uint32_t>(Bridgetek81xTypes::AddressSpace::Registers);
+
+            if (currentRetries < maxRetries && address >= registersStart && address < registersEnd) {
+                uint32_t readBack = 0;
+                error = hostMemoryRead(address, readBack, timeout);
+                const uint32_t valueWritten = *((uint32_t *)&(data[0]));
+
+                if (ErrorType::Success == error && (readBack & valueWritten) != valueWritten) {
+                    error = ErrorType::Failure;
+                    currentRetries++;
+                }
+            }
+        }
+
+        return maxRetries == 0 || currentRetries < maxRetries ? error : ErrorType::LimitReached;
+    }
+
+    /**
      * @brief Send a display list command to the BT81x
      * @param[in] command The display list command to send
      * @sa Bridgetek81xTyes::DisplayListCommands
@@ -318,8 +360,9 @@ class Bridgetek81x {
     ErrorType sendHostCommand(const Bridgetek81xTypes::HostCommands hostCommand, const uint8_t parameter);
     /**
      * @brief Write data to the command buffer FIFO
-     * @tparam _Parameters The parameters to write to the command buffer
      * @param[in] command The command to write to the command buffer
+     * @param parameters The 4 byte parameters to write to the command buffer
+     * @sa Bt81X Series Programming Guide, Sect. 5.1 Command FIFO - Fifo entries are always 4 bytes wide.
      * @param[in] flush True if the command buffer should be flushed to the LCD and displayed
      * @returns Anything returned by hostMemoryWrite
      */

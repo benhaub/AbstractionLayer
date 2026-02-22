@@ -9,7 +9,7 @@ ErrorType RiverdiEve3Tft35Inch::configure() {
     _params.spiParams.hardwareConfig.clock = APP_CLOCK_PIN_NUMBER;
     _params.spiParams.hardwareConfig.periperhalOutControllerIn = APP_POCI_PIN_NUMBER;
     _params.spiParams.hardwareConfig.perpheralInControllerOut = APP_PICO_PIN_NUMBER;
-    _params.spiParams.driverConfig.clockFrequency = 20E6;
+    _params.spiParams.driverConfig.clockFrequency = 10E6;
     _params.spiParams.driverConfig.format = SpiTypes::FrameFormat::Mode0;
     _params.spiParams.driverConfig.isController = true;
     _params.spiParams.driverConfig.dataSize = SpiTypes::DataSize::EightBits;
@@ -31,9 +31,6 @@ ErrorType RiverdiEve3Tft35Inch::configure() {
 }
 
 ErrorType RiverdiEve3Tft35Inch::init() {
-    //https://github.com/riverdi/riverdi-eve/blob/master/riverdi_modules/modules.h
-    //A lot of the values can not be found in the datasheet and only exist in the source code.
-
     ErrorType error = reset();
 
     if (ErrorType::Success == error) {
@@ -49,7 +46,7 @@ ErrorType RiverdiEve3Tft35Inch::init() {
                     error = _bt815.setTouchThreshold(1200);
 
                     if (ErrorType::Success == error) {
-                        _bt815.calibrate();
+                        _bt815.calibrate({screenParameters().activeArea.width/2U, screenParameters().activeArea.height/2U});
                     }
                 }
             }
@@ -95,11 +92,13 @@ ErrorType RiverdiEve3Tft35Inch::addDesignElement(const LcdTypes::DesignElement &
             break;
         }
         case LcdTypes::DesignElementType::Text: {
+            constexpr Count maxTextSize = 256;
             const LcdTypes::Text &text = static_cast<const LcdTypes::Text &>(element);
 
             if (static_cast<uint32_t>(text.font) >= static_cast<uint32_t>(Bridgetek81xTypes::Font::Font0) && static_cast<uint32_t>(text.font) <= static_cast<uint32_t>(Bridgetek81xTypes::Font::Font18)) {
-                error = _bt815.drawText<128>(text.location,
+                error = _bt815.drawText<maxTextSize>(text.location,
                                             static_cast<Bridgetek81xTypes::Font>(text.font),
+                                            text.colour,
                                             Bridgetek81xTypes::Options::NoOptions,
                                             std::string_view(text.text->c_str(), text.text->size())
                 );
@@ -113,16 +112,21 @@ ErrorType RiverdiEve3Tft35Inch::addDesignElement(const LcdTypes::DesignElement &
         case LcdTypes::DesignElementType::Button: {
             const LcdTypes::Button &button = static_cast<const LcdTypes::Button &>(element);
 
-            if (0 != button.id && button.id <= UINT8_MAX) {
-                _bt815.setTouchTag(button.id);
-            }
-
             if (static_cast<uint32_t>(button.font) >= static_cast<uint32_t>(Bridgetek81xTypes::Font::Font0) && static_cast<uint32_t>(button.font) <= static_cast<uint32_t>(Bridgetek81xTypes::Font::Font18)) {
-                error = _bt815.drawButton<32>(button.area,
-                                              static_cast<Bridgetek81xTypes::Font>(button.font),
-                                              Bridgetek81xTypes::Options::NoOptions,
-                                              std::string_view(button.text->c_str(), button.text->size())
-                );
+
+                if (0 != button.id && button.id <= UINT8_MAX) {
+                    error = _bt815.enableTouchTag(button.id);
+
+                    if (ErrorType::Success == error) {
+                        error = _bt815.drawButton<32>(button.area,
+                                                    static_cast<Bridgetek81xTypes::Font>(button.font),
+                                                    Bridgetek81xTypes::Options::NoOptions,
+                                                    std::string_view(button.text->c_str(), button.text->size())
+                        );
+
+                        _bt815.disableTouchTag();
+                    }
+                }
             }
             else {
                 error = ErrorType::InvalidParameter;
@@ -143,14 +147,29 @@ ErrorType RiverdiEve3Tft35Inch::endDesign() {
 }
 
 template <typename Buffer>
-static ErrorType copyScreenImplementation(Buffer &&buffer, const Area &area, Bridgetek81x &bt815, const LcdTypes::PixelFormat pixelFormat) {
-    //TODO: The screen should be able to manage the memory of RAMG and choose an appropriate address.
-    const uint32_t ramG = static_cast<uint32_t>(Bridgetek81xTypes::BaseAddresses::GeneralPurposeGraphicsRam) + area.size();
-    ErrorType error = bt815.saveScreenToRamG(ramG, area);
+static ErrorType copyScreenImplementation(Buffer &&buffer, const Area &area, Bridgetek81x &bt815, const PixelFormat pixelFormat) {
+    //TODO: This class should be able to manage the memory of RAMG and choose an appropriate address.
+    uint32_t ramG;
+    ErrorType error = ErrorType::Success;
+    //I don't know if something like this could work or not, but could we know where to copy data from based
+    //on the pixel format? Managing memory by saving certain pixel formats in certain start addresses? Could they
+    //still vary in size by not allowing more than one format to be saved at once?
+    //For a sketch, if you draw with lots of colours, then it might be beneficial to save the screen because it
+    //will convert from L1/L8 for you.
+    if (PixelFormat::Greyscale == pixelFormat) {
+        //TODO: The address should not be hardcoded.
+        ramG = static_cast<uint32_t>(Bridgetek81xTypes::BaseAddresses::GeneralPurposeGraphicsRam);
+    }
+    else {
+        ramG = static_cast<uint32_t>(Bridgetek81xTypes::BaseAddresses::GeneralPurposeGraphicsRam) + area.size();
+        error = bt815.saveScreenToRamG(ramG, area);
+    }
+
     size_t bytesCopied = 0;
 
     if (ErrorType::Success == error) {
-        error = bt815.memoryCopy(pixelFormat, ramG, buffer->data(), buffer->capacity(), bytesCopied);
+        buffer->resize(area.size());
+        error = bt815.memoryCopy(pixelFormat, ramG, buffer->data(), buffer->size(), bytesCopied);
 
         if (ErrorType::Success == error) {
             buffer->resize(bytesCopied);
@@ -160,12 +179,16 @@ static ErrorType copyScreenImplementation(Buffer &&buffer, const Area &area, Bri
     return error;
 }
 
-ErrorType RiverdiEve3Tft35Inch::copyScreen(StaticString::Container &buffer, const Area &area, const LcdTypes::PixelFormat pixelFormat) {
+ErrorType RiverdiEve3Tft35Inch::copyScreen(StaticString::Container &buffer, const Area &area, const PixelFormat pixelFormat) {
     return copyScreenImplementation(buffer, area, _bt815, pixelFormat);
 }
 
-ErrorType RiverdiEve3Tft35Inch::copyScreen(std::string &buffer, const Area &area, const LcdTypes::PixelFormat pixelFormat) {
+ErrorType RiverdiEve3Tft35Inch::copyScreen(std::string &buffer, const Area &area, const PixelFormat pixelFormat) {
     return copyScreenImplementation(&buffer, area, _bt815, pixelFormat);
+}
+
+ErrorType RiverdiEve3Tft35Inch::clearScreen(const HexCodeColour hexCodeColour) {
+    return _bt815.clearScreen(hexCodeColour);
 }
 
 ErrorType RiverdiEve3Tft35Inch::waitForTouches(std::initializer_list<Id> designElements, Milliseconds timeout) {

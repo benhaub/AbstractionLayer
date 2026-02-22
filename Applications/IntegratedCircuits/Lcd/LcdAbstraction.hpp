@@ -9,6 +9,7 @@
 
 //AbstractionLayer
 #include "IcCommunicationProtocol.hpp"
+#include "ComputerVision.hpp"
 //C++
 #include <cmath>
 
@@ -37,71 +38,6 @@ namespace LcdTypes {
         uint8_t pixelClockPolarity = 0;    ///< Pixel clock polarity
         uint8_t dithering = 0;             ///< Dithering setting (Used to simluate more colors on displays with less color depth i.e less than 24-bits or 16.7 million colours)
     };
-
-    /**
-     * @enum PixelFormat
-     * @brief The pixel format
-     */
-    enum class PixelFormat : uint8_t {
-        Unknown = 0, ///< Unknown
-        Argb4,       ///< Alpha, Red, Green, Blue
-        Argb1555,    ///< Alpha, Red, Green, Blue
-        Argb2,       ///< Alpha, Red, Green, Blue
-        Rgb565,      ///< Red (5 bits), Green (6 bits), Blue (5 bits)
-        Rgb8,        ///< Red (8 bits), Green (8 bits), Blue (8 bits)
-        Rgb4,        ///< Red (4 bits), Green (4 bits), Blue (4 bits)
-        Greyscale    ///< Greyscale
-    };
-
-    /**
-     * @brief Convert a pixel to greyscale
-     * @param[in] inputPixelFormat The pixel format of the input
-     * @param[in] inputPixels The pixels to convert
-     * @returns The greyscale value
-     * @todo Very bad, specific use case implementation. Assumes 2 pixel input, 2 bytes per pixel.
-     */
-    constexpr inline uint16_t ToGreyscale(const PixelFormat inputPixelFormat, const uint32_t inputPixels) {
-        uint8_t grey1 = 0;
-        uint8_t grey2 = 0;
-        
-        if (inputPixelFormat == PixelFormat::Argb4) {
-            const uint16_t pixel1 = (inputPixels >> 16) & 0xFFFF;
-            const uint16_t pixel2 = inputPixels & 0xFFFF;
-
-            //Extract and normalise the RGB values
-            const float pixel1Red = ((pixel1 >> 8) & 0xF) / 15.0f;
-            const float pixel1Green = ((pixel1 >> 4) & 0xF) / 15.0f;
-            const float pixel1Blue = (pixel1 & 0xF) / 15.0f;
-            const float pixel2Red = ((pixel2 >> 8) & 0xF) / 15.0f;
-            const float pixel2Green = ((pixel2 >> 4) & 0xF) / 15.0f;
-            const float pixel2Blue = (pixel2 & 0xF) / 15.0f;
-
-            //Weighted average of the RGB which gives preference to the colours seen brightest by the human eye.
-            const float linearIntensity1 = 0.2126 * pixel1Red + 0.7152 * pixel1Green + 0.0722 * pixel1Blue;
-            const float linearIntensity2 = 0.2126 * pixel2Red + 0.7152 * pixel2Green + 0.0722 * pixel2Blue;
-
-            //https://en.wikipedia.org/wiki/Grayscale#Converting_color_to_grayscale
-            if (linearIntensity1 <= 0.0031308) {
-                float gammaCompressed1 = 12.92f * linearIntensity1;
-                grey1 = gammaCompressed1 * 255;
-            }
-            else {
-                float gammaCompressed1 = 1.055f * std::pow(linearIntensity1, 1.0f / 2.4f) - 0.055f;
-                grey1 = gammaCompressed1 * 255;
-            }
-
-            if (linearIntensity2 <= 0.0031308) {
-                float gammaCompressed2 = 12.92f * linearIntensity2;
-                grey2 = gammaCompressed2 * 255;
-            }
-            else {
-                float gammaCompressed2 = 1.055f * std::pow(linearIntensity2, 1.0f / 2.4f) - 0.055f;
-                grey2 = gammaCompressed2 * 255;
-            }
-        }
-
-        return (grey1 << 8) | grey2;
-    }
 
     /**
      * @enum DesignElementType
@@ -267,9 +203,16 @@ class LcdAbstraction {
      * @post The buffer is not resized if the call is unsuccessful
      * @post The buffer is resized to the number of bytes copied if the call is successful
      */
-    virtual ErrorType copyScreen(StaticString::Container &buffer, const Area &area, const LcdTypes::PixelFormat pixelFormat) = 0;
+    virtual ErrorType copyScreen(StaticString::Container &buffer, const Area &area, const PixelFormat pixelFormat) = 0;
     /// @copydoc LcdAbstraction::copyScreen(StaticString::Container &buffer)
-    virtual ErrorType copyScreen(std::string &buffer, const Area &area, const LcdTypes::PixelFormat pixelFormat) = 0;
+    virtual ErrorType copyScreen(std::string &buffer, const Area &area, const PixelFormat pixelFormat) = 0;
+    /**
+     * @brief Clear the screen to the specified colour
+     * @param[in] hexCodeColour The colour to clear the screen to
+     * @returns ErrorType::Success if the screen was cleared
+     * @returns ErrorType::Failure if the screen was not cleared
+     */
+    virtual ErrorType clearScreen(const HexCodeColour hexCodeColour) = 0;
     /**
      * @brief Wait for touches on the design elements with the given IDs
      * @param[in] designElements The IDs of the design elements to wait for touches on

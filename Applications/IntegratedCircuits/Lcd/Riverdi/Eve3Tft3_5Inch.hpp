@@ -35,9 +35,12 @@ class RiverdiEve3Tft35Inch final : public LcdAbstraction {
     ErrorType startDesign() override;
     ErrorType addDesignElement(const LcdTypes::DesignElement &element) override;
     ErrorType endDesign() override;
-    ErrorType copyScreen(StaticString::Container &buffer, const Area &area, const LcdTypes::PixelFormat pixelFormat) override;
-    ErrorType copyScreen(std::string &buffer, const Area &area, const LcdTypes::PixelFormat pixelFormat) override;
+    ErrorType copyScreen(StaticString::Container &buffer, const Area &area, const PixelFormat pixelFormat) override;
+    ErrorType copyScreen(std::string &buffer, const Area &area, const PixelFormat pixelFormat) override;
+    ErrorType clearScreen(const HexCodeColour hexCodeColour) override;
     ErrorType waitForTouches(std::initializer_list<Id> designElements, Milliseconds timeout) override;
+    //https://github.com/riverdi/riverdi-eve/blob/master/riverdi_modules/modules.h
+    //A lot of the values can not be found in the datasheet and only exist in the source code.
     constexpr LcdTypes::ScreenParameters screenParameters() override {
         return LcdTypes::ScreenParameters {
             .activeArea = {.origin = {0,0}, .width = 320, .height = 240},
@@ -51,7 +54,7 @@ class RiverdiEve3Tft35Inch final : public LcdAbstraction {
             .horizontalPulseWidth = 10,
             .swizzle = 2,
             //Supported pixel clock frequencies can be found on Pg. 27, Tabel 4-11, Bt81X datasheet.
-            .pixelClockDivisor = 2,
+            .pixelClockDivisor = 6,
             .pixelClockPolarity = 1,
             //The display has 24-bit colour but BT81x can improve half tones with dithering.
             .dithering = 1

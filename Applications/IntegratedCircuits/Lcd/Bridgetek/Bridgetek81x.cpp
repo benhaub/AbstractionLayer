@@ -65,7 +65,7 @@ ErrorType Bridgetek81x::init(const SpiTypes::SpiParams params, bool externalCloc
                                             StaticString::Container dataBytes = StaticString::Data<sizeof(uint32_t)>();
                                             dataBytes->assign(reinterpret_cast<const char*>(&lcdSystemClockFrequency), sizeof(lcdSystemClockFrequency));
 
-                                            if (ErrorType::Success == (error = hostMemoryWrite(address, dataBytes, Milliseconds(500)))) {
+                                            if (ErrorType::Success == (error = hostMemoryWrite(address, dataBytes, Milliseconds(500), 10))) {
                                                 error = setScreenParameters(screenParams);
 
                                                 if (ErrorType::Success == error) {
@@ -136,6 +136,7 @@ ErrorType Bridgetek81x::startFreeHandSketch(const Area &area, const HexCodeColou
                 });
 
                 if (ErrorType::Success == error) {
+                    //TODO: There are 32 possible bitmap handles. We should be tracking an managing their use.
                     error = sendDisplayListCommand(Bridgetek81xTypes::DisplayListCommands::BitmapHandle(1));
 
                     if (ErrorType::Success == error) {
@@ -192,6 +193,7 @@ ErrorType Bridgetek81x::startFreeHandSketch(const Area &area, const HexCodeColou
                             error = sendDisplayListCommand(Bridgetek81xTypes::DisplayListCommands::BeginGraphicsPrimitive(Bridgetek81xTypes::DisplayListCommands::GraphicsPrimitive::Bitmaps));
 
                             if (ErrorType::Success == error) {
+                                //TODO: This should be using the bitmap handle that was set earlier the the BitmapHandle DL command.
                                 error = sendDisplayListCommand(Bridgetek81xTypes::DisplayListCommands::Vertex2II(0, 0, 1, 0));
 
                                 if (ErrorType::Success == error) {
@@ -214,24 +216,13 @@ ErrorType Bridgetek81x::saveScreenToRamG(const uint32_t address, const Area &are
     ErrorType error = ErrorType::InvalidParameter;
 
     if (address >= ramG && address + area.size() < ramGEnd) {
-        constexpr uint32_t pixelClockDivisorAddress = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::PixelClock);
-        StaticString::Container dataBytes = StaticString::Data<sizeof(uint8_t)>();
-        dataBytes->push_back(0x0);
-        error = hostMemoryWrite(pixelClockDivisorAddress, dataBytes, Milliseconds(500));
-
-        if (ErrorType::Success == error) {
-            error = writeToCommandBuffer(Bridgetek81xTypes::Commands::Snapshot2,
-                {
-                    static_cast<uint32_t>(Bridgetek81xTypes::BitmapPixelFormat::Argb4),
-                    address,
-                    static_cast<uint32_t>(area.origin.y) << 16 | area.origin.x,
-                    static_cast<uint32_t>(area.height) << 16 | area.width,
-                }, true);
-        }
-
-        dataBytes->clear();
-        dataBytes->push_back(_pixelClockDivisor);
-        error = hostMemoryWrite(pixelClockDivisorAddress, dataBytes, Milliseconds(500));
+        error = writeToCommandBuffer(Bridgetek81xTypes::Commands::Snapshot2,
+            {
+                static_cast<uint32_t>(Bridgetek81xTypes::BitmapPixelFormat::Argb4),
+                address,
+                static_cast<uint32_t>(area.origin.y) << 16 | area.origin.x,
+                static_cast<uint32_t>(area.height) << 16 | area.width,
+            }, true);
     }
 
     return error;
@@ -269,6 +260,7 @@ ErrorType Bridgetek81x::setDrawColour(const HexCodeColour colour) {
 
 ErrorType Bridgetek81x::toggleBacklight(const bool on, const Percent brightness) {
     constexpr Milliseconds timeout = 500;
+    constexpr Count maxRetries = 10;
     ErrorType error;
     StaticString::Container dataBytes = StaticString::Data<sizeof(uint32_t)>();
 
@@ -276,21 +268,21 @@ ErrorType Bridgetek81x::toggleBacklight(const bool on, const Percent brightness)
     uint16_t value = on ? 0x8000 : 0;
     dataBytes->assign(reinterpret_cast<const char*>(&value), sizeof(value));
 
-    if (ErrorType::Success == (error = hostMemoryWrite(gpioXDirectionAddress, dataBytes, timeout))) {
+    if (ErrorType::Success == (error = hostMemoryWrite(gpioXDirectionAddress, dataBytes, timeout, maxRetries))) {
         constexpr uint32_t setBacklightAddress = static_cast<uint32_t>(Bridgetek81xTypes::MiscellaneousRegisters::GpioXParameters);
         value = on ? 0x8000 : 0;
         dataBytes->assign(reinterpret_cast<const char*>(&value), sizeof(value));
 
-        if (ErrorType::Success == (error = hostMemoryWrite(setBacklightAddress, dataBytes, timeout))) {
+        if (ErrorType::Success == (error = hostMemoryWrite(setBacklightAddress, dataBytes, timeout, maxRetries))) {
             constexpr uint32_t pwmEnableAddress = static_cast<uint32_t>(Bridgetek81xTypes::MiscellaneousRegisters::PwmHz);
             value = on ? 250 : 0;
             dataBytes->assign(reinterpret_cast<const char*>(&value), sizeof(value));
 
-            if (ErrorType::Success == (error = hostMemoryWrite(pwmEnableAddress, dataBytes, timeout))) {
+            if (ErrorType::Success == (error = hostMemoryWrite(pwmEnableAddress, dataBytes, timeout, maxRetries))) {
                 constexpr uint32_t pwmDutyAddress = static_cast<uint32_t>(Bridgetek81xTypes::MiscellaneousRegisters::PwmDuty);
                 value = on ? (brightness / 100.0f) * 128 : 0;
                 dataBytes->assign(reinterpret_cast<const char*>(&value), sizeof(value));
-                error = hostMemoryWrite(pwmDutyAddress, dataBytes, timeout);
+                error = hostMemoryWrite(pwmDutyAddress, dataBytes, timeout, maxRetries);
             }
         }
     }
@@ -299,50 +291,67 @@ ErrorType Bridgetek81x::toggleBacklight(const bool on, const Percent brightness)
 }
 
 ErrorType Bridgetek81x::toggleDisplay(const bool on) {
+    constexpr Count maxRetries = 10;
+    constexpr Milliseconds timeout = 500;
     constexpr uint32_t address = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::PixelClock);
     const uint8_t data = on ? _pixelClockDivisor : 0;
     StaticString::Container dataBytes = StaticString::Data<sizeof(uint8_t)>();
     dataBytes->assign(reinterpret_cast<const char*>(&data), sizeof(data));
-    return hostMemoryWrite(address, dataBytes, Milliseconds(500));
+    return hostMemoryWrite(address, dataBytes, timeout, maxRetries);
 }
 
 ErrorType Bridgetek81x::setTouchThreshold(const uint16_t threshold) {
+    constexpr Count maxRetries = 10;
+    constexpr Milliseconds timeout = 500;
     constexpr uint32_t address = static_cast<uint32_t>(Bridgetek81xTypes::ResistiveTouchEngineRegisters::TouchRzThresh);
     StaticString::Container dataBytes = StaticString::Data<sizeof(uint16_t)>();
     dataBytes->assign(reinterpret_cast<const char*>(&threshold), sizeof(threshold));
-    return hostMemoryWrite(address, dataBytes, Milliseconds(500));
+    return hostMemoryWrite(address, dataBytes, timeout, maxRetries);
 }
 
-ErrorType Bridgetek81x::calibrate() {
-    const StaticString::Container instructions = StaticString::Data<32>("Tap the dots to calibrate touch");
-
-    ErrorType error = sendDisplayListCommand(Bridgetek81xTypes::DisplayListCommands::ClearColorRgb(0x00FFFFFF));
+ErrorType Bridgetek81x::calibrate(const Coordinate &instructionTextLocation) {
+    //It's not a bug that commitDisplayList is not called.
+    //Pg. 159, Sect. 5.60 CMD_CALIBRATE, Bt81X Programming Guide.
+    ErrorType error = startDisplayList();
 
     if (ErrorType::Success == error) {
-        error = sendDisplayListCommand(Bridgetek81xTypes::DisplayListCommands::Clear(1,1,1));
+        error = sendDisplayListCommand(Bridgetek81xTypes::DisplayListCommands::ClearColorRgb(0x00000000));
 
         if (ErrorType::Success == error) {
-            error = drawText<32>(Coordinate{0,0}, Bridgetek81xTypes::Font::Font0, Bridgetek81xTypes::Options::Centered, instructions->c_str());
+            error = sendDisplayListCommand(Bridgetek81xTypes::DisplayListCommands::Clear(1,1,1));
 
             if (ErrorType::Success == error) {
-                error = writeToCommandBuffer(Bridgetek81xTypes::Commands::Calibrate, {0}, true);
+                error = drawText<26>(instructionTextLocation, Bridgetek81xTypes::Font::Font11, 0x00FFFFFF, Bridgetek81xTypes::Options::Centered, "Tap the dots to calibrate");
+
+                if (ErrorType::Success == error) {
+                    error = writeToCommandBuffer(Bridgetek81xTypes::Commands::Calibrate, {0}, true);
+                }
+            }
+        }
+
+        //while the programming guide does say that "The completion of this function [calibration] is detected when
+        //the value of REG_CMD_READ is equal to REG_CMD_WRITE", from testing it appears that they simply mean the completion of
+        //writing the command to the LCD screen, not the completion of the actual calibration process.
+        constexpr uint32_t regTouchDirectXyAddress = static_cast<uint32_t>(Bridgetek81xTypes::ResistiveTouchEngineRegisters::TouchDirectXy);
+        constexpr Milliseconds timeout = 500;
+        uint32_t isScreenTouched = 0;
+        int numberOfTouchesDetected = 0;
+        
+        while (numberOfTouchesDetected < 3) {
+            error = hostMemoryRead(regTouchDirectXyAddress, isScreenTouched, timeout);
+            bool touchDetected = ErrorType::Success == error && (isScreenTouched & 0x80000000) == 0;
+
+            if (touchDetected) {
+                numberOfTouchesDetected++;
+            }
+
+            //Make sure we don't count holding touches on the screen as a touch.
+            while (touchDetected) {
+                error = hostMemoryRead(regTouchDirectXyAddress, isScreenTouched, timeout);
+                touchDetected = ErrorType::Success == error && (isScreenTouched & 0x80000000) == 0;
             }
         }
     }
-
-    constexpr uint32_t readBufferAddress = static_cast<uint32_t>(Bridgetek81xTypes::CoprocessorEngineRegisters::ReadFifoOffset);
-    constexpr uint32_t writeBufferAddress = static_cast<uint32_t>(Bridgetek81xTypes::CoprocessorEngineRegisters::WriteFifoOffset);
-    constexpr Milliseconds timeout = 500;
-    uint32_t readBufferOffset = 0;
-    uint32_t writeBufferOffset = 0;
-
-    do {
-        error = hostMemoryRead(readBufferAddress, readBufferOffset, timeout);
-
-        if (ErrorType::Success == error) {
-            error = hostMemoryRead(writeBufferAddress, writeBufferOffset, timeout);
-        }
-    } while (ErrorType::Success == error && (readBufferOffset != writeBufferOffset));
 
     return error;
 }
@@ -369,7 +378,7 @@ ErrorType Bridgetek81x::commitDisplayList() {
     return error;
 }
 
-ErrorType Bridgetek81x::setTouchTag(const uint8_t tag) {
+ErrorType Bridgetek81x::enableTouchTag(const uint8_t tag) {
     ErrorType error = sendDisplayListCommand(Bridgetek81xTypes::DisplayListCommands::GraphicsObjectTagMask(1));
 
     if (ErrorType::Success == error) {
@@ -379,35 +388,32 @@ ErrorType Bridgetek81x::setTouchTag(const uint8_t tag) {
     return error;
 }
 
+ErrorType Bridgetek81x::disableTouchTag() {
+    return sendDisplayListCommand(Bridgetek81xTypes::DisplayListCommands::GraphicsObjectTagMask(0));
+}
+
 ErrorType Bridgetek81x::checkForScreenTouches(const uint8_t tag, Coordinate &touchedAt) {
     constexpr uint32_t tagAddress = static_cast<uint32_t>(Bridgetek81xTypes::ResistiveTouchEngineRegisters::TouchTag);
     constexpr uint32_t tagXyAddress = static_cast<uint32_t>(Bridgetek81xTypes::ResistiveTouchEngineRegisters::TouchTagXy);
-    constexpr uint32_t touchDirectAddress = static_cast<uint32_t>(Bridgetek81xTypes::ResistiveTouchEngineRegisters::TouchDirectZ1z2);
     constexpr Milliseconds timeout = 500;
     uint8_t tagValue = 0;
     uint32_t tagXyValue = 0;
-    uint32_t touchDirectValue = 0;
 
-    ErrorType error = hostMemoryRead(touchDirectAddress, touchDirectValue, timeout);
-    const bool mostSignificantBitSet = (touchDirectValue & 0x80000000) != 0;
+    ErrorType error = hostMemoryRead(tagAddress, tagValue, timeout);
 
-    if (ErrorType::Success == error && mostSignificantBitSet) {
-        error = hostMemoryRead(tagAddress, tagValue, timeout);
+    if (ErrorType::Success == error) {
+        error = hostMemoryRead(tagXyAddress, tagXyValue, timeout);
 
         if (ErrorType::Success == error) {
-            error = hostMemoryRead(tagXyAddress, tagXyValue, timeout);
-
-            if (ErrorType::Success == error) {
-                if (tagValue == tag) {
-                    touchedAt.y = tagXyValue & 0xFFFF;
-                    touchedAt.x = tagXyValue >> 16;
-                    error = ErrorType::Success;
-                }
-                else {
-                    touchedAt.x = 0;
-                    touchedAt.y = 0;
-                    error = ErrorType::Negative;
-                }
+            if (tagValue == tag) {
+                touchedAt.y = tagXyValue & 0xFFFF;
+                touchedAt.x = tagXyValue >> 16;
+                error = ErrorType::Success;
+            }
+            else {
+                touchedAt.x = 0;
+                touchedAt.y = 0;
+                error = ErrorType::Negative;
             }
         }
     }
@@ -418,29 +424,43 @@ ErrorType Bridgetek81x::checkForScreenTouches(const uint8_t tag, Coordinate &tou
     return error;
 }
 
-ErrorType Bridgetek81x::memoryCopy(const LcdTypes::PixelFormat pixelFormat, const uint32_t address, char *buffer, const size_t bufferSize, size_t &bytesCopied) {
+ErrorType Bridgetek81x::memoryCopy(const PixelFormat pixelFormat, const uint32_t address, char *buffer, const size_t bufferSize, size_t &bytesCopied) {
     uint32_t dataBuffer = 0;
     ErrorType error = ErrorType::InvalidParameter;
 
     //TODO: Support more formats.
-    if (LcdTypes::PixelFormat::Greyscale == pixelFormat) {
+    //TODO: Assumes we saved in Argb4 format.
+    //if (PixelFormat::Greyscale == pixelFormat) {
 
-        for (size_t i = 0, j = 0; i < bufferSize*2; i += sizeof(dataBuffer), j += 2) {
-            error = hostMemoryRead(address + i, dataBuffer, Milliseconds(500));
+    //    for (size_t i = 0, j = 0; i < bufferSize*2; i += sizeof(dataBuffer), j += 2) {
+    //        error = hostMemoryRead(address + i, dataBuffer, Milliseconds(500));
 
-            if (ErrorType::Success == error) {
-                const uint16_t grey = LcdTypes::ToGreyscale(LcdTypes::PixelFormat::Argb4, dataBuffer);
-                const uint8_t grey1 = grey >> 8;
-                const uint8_t grey2 = grey & 0xFF;
+    //        if (ErrorType::Success == error) {
+    //            const uint16_t grey = ToGreyscale(PixelFormat::Argb4, dataBuffer);
+    //            const uint8_t grey1 = grey >> 8;
+    //            const uint8_t grey2 = grey & 0xFF;
 
-                memcpy(&buffer[j], &grey1, sizeof(grey1));
-                bytesCopied += sizeof(grey1);
-                memcpy(&buffer[j+1], &grey2, sizeof(grey2));
-                bytesCopied += sizeof(grey2);
-            }
-            else {
-                break;
-            }
+    //            memcpy(&buffer[j], &grey1, sizeof(grey1));
+    //            bytesCopied += sizeof(grey1);
+    //            memcpy(&buffer[j+1], &grey2, sizeof(grey2));
+    //            bytesCopied += sizeof(grey2);
+    //        }
+    //        else {
+    //            break;
+    //        }
+    //    }
+    //}
+
+    //TODO: Assumes to we saved in grey scale and want greyscale back.
+    for (size_t i = 0; i < bufferSize; i = i + sizeof(dataBuffer)) {
+        error = hostMemoryRead(address + i, dataBuffer, Milliseconds(500));
+
+        if (ErrorType::Success == error) {
+            memcpy(&buffer[i], &dataBuffer, sizeof(dataBuffer));
+            bytesCopied += sizeof(dataBuffer);
+        }
+        else {
+            break;
         }
     }
 
@@ -482,15 +502,16 @@ ErrorType Bridgetek81x::writeToCommandBuffer(const Bridgetek81xTypes::Commands c
 
     std::string_view commandBytes = std::string_view(reinterpret_cast<const char *>(&command), sizeof(command));
 
-    if (_commandBuffer->size()  + parameters.size()*4 + commandBytes.size() != _commandBuffer->capacity()) {
+    if (_commandBuffer->size() + parameters.size()*4 + commandBytes.size() <= _commandBuffer->capacity()) {
         _commandBuffer->append(commandBytes);
+
         for (const auto param : parameters) {
             std::string_view paramBytes = std::string_view(reinterpret_cast<const char *>(&param), sizeof(param));
             _commandBuffer->append(paramBytes);
         }
         
         if (flush) {
-            error = hostMemoryWrite(address, _commandBuffer, timeout);
+            error = hostMemoryWrite(address, _commandBuffer, timeout, 0);
             _commandBuffer->clear();
             //uint16_t freeSpaceInCommandBuffer = 0;
 
@@ -510,6 +531,7 @@ ErrorType Bridgetek81x::writeToCommandBuffer(const Bridgetek81xTypes::Commands c
 uint16_t Bridgetek81x::commandBufferSpace(ErrorType &error) {
     error = ErrorType::Success;
     constexpr Milliseconds timeout = 500;
+    constexpr Count maxRetries = 10;
     //Pg. 107, Sect. 5.7 Coprocessor Faults
     constexpr uint16_t coprocessorFaultCode = 0xfff;
     const uint32_t address = static_cast<uint32_t>(Bridgetek81xTypes::CoprocessorEngineRegisters::FreeSpaceInCommandBuffer);
@@ -527,7 +549,7 @@ uint16_t Bridgetek81x::commandBufferSpace(ErrorType &error) {
             constexpr uint32_t cpuResetAddress = static_cast<uint32_t>(Bridgetek81xTypes::MiscellaneousRegisters::CpuReset);
             StaticString::Container dataBytes = StaticString::Data<sizeof(uint32_t)>();
             dataBytes->push_back(0x1);
-            error = hostMemoryWrite(cpuResetAddress, dataBytes, timeout);
+            error = hostMemoryWrite(cpuResetAddress, dataBytes, timeout, maxRetries);
 
             if (ErrorType::Success == error) {
                 constexpr uint32_t readCommandFifoOffset = static_cast<uint32_t>(Bridgetek81xTypes::CoprocessorEngineRegisters::ReadFifoOffset);
@@ -535,12 +557,12 @@ uint16_t Bridgetek81x::commandBufferSpace(ErrorType &error) {
                 constexpr uint32_t displayListFifoOffset = static_cast<uint32_t>(Bridgetek81xTypes::CoprocessorEngineRegisters::DisplayListFifoOffset);
                 dataBytes->clear();
                 dataBytes->push_back(0x0);
-                error = hostMemoryWrite(readCommandFifoOffset, dataBytes, timeout);
+                error = hostMemoryWrite(readCommandFifoOffset, dataBytes, timeout, maxRetries);
 
                 if (ErrorType::Success == error) {
                     dataBytes->clear();
                     dataBytes->push_back(0x0);
-                    error = hostMemoryWrite(writeCommandFifoOffset, dataBytes, timeout);
+                    error = hostMemoryWrite(writeCommandFifoOffset, dataBytes, timeout, maxRetries);
 
                     if (ErrorType::Success == error) {
                         dataBytes->clear();
@@ -549,11 +571,11 @@ uint16_t Bridgetek81x::commandBufferSpace(ErrorType &error) {
                         error = hostMemoryRead(displayListFifoOffset, displayListFifo, timeout);
 
                         if (ErrorType::Success == error) {
-                            error = hostMemoryWrite(cpuResetAddress, dataBytes, timeout);
+                            error = hostMemoryWrite(cpuResetAddress, dataBytes, timeout, maxRetries);
 
                             if (ErrorType::Success == error) {
                                 dataBytes->assign(reinterpret_cast<const char*>(&patchAddress), sizeof(patchAddress));
-                                error = hostMemoryWrite(coprocessorPatchPointer, dataBytes, timeout);
+                                error = hostMemoryWrite(coprocessorPatchPointer, dataBytes, timeout, maxRetries);
 
                                 if (ErrorType::Success == error) {
                                     error = writeToCommandBuffer(Bridgetek81xTypes::Commands::Flashattach, {}, true);
@@ -563,7 +585,7 @@ uint16_t Bridgetek81x::commandBufferSpace(ErrorType &error) {
 
                                         if (ErrorType::Success == error) {
                                             dataBytes->assign(reinterpret_cast<const char*>(&_pixelClockDivisor), sizeof(_pixelClockDivisor));
-                                            error = hostMemoryWrite(address, dataBytes, Milliseconds(500));
+                                            error = hostMemoryWrite(address, dataBytes, Milliseconds(500), maxRetries);
                                         }
                                     }
                                 }
@@ -628,81 +650,82 @@ ErrorType Bridgetek81x::readResetStatus() {
 }
 
 ErrorType Bridgetek81x::setScreenParameters(const LcdTypes::ScreenParameters &screenParams) {
-    ErrorType error = ErrorType::Success;
     constexpr Milliseconds timeout = 500;
+    constexpr Count maxRetries = 10;
+    ErrorType error = ErrorType::Success;
     StaticString::Container dataBytes = StaticString::Data<sizeof(uint32_t)>();
 
     constexpr uint32_t hSizeAddress = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Hsize);
-    dataBytes->assign(reinterpret_cast<const char*>(&screenParams.activeArea.width), sizeof(screenParams.activeArea.height));
-    error = hostMemoryWrite(hSizeAddress, dataBytes, timeout);
+    dataBytes->assign(reinterpret_cast<const char*>(&screenParams.activeArea.width), sizeof(screenParams.activeArea.width));
+    error = hostMemoryWrite(hSizeAddress, dataBytes, timeout, maxRetries);
 
     if (ErrorType::Success == error) {
-        constexpr uint32_t hCycleaddress = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Hcycle);
+        constexpr uint32_t hCycleAddress = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Hcycle);
         dataBytes->assign(reinterpret_cast<const char*>(&screenParams.totalHorizontalLines), sizeof(screenParams.totalHorizontalLines));
-        error = hostMemoryWrite(hCycleaddress, dataBytes, timeout);
+        error = hostMemoryWrite(hCycleAddress, dataBytes, timeout, maxRetries);
     }
     if (ErrorType::Success == error) {
         constexpr uint32_t hOffsetAddress = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Hoffset);
         dataBytes->assign(reinterpret_cast<const char*>(&screenParams.horizontalOffset), sizeof(screenParams.horizontalOffset));
-        error = hostMemoryWrite(hOffsetAddress, dataBytes, timeout);
+        error = hostMemoryWrite(hOffsetAddress, dataBytes, timeout, maxRetries);
     }
     if (ErrorType::Success == error) {
         constexpr uint32_t hSync0Address = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Hsync0);
         dataBytes->assign(reinterpret_cast<const char*>(&screenParams.horizontalFrontPorch), sizeof(screenParams.horizontalFrontPorch));
-        error = hostMemoryWrite(hSync0Address, dataBytes, timeout);
+        error = hostMemoryWrite(hSync0Address, dataBytes, timeout, maxRetries);
     }
     if (ErrorType::Success == error) {
         constexpr uint32_t hSync1Address = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Hsync1);
         const uint16_t hsync = screenParams.horizontalFrontPorch + screenParams.horizontalPulseWidth;
         dataBytes->assign(reinterpret_cast<const char*>(&hsync), sizeof(hsync));
-        error = hostMemoryWrite(hSync1Address, dataBytes, timeout);
+        error = hostMemoryWrite(hSync1Address, dataBytes, timeout, maxRetries);
     }
     if (ErrorType::Success == error) {
         constexpr uint32_t vSizeAddress = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Vsize);
         dataBytes->assign(reinterpret_cast<const char*>(&screenParams.activeArea.height), sizeof(screenParams.activeArea.height));
-        error = hostMemoryWrite(vSizeAddress, dataBytes, timeout);
+        error = hostMemoryWrite(vSizeAddress, dataBytes, timeout, maxRetries);
     }
     if (ErrorType::Success == error) {
         constexpr uint32_t vCycleAddress = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Vcycle);
         dataBytes->assign(reinterpret_cast<const char*>(&screenParams.totalVerticalLines), sizeof(screenParams.totalVerticalLines));
-        error = hostMemoryWrite(vCycleAddress, dataBytes, timeout);
+        error = hostMemoryWrite(vCycleAddress, dataBytes, timeout, maxRetries);
     }
     if (ErrorType::Success == error) {
         constexpr uint32_t vOffsetAddress = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Voffset);
         dataBytes->assign(reinterpret_cast<const char*>(&screenParams.verticalOffset), sizeof(screenParams.verticalOffset));
-        error = hostMemoryWrite(vOffsetAddress, dataBytes, timeout);
+        error = hostMemoryWrite(vOffsetAddress, dataBytes, timeout, maxRetries);
     }
     if (ErrorType::Success == error) {
         constexpr uint32_t vSync0Address = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Vsync0);
         dataBytes->assign(reinterpret_cast<const char*>(&screenParams.verticalFrontPorch), sizeof(screenParams.verticalFrontPorch));
-        error = hostMemoryWrite(vSync0Address, dataBytes, timeout);
+        error = hostMemoryWrite(vSync0Address, dataBytes, timeout, maxRetries);
     }
     if (ErrorType::Success == error) {
         constexpr uint32_t vSync1Address = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Vsync1);
         const uint16_t vsync = screenParams.verticalFrontPorch + screenParams.verticalPulseWidth;
         dataBytes->assign(reinterpret_cast<const char*>(&vsync), sizeof(vsync));
-        error = hostMemoryWrite(vSync1Address, dataBytes, timeout);
+        error = hostMemoryWrite(vSync1Address, dataBytes, timeout, maxRetries);
     }
     if (ErrorType::Success == error) {
         constexpr uint32_t swizzleAddress = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Swizzle);
         dataBytes->assign(reinterpret_cast<const char*>(&screenParams.swizzle), sizeof(screenParams.swizzle));
-        error = hostMemoryWrite(swizzleAddress, dataBytes, timeout);
+        error = hostMemoryWrite(swizzleAddress, dataBytes, timeout, maxRetries);
     }
     if (ErrorType::Success == error) {
         const uint8_t cspread = 0;
         constexpr uint32_t cspreadAddress = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Cspread);
         dataBytes->assign(reinterpret_cast<const char*>(&cspread), sizeof(cspread));
-        error = hostMemoryWrite(cspreadAddress, dataBytes, timeout);
+        error = hostMemoryWrite(cspreadAddress, dataBytes, timeout, maxRetries);
     }
     if (ErrorType::Success == error) {
         constexpr uint32_t pclkPolarityAddress = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::PixelClockPolarity);
         dataBytes->assign(reinterpret_cast<const char*>(&screenParams.pixelClockPolarity), sizeof(screenParams.pixelClockPolarity));
-        error = hostMemoryWrite(pclkPolarityAddress, dataBytes, timeout);
+        error = hostMemoryWrite(pclkPolarityAddress, dataBytes, timeout, maxRetries);
     }
     if (ErrorType::Success == error) {
         constexpr uint32_t ditherAddress = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Dither);
         dataBytes->assign(reinterpret_cast<const char*>(&screenParams.dithering), sizeof(screenParams.dithering));
-        error = hostMemoryWrite(ditherAddress, dataBytes, timeout);
+        error = hostMemoryWrite(ditherAddress, dataBytes, timeout, maxRetries);
     }
 
     return error;
@@ -727,12 +750,12 @@ ErrorType Bridgetek81x::resetEngines(const bool resetAudioEngine, const bool res
     }
 
     dataBytes->push_back(resetBits);
-    ErrorType error = hostMemoryWrite(address, dataBytes, timeout);
+    ErrorType error = hostMemoryWrite(address, dataBytes, timeout, 10);
 
     if (ErrorType::Success == error) {
         dataBytes->clear();
         dataBytes->push_back(0x0);
-        error = hostMemoryWrite(address, dataBytes, timeout);
+        error = hostMemoryWrite(address, dataBytes, timeout, 10);
     }
 
     return error;

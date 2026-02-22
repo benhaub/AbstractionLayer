@@ -56,7 +56,7 @@ namespace Bridgetek81xTypes {
     enum class Commands : uint32_t {
         Unknown          = 0x0,
         Append           = 0xFFFFFF1E,
-        BgColor          = 0xFFFFFF09,
+        BgColor          = 0xFFFFFF09, ///< Bt81x Programming Guide, Pg. 98, Sect. 5.2.2 - Color Settings
         Button           = 0xFFFFFF0D,
         Calibrate        = 0xFFFFFF15,
         Clock            = 0xFFFFFF14,
@@ -64,7 +64,7 @@ namespace Bridgetek81xTypes {
         Crc              = 0xFFFFFF18,
         Dial             = 0xFFFFFF2D,
         DisplayListStart = 0xFFFFFF00,
-        FgColor          = 0xFFFFFF0A,
+        FgColor          = 0xFFFFFF0A, ///< Bt81x Programming Guide, Pg. 98, Sect. 5.2.2 - Color Settings
         Gauge            = 0xFFFFFF13,
         Getmatrix        = 0xFFFFFF33,
         Getprops         = 0xFFFFFF25,
@@ -630,6 +630,11 @@ namespace Bridgetek81xTypes {
                    ((a & 1UL));
         }
 
+        /**
+         * @brief Set the colour of the screen
+         * @param[in] colour The colour to set
+         * @sa Bt81x Programming Guide, Pg. 98, Sect. 5.2.2 - Color Settings
+         */
         inline constexpr DisplayListCommand ColorRgb(const HexCodeColour colour) {
             return (4UL << 24) | (colour & 0x00FFFFFF);
         }
