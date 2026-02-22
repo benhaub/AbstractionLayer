@@ -8,11 +8,7 @@
 #define __INFERENCE_ABSTRACTION_HPP__
 
 //AbstractionLayer
-#include "Error.hpp"
-#include "Types.hpp"
 #include "StaticString.hpp"
-//C++
-#include <string_view>
 
 /**
  * @namespace InferenceAbstractionTypes
