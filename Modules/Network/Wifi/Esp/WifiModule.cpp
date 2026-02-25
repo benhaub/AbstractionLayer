@@ -518,13 +518,13 @@ ErrorType Wifi::setSsid(WifiTypes::Mode mode, const StaticString::Data<WifiTypes
 }
 
 ErrorType Wifi::setStationSsid(const StaticString::Data<WifiTypes::MaxSsidLength> &ssid) {
-    _params.stationSsid.assign(ssid);
+    _params.stationSsid.assign(std::string_view(ssid.c_str(), ssid.size()));
 
     return ErrorType::Success;
 }
 
 ErrorType Wifi::setAccessPointSsid(const StaticString::Data<WifiTypes::MaxSsidLength> &ssid) {
-    _params.accessPointSsid.assign(ssid);
+    _params.accessPointSsid.assign(std::string_view(ssid.c_str(), ssid.size()));
 
     return ErrorType::Success;
 }
@@ -533,10 +533,10 @@ ErrorType Wifi::setPassword(WifiTypes::Mode mode, const StaticString::Data<WifiT
     ErrorType error = ErrorType::Success;
 
     if (WifiTypes::Mode::Station == mode) {
-        _params.stationPassword.assign(password);
+        _params.stationPassword.assign(std::string_view(password.c_str(), password.size()));
     }
     else if (WifiTypes::Mode::AccessPoint == mode) {
-        _params.accessPointPassword.assign(password);
+        _params.accessPointPassword.assign(std::string_view(password.c_str(), password.size()));
     }
     else if (WifiTypes::Mode::AccessPointAndStation == mode) {
         error = ErrorType::InvalidParameter;
