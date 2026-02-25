@@ -13,6 +13,7 @@
 //C++
 #include <limits>
 #include <cmath>
+#include <cassert>
 
 /**
  * @brief Calculate a running average.
