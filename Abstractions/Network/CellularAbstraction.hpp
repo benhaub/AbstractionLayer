@@ -61,7 +61,7 @@ namespace CellularTypes {
         StaticString::Container carrier;  ///< The carrier that the modem is registered to.
         RadioAccessTechnology rat;        ///< The radio access technology currently in use.
 
-        Status() : signalStrength(0), carrier(StaticString::Data<16>()), rat(RadioAccessTechnology::Unknown) {}
+        Status() : signalStrength(0), carrier(std::integral_constant<size_t, 16>()), rat(RadioAccessTechnology::Unknown) {}
     };
 
     /**

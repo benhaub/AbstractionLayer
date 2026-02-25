@@ -15,6 +15,15 @@
 #include "boost/static_string.hpp"
 //C++
 #include <any>
+#include <type_traits>
+
+
+#define APP_STATIC_STRING_BUFFER_SIZE 128
+#ifndef APP_STATIC_STRING_BUFFER_SIZE
+#error "Please define that size before static strings dynamically allocate."
+#else
+#define BUFFER_OPTIMIZATION sizeof(Data<APP_STATIC_STRING_BUFFER_SIZE>)
+#endif
 
 /**
  * @namespace StaticString
@@ -97,11 +106,9 @@ namespace StaticString {
          * @param s The string to initialize the static string to.
          */
         constexpr Data(const char (&s)[_n]) : _str(s) {}
+        constexpr Data(std::string_view s) : _str(s) {}
         /// @brief Constructor
         constexpr Data() : _str() {}
-
-        /// @brief The underlying static string.
-        boost::static_string<_n> _str;
 
         const char *c_str() const override { return _str.c_str(); }
         size_t size() const override { return _str.size(); }
@@ -114,7 +121,6 @@ namespace StaticString {
             _str.assign(s, length); return *this;
         }
         StandardStringInterface &assign(std::string_view s) override { _str.assign(s); return *this; }
-        StandardStringInterface &assign(const Data<_n> &other) { return assign(other.c_str(), other.size()); }
         void clear() override { _str.clear(); }
         bool empty() const override { return _str.empty(); }
         constexpr size_t capacity() const override { return _str.capacity(); }
@@ -141,12 +147,16 @@ namespace StaticString {
         const char &operator[](const size_t pos) const {
             return _str[pos];
         }
+
+        private:
+        /// @brief The underlying static string.
+        boost::static_string<_n> _str;
+
     };
 
     /**
      * @class Container
-     * @brief Template type-erasure for anything that inherits from the Interface type.
-     * @details This is useful for storing template classes in a common container without needing to know the template parameters
+     * @brief An owning, type-erased, and statically allocated container for any subclass of StandardStringInterface.
      */
     class Container {
 
@@ -159,8 +169,12 @@ namespace StaticString {
          * @returns A Container of string length _n
          */
         template <size_t _n>
-        Container(const Data<_n> &other) {
-            set(other);
+        constexpr Container(const char (&s)[_n]) {
+            set<_n>(std::string_view(s, _n));
+        }
+        template <size_t _n>
+        constexpr Container(std::integral_constant<size_t, _n>) {
+            set<_n>(std::string_view());
         }
         
         /// @brief Deleted because the container does not store the template type of the data and we can't use any_cast
@@ -168,44 +182,76 @@ namespace StaticString {
         Container(const Container &other) = delete;
         
         /// @brief Move constructor
-        Container(Container &&other) noexcept : _data(std::move(other._data)), _dataPtr(other._dataPtr) {
-            other.reset();
+        Container(Container &&other) noexcept {
+            *this = std::move(other);
+        }
+
+        ~Container() {
+            if (!_data.has_value()) {
+
+                if (_destroy != nullptr) {
+                    _destroy(_staticBuffer.data());
+                }
+            }
         }
         
         private:
         /// @brief The pure virtual interface that the container returns.
         using Interface = StandardStringInterface;
-        /// @brief The copy of the static string data.
+        /// @brief The dynamically allocated data when it is too large to fit in the static buffer.
         std::any _data;
+        /// @brief The static buffer for the data when it is small enough to fit.
+        std::array<std::byte, BUFFER_OPTIMIZATION> _staticBuffer = {};
         /**
          * @brief A pointer so that the we any_cast to a Interface pointer.
          * @details A cast directly from T to Interface* is not allowed, so we need this intermediate step.
          */
         Interface *_dataPtr = nullptr;
+        void (*_destroy)(void *) = nullptr;
+        void (*_move)(void *dest, void *src) = nullptr;
+
+        template <size_t _n>
+        static void destroyInBuffer(void *p) {
+            static_cast<Data<_n> *>(p)->~Data();
+        }
+
+        template <size_t _n>
+        static void moveBetweenBuffers(void *dest, void *src) {
+            new (dest) Data<_n>(std::move(*static_cast<Data<_n> *>(src)));
+        }
 
         public:
         /**
          * @brief Set the contained string to a specific type.
          * @tparam T The type of static string to store.
          * @param value The value to set the string to.
+         * @post If the size of T is less than BUFFER_OPTIMIZATION then data will be stored in the static buffer
+         *.      and _data.has_value() will be false for the lifetime of this object.
          */
-        template<typename T>
-        requires std::is_base_of_v<Interface, T>
-        constexpr void set(const T& value) {
-            _data = value;
-            T *dataPtr = std::any_cast<T>(&_data);
-            _dataPtr = static_cast<Interface *>(dataPtr);
+        template <size_t _n>
+        constexpr void set(std::string_view value) {
+            if constexpr (sizeof(Data<_n>) > BUFFER_OPTIMIZATION) {
+                _destroy = nullptr;
+                _move = nullptr;
+                _data = std::make_any<Data<_n>>(value);
+                Data<_n> *dataPtr = std::any_cast<Data<_n>>(&_data);
+                _dataPtr = static_cast<Interface *>(dataPtr);
+            }
+            else {
+                new (_staticBuffer.data()) Data<_n>(value);
+                _dataPtr = reinterpret_cast<Interface *>(_staticBuffer.data());
+                _destroy = &destroyInBuffer<_n>;
+                _move = &moveBetweenBuffers<_n>;
+            }
         }
 
         /// @brief Get a constant interface pointer
-        const Interface *const getConst() const {
-            assert(_data.has_value());
+        const Interface *getConst() const {
             assert(nullptr != _dataPtr);
             return _dataPtr;
         }
         /// @brief Get a mutable interface pointer
         Interface *get() {
-            assert(_data.has_value());
             assert(nullptr != _dataPtr);
             return _dataPtr;
         }
@@ -230,6 +276,7 @@ namespace StaticString {
         void reset() {
             _data.reset();
             _dataPtr = nullptr;
+            _staticBuffer = {};
         }
 
         /// @brief Shorthand operator for Container::get
@@ -240,23 +287,31 @@ namespace StaticString {
         const Interface *operator->() const {
             return getConst();
         }
-        /// @brief Shorthand operator Container::set
-        template<size_t _n>
-        Container &operator=(const Data<_n> &other) {
-            set(other);
-            return *this;
-        }
         
         /// @copydoc Container(const Container &other)
         Container &operator=(const Container &other) = delete;
         
         /// @brief Move assignment operator
-        constexpr Container &operator=(Container &&other) noexcept {
+        Container &operator=(Container &&other) noexcept {
             if (this != &other) {
-                _data = std::move(other._data);
-                _dataPtr = other._dataPtr;
-                other._data.reset();
-                other._dataPtr = nullptr;
+
+                if (other._data.has_value()) {
+                    _data = std::move(other._data);
+                    _dataPtr = other._dataPtr;
+                    other._data.reset();
+                    other._dataPtr = nullptr;
+                }
+                else {
+                    other._move(_staticBuffer.data(), other._staticBuffer.data());
+                    other._destroy(other._staticBuffer.data());
+                    _dataPtr = reinterpret_cast<Interface *>(_staticBuffer.data());
+                    _destroy = other._destroy;
+                    _move = other._move;
+                    other._dataPtr = nullptr;
+                    other._destroy = nullptr;
+                    other._move = nullptr;
+                    other._staticBuffer = {};
+                }
             }
 
             return *this;

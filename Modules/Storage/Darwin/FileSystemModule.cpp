@@ -14,7 +14,7 @@ ErrorType FileSystem::mount() {
     const bool fileSystemHasNotBeenMounted = !_status.mounted;
 
     if (fileSystemHasNotBeenMounted) {
-        _mountPrefix.set(StaticString::Data<StorageTypes::longestMediumStringSize() + sizeof(APP_HOME_DIRECTORY "/") + FileSystemTypes::PartitionNameLength>());
+        _mountPrefix.set<StorageTypes::longestMediumStringSize() + sizeof(APP_HOME_DIRECTORY "/") + FileSystemTypes::PartitionNameLength>(std::string_view());
         _mountPrefix->assign(_storage.rootPrefix()->c_str());
 
         if (_mountPrefix->back() != '/') {

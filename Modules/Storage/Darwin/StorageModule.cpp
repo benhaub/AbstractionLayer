@@ -30,7 +30,7 @@ ErrorType Storage::init() {
 
     if (!_status.isInitialized) {
 
-        _rootPrefix.set(StaticString::Data<longestMediumStringSize() + sizeof(APP_HOME_DIRECTORY "/")>());
+        _rootPrefix.set<longestMediumStringSize() + sizeof(APP_HOME_DIRECTORY "/")>(std::string_view());
         std::string_view mediumString = StorageTypes::MediumToString(medium());
 
         if (0 != mediumString.compare(StorageTypes::MediumToString(StorageTypes::Medium::Unknown))) {

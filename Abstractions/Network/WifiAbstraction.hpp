@@ -243,12 +243,12 @@ class WifiAbstraction : public NetworkAbstraction {
 
         if (ErrorType::Success == error) {
             if (mode == WifiTypes::Mode::AccessPoint) {
-                _params.accessPointSsid.assign(ssid);
-                _params.accessPointPassword = password;
+                _params.accessPointSsid.assign(std::string_view(ssid.c_str(), ssid.size()));
+                _params.accessPointPassword.assign(std::string_view(password.c_str(), password.size()));
             }
             else if (mode == WifiTypes::Mode::Station) {
-                _params.stationSsid.assign(ssid);
-                _params.stationPassword = password;
+                _params.stationSsid.assign(std::string_view(ssid.c_str(), ssid.size()));
+                _params.stationPassword.assign(std::string_view(password.c_str(), password.size()));
             }
             else {
                 error = ErrorType::InvalidParameter;
