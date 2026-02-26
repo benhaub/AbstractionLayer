@@ -49,6 +49,7 @@ class MemoryPool {
         for (size_t i = 0; i < sizeof(_blockAllocationMap); i++) {
             if (blockIsAvailable(i)) {
                 item = reinterpret_cast<T*>(&_pool[i*sizeof(T)]);
+                new (item) T();
                 _blockAllocationMap[i] = 1;
                 return ErrorType::Success;
             }
@@ -66,40 +67,13 @@ class MemoryPool {
     constexpr ErrorType deallocate(const T *const item) {
         for (size_t i = 0; i < sizeof(_blockAllocationMap); i++) {
             if (item == reinterpret_cast<T*>(&_pool[i*sizeof(T)])) {
+                std::destroy_at(const_cast<T*>(item));
                 _blockAllocationMap[i] = 0;
                 return ErrorType::Success;
             }
         }
 
         return ErrorType::InvalidParameter;
-    }
-
-    /**
-     * @brief Set the data in a memory block.
-     * @param[in] itemHandle The pointer to the block of memory to set.
-     * @param[in] data The data to set the poolBlock to.
-     * @return ErrorType::Success if the data was set
-     * @returns ErrorType::InvalidParameter if the data is too large to fit in the block.
-     * @returns ErrorType::InvalidParameter if the poolBlock being set does not belong to the pool.
-     * @returns ErrorType::PrerequisitesNotMet if the poolBlock being set was not allocated.
-     */
-    constexpr ErrorType setData(const Id itemHandle, const T &data) {
-        Bytes availableInPool = available(availableInPool);
-        const bool dataIsTooLarge = (availableInPool < sizeof(T));
-        if (dataIsTooLarge) {
-            return ErrorType::InvalidParameter;
-        }
-        const bool dataDoesNotBelongToPool = (itemHandle < 0 || itemHandle >= sizeof(_blockAllocationMap));
-        if (dataDoesNotBelongToPool) {
-            return ErrorType::InvalidParameter;
-        }
-        const bool itemWasNotAllocated = (_blockAllocationMap[itemHandle] == 0);
-        if (itemWasNotAllocated) {
-            return ErrorType::PrerequisitesNotMet;
-        }
-
-        std::copy(&data, &data + sizeof(T), &_pool[itemHandle*sizeof(T)]);
-        return ErrorType::Success;
     }
 
     /**
