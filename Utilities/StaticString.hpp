@@ -16,14 +16,7 @@
 //C++
 #include <any>
 #include <type_traits>
-
-
-#define APP_STATIC_STRING_BUFFER_SIZE 128
-#ifndef APP_STATIC_STRING_BUFFER_SIZE
-#error "Please define that size before static strings dynamically allocate."
-#else
-#define BUFFER_OPTIMIZATION sizeof(Data<APP_STATIC_STRING_BUFFER_SIZE>)
-#endif
+#include <atomic>
 
 /**
  * @namespace StaticString
@@ -96,6 +89,7 @@ namespace StaticString {
      * @class Data
      * @brief Implements the StandardStringInterface using static strings.
      * @tparam _n The size of the static string.
+     * @note Try to use string sizes similar to sizes used elsewhere in the program to avoid excessive template instantiations.
      */
     template<size_t _n>
     class Data final : public StandardStringInterface {
@@ -187,61 +181,62 @@ namespace StaticString {
         }
 
         ~Container() {
-            if (!_data.has_value()) {
+            if (_destroy != nullptr) {
+                _destroy(_dataPtr);
 
-                if (_destroy != nullptr) {
-                    _destroy(_staticBuffer.data());
+                if (_dataBufferisFree != nullptr) {
+                    _dataBufferisFree->store(false);
                 }
             }
         }
         
-        private:
         /// @brief The pure virtual interface that the container returns.
         using Interface = StandardStringInterface;
+        /**
+         * @brief Static storage for data.
+         * @details When set<_n> is called and the buffer is not in use, the Container uses this storage.
+         *          When the buffer is currently being used by another Container, allocation falls back
+         *          to std::any (dynamic).
+         */
+        template <size_t _n>
+        struct DataBuffer {
+            alignas(Data<_n>) std::byte storage[sizeof(Data<_n>)];
+            std::atomic<bool> in_use{false};
+        };
         /// @brief The dynamically allocated data when it is too large to fit in the static buffer.
         std::any _data;
-        /// @brief The static buffer for the data when it is small enough to fit.
-        std::array<std::byte, BUFFER_OPTIMIZATION> _staticBuffer = {};
-        /**
-         * @brief A pointer so that the we any_cast to a Interface pointer.
-         * @details A cast directly from T to Interface* is not allowed, so we need this intermediate step.
-         */
+        /// @brief A pointer to access the interface from.
         Interface *_dataPtr = nullptr;
         void (*_destroy)(void *) = nullptr;
-        void (*_move)(void *dest, void *src) = nullptr;
+        /// @brief When non-null, points at the per-size static slot's in_use flag; clear it on destroy/reset/move-from.
+        std::atomic<bool> *_dataBufferisFree = nullptr;
 
         template <size_t _n>
         static void destroyInBuffer(void *p) {
             static_cast<Data<_n> *>(p)->~Data();
         }
 
-        template <size_t _n>
-        static void moveBetweenBuffers(void *dest, void *src) {
-            new (dest) Data<_n>(std::move(*static_cast<Data<_n> *>(src)));
-        }
-
-        public:
         /**
          * @brief Set the contained string to a specific type.
          * @tparam T The type of static string to store.
          * @param value The value to set the string to.
-         * @post If the size of T is less than BUFFER_OPTIMIZATION then data will be stored in the static buffer
-         *.      and _data.has_value() will be false for the lifetime of this object.
          */
         template <size_t _n>
         constexpr void set(std::string_view value) {
-            if constexpr (sizeof(Data<_n>) > BUFFER_OPTIMIZATION) {
+            static DataBuffer<_n> staticBuffer;
+
+            if (!staticBuffer.in_use.exchange(true)) {
+                new (staticBuffer.storage) Data<_n>(value);
+                _dataPtr = reinterpret_cast<Interface *>(staticBuffer.storage);
+                _destroy = &destroyInBuffer<_n>;
+                _dataBufferisFree = &staticBuffer.in_use;
+            }
+            else {
                 _destroy = nullptr;
-                _move = nullptr;
+                _dataBufferisFree = nullptr;
                 _data = std::make_any<Data<_n>>(value);
                 Data<_n> *dataPtr = std::any_cast<Data<_n>>(&_data);
                 _dataPtr = static_cast<Interface *>(dataPtr);
-            }
-            else {
-                new (_staticBuffer.data()) Data<_n>(value);
-                _dataPtr = reinterpret_cast<Interface *>(_staticBuffer.data());
-                _destroy = &destroyInBuffer<_n>;
-                _move = &moveBetweenBuffers<_n>;
             }
         }
 
@@ -274,9 +269,21 @@ namespace StaticString {
 
         /// @brief Reset the container to an empty state.
         void reset() {
-            _data.reset();
+            if (_destroy != nullptr) {
+                _destroy(_dataPtr);
+
+                if (_dataBufferisFree != nullptr) {
+                    _dataBufferisFree->store(false);
+                }
+
+                _destroy = nullptr;
+                _dataBufferisFree = nullptr;
+            }
+            else {
+                _data.reset();
+            }
+
             _dataPtr = nullptr;
-            _staticBuffer = {};
         }
 
         /// @brief Shorthand operator for Container::get
@@ -294,23 +301,21 @@ namespace StaticString {
         /// @brief Move assignment operator
         Container &operator=(Container &&other) noexcept {
             if (this != &other) {
+                reset();
 
                 if (other._data.has_value()) {
                     _data = std::move(other._data);
                     _dataPtr = other._dataPtr;
-                    other._data.reset();
-                    other._dataPtr = nullptr;
+                    other.reset();
                 }
                 else {
-                    other._move(_staticBuffer.data(), other._staticBuffer.data());
-                    other._destroy(other._staticBuffer.data());
-                    _dataPtr = reinterpret_cast<Interface *>(_staticBuffer.data());
+                    _dataPtr = other._dataPtr;
                     _destroy = other._destroy;
-                    _move = other._move;
-                    other._dataPtr = nullptr;
-                    other._destroy = nullptr;
-                    other._move = nullptr;
-                    other._staticBuffer = {};
+                    _dataBufferisFree = other._dataBufferisFree;
+                    //Prevent the temporary from setting our buffer to unused. Only the current object
+                    //through it's own destructor should set the buffer to unused.
+                    other._dataBufferisFree = nullptr;
+                    other.reset();
                 }
             }
 
