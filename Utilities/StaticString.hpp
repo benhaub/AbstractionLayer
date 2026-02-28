@@ -200,7 +200,7 @@ namespace StaticString {
          */
         template <size_t _n>
         struct DataBuffer {
-            alignas(Data<_n>) std::byte storage[sizeof(Data<_n>)];
+            alignas(Data<_n>) std::byte storage[sizeof(Data<_n>)] = {};
             std::atomic<bool> in_use{false};
         };
         /// @brief The dynamically allocated data when it is too large to fit in the static buffer.
@@ -222,7 +222,11 @@ namespace StaticString {
          * @param value The value to set the string to.
          */
         template <size_t _n>
+#if __cplusplus >= 202300L
         constexpr void set(std::string_view value) {
+#else
+        void set(std::string_view value) {
+#endif
             static DataBuffer<_n> staticBuffer;
 
             if (!staticBuffer.in_use.exchange(true)) {

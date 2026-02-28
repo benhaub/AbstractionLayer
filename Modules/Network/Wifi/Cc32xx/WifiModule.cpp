@@ -305,13 +305,13 @@ ErrorType Wifi::setSsid(WifiTypes::Mode mode, const StaticString::Data<WifiTypes
         result = sl_WlanSet(SL_WLAN_CFG_AP_ID, SL_WLAN_AP_OPT_SSID, ssid.size(), reinterpret_cast<const unsigned char *>(ssid.c_str()));
 
         if (0 == result) {
-            _params.accessPointSsid.assign(ssid);
+            _params.accessPointSsid.assign(std::string_view(ssid.c_str(), ssid.size()));
         }
 
         error = fromPlatformError(result);
     }
     else if (mode == WifiTypes::Mode::Station || mode == WifiTypes::Mode::AccessPointAndStation) {
-        _params.stationSsid.assign(ssid);
+        _params.stationSsid.assign(std::string_view(ssid.c_str(), ssid.size()));
     }
 
     return error;

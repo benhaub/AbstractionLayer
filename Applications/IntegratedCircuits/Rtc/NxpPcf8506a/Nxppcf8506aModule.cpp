@@ -18,7 +18,7 @@ ErrorType Nxppcf8506a::writeDate(const DateTime& dateTime) {
     //then next write will be to address 02h. In this way, we can write the entire date
     //by first writing to the seconds register, and then making subsequent writes that will
     //continue to fill each of the registers with the value given.
-    StaticString::Container dateTimeArray = StaticString::Data<7>();
+    StaticString::Container dateTimeArray = StaticString::Container(std::integral_constant<size_t, 7>{});
     dateTimeArray->resize(0);
     dateTimeArray->push_back(toBinaryCodedDecimal(dateTime._second));
     dateTimeArray->push_back(toBinaryCodedDecimal(dateTime._minute));
@@ -42,7 +42,7 @@ ErrorType Nxppcf8506a::writeDate(const DateTime& dateTime) {
 }
 
 ErrorType Nxppcf8506a::readDate(DateTime& dateTime) {
-    StaticString::Container dateTimeArray = StaticString::Data<7>();
+    StaticString::Container dateTimeArray = StaticString::Container(std::integral_constant<size_t, 7>{});
     IcCommunicationProtocolTypes::AdditionalCommunicationParameters params = {
         _I2cAddress,
         static_cast<uint8_t>(RegisterMap::Seconds)
@@ -76,7 +76,7 @@ ErrorType Nxppcf8506a::readAlarm(DateTime& dateTime) {
 ErrorType Nxppcf8506a::setHourMode(bool twentyFourHourMode) {
     ErrorType error = ErrorType::Failure;
     constexpr Milliseconds timeout = 1000;
-    StaticString::Container controlRegisterData = StaticString::Data<1>();
+    StaticString::Container controlRegisterData = StaticString::Container(std::integral_constant<size_t, 1>{});
     IcCommunicationProtocolTypes::AdditionalCommunicationParameters params = {
         _I2cAddress,
         static_cast<uint8_t>(RegisterMap::Control1)
@@ -100,7 +100,7 @@ ErrorType Nxppcf8506a::startClock() {
     constexpr Milliseconds timeout = 1000;
     constexpr uint8_t stopBitPosition = 5;
     constexpr uint8_t externalTestBitPosition = 7;
-    StaticString::Container controlRegisterData = StaticString::Data<1>();
+    StaticString::Container controlRegisterData = StaticString::Container(std::integral_constant<size_t, 1>{});
     IcCommunicationProtocolTypes::AdditionalCommunicationParameters params = {
         _I2cAddress,
         static_cast<uint8_t>(RegisterMap::Control1)
@@ -124,7 +124,7 @@ ErrorType Nxppcf8506a::stopClock() {
     ErrorType error = ErrorType::Failure;
     constexpr Milliseconds timeout = 1000;
     constexpr uint8_t stopBitPosition = 5;
-    StaticString::Container controlRegisterData = StaticString::Data<1>();
+    StaticString::Container controlRegisterData = StaticString::Container(std::integral_constant<size_t, 1>{});
     IcCommunicationProtocolTypes::AdditionalCommunicationParameters params = {
         _I2cAddress,
         static_cast<uint8_t>(RegisterMap::Control1)
@@ -147,7 +147,7 @@ ErrorType Nxppcf8506a::softwareReset() {
     ErrorType error = ErrorType::Failure;
     constexpr Milliseconds timeout = 1000;
     constexpr uint8_t resetCode = 0x58;
-    StaticString::Container controlRegisterData = StaticString::Data<1>();
+    StaticString::Container controlRegisterData = StaticString::Container(std::integral_constant<size_t, 1>{});
     IcCommunicationProtocolTypes::AdditionalCommunicationParameters params = {
         _I2cAddress,
         static_cast<uint8_t>(RegisterMap::Control1)
