@@ -62,7 +62,7 @@ ErrorType Bridgetek81x::init(const SpiTypes::SpiParams params, bool externalCloc
                                         if (ErrorType::Success == (error = readResetStatus())) {
                                             const Hertz lcdSystemClockFrequency = static_cast<Hertz>(systemClockFrequency);
                                             constexpr uint32_t address = static_cast<uint32_t>(Bridgetek81xTypes::MiscellaneousRegisters::Frequency);
-                                            StaticString::Container dataBytes = StaticString::Data<sizeof(uint32_t)>();
+                                            StaticString::Container dataBytes = StaticString::Container(std::integral_constant<size_t, sizeof(uint32_t)>());
                                             dataBytes->assign(reinterpret_cast<const char*>(&lcdSystemClockFrequency), sizeof(lcdSystemClockFrequency));
 
                                             if (ErrorType::Success == (error = hostMemoryWrite(address, dataBytes, Milliseconds(500), 10))) {
@@ -262,7 +262,7 @@ ErrorType Bridgetek81x::toggleBacklight(const bool on, const Percent brightness)
     constexpr Milliseconds timeout = 500;
     constexpr Count maxRetries = 10;
     ErrorType error;
-    StaticString::Container dataBytes = StaticString::Data<sizeof(uint32_t)>();
+    StaticString::Container dataBytes = StaticString::Container(std::integral_constant<size_t, sizeof(uint32_t)>());
 
     constexpr uint32_t gpioXDirectionAddress = static_cast<uint32_t>(Bridgetek81xTypes::MiscellaneousRegisters::GpioXDirection);
     uint16_t value = on ? 0x8000 : 0;
@@ -295,7 +295,7 @@ ErrorType Bridgetek81x::toggleDisplay(const bool on) {
     constexpr Milliseconds timeout = 500;
     constexpr uint32_t address = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::PixelClock);
     const uint8_t data = on ? _pixelClockDivisor : 0;
-    StaticString::Container dataBytes = StaticString::Data<sizeof(uint8_t)>();
+    StaticString::Container dataBytes = StaticString::Container(std::integral_constant<size_t, sizeof(uint8_t)>());
     dataBytes->assign(reinterpret_cast<const char*>(&data), sizeof(data));
     return hostMemoryWrite(address, dataBytes, timeout, maxRetries);
 }
@@ -304,7 +304,7 @@ ErrorType Bridgetek81x::setTouchThreshold(const uint16_t threshold) {
     constexpr Count maxRetries = 10;
     constexpr Milliseconds timeout = 500;
     constexpr uint32_t address = static_cast<uint32_t>(Bridgetek81xTypes::ResistiveTouchEngineRegisters::TouchRzThresh);
-    StaticString::Container dataBytes = StaticString::Data<sizeof(uint16_t)>();
+    StaticString::Container dataBytes = StaticString::Container(std::integral_constant<size_t, sizeof(uint16_t)>());
     dataBytes->assign(reinterpret_cast<const char*>(&threshold), sizeof(threshold));
     return hostMemoryWrite(address, dataBytes, timeout, maxRetries);
 }
@@ -477,7 +477,7 @@ ErrorType Bridgetek81x::sendDisplayListCommand(const Bridgetek81xTypes::DisplayL
 
 ErrorType Bridgetek81x::sendHostCommand(const Bridgetek81xTypes::HostCommands hostCommand, const uint8_t parameter) {
     constexpr Bytes dummy = 0x00;
-    StaticString::Container hostCommandBytes = StaticString::Data<sizeof(hostCommand) + sizeof(parameter) + sizeof(dummy)>();
+    StaticString::Container hostCommandBytes = StaticString::Container(std::integral_constant<size_t, sizeof(hostCommand) + sizeof(parameter) + sizeof(dummy)>());
     ErrorType error;
 
     hostCommandBytes->push_back(static_cast<uint8_t>(hostCommand));
@@ -547,7 +547,7 @@ uint16_t Bridgetek81x::commandBufferSpace(ErrorType &error) {
 
         if (ErrorType::Success == error) {
             constexpr uint32_t cpuResetAddress = static_cast<uint32_t>(Bridgetek81xTypes::MiscellaneousRegisters::CpuReset);
-            StaticString::Container dataBytes = StaticString::Data<sizeof(uint32_t)>();
+            StaticString::Container dataBytes = StaticString::Container(std::integral_constant<size_t, sizeof(uint32_t)>());
             dataBytes->push_back(0x1);
             error = hostMemoryWrite(cpuResetAddress, dataBytes, timeout, maxRetries);
 
@@ -653,7 +653,7 @@ ErrorType Bridgetek81x::setScreenParameters(const LcdTypes::ScreenParameters &sc
     constexpr Milliseconds timeout = 500;
     constexpr Count maxRetries = 10;
     ErrorType error = ErrorType::Success;
-    StaticString::Container dataBytes = StaticString::Data<sizeof(uint32_t)>();
+    StaticString::Container dataBytes = StaticString::Container(std::integral_constant<size_t, sizeof(uint32_t)>());
 
     constexpr uint32_t hSizeAddress = static_cast<uint32_t>(Bridgetek81xTypes::GraphicsEngineRegisters::Hsize);
     dataBytes->assign(reinterpret_cast<const char*>(&screenParams.activeArea.width), sizeof(screenParams.activeArea.width));
@@ -734,7 +734,7 @@ ErrorType Bridgetek81x::setScreenParameters(const LcdTypes::ScreenParameters &sc
 ErrorType Bridgetek81x::resetEngines(const bool resetAudioEngine, const bool resetTouchEngine, const bool resetCoprocessorEngine) {
     constexpr uint32_t address = static_cast<uint32_t>(Bridgetek81xTypes::MiscellaneousRegisters::CpuReset);
     constexpr Milliseconds timeout = 500;
-    StaticString::Container dataBytes = StaticString::Data<sizeof(uint32_t)>();
+    StaticString::Container dataBytes = StaticString::Container(std::integral_constant<size_t, sizeof(uint8_t)>());
     uint8_t resetBits = 0;
 
     if (resetCoprocessorEngine) {

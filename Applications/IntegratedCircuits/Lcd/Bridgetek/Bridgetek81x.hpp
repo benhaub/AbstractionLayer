@@ -224,7 +224,7 @@ class Bridgetek81x {
     /// @brief The pixel clock divsor save from config so that the screen can be enabled/disabled later.
     uint8_t _pixelClockDivisor = 0;
     /// @brief The buffer of commands to write to the LCD display
-    StaticString::Container _commandBuffer = StaticString::Data<512>();
+    StaticString::Container _commandBuffer = StaticString::Container(std::integral_constant<size_t, 512>());
 
     /**
      * @brief Read data from the address specified
@@ -241,14 +241,14 @@ class Bridgetek81x {
     ErrorType hostMemoryRead(const uint32_t address, _ReadType &buffer, const Milliseconds timeout) {
         ErrorType error = ErrorType::Failure;
         constexpr uint8_t dummyByteValue = 0;
-        StaticString::Container readTransactionAddressBytes = StaticString::Data<Bridgetek81xTypes::AddressSize + sizeof(dummyByteValue)>();
+        StaticString::Container readTransactionAddressBytes = StaticString::Container(std::integral_constant<size_t, Bridgetek81xTypes::AddressSize + sizeof(dummyByteValue)>());
 
         readTransactionAddressBytes->push_back((address >> 16) & 0x3F);
         readTransactionAddressBytes->push_back((address >> 8) & 0xFF);
         readTransactionAddressBytes->push_back((address) & 0xFF);
         readTransactionAddressBytes->push_back(dummyByteValue);
 
-        StaticString::Container byteBuffer = StaticString::Data<sizeof(uint8_t)>();
+        StaticString::Container byteBuffer = StaticString::Container(std::integral_constant<size_t, sizeof(uint8_t)>());
         //Dummy byte is an alias to byteBuffer, so they are sharing the same memory but named differently depending on usage
         StaticString::Container &dummyByte = byteBuffer;
 
@@ -304,7 +304,7 @@ class Bridgetek81x {
      * @returns ErrorType::LimitReached if the data could not be written within the maximum number of retries
      */
     ErrorType hostMemoryWrite(const uint32_t address, const StaticString::Container &data, const Milliseconds timeout, const Count maxRetries) {
-        StaticString::Container writeTransactionBytes = StaticString::Data<Bridgetek81xTypes::AddressSize>();
+        StaticString::Container writeTransactionBytes = StaticString::Container(std::integral_constant<size_t, Bridgetek81xTypes::AddressSize>());
         ErrorType error = ErrorType::Failure;
         Count currentRetries = 0;
 
