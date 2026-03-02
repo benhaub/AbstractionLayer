@@ -100,7 +100,6 @@ class CommandQueue {
             }
 
             error = ErrorType::Success;
-            printf("Command added :%lu\n", currentCommandQueueIndexLast);
         }
         else {
             error = ErrorType::LimitReached;
