@@ -19,6 +19,10 @@
 #error APP_MAX_NUMBER_OF_THREADS must be defined so that the list of waiting threads is properly sized.
 #endif
 
+#ifndef APP_MAX_QUEUEABLE_COMMANDS
+#error APP_MAX_QUEUEABLE_COMMANDS must be defined so to determine the maximum number of commands that can be queued simultaneously.
+#endif
+
 /**
  * @namespace CommandQueueTypes
  * @brief Types for the Queue of Responsibility CommandQueue
@@ -34,7 +38,7 @@ namespace CommandQueueTypes {
     };
 
     /// @brief The maximum amount of commands that can be in a queue at the same time
-    static constexpr Count MaxCommandQueueSize = 8;
+    static constexpr Count MaxCommandQueueSize = APP_MAX_QUEUEABLE_COMMANDS;
     /// @brief Tag for logging
     static constexpr char TAG[] = "CommandQueue";
 
@@ -96,10 +100,12 @@ class CommandQueue {
             }
 
             error = ErrorType::Success;
+            printf("Command added :%lu\n", currentCommandQueueIndexLast);
         }
         else {
             error = ErrorType::LimitReached;
         }
+
 
         return error;
     }

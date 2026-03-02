@@ -22,6 +22,10 @@
 #error APP_MAX_NUMBER_OF_THREADS must be defined so that the list of waiting threads is properly sized.
 #endif
 
+#ifndef APP_MAX_QUEUEABLE_EVENTS
+#error APP_MAX_QUEUEABLE_EVENTS must be defined so to determine the maximum number of events that can be queued simultaneously.
+#endif
+
 /**
  * @class EventQueue
  * @details Queue is FIFO
@@ -181,7 +185,7 @@ class EventQueue {
 
     private:
     /// @brief The maximum number of events that can be queued.
-    static constexpr Count _MaxEvents = 10;
+    static constexpr Count _MaxEvents = APP_MAX_QUEUEABLE_EVENTS;
     /// @brief The ring buffer queue of events to run. 
     std::array<Event, _MaxEvents> _events;
     /// @brief The index of the next event to run.

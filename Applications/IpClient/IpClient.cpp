@@ -3,7 +3,7 @@
 #include "MemoryPool.hpp"
 
 namespace {
-    MemoryPool<StaticString::Container, 10> sendReceivePool;
+    MemoryPool<StaticString::Container, APP_MAX_QUEUEABLE_EVENTS> sendReceivePool;
 }
 
 ErrorType IpClient::connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, const Milliseconds timeout) {
