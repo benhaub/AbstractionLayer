@@ -200,7 +200,7 @@ namespace StaticString {
          */
         template <size_t _n>
         struct DataBuffer {
-            alignas(Data<_n>) std::byte storage[sizeof(Data<_n>)] = {};
+            alignas(Data<_n>) std::array<std::byte, sizeof(Data<_n>)> storage{};
             std::atomic<bool> in_use{false};
         };
         /// @brief The dynamically allocated data when it is too large to fit in the static buffer.
@@ -230,8 +230,8 @@ namespace StaticString {
             static DataBuffer<_n> staticBuffer;
 
             if (!staticBuffer.in_use.exchange(true)) {
-                new (staticBuffer.storage) Data<_n>(value);
-                _dataPtr = reinterpret_cast<Interface *>(staticBuffer.storage);
+                new (staticBuffer.storage.data()) Data<_n>(value);
+                _dataPtr = reinterpret_cast<Interface *>(staticBuffer.storage.data());
                 _destroy = &destroyInBuffer<_n>;
                 _dataBufferisFree = &staticBuffer.in_use;
             }
@@ -310,17 +310,16 @@ namespace StaticString {
                 if (other._data.has_value()) {
                     _data = std::move(other._data);
                     _dataPtr = other._dataPtr;
-                    other.reset();
                 }
                 else {
                     _dataPtr = other._dataPtr;
                     _destroy = other._destroy;
                     _dataBufferisFree = other._dataBufferisFree;
-                    //Prevent the temporary from setting our buffer to unused. Only the current object
-                    //through it's own destructor should set the buffer to unused.
-                    other._dataBufferisFree = nullptr;
-                    other.reset();
                 }
+
+                other._dataBufferisFree = nullptr;
+                other._destroy = nullptr;
+                other._dataPtr = nullptr;
             }
 
             return *this;
