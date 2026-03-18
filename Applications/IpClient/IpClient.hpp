@@ -1,0 +1,230 @@
+/***************************************************************************//**
+* @author   Ben Haubrich
+* @file     IpClient.hpp
+* @details  Interface for creating a client on any network
+* @ingroup  Applications
+*******************************************************************************/
+#ifndef __IP_CLIENT_HPP__
+#define __IP_CLIENT_HPP__
+
+//AbstractionLayer
+#include "NetworkAbstraction.hpp"
+#include "OperatingSystemModule.hpp"
+//C++
+#include <memory>
+
+/**
+ * @class IpClient
+ * @brief Abstraction for creating a client on any network
+ * @note You should use the network to handle communication by placing events on it's queue.
+*/
+class IpClient {
+
+    public:
+    virtual ~IpClient() = default;
+
+    /// @brief The tag for logging.
+    static constexpr char TAG[] =  "IpClient";
+
+    /**
+     * @sa NetworkAbstraction::connectTo
+    */
+    ErrorType connectTo(std::string_view hostname, const Port port, const IpTypes::Protocol protocol, const IpTypes::Version version, const Milliseconds timeout);
+    /**
+     * @sa NetworkAbstraction::disconnect
+    */
+    ErrorType disconnect();
+    /**
+     * @brief Sends data.
+     * @pre The amount of data to send is equal to the size of data. See std::string::resize()
+     * @param[in] data The data to send.
+     * @param[in] timeout The timeout in milliseconds.
+     * @returns ErrorType::Success if the data was sent.
+     * @returns ErrorType::Failure if the data was not sent.
+     * @returns ErrorType::Timeout if the timeout was reached.
+     * @note If the actual send is queued as an event for some other thread (i.e a network thread that actually sends the data)
+     *       then the delay will be the timeout plus any additional scheduling delay incurred by the operating system as a result
+     *       of thread priorities.
+    */
+    ErrorType sendBlocking(std::string_view data, const Milliseconds timeout) {
+        return sendBlockingImplementation(data, timeout);
+    }
+    /// @copydoc sendBlocking(const std::string &data, const Milliseconds timeout)
+    ErrorType sendBlocking(const StaticString::Container &data, const Milliseconds timeout) {
+        return sendBlockingImplementation(data, timeout);
+    }
+    /**
+     * @brief Receives data.
+     * @param[out] buffer The data to receive.
+     * @param[in] timeout The timeout in milliseconds.
+     * @returns ErrorType::Success if the data was received.
+     * @returns ErrorType::Failure if the data was not received.
+     * @returns ErrorType::Timeout if the timeout was reached.
+     * @returns ErrorType::NoData if the buffer has 0 length.
+     * @post The amount of data received is equal to the size of the data if ErrorType::Success is returned. See std::string::size().
+     * @note If the actual send is queued as an event for some other thread (i.e a network thread that actually sends the data)
+     *       then the delay will be the timeout plus any additional scheduling delay incurred by the operating system as a result
+     *       of thread priorities.
+    */
+    ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout) {
+        return receiveBlockingImplementation(buffer, timeout);
+    }
+    /// @copydoc ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout)
+    ErrorType receiveBlocking(StaticString::Container &buffer, const Milliseconds timeout) {
+        return receiveBlockingImplementation(buffer,  timeout);
+    }
+    /**
+     * @brief Sends data.
+     * @pre The amount of data to send is equal to the size of data. See std::string::resize()
+     * @param[in] data The data to send.
+     * @param[in] timeout The time to wait to send the data.
+     * @param[in] callback The callback to call when the data is sent.
+     * @code{.cpp}
+     * //Lambda callback
+     * auto callback = [](const ErrorType error, const Bytes bytesWritten) -> void {
+     *     if (ErrorType::Success == error) {
+     *         // Data was sent
+     *     }
+     * };
+     * error = sendNonBlocking(data, timeout, callback);
+     * 
+     * //Member function callback
+     * void Foo::bar(const ErrorType error, const Bytes bytesWritten) {
+     *     if (ErrorType::Success == error) {
+     *         // Data was sent
+     *     }
+     * }
+     * error = sendNonBlocking(data, timeout, std::bind(&Foo::bar, this, std::placeholders::_1, std::placeholders::_2)); 
+     * @endcode
+     * @returns ErrorType::Success if the data was sent.
+     * @returns ErrorType::Failure if the data was not sent.
+     * @post The callback will be called when the data has been sent. The bytes written is valid if and only if error is equal to ErrorType::Success.
+     * @post Ownership of data is moved to this call. No access to data is allowed after this call.
+    */
+    virtual ErrorType sendNonBlocking(const std::string &data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback);
+    /// @copydoc ErrorType sendNonBlocking(const std::string &data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback)
+    virtual ErrorType sendNonBlocking(StaticString::Container &data, const Milliseconds timeout, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback);
+    /**
+     * @brief Receives data.
+     * @param[out] buffer The buffer to receive the data into.
+     * @param[in] timeout The time to wait to receive the data.
+     * @param[in] callback The callback to call when the data has been received.
+     * @code{.cpp}
+     * //Lambda callback
+     * auto callback = [](const ErrorType error, std::string_view buffer) -> void {
+     *     if (ErrorType::Success == error) {
+     *         // Data was sent
+     *         // Feel free to copy the data from the buffer you need it for something else
+     *     }
+     * };
+     * error = receiveNonBlocking(data, timeout, callback);
+     * 
+     * //Member function callback
+     * void Foo::bar(const ErrorType error, std::string_view buffer, bool extraParameter) {
+     *     if (ErrorType::Success == error) {
+     *         // Data was sent
+     *     }
+     * }
+     * //As long as you have one std::placeholder for the error and the buffer, you can bind extra parameters to your callback.
+     * error = receiveNonBlocking(data, timeout, std::bind(&Foo::bar, this, std::placeholders::_1, std::placeholders::_2, extraParameter)); 
+     * @endcode
+     * @post The callback will be called when the data has been received. The amount of data received is equal to the size of the
+     *       data if ErrorType::Success is returned. See std::string::size().
+     * @post Ownership of buffer is moved to this call. No access to buffer is allowed after this call. The buffer will be available again in the callback.
+    */
+    ErrorType receiveNonBlocking(std::string &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string_view buffer)> callback);
+    /// @copydoc ErrorType receiveNonBlocking(std::string &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string_view buffer)> callback)
+    ErrorType receiveNonBlocking(StaticString::Container &buffer, const Milliseconds timeout, std::function<void(const ErrorType error, std::string_view buffer)> callback);
+
+    /// @brief Get the socket as a constant reference
+    const Socket &sock() const { return _socket; }
+    /// @brief Get the protocol as a constant reference
+    const IpTypes::Protocol &protocol() const { return _protocol; }
+    /// @brief Get the version as a constant reference
+    const IpTypes::Version &version() const { return _version; }
+    /// @brief Get the hostname as a constant reference
+    const std::string &hostname() const { return _hostname; }
+    /// @brief Get the port as a constant reference
+    const Port &port() const { return _port; }
+    /// @brief Get the network abstraction that this client communicates on as a mutable reference
+    NetworkAbstraction &network() { assert(nullptr != _network); return *_network; }
+    /// @brief Get the network abstraction that this client communicates on as a constant reference
+    const NetworkAbstraction &networkConst() const { assert(nullptr != _network); return *_network; }
+
+    /// @brief Set the network abstraction that this client communicates on.
+    /// @param[in] network The network abstraction to use.
+    ErrorType setNetwork(NetworkAbstraction &network) { _network = &network; return ErrorType::Success; }
+
+    protected:
+    /// @brief The socket
+    Socket _socket = -1;
+    /// @brief The protocol
+    IpTypes::Protocol _protocol = IpTypes::Protocol::Unknown;
+    /// @brief The IP version
+    IpTypes::Version _version = IpTypes::Version::Unknown;
+    /// @brief The hostname
+    std::string _hostname = "";
+    /// @brief The port
+    Port _port = 0;
+
+    private:
+    /// @brief The network interface that this client communicates on.
+    /// @note Not a unique_ptr because this IP client does not have exclusive ownersip of the network
+    NetworkAbstraction *_network = nullptr;
+
+    /// @copydoc sendBlocking(const std::string &data, const Milliseconds timeout)
+    template <typename Data>
+    ErrorType sendBlockingImplementation(const Data &data, const Milliseconds timeout) {
+        volatile bool doneSending = false;
+        ErrorType callbackError = ErrorType::Failure;
+        Id thread;
+        OperatingSystem::Instance().currentThreadId(thread);
+
+        auto tx = [&, thread]() -> ErrorType {
+            callbackError = network().transmit(data, _socket, timeout);
+
+            doneSending = true;
+            OperatingSystem::Instance().unblock(thread);
+            return callbackError;
+        };
+
+        EventQueue::Event event = EventQueue::Event(tx);
+        ErrorType error = network().addEvent(event);
+        if (ErrorType::Success != error) {
+            return error;
+        }
+
+        while (!doneSending && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+        return callbackError;
+    }
+    /// @copydoc ErrorType receiveBlocking(std::string &buffer, const Milliseconds timeout)
+    template <typename Buffer>
+    ErrorType receiveBlockingImplementation(Buffer &buffer, const Milliseconds timeout) {
+        volatile bool doneReceiving = false;
+        ErrorType callbackError = ErrorType::Failure;
+        Id thread;
+        OperatingSystem::Instance().currentThreadId(thread);
+
+        auto rx = [&, thread]() -> ErrorType {
+
+            callbackError = network().receive(buffer, _socket, timeout);
+
+            doneReceiving = true;
+            OperatingSystem::Instance().unblock(thread);
+            return callbackError;
+        };
+
+        EventQueue::Event event = EventQueue::Event(rx);
+        ErrorType error = network().addEvent(event);
+        if (ErrorType::Success != error) {
+            return error;
+        }
+
+        while (!doneReceiving && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+        return callbackError;
+    }
+};
+
+#endif // __IP_CLIENT_ABSTRACTION_HPP__

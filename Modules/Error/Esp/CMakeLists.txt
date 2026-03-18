@@ -1,0 +1,11 @@
+add_library(EspError
+OBJECT
+  ErrorModule.cpp
+)
+
+target_include_directories(EspError PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},INCLUDE_DIRECTORIES>)
+
+target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE EspError)
+
+target_compile_options(EspError PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)
+target_compile_definitions(EspError PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_DEFINITIONS>)

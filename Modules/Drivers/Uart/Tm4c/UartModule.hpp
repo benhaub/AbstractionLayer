@@ -1,0 +1,34 @@
+#ifndef __UART_MODULE_HPP__
+#define __UART_MODULE_HPP__
+
+//AbstractionLayer
+#include "UartAbstraction.hpp"
+
+class Uart : public UartAbstraction {
+    public:
+    Uart() : UartAbstraction() {}
+    ~Uart() = default;
+
+    ErrorType init() override;
+    ErrorType deinit() override;
+    ErrorType txBlocking(const StaticString::Container &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType txBlocking(std::string_view data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType rxBlocking(StaticString::Container &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType txNonBlocking(const std::shared_ptr<StaticString::Container> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
+    ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
+    ErrorType rxNonBlocking(std::shared_ptr<StaticString::Container> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<StaticString::Container> buffer)> callback) override;
+    ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
+    ErrorType flushRxBuffer() override;
+
+    private:
+    ErrorType txBlocking(const char c);
+    ErrorType rxBlocking(char *buffer, const size_t bufferSize, size_t &bytesRead, const Milliseconds timeout);
+
+    uint32_t toTm4cSysCtlPeripheralNumber(PeripheralNumber peripheralNumber, ErrorType &error);
+    Register toTm4cPeripheralBaseRegister(PeripheralNumber peripheralNumber, ErrorType &error);
+    uint32_t toTm4cUartConfigBits(const uint32_t dataBits, const uint32_t stopBits, const char parity, ErrorType &error);
+    uint32_t toTm4cUartFlowControl(const UartTypes::FlowControl flowControl, ErrorType &error);
+};
+
+#endif // __UART_MODULE_HPP__

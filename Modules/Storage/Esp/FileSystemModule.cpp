@@ -1,0 +1,466 @@
+//AbstractionLayer
+#include "FileSystemModule.hpp"
+#include "OperatingSystemModule.hpp"
+#include "Spiffs.hpp"
+#include "KeyValue.hpp"
+
+ErrorType FileSystem::mount() {
+    volatile bool mountDone = false;
+    ErrorType callbackError = ErrorType::NotSupported;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto mountCallback = [&, thread]() -> ErrorType {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
+            
+            if (FileSystemTypes::Implementation::KeyValue == implementation()) {
+                callbackError = KeyValue::mount(*this, _nameSpace, _handle);
+            }
+        }
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
+            
+            if (FileSystemTypes::Implementation::Spiffs == implementation()) {
+                callbackError = Spiffs::mount(*this);
+            }
+        }
+
+        if (ErrorType::Success == callbackError) {
+            _status.mounted = true;
+        }
+
+        mountDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(mountCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!mountDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::unmount() {
+    volatile bool unmountDone = false;
+    ErrorType callbackError = ErrorType::NotSupported;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto unmountCallback = [&, thread]() -> ErrorType {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
+            
+            if (FileSystemTypes::Implementation::KeyValue == implementation()) {
+                callbackError = KeyValue::unmount(*this, _handle);
+            }
+        }
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
+            
+            if (FileSystemTypes::Implementation::Spiffs == implementation()) {
+                callbackError = Spiffs::unmount(*this);
+            }
+        }
+
+        if (ErrorType::Success == callbackError) {
+            _status.mounted = false;
+        }
+
+        unmountDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(unmountCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!unmountDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
+        OperatingSystem::Instance().block();
+    }
+
+    return callbackError;
+}
+
+ErrorType FileSystem::maxPartitionSize(Bytes &size) {
+    auto maxStorageQueryDone = false;
+    ErrorType callbackError = ErrorType::NotSupported;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto maxStorageQueryCallback = [&, thread]() -> ErrorType {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
+            
+            if (FileSystemTypes::Implementation::KeyValue == implementation()) {
+                callbackError = KeyValue::maxPartitionSize(*this, size);
+            }
+        }
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
+            
+            if (FileSystemTypes::Implementation::Spiffs == implementation()) {
+                callbackError = Spiffs::maxPartitionSize(*this, size);
+            }
+        }
+
+        maxStorageQueryDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(maxStorageQueryCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!maxStorageQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::availablePartition(Bytes &size) {
+    volatile bool availableStorageQueryDone = false;
+    ErrorType callbackError = ErrorType::NotSupported;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto availableStorageQueryCallback = [&, thread]() -> ErrorType {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
+            
+            if (FileSystemTypes::Implementation::KeyValue == implementation()) {
+                callbackError = KeyValue::availablePartition(*this, size);
+            }
+        }
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
+            
+            if (FileSystemTypes::Implementation::Spiffs == implementation()) {
+                callbackError = Spiffs::availablePartition(*this, size);
+            }
+        }
+
+        availableStorageQueryDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(availableStorageQueryCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }   
+
+    while (!availableStorageQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::erasePartition() {
+    volatile bool erasePartitionDone = false;
+    ErrorType callbackError = ErrorType::NotSupported;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto erasePartitionCallback = [&, thread]() -> ErrorType {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
+            
+            if (FileSystemTypes::Implementation::KeyValue == implementation()) {
+                callbackError = KeyValue::erasePartition(*this);
+            }
+        }
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
+            
+            if (FileSystemTypes::Implementation::Spiffs == implementation()) {
+                callbackError = Spiffs::erasePartition(*this);
+            }
+        }
+
+        erasePartitionDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(erasePartitionCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!erasePartitionDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
+    assert(path.size() > 0);
+    volatile bool openDone = false;
+    ErrorType callbackError = ErrorType::NotSupported;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto openCallback = [&, thread]() -> ErrorType {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
+            
+            if (FileSystemTypes::Implementation::KeyValue == implementation()) {
+                callbackError = KeyValue::open(*this, path, mode, file);
+            }
+        }
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
+            
+            if (FileSystemTypes::Implementation::Spiffs == implementation()) {
+                if (spiffsFiles.size() >= _MaxOpenFiles) {
+                    callbackError = ErrorType::LimitReached;
+                }
+                else {
+                    FILE *spiffsFile = nullptr;
+                    callbackError = Spiffs::open(path, mode, file, spiffsFile);
+                    if (ErrorType::Success == callbackError) {
+                        spiffsFiles[FileSystemTypes::pathKey(std::string_view(file.path->c_str()))] = spiffsFile;
+                        _status.openedFiles = spiffsFiles.size();
+                    }
+                }
+            }
+        }
+
+        openDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(openCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!openDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::close(FileSystemTypes::File &file) {
+    volatile bool closeDone = false;
+    ErrorType callbackError = ErrorType::NotSupported;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto closeCallback = [&, thread]() -> ErrorType {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
+            
+            if (FileSystemTypes::Implementation::KeyValue == implementation()) {
+                callbackError = KeyValue::close(_handle, file);
+            }
+        }
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
+            
+            if (FileSystemTypes::Implementation::Spiffs == implementation()) {
+                const uint32_t key = FileSystemTypes::pathKey(std::string_view(file.path->c_str()));
+                callbackError = Spiffs::close(file, spiffsFiles[key]);
+
+                if (callbackError == ErrorType::Success) {
+                    spiffsFiles.erase(key);
+                    _status.openedFiles = spiffsFiles.size();
+                }
+            }
+        }
+
+        closeDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(closeCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!closeDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::remove(FileSystemTypes::File &file) {
+    volatile bool removeDone = false;
+    ErrorType callbackError = ErrorType::NotSupported;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto removeCallback = [&, thread]() -> ErrorType {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
+            
+            if (FileSystemTypes::Implementation::KeyValue == implementation()) {
+                callbackError = KeyValue::remove(_handle, file);
+            }
+        }
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
+            
+            if (FileSystemTypes::Implementation::Spiffs == implementation()) {
+                const uint32_t key = FileSystemTypes::pathKey(std::string_view(file.path->c_str()));
+                callbackError = Spiffs::remove(file, spiffsFiles[key]);
+                spiffsFiles.erase(key);
+            }
+        }
+
+        removeDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(removeCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!removeDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, char *buffer, const size_t bufferSize, Bytes &read) {
+    volatile bool readDone = false;
+    ErrorType callbackError = ErrorType::NotSupported;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto readCallback = [&, thread]() -> ErrorType {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
+            
+            if (FileSystemTypes::Implementation::KeyValue == implementation()) {
+                callbackError = KeyValue::readBlocking(_handle, file, buffer, bufferSize, read);
+            }
+        }
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
+            
+            if (FileSystemTypes::Implementation::Spiffs == implementation()) {
+                callbackError = Spiffs::readBlocking(spiffsFiles[FileSystemTypes::pathKey(std::string_view(file.path->c_str()))], file, buffer, bufferSize, read);
+            }
+        }
+
+        readDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(readCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!readDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_view data) {
+    volatile bool writeDone = false;
+    ErrorType callbackError = ErrorType::NotSupported;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto writeCallback = [&, thread]() -> ErrorType {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
+            
+            if (FileSystemTypes::Implementation::KeyValue == implementation()) {
+                callbackError = KeyValue::writeBlocking(_handle, file, data);
+            }
+        }
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
+
+            if (FileSystemTypes::Implementation::Spiffs == implementation()) {
+                callbackError = Spiffs::writeBlocking(spiffsFiles[FileSystemTypes::pathKey(std::string_view(file.path->c_str()))], file, data);
+            }
+        }
+
+        writeDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(writeCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!writeDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
+    volatile bool syncDone = false;
+    ErrorType callbackError = ErrorType::NotSupported;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto syncCallback = [&, thread]() -> ErrorType {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
+            
+            if (FileSystemTypes::Implementation::KeyValue == implementation()) {
+                callbackError = KeyValue::synchronize(_handle);
+            }
+        }
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
+            
+            if (FileSystemTypes::Implementation::Spiffs == implementation()) {
+                callbackError = Spiffs::synchronize(spiffsFiles[FileSystemTypes::pathKey(std::string_view(file.path->c_str()))]);
+            }
+        }
+
+        syncDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(syncCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!syncDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::size(FileSystemTypes::File &file) {
+    volatile bool sizeQueryDone = false;
+    ErrorType callbackError = ErrorType::NotSupported;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto sizeQueryCallback = [&, thread]() -> ErrorType {
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_NVS) {
+            
+            if (FileSystemTypes::Implementation::KeyValue == implementation()) {
+                callbackError = KeyValue::size(_handle, file);
+            }
+        }
+        if constexpr (ESP_FILE_SYSTEM_ENABLE_SPIFFS) {
+            
+            if (FileSystemTypes::Implementation::Spiffs == implementation()) {
+                callbackError = Spiffs::size(file);
+            }
+        }
+
+        OperatingSystem::Instance().unblock(thread);
+        sizeQueryDone = true;
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(sizeQueryCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!sizeQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}

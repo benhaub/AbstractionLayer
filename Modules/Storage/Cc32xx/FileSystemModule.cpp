@@ -1,0 +1,297 @@
+//AbstractionLayer
+#include "FileSystemModule.hpp"
+#include "StorageAbstraction.hpp"
+#include "OperatingSystemModule.hpp"
+
+ErrorType FileSystem::mount() {
+    _status.mounted = true;
+    return ErrorType::NotAvailable;
+}
+
+ErrorType FileSystem::unmount() {
+    _status.mounted = false;
+    return ErrorType::NotAvailable;
+}
+
+ErrorType FileSystem::maxPartitionSize(Bytes &size) {
+    volatile bool maxStorageQueryDone = false;
+    ErrorType callbackError = ErrorType::Failure;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto maxStorageQueryCallback = [&, thread]() -> ErrorType {
+        SlFsControlGetStorageInfoResponse_t storageInfo;
+        _i32 slRetVal;
+
+        slRetVal = sl_FsCtl((SlFsCtl_e)SL_FS_CTL_GET_STORAGE_INFO, 0, NULL, NULL, 0, reinterpret_cast<_u8 *>(&storageInfo), sizeof(storageInfo), NULL);
+        if (0 != slRetVal) {
+            callbackError = fromPlatformError(slRetVal);
+        }
+
+        size = storageInfo.DeviceUsage.DeviceBlocksCapacity * storageInfo.DeviceUsage.DeviceBlockSize;
+
+        maxStorageQueryDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(maxStorageQueryCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!maxStorageQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::availablePartition(Bytes &size) {
+    volatile bool availableStorageQueryDone = false;
+    ErrorType callbackError = ErrorType::Failure;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto availableStorageQueryCallback = [&, thread]() -> ErrorType {
+        SlFsControlGetStorageInfoResponse_t storageInfo;
+        _i32 slRetVal;
+
+        slRetVal = sl_FsCtl((SlFsCtl_e)SL_FS_CTL_GET_STORAGE_INFO, 0, NULL, NULL, 0, reinterpret_cast<_u8 *>(&storageInfo), sizeof(storageInfo), NULL);
+        if (0 != slRetVal) {
+            callbackError = fromPlatformError(slRetVal);
+        }
+
+        size = storageInfo.DeviceUsage.NumOfAvailableBlocksForUserFiles * storageInfo.DeviceUsage.DeviceBlockSize;
+
+        availableStorageQueryDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(availableStorageQueryCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!availableStorageQueryDone && ErrorType::LimitReached == OperatingSystem::Instance().block()) {
+        OperatingSystem::Instance().block();
+    }
+
+    return callbackError;
+}
+
+ErrorType FileSystem::erasePartition(){
+    return ErrorType::NotSupported;
+}
+
+ErrorType FileSystem::open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) {
+    ErrorType callbackError = ErrorType::Failure;
+    volatile bool openDone = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+    assert(path.size() > 0);
+
+    auto openCallback = [&, thread]() -> ErrorType {
+        _u32 token = 0;
+        _i32 retval = 0;
+        //Comes from the Host driver documentation. Not sure how to query for this or if there is a constant somewhere.
+        constexpr Bytes maxFileSize = 62.5f * 1024;
+
+        Bytes maxSize = SL_FS_CREATE_MAX_SIZE(path.size());
+        assert(maxSize <= maxFileSize);
+
+        const uint32_t key = FileSystemTypes::pathKey(path);
+        const bool fileIsNotOpen = !openFiles.contains(key);
+
+        if (fileIsNotOpen) {
+            retval = sl_FsOpen(reinterpret_cast<const _u8 *>(path.data()), toCc32xxAccessMode(mode, callbackError) | maxSize, &token);
+
+            if (retval >= 0 || SL_ERROR_FS_FILE_HAS_NOT_BEEN_CLOSE_CORRECTLY == retval || SL_ERROR_FS_FILE_IS_ALREADY_OPENED == retval) {
+                file.path->assign(path);
+                file.isOpen = true;
+                file.openMode = mode;
+                file.filePointer = 0;
+                openFiles[key] = retval;
+                _status.openedFiles = openFiles.size();
+
+                if (fileShouldBeTruncated(mode)) {
+                    file.size = 0;
+                }
+                callbackError = ErrorType::Success;
+            }
+            else {
+                callbackError = fromPlatformError(retval);
+            }
+        }
+        else {
+            callbackError = ErrorType::Success;
+        }
+
+        openDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(openCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!openDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::close(FileSystemTypes::File &file) {
+    ErrorType callbackError = ErrorType::Failure;
+    volatile bool closeDone = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto closeCallback = [&, thread]() -> ErrorType {
+        const uint32_t key = FileSystemTypes::pathKey(std::string_view(file.path->c_str()));
+        const bool fileIsOpen = openFiles.contains(key);
+
+        if (fileIsOpen) {
+            _i32 retval = sl_FsClose(openFiles[key], NULL, NULL, 0);
+
+            if (SL_FS_OK == retval) {
+                openFiles.erase(key);
+                file.isOpen = false;
+                file.openMode = FileSystemTypes::OpenMode::Unknown;
+                _status.openedFiles = openFiles.size();
+            }
+
+            callbackError = fromPlatformError(retval);
+        }
+        else {
+            callbackError = ErrorType::Success;
+        }
+
+        closeDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(closeCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!closeDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::remove(FileSystemTypes::File &file) {
+    ErrorType callbackError = ErrorType::Failure;
+    volatile bool removeDone = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto removeCallback = [&, thread]() -> ErrorType {
+        if (file.isOpen) {
+            if (ErrorType::Success == (callbackError = close(file))) {
+                _i32 retval = sl_FsDel(reinterpret_cast<const unsigned char *>(file.path->c_str()), 0);
+                if (SL_FS_OK == retval) {
+                    callbackError = fromPlatformError(retval);
+                }
+            }
+        }
+
+        removeDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(removeCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!removeDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::readBlocking(FileSystemTypes::File &file, char *buffer, const size_t bufferSize, Bytes &read) {
+    ErrorType callbackError = ErrorType::Failure;
+    volatile bool readDone = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto readCallback = [&, thread]() -> ErrorType {
+        _i32 retval = sl_FsRead(openFiles[FileSystemTypes::pathKey(std::string_view(file.path->c_str()))], file.filePointer, reinterpret_cast<_u8 *>(buffer), bufferSize);
+
+        if (retval > 0) {
+            file.filePointer += static_cast<FileOffset>(retval);
+            read = retval;
+            callbackError = ErrorType::Success;
+        }
+        else {
+            callbackError = fromPlatformError(retval);
+        }
+
+        readDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(readCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!readDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return callbackError;
+}
+
+ErrorType FileSystem::writeBlocking(FileSystemTypes::File &file, std::string_view data) {
+    ErrorType callbackError = ErrorType::Failure;
+    volatile bool writeDone = false;
+    Id thread;
+    OperatingSystem::Instance().currentThreadId(thread);
+
+    auto writeCallback = [&, thread]() -> ErrorType {
+        //DO NOT try to edit data. Only casting away constness because FsWrite does not take a const parameter.
+        //It's UB to edit a string_view.
+        char *dataToWrite = const_cast<char *>(data.data());
+        _i32 retval = sl_FsWrite(openFiles[FileSystemTypes::pathKey(std::string_view(file.path->c_str()))], file.filePointer, reinterpret_cast<_u8 *>(dataToWrite), data.size());
+
+        if (retval >= 0) {
+            callbackError = ErrorType::Success;
+            file.size += data.size();
+        }
+        else {
+            callbackError = fromPlatformError(retval);
+        }
+
+        writeDone = true;
+        OperatingSystem::Instance().unblock(thread);
+        return callbackError;
+    };
+
+    EventQueue::Event event = EventQueue::Event(writeCallback);
+    ErrorType error = _storage.addEvent(event);
+    if (ErrorType::Success != error) {
+        return error;
+    }
+
+    while (!writeDone && ErrorType::LimitReached == OperatingSystem::Instance().block());
+
+    return error;
+}
+
+ErrorType FileSystem::synchronize(const FileSystemTypes::File &file) {
+    return ErrorType::NotAvailable;
+}
+
+ErrorType FileSystem::size(FileSystemTypes::File &file) {
+    return ErrorType::NotAvailable;
+}

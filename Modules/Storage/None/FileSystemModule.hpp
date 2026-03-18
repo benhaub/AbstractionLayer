@@ -1,0 +1,33 @@
+#ifndef __FILE_SYSTEM_MODULE_HPP__
+#define __FILE_SYSTEM_MODULE_HPP__
+
+//AbstractionLayer
+#include "FileSystemAbstraction.hpp"
+#include "StorageAbstraction.hpp"
+//C++
+#include <map>
+#include <fstream>
+
+class FileSystem final : public FileSystemAbstraction {
+
+    public:
+    FileSystem(StorageAbstraction &storage, FileSystemTypes::Implementation implementation, FileSystemTypes::PartitionName partitionName) : FileSystemAbstraction(storage, implementation, partitionName) {}
+    ~FileSystem() = default;
+
+    static constexpr Count _MaxOpenFiles = 10;
+
+    ErrorType mount() override;
+    ErrorType unmount() override; 
+    ErrorType maxPartitionSize(Bytes &size) override;
+    ErrorType availablePartition(Bytes &size) override;
+    ErrorType erasePartition() override;
+    ErrorType open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) override;
+    ErrorType close(FileSystemTypes::File &file) override;
+    ErrorType remove(FileSystemTypes::File &file) override;
+    ErrorType readBlocking(FileSystemTypes::File &file, char *buffer, const size_t bufferSize, Bytes &read) override; 
+    ErrorType writeBlocking(FileSystemTypes::File &file, std::string_view data) override; 
+    ErrorType synchronize(const FileSystemTypes::File &file) override;
+    ErrorType size(FileSystemTypes::File &file) override;
+};
+
+#endif //__FILE_SYSTEM_MODULE_HPP__

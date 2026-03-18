@@ -1,0 +1,2 @@
+These files are cross-platform but it's common for each platform to have a pre-proted implementation of mbedtls.
+The files in here can be symlinked from the module. See Modules/Http/Posix for an example.

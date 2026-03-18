@@ -1,0 +1,76 @@
+#ifndef __FILE_SYSTEM_MODULE_HPP__
+#define __FILE_SYSTEM_MODULE_HPP__
+
+#ifndef ESP_FILE_SYSTEM_ENABLE_NVS
+#error "Please define whether or not to enable the NVS filesystem"
+#endif
+
+#ifndef ESP_FILE_SYSTEM_ENABLE_SPIFFS
+#error "Please define whether or not to enable the SPIFFS filesystem"
+#endif
+
+//AbstractionLayer
+#include "FileSystemAbstraction.hpp"
+#include "StorageAbstraction.hpp"
+//ESP
+#include "nvs_handle.hpp"
+#include "esp_spiffs.h"
+//C++
+#include <map>
+
+class FileSystem final : public FileSystemAbstraction {
+
+    public:
+    FileSystem(StorageAbstraction &storage, FileSystemTypes::Implementation implementation, FileSystemTypes::PartitionName partitionName) : FileSystemAbstraction(storage, implementation, partitionName) {
+        if (FileSystemTypes::Implementation::KeyValue == implementation && ESP_FILE_SYSTEM_ENABLE_NVS != 1) {
+            assert(false);
+        }
+        else if (FileSystemTypes::Implementation::Spiffs == implementation && ESP_FILE_SYSTEM_ENABLE_SPIFFS != 1) {
+            assert(false);
+        }
+    }
+
+    static constexpr Count _MaxOpenFiles = 10;
+
+    ErrorType mount() override;
+    ErrorType unmount() override; 
+    ErrorType maxPartitionSize(Bytes &size) override;
+    ErrorType availablePartition(Bytes &size) override;
+    ErrorType erasePartition() override;
+    ErrorType open(std::string_view path, const FileSystemTypes::OpenMode mode, FileSystemTypes::File &file) override;
+    ErrorType close(FileSystemTypes::File &file) override;
+    ErrorType remove(FileSystemTypes::File &file) override;
+    ErrorType readBlocking(FileSystemTypes::File &file, char *buffer, const size_t bufferSize, Bytes &read) override; 
+    ErrorType writeBlocking(FileSystemTypes::File &file, std::string_view data) override; 
+    ErrorType synchronize(const FileSystemTypes::File &file) override;
+    ErrorType size(FileSystemTypes::File &file) override;
+
+    nvs_open_mode_t toEspOpenMode(FileSystemTypes::OpenMode mode, ErrorType &error) {
+        error = ErrorType::Success;
+
+        switch (mode) {
+            case FileSystemTypes::OpenMode::ReadOnly:
+                return NVS_READONLY;
+            case FileSystemTypes::OpenMode::ReadWriteNew:
+            case FileSystemTypes::OpenMode::ReadWriteAppend:
+            case FileSystemTypes::OpenMode::ReadWriteTruncate:
+            case FileSystemTypes::OpenMode::WriteOnlyNew:
+            case FileSystemTypes::OpenMode::WriteOnlyAppend:
+            case FileSystemTypes::OpenMode::WriteOnlyTruncate:
+                return NVS_READWRITE;
+            default:
+                error = ErrorType::InvalidParameter;
+                return NVS_READONLY;
+        }
+    }
+
+    private:
+    static constexpr std::array<char, NVS_NS_NAME_MAX_SIZE> _nameSpace = {"nvsFlash"};
+    std::unique_ptr<nvs::NVSHandle> _handle;
+    std::map<uint32_t, FILE *> spiffsFiles;
+
+    
+
+};
+
+#endif //__FILE_SYSTEM_MODULE_HPP__
