@@ -12,6 +12,7 @@ target_include_directories(Uart INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(PosixUart PRIVATE abstractionLayer)
 target_link_libraries(PosixUart PRIVATE Event)
+target_link_libraries(PosixUart PRIVATE Logging)
 target_link_libraries(${PROJECT_NAME}${EXECUTABLE_SUFFIX} PRIVATE PosixUart)
 
 target_compile_options(PosixUart PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME}${EXECUTABLE_SUFFIX},COMPILE_OPTIONS>)

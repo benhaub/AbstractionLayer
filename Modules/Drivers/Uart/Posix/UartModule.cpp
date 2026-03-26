@@ -1,137 +1,194 @@
-#include "UartModule.hpp"
-//C++
-#include <cstdio>
-#include <cerrno>
+#ifndef __UART_MODULE_HPP__
+#define __UART_MODULE_HPP__
 
-ErrorType Uart::init() {
-    ErrorType error = ErrorType::Failure;
+//https://en.wikibooks.org/wiki/Serial_Programming/termios
 
-    _devicePath = toDevicePath(uartParams().hardwareConfig.peripheralNumber);
+//AbstractionLayer
+#include "UartAbstraction.hpp"
+//Posix
+#include <termios.h>
+#include <fcntl.h>
+#include <unistd.h>
 
-    if (strlen(_devicePath.data()) > 0) {
-        _fileDescriptor = open(_devicePath.data(), O_RDWR | O_NONBLOCK);
+class Uart : public UartAbstraction {
+    public:
+    Uart() : UartAbstraction() {}
 
-        if (-1 != _fileDescriptor) {
-            struct termios tty;
-            error = setTermiosConfig(tty);
+    ErrorType init() override;
+    ErrorType deinit() override;
+    ErrorType txBlocking(const StaticString::Container &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType txBlocking(std::string_view data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType rxBlocking(StaticString::Container &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType rxBlocking(std::string &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) override;
+    ErrorType txNonBlocking(const std::shared_ptr<StaticString::Container> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
+    ErrorType txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) override;
+    ErrorType rxNonBlocking(std::shared_ptr<StaticString::Container> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<StaticString::Container> buffer)> callback) override;
+    ErrorType rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) override;
+    ErrorType flushRxBuffer() override;
+
+    private:
+    /// @brief The discovered serial device path
+    /// @details The size is big enough to support the largest path. Change as needed.
+    std::array<char, 32> _devicePath = {0};
+    /// @brief The file descriptor
+    int _fileDescriptor = -1;
+
+    ErrorType txBlocking(const char *data, const size_t size, const Milliseconds timeout);
+    ErrorType rxBlocking(char *buffer, const size_t bufferSize, size_t &bytesRead, const Milliseconds timeout);
+
+    /**
+     * @brief Convert a peripheral number to a device path
+     * @param peripheralNumber The peripheral number to convert
+     * @returns The device path
+     */
+    std::array<char, 32> toDevicePath(const PeripheralNumber peripheralNumber);
+
+    /**
+     * @brief Convert a baud rate to a POSIX baud rate
+     * @param baudRate The baud rate to convert
+     * @returns The POSIX baud rate
+     */
+    ErrorType toPosixBaudRate(const uint32_t baudRate, struct termios &tty) {
+        ErrorType error = ErrorType::Success;
+        speed_t posixBaudRate;
+
+        switch (baudRate) {
+            case 9600:
+                posixBaudRate = B9600;
+                break;
+            case 19200:
+                posixBaudRate = B19200;
+                break;
+            case 38400:
+                posixBaudRate = B38400;
+                break;
+            case 57600:
+                posixBaudRate = B57600;
+                break;
+            case 115200:
+                posixBaudRate = B115200;
+                break;
+            case 230400:
+                posixBaudRate = B230400;
+                break;
+            default:
+                return ErrorType::InvalidParameter;
         }
-        else {
-            error = fromPlatformError(errno);
+
+        cfsetospeed(&tty, posixBaudRate);
+        cfsetispeed(&tty, posixBaudRate);
+
+        return error;
+    }
+
+    /**
+     * @brief Convert a data bits to a POSIX data bits
+     * @param dataBits The data bits to convert
+     * @returns The POSIX data bits
+     */
+    ErrorType toPosixDataBits(const uint8_t dataBits, struct termios &tty) {
+        ErrorType error = ErrorType::Success;
+
+        switch (dataBits) {
+            case 5:
+                tty.c_cflag |= CS5;
+                break;
+            case 6:
+                tty.c_cflag |= CS6;
+                break;
+            case 7:
+                tty.c_cflag |= CS7;
+                break;
+            case 8:
+                tty.c_cflag |= CS8;
+                break;
+            default:
+                error = ErrorType::InvalidParameter;
         }
+
+        return error;
     }
 
-    return error;
-}
+    /**
+     * @brief Convert a parity to a POSIX parity
+     * @param parity The parity to convert
+     * @returns The POSIX parity
+     */
+    ErrorType toPosixParity(const char parity, struct termios &tty) {
+        ErrorType error = ErrorType::Success;
 
-ErrorType Uart::deinit() {
-    close(_fileDescriptor);
+        switch (parity) {
+            case 'N':
+                tty.c_cflag &= ~PARENB;
+                break;
+            case 'O':
+                tty.c_cflag |= PARENB | PARODD;
+                break;
+            case 'E':
+                tty.c_cflag |= PARENB;
+                break;
+            default:
+                error = ErrorType::InvalidParameter;
+        }
 
-    return ErrorType::Success;
-}
-
-ErrorType Uart::txBlocking(const StaticString::Container &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
-    return txBlocking(data->c_str(), data->size(), timeout);
-}
-ErrorType Uart::txBlocking(std::string_view data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
-    return txBlocking(data.data(), data.size(), timeout);
-}
-ErrorType Uart::txBlocking(const char *data, const size_t size, const Milliseconds timeout) {
-    if (_fileDescriptor < 0) {
-        return ErrorType::PrerequisitesNotMet;
-    }
-    
-    ssize_t bytesWritten = write(_fileDescriptor, data, size);
-
-    if (bytesWritten < 0) {
-        return ErrorType::Failure;
-    }
-    else if (bytesWritten > 0 && static_cast<size_t>(bytesWritten) < size) {
-        return ErrorType::LimitReached;
-    }
-    else if (bytesWritten > 0 && static_cast<size_t>(bytesWritten) == size) {
-        return ErrorType::Success;
-    }
-    else {
-        return ErrorType::Failure;
-    }
-    
-}
-
-ErrorType Uart::rxBlocking(StaticString::Container &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
-    size_t bytesRead = 0;
-    ErrorType error = ErrorType::Failure;
-
-    if (ErrorType::Success == (error = rxBlocking(&buffer[0], buffer->size(), bytesRead, timeout))) {
-        buffer->resize(bytesRead);
+        return error;
     }
 
-    return error;
-}
-ErrorType Uart::rxBlocking(std::string &buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
-    size_t bytesRead = 0;
-    ErrorType error = ErrorType::Failure;
+    /**
+     * @brief Convert a flow control to a POSIX flow control
+     * @param flowControl The flow control to convert
+     * @param tty The termios config to set
+     * @returns The error type
+     */
+    ErrorType toPosixFlowControl(const UartTypes::FlowControl flowControl, struct termios &tty) {
+        ErrorType error = ErrorType::Success;
 
-    if (ErrorType::Success == (error = rxBlocking(&buffer[0], buffer.size(), bytesRead, timeout))) {
-        buffer.resize(bytesRead);
+        switch (flowControl) {
+            case UartTypes::FlowControl::Disable:
+                tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+                break;
+            case UartTypes::FlowControl::Rts:
+                tty.c_iflag |= IXOFF;
+                break;
+            case UartTypes::FlowControl::Cts:
+                tty.c_iflag |= IXON;
+                break;
+            case UartTypes::FlowControl::CtsRts:
+                tty.c_iflag |= IXON | IXOFF;
+                break;
+            default:
+                error = ErrorType::InvalidParameter;
+        }
+
+        return error;
+    }
+    /**
+     * @brief Convert a stop bits to a POSIX stop bits
+     * @param stopBits The stop bits to convert
+     * @returns The POSIX stop bits
+     */
+    ErrorType toPosixStopBits(const uint8_t stopBits, struct termios &tty) {
+        ErrorType error = ErrorType::Success;
+
+        switch (stopBits) {
+            case 1:
+                tty.c_cflag &= ~CSTOPB;
+                break;
+            case 2:
+                tty.c_cflag |= CSTOPB;
+                break;
+            default:
+                error = ErrorType::InvalidParameter;
+        }
+
+        return error;
     }
 
-    return error;
-}
-ErrorType Uart::rxBlocking(char *buffer, const size_t bufferSize, size_t &bytesRead, const Milliseconds timeout) {
-    if (_fileDescriptor < 0) {
-        return ErrorType::PrerequisitesNotMet;
-    }
-    
-    fd_set readfds;
-    struct timeval tv;
-    bytesRead = 0;
-    
-    FD_ZERO(&readfds);
-    FD_SET(_fileDescriptor, &readfds);
-    
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = (timeout % 1000) * 1000;
-    
-    int selectResult = select(_fileDescriptor + 1, &readfds, NULL, NULL, &tv);
-    if (selectResult < 0) {
-        return ErrorType::Failure;
-    }
-    else if (selectResult == 0) {
-        return ErrorType::Timeout;
-    }
-    
-    bytesRead = read(_fileDescriptor, buffer, bufferSize);
-    if (static_cast<ssize_t>(bytesRead) > 0) {
-        return ErrorType::Success;
-    }
-    else {
-        return ErrorType::NoData;
-    }
-}
+    /**
+     * @brief Set the termio config
+     * @param tty The termio config to set
+     */
+    ErrorType setTermiosConfig(struct termios &tty);
+};
 
-ErrorType Uart::txNonBlocking(const std::shared_ptr<StaticString::Container> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    return ErrorType::NotAvailable;
-}
-ErrorType Uart::txNonBlocking(const std::shared_ptr<std::string> data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, const Bytes bytesWritten)> callback) {
-    return ErrorType::NotAvailable;
-}
-
-ErrorType Uart::rxNonBlocking(std::shared_ptr<StaticString::Container> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<StaticString::Container> buffer)> callback) {
-    return ErrorType::NotAvailable;
-}
-ErrorType Uart::rxNonBlocking(std::shared_ptr<std::string> buffer, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params, std::function<void(const ErrorType error, std::shared_ptr<std::string> buffer)> callback) {
-    return ErrorType::NotAvailable;
-}
-
-ErrorType Uart::flushRxBuffer() {
-    if (_fileDescriptor < 0) {
-        return ErrorType::PrerequisitesNotMet;
-    }
-    
-    // Flush the input buffer
-    if (tcflush(_fileDescriptor, TCIFLUSH) != 0) {
-        return ErrorType::Failure;
-    }
-    
-    return ErrorType::Success;
-}
+#endif // __UART_MODULE_HPP__
