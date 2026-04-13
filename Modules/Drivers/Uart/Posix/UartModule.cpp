@@ -2,6 +2,7 @@
 #include "Log.hpp"
 //C++
 #include <filesystem>
+#include <cstring>
 
 std::array<char, 32> Uart::toDevicePath(const PeripheralNumber peripheralNumber) {
     std::array<char, 32> devicePath = {0};
