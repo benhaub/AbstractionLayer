@@ -151,6 +151,8 @@ class IpClient {
     /// @brief Get the network abstraction that this client communicates on as a constant reference
     const NetworkAbstraction &networkConst() const { assert(nullptr != _network); return *_network; }
 
+    /// @brief Whether the client has a network set or not.
+    bool hasNetwork() const { return nullptr != _network; }
     /// @brief Set the network abstraction that this client communicates on.
     /// @param[in] network The network abstraction to use.
     ErrorType setNetwork(NetworkAbstraction &network) { _network = &network; return ErrorType::Success; }
