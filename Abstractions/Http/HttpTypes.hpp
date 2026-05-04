@@ -646,11 +646,15 @@ namespace HttpTypes {
         if (ErrorType::Success == FindHeaderValue(buffer, "Content-Language:", "zu")) {request.headers.language.push_back(HttpTypes::Language::isiZulu);}
 
         size_t contentLengthBegin = buffer.find("Content-Length:");
-        size_t contentLengthEnd = buffer.find("\r\n", contentLengthBegin);
+
         if (std::string::npos != contentLengthBegin) {
             contentLengthBegin += sizeof("Content-Length:");
-            std::string_view bufferView = std::string_view(buffer).substr(contentLengthBegin, contentLengthEnd - contentLengthBegin);
-            request.headers.contentLength = std::stoul(bufferView.data(), nullptr, 10);
+            const size_t contentLengthEnd = buffer.find("\r\n", contentLengthBegin);
+
+            if (std::string::npos != contentLengthEnd) {
+                std::string_view bufferView = std::string_view(buffer).substr(contentLengthBegin, contentLengthEnd - contentLengthBegin);
+                request.headers.contentLength = std::stoul(bufferView.data(), nullptr, 10);
+            }
         }
 
         return ErrorType::Success;

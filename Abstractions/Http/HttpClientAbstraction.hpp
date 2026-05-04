@@ -111,31 +111,35 @@ class HttpClientAbstraction {
     ErrorType readResponseHeaders(HttpTypes::Response &response, const Milliseconds timeout) {
         std::string &buffer = response.messageBody;
         ErrorType error = ErrorType::Negative;
-        size_t responseBodyBegin = 0;
 
         size_t contentLengthBegin = buffer.find("Content-Length:");
-        size_t responseCodeBegin = buffer.find("HTTP/1.");
 
         if (std::string::npos != contentLengthBegin) {
             contentLengthBegin += sizeof("Content-Length:");
-            size_t contentLengthEnd = buffer.find("\r\n", contentLengthBegin);
+            const size_t contentLengthEnd = buffer.find("\r\n", contentLengthBegin);
+
             if (std::string::npos != contentLengthEnd) {
                 response.representationHeaders.contentLength = std::stoi(buffer.substr(contentLengthBegin, contentLengthEnd - contentLengthBegin));
             }
         }
 
+        size_t responseCodeBegin = buffer.find("HTTP/1.");
+
         if (std::string::npos != responseCodeBegin) {
             //Plus one for whatever the 1.x version is.
             responseCodeBegin += sizeof("HTTP/1.") + 1;
             //Don't go to the \r\n because we don't want the string representation of the response code.
-            size_t responseCodeEnd = buffer.find(" ", responseCodeBegin);
+            const size_t responseCodeEnd = buffer.find(" ", responseCodeBegin);
+
             if (std::string::npos != responseCodeEnd) {
                 response.statusLine.statusCode = static_cast<HttpTypes::StatusCode>(std::stoi(buffer.substr(responseCodeBegin, responseCodeEnd - responseCodeBegin)));
             }
         }
 
+        const size_t responseBodyBegin = buffer.find("\r\n\r\n");
+
         //If any of the body was read while extracting the response headers, remove everything except the message body.
-        if (std::string::npos != (responseBodyBegin = buffer.find("\r\n\r\n"))) {
+        if (std::string::npos != responseBodyBegin) {
             buffer.erase(0, responseBodyBegin + sizeof("\r\n\r\n")-1);
             error = ErrorType::Success;
         }

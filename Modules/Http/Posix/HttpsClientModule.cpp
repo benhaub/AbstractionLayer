@@ -34,7 +34,7 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
 
                 if (0 == mbedtls_x509_crt_parse_file(&_cacert, CA_CERT)) {
 
-                    if (ErrorType::Success == (callbackError = _ipClient.connectTo(hostname, port, protocol, version, timeout))) {
+                    if (ErrorType::Success == _ipClient.connectTo(hostname, port, protocol, version, timeout)) {
                         _context.sock = _ipClient.sock();
                         mbedtls_ssl_config_init(&_conf);
 
@@ -65,8 +65,8 @@ ErrorType HttpsClient::connectTo(std::string_view hostname, const Port port, con
 
                                     const uint32_t flags = mbedtls_ssl_get_verify_result(&_ssl);
 
-                                    if (0 != flags || handshakeFailed) {
-                                        callbackError = ErrorType::Failure;
+                                    if (0 == flags && !handshakeFailed) {
+                                        callbackError = ErrorType::Success;
                                     }
                                 }
                             }
