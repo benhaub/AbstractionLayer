@@ -1,7 +1,7 @@
 /**************************************************************************//**
 * @author Ben Haubrich                                        
 * @file   PidController.hpp
-* @details \b Synopsis: \n Proporional-Integral-Derivative controller
+* @details Proporional-Integral-Derivative controller
 * @see https://en.wikipedia.org/wiki/Proportional%E2%80%93integral%E2%80%93derivative_controller
 * @ingroup Applications
 *******************************************************************************/
@@ -11,37 +11,57 @@
 //AbstractionLayer
 #include "Error.hpp"
 #include "Types.hpp"
+
 /**
  * @class PidController
+ * @tparam T The type of the process variable.
  * @brief Proporional-Integral-Derivative controller
  */                       
+template <typename T>
 class PidController {
-    public:
-    /// @brief Constructor
-    PidController() = default;
 
+    public:
     /**
      * @brief Calculate the control variable
-     * @param controlVariable The control variable is used to adjust process parameters like a new duty cycle to increase or reduce power output.
-     * @param processVariable The process variable is the difference between the desired setpoint and the measure setpoint. For a tank of water
-     *        filled by a pump, the desired setpoint might be 1L, and the measure set point is 800mL, so the processVariable is 200mL.
+     * @pre Call this function in regular intervals.
+     * @param[in] processVariable The last value received from the process output.
+     * @param[in] setPoint The desired target value
+     * @param[in] proportionalTermKp The control variable is increased or decreased in proportion to this term. Often used to convert the output to the units needed to control it via the input. 
+     * @param[in] integralTermKi Keeps track of accumulated error. Should be a multiple of the frequency at which you call this function.
+     * @param[in] derivativeTermKd Helps to control damping and setpoint overshoot. Should be a multiple of the frequency at which you call this function.
+     * @param[out] controlVariable The output control variable value which is fed to the process input for corrections.
      * @sa https://en.wikipedia.org/wiki/Proportional%E2%80%93integral%E2%80%93derivative_controller#Discrete_implementation
+     * @sa https://youtu.be/tFVAaUcOm4I
      */
-    ErrorType calculateControlVariable(const float processVariable, float &controlVariable);
+    ErrorType calculateControlVariable(const T processVariable,
+                                                    const T setPoint,
+                                                    const T proportionalTermKp,
+                                                    const T integralTermKi,
+                                                    const T derivativeTermKd,
+                                                    T &controlVariable) {
+        const T error = setPoint - processVariable;
+
+        _integralAccumulator += error;
+        const T derivative = error - _previousErrorTMinusOne;
+
+        controlVariable = (proportionalTermKp * error) +
+                        (integralTermKi * _integralAccumulator) +
+                        (derivativeTermKd * derivative);
+
+        _previousErrorTMinusOne = error;
+        return ErrorType::Success;
+    }
+
+    void reset() {
+        _integralAccumulator = 0.0f;
+        _previousErrorTMinusOne = 0.0f;
+    }
 
     private:
-    /// @brief Integral term
-    float _integralTermKi;
-    /// @brief Derivative term
-    float _derivativeTermKd;
-    /// @brief Proportional term
-    float _proportionalTermKp;
-    /// @brief Set point
-    float _setPoint;
-    /// @brief previous error from T-1
-    float _previousErrorTMinusOne;
-    /// @brief previous control variable from T-2
-    float _previousControlVariableTMinusTwo;
+    /// @brief Accumulated integral error
+    T _integralAccumulator = 0.0f;
+    /// @brief Previous error from T-1
+    T _previousErrorTMinusOne = 0.0f;
 };
 
 #endif /* __PID_CONTROLLER_HPP */

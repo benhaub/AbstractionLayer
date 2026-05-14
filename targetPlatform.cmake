@@ -81,6 +81,9 @@ endif()
 if (ENABLE_IP_SERVER)
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/IpServer)
 endif()
+if (ENABLE_PID_CONTROLLER)
+  add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Applications/PidController)
+endif()
 
 if (TARGET_PLATFORM STREQUAL "Cc32xx")
   target_compile_definitions(${PROJECT_NAME}${EXECUTABLE_SUFFIX}
