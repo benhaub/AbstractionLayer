@@ -146,9 +146,9 @@ class Sm10001 {
     /**
      * @brief Slide the wiper to the desired voltage drop reading.
      * @param ofMaxVoltage The desired voltage drop as a percentage of the maximum possible
-     * @param hysteresis The amount of difference in the voltage that is fed back that is acceptable.
+     * @param deadband The amount of difference in the voltage that is fed back that is acceptable.
      */
-    ErrorType slideToVoltage(const Percent ofMaxVoltage, const Volts hysteresis) {
+    ErrorType slideToVoltage(const Percent ofMaxVoltage, const Volts deadband) {
         Volts currentReading = 0.0f;
         ErrorType error = getVoltageDrop(currentReading, Sm10001Types::AdcMultiSamples);
         const Volts desired = (ofMaxVoltage / 100.0f) * maxVoltage();
@@ -157,7 +157,7 @@ class Sm10001 {
             if (0 != _minimumForwardSlideTime && 0 != _minimumBackwardSlideTime) {
 
                 if (Sm10001Types::ForwardSlideVoltageEffect::Unknown != _forwardSlideVoltageEffect) {
-                    while (!withinError(desired, currentReading, hysteresis) && ErrorType::Success == error) {
+                    while (!withinError(desired, currentReading, deadband) && ErrorType::Success == error) {
                         if (currentReading < desired) {
 
                             if (_forwardSlideVoltageEffect == Sm10001Types::ForwardSlideVoltageEffect::Raises) {
@@ -242,17 +242,16 @@ class Sm10001 {
      * @brief Measures and saves the minimum and maximum voltage values that represent 100% and 0% voltage drop of the potentiometer.
      *        Also measures the average voltage that is changed when sliding forwards and backwards.
      * @param[in] numRetries The amount of times to retry if the voltage doesn't change.
-     * @param[in] hysteresis The smallest acceptable amount of voltage to consider a change.
-     * @param[in] slideTime The amount of time to drive the H-Bridge in the forward and backward direction.
-     * @details If calibration fails, try increasing slideTime first, then numRetries, then hysteresis.
+     * @param[in] deadband The smallest acceptable amount of voltage to consider a change.
+     * @details If calibration fails, try increasing slideTime first, then numRetries, then deadband.
      * @returns ErrorType::Success if the calibration was successful
      * @returns Any errors returned by slideBackward, slideForward, getVoltageDrop
      */
-    ErrorType calibrate(const Count numRetries, const Volts hysteresis, const Milliseconds slideTime) {
-        ErrorType error = calibrateMinimumForwardSlideTime(_minimumForwardSlideTime, hysteresis);
+    ErrorType calibrate(const Count numRetries, const Volts deadband) {
+        ErrorType error = calibrateMinimumForwardSlideTime(_minimumForwardSlideTime, deadband);
 
         if (ErrorType::Success == error) {
-            error = calibrateMinimumBackwardSlideTime(_minimumBackwardSlideTime, hysteresis);
+            error = calibrateMinimumBackwardSlideTime(_minimumBackwardSlideTime, deadband);
         }
 
         return error;
@@ -288,11 +287,11 @@ class Sm10001 {
     /**
      * @brief Determine the minimum number of milliseconds needed to move the wiper forward at the current speed.
      * @param[out] minimumForwardSlideTime The minimum amount of time needed to slide forward.
-     * @param[in] hysteresis The minimum acceptable voltage to count as a change.
+     * @param[in] deadband The minimum acceptable voltage to count as a change.
      * @returns ErrorType::Success if the calibration was successfull
      * @returns ErrorType::Failure otherwise.
      */
-    ErrorType calibrateMinimumForwardSlideTime(Milliseconds &minimumForwardSlideTime, const Volts hysteresis) {
+    ErrorType calibrateMinimumForwardSlideTime(Milliseconds &minimumForwardSlideTime, const Volts deadband) {
         minimumForwardSlideTime = 0;
         Volts potentiometerVoltageDropPrevious = 0.0f;
         Volts potentiometerVoltageDropNow = 0.0f;
@@ -303,7 +302,7 @@ class Sm10001 {
         if (ErrorType::Success == error) {
             potentiometerVoltageDropPrevious = potentiometerVoltageDropNow;
 
-            while (differenceBetweenNowAndPrevious < hysteresis) {
+            while (differenceBetweenNowAndPrevious < deadband) {
                 minimumForwardSlideTime++;
                 error = slideForward(minimumForwardSlideTime);
 
@@ -311,10 +310,10 @@ class Sm10001 {
                     error = getVoltageDrop(potentiometerVoltageDropNow, Sm10001Types::AdcMultiSamples);
 
                     //In case the wiper is positioned all the way to one end such that it can't slide forward.
-                    if (withinError(potentiometerVoltageDropNow, maxVoltage(), hysteresis) || withinError(potentiometerVoltageDropNow, minVoltage(), hysteresis)) {
+                    if (withinError(potentiometerVoltageDropNow, maxVoltage(), deadband) || withinError(potentiometerVoltageDropNow, minVoltage(), deadband)) {
                         slideBackward(minimumForwardSlideTime*32);
 
-                        if (!(withinError(potentiometerVoltageDropNow, maxVoltage(), hysteresis) || withinError(potentiometerVoltageDropNow, minVoltage(), hysteresis))) {
+                        if (!(withinError(potentiometerVoltageDropNow, maxVoltage(), deadband) || withinError(potentiometerVoltageDropNow, minVoltage(), deadband))) {
                             minimumForwardSlideTime = 0;
                         }
                     }
@@ -336,11 +335,11 @@ class Sm10001 {
     /**
      * @brief Determine the minimum number of milliseconds needed to move the wiper backward at the current speed.
      * @param[out] minimumBackwardSlideTime The minimum amount of time needed to slide forward.
-     * @param[in] hysteresis The minimum acceptable voltage to count as a change.
+     * @param[in] deadband The minimum acceptable voltage to count as a change.
      * @returns ErrorType::Success if the calibration was successfull
      * @returns ErrorType::Failure otherwise.
      */
-    ErrorType calibrateMinimumBackwardSlideTime(Milliseconds &minimumBackwardSlideTime, const Volts hysteresis) {
+    ErrorType calibrateMinimumBackwardSlideTime(Milliseconds &minimumBackwardSlideTime, const Volts deadband) {
         minimumBackwardSlideTime = 0;
         Volts potentiometerVoltageDropPrevious = 0.0f;
         Volts potentiometerVoltageDropNow = 0.0f;
@@ -351,7 +350,7 @@ class Sm10001 {
         if (ErrorType::Success == error) {
             potentiometerVoltageDropPrevious = potentiometerVoltageDropNow;
 
-            while (differenceBetweenNowAndPrevious < hysteresis) {
+            while (differenceBetweenNowAndPrevious < deadband) {
                 minimumBackwardSlideTime++;
                 error = slideBackward(minimumBackwardSlideTime);
 
@@ -359,12 +358,12 @@ class Sm10001 {
                     error = getVoltageDrop(potentiometerVoltageDropNow, Sm10001Types::AdcMultiSamples);
 
                     //In case the wiper is positioned all the way to one end such that it can't slide backward.
-                    if (withinError(potentiometerVoltageDropNow, maxVoltage(), hysteresis) || withinError(potentiometerVoltageDropNow, minVoltage(), hysteresis)) {
+                    if (withinError(potentiometerVoltageDropNow, maxVoltage(), deadband) || withinError(potentiometerVoltageDropNow, minVoltage(), deadband)) {
                         error = slideForward(minimumBackwardSlideTime*32);
 
                         if (ErrorType::Success == error) {
 
-                            if (!(withinError(potentiometerVoltageDropNow, maxVoltage(), hysteresis) || withinError(potentiometerVoltageDropNow, minVoltage(), hysteresis))) {
+                            if (!(withinError(potentiometerVoltageDropNow, maxVoltage(), deadband) || withinError(potentiometerVoltageDropNow, minVoltage(), deadband))) {
                                 minimumBackwardSlideTime = 0;
                             }
                         }
