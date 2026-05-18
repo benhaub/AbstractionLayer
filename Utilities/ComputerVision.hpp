@@ -536,18 +536,18 @@ inline ErrorType FillPixelGapsImplementation(ConstBuffer &&unfilled, const Area 
                 for (uint32_t x = maxGapSize; x < area.width-1; x++) {
                     const uint32_t currentIndex = area.xyToFlatIndex({x, y});
 
-                    if (unfilled->at(currentIndex) == gapColour) {
+                    if (unfilled->at(currentIndex) == static_cast<char>(gapColour)) {
 
                         for (uint32_t currentGapSize = 1; currentGapSize <= maxGapSize; currentGapSize++) {
                             bool verticalGap, horizontalGap = false;
-                            horizontalGap = unfilled->at(area.xyToFlatIndex({x - currentGapSize, y})) == fillColour && unfilled->at(area.xyToFlatIndex({x + currentGapSize, y})) == fillColour;
+                            horizontalGap = unfilled->at(area.xyToFlatIndex({x - currentGapSize, y})) == static_cast<char>(fillColour) && unfilled->at(area.xyToFlatIndex({x + currentGapSize, y})) == static_cast<char>(fillColour);
 
                             if (!horizontalGap) {
-                                verticalGap = unfilled->at(area.xyToFlatIndex({x, y - currentGapSize})) == fillColour && unfilled->at(area.xyToFlatIndex({x, y + currentGapSize})) == fillColour;
+                                verticalGap = unfilled->at(area.xyToFlatIndex({x, y - currentGapSize})) == static_cast<char>(fillColour) && unfilled->at(area.xyToFlatIndex({x, y + currentGapSize})) == static_cast<char>(fillColour);
                             }
 
                             if (horizontalGap || verticalGap) {
-                                filled->at(currentIndex) = fillColour;
+                                filled->at(currentIndex) = static_cast<char>(fillColour);
                                 break;
                             }
                         }
@@ -575,121 +575,131 @@ inline ErrorType FillPixelGaps(const std::string &unfilled, const Area &area, co
 
 template <typename Buffer>
 requires CompatibleBuffer<Buffer>
-inline ErrorType ExtractLargestIslandImplementation(Buffer &&buffer, const Area &area, const HexCodeColour islandColour) {
-    ErrorType error = ErrorType::InvalidParameter;
+inline ErrorType ExtractLargestIslandImplementation(Buffer &&buffer, const Area &area, const PixelFormat pixelFormat, const HexCodeColour islandColour) {
+    ErrorType error = ErrorType::NotSupported;
 
-    if (area.size() > 0 || area.size() == buffer->size()) {
-        std::vector<bool> visited(area.size(), false);
-        std::vector<uint32_t> largestIsland;
-        
-        for (uint32_t i = 0; i < area.size(); ++i) {
+    if (PixelFormat::Greyscale == pixelFormat) {
 
-            if (buffer->at(i) == islandColour && !visited[i]) {
-                std::vector<uint32_t> currentIsland;
-                std::vector<uint32_t> queue;
-                queue.push_back(i);
-                visited[i] = true;
-                uint32_t head = 0;
+        if (area.size() > 0 || area.size() == buffer->size()) {
+            std::vector<bool> visited(area.size(), false);
+            std::vector<uint32_t> largestIsland;
+            
+            for (uint32_t i = 0; i < area.size(); ++i) {
 
-                // BFS traversal
-                while (head < queue.size()) {
-                    uint32_t currentIdx = queue[head++];
-                    currentIsland.push_back(currentIdx);
+                if (buffer->at(i) == static_cast<char>(islandColour) && !visited[i]) {
+                    std::vector<uint32_t> currentIsland;
+                    std::vector<uint32_t> queue;
+                    queue.push_back(i);
+                    visited[i] = true;
+                    uint32_t head = 0;
 
-                    Coordinate coord = { currentIdx % area.width, currentIdx / area.width };
-                    // getNeighbours uses 8-connectivity (Moore Neighborhood)
-                    auto neighbors = area.getNeighbours(coord);
+                    while (head < queue.size()) {
+                        uint32_t currentIdx = queue[head++];
+                        currentIsland.push_back(currentIdx);
 
-                    for (uint32_t neighborIdx : neighbors) {
+                        Coordinate coord = { currentIdx % area.width, currentIdx / area.width };
+                        auto neighbors = area.getNeighbours(coord);
 
-                        if (buffer->at(neighborIdx) == islandColour && !visited[neighborIdx]) {
-                            visited[neighborIdx] = true;
-                            queue.push_back(neighborIdx);
+                        for (uint32_t neighborIdx : neighbors) {
+
+                            if (buffer->at(neighborIdx) == static_cast<char>(islandColour) && !visited[neighborIdx]) {
+                                visited[neighborIdx] = true;
+                                queue.push_back(neighborIdx);
+                            }
                         }
                     }
-                }
 
-                if (currentIsland.size() > largestIsland.size()) {
-                    largestIsland = std::move(currentIsland);
+                    if (currentIsland.size() > largestIsland.size()) {
+                        largestIsland = std::move(currentIsland);
+                    }
                 }
             }
-        }
 
-        // Remove all islands except the largest.
-        for (uint32_t i = 0; i < area.size(); ++i) {
-            buffer->at(i) = 0;
-        }
+            // Remove all islands except the largest.
+            for (uint32_t i = 0; i < area.size(); ++i) {
+                buffer->at(i) = 0;
+            }
 
-        // Then, restore only the pixels belonging to the largest island
-        for (uint32_t pixelIdx : largestIsland) {
-            buffer->at(pixelIdx) = islandColour;
-        }
+            // Then, restore only the pixels belonging to the largest island
+            for (uint32_t pixelIdx : largestIsland) {
+                buffer->at(pixelIdx) = static_cast<char>(islandColour);
+            }
 
-        error = ErrorType::Success;
+            error = ErrorType::Success;
+        }
+        else {
+            error = ErrorType::InvalidParameter;
+        }
     }
 
     return error;
 }
-inline ErrorType ExtractLargestIsland(StaticString::Container &buffer, const Area &area, const HexCodeColour islandColour) {
-    return ExtractLargestIslandImplementation(buffer, area, islandColour);
+inline ErrorType ExtractLargestIsland(StaticString::Container &buffer, const Area &area, const PixelFormat pixelFormat, const HexCodeColour islandColour) {
+    return ExtractLargestIslandImplementation(buffer, area, pixelFormat, islandColour);
 }
-inline ErrorType ExtractLargestIsland(std::string &buffer, const Area &area, const HexCodeColour islandColour) {
-    return ExtractLargestIslandImplementation(&buffer, area, islandColour);
+inline ErrorType ExtractLargestIsland(std::string &buffer, const Area &area, const PixelFormat pixelFormat, const HexCodeColour islandColour) {
+    return ExtractLargestIslandImplementation(&buffer, area, pixelFormat, islandColour);
 }
 
 template <typename Buffer>
 requires CompatibleBuffer<Buffer>
-ErrorType IslandFilterImplementation(Buffer &&buffer, const Area &area, const HexCodeColour islandColour, const HexCodeColour filterTo, const Area &minArea) {
-    ErrorType error = ErrorType::PrerequisitesNotMet;
+ErrorType IslandFilterImplementation(Buffer &&buffer, const Area &area, const PixelFormat pixelFormat, const HexCodeColour islandColour, const HexCodeColour filterTo, const Area &minArea) {
+    ErrorType error = ErrorType::NotSupported;
     std::vector<bool> visited(area.size(), false);
 
-    if (area.size() > 0 && area.size() == buffer->size()) {
-        error = ErrorType::Success;
+    if (PixelFormat::Greyscale == pixelFormat) {
 
-        for (uint32_t i = 0; i < area.size(); ++i) {
+        if (area.size() > 0 && area.size() == buffer->size()) {
+            error = ErrorType::Success;
 
-            if (buffer->at(i) == islandColour && !visited[i]) {
-                std::vector<uint32_t> currentIsland;
-                std::deque<uint32_t> queue;
+            for (uint32_t i = 0; i < area.size(); ++i) {
 
-                visited[i] = true;
-                queue.push_back(i);
+                if (buffer->at(i) == static_cast<char>(islandColour) && !visited[i]) {
+                    std::vector<uint32_t> currentIsland;
+                    std::deque<uint32_t> queue;
 
-                while (!queue.empty()) {
-                    uint32_t currentIdx = queue.front();
-                    queue.pop_front();
-                    currentIsland.push_back(currentIdx);
+                    visited[i] = true;
+                    queue.push_back(i);
 
-                    Coordinate coord = area.flatIndexToXy(currentIdx);
-                    auto neighbors = area.getNeighbours(coord);
+                    while (!queue.empty()) {
+                        uint32_t currentIdx = queue.front();
+                        queue.pop_front();
+                        currentIsland.push_back(currentIdx);
 
-                    for (uint32_t neighborIdx : neighbors) {
+                        Coordinate coord = area.flatIndexToXy(currentIdx);
+                        auto neighbors = area.getNeighbours(coord);
 
-                        if (buffer->at(neighborIdx) == islandColour && !visited[neighborIdx]) {
-                            visited[neighborIdx] = true;
-                            queue.push_back(neighborIdx);
+                        for (uint32_t neighborIdx : neighbors) {
+
+                            if (buffer->at(neighborIdx) == static_cast<char>(islandColour) && !visited[neighborIdx]) {
+                                visited[neighborIdx] = true;
+                                queue.push_back(neighborIdx);
+                            }
+                        }
+                    }
+
+                    // If the island is too small, delete it immediately
+                    if (currentIsland.size() < minArea.size()) {
+
+                        for (uint32_t pixelIdx : currentIsland) {
+                            buffer->at(pixelIdx) = filterTo;
                         }
                     }
                 }
-
-                // If the island is too small, delete it immediately
-                if (currentIsland.size() < minArea.size()) {
-
-                    for (uint32_t pixelIdx : currentIsland) {
-                        buffer->at(pixelIdx) = filterTo;
-                    }
-                }
             }
+        }
+        else {
+            error = ErrorType::InvalidParameter;
         }
     }
 
     return error;
 }
-inline ErrorType IslandFilter(StaticString::Container &buffer, const Area &area, const HexCodeColour islandColour, const HexCodeColour filterTo, const Area &minArea) {
-    return IslandFilterImplementation(buffer, area, islandColour, filterTo, minArea);
+inline ErrorType IslandFilter(StaticString::Container &buffer, const Area &area, const PixelFormat pixelFormat, const HexCodeColour islandColour, const HexCodeColour filterTo, const Area &minArea) {
+    return IslandFilterImplementation(buffer, area, pixelFormat, islandColour, filterTo, minArea);
 }
-inline ErrorType IslandFilter(std::string &buffer, const Area &area, const HexCodeColour islandColour, const HexCodeColour filterTo, const Area &minArea) {
-    return IslandFilterImplementation(&buffer, area, islandColour, filterTo, minArea);
+inline ErrorType IslandFilter(std::string &buffer, const Area &area, const PixelFormat pixelFormat, const HexCodeColour islandColour, const HexCodeColour filterTo, const Area &minArea) {
+    return IslandFilterImplementation(&buffer, area, pixelFormat, islandColour, filterTo, minArea);
 }
 
 #endif //__COMPUTER_VISION_HPP__
