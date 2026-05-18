@@ -86,6 +86,7 @@ namespace SpiTypes {
          */
         struct DriverConfig {
             bool isController = false; ///< True if the driver controls the data flow (isMaster)
+            bool chipSelectActiveLow = true; ///< True if the chip select line is active low
             FrameFormat format = SpiTypes::FrameFormat::Unknown; ///< The frame format. Controls the clock and chip select during idle and active periods.
             Hertz clockFrequency = 0; ///< The frequency of the clock. Only matter for controller mode.
             DataSize dataSize = DataSize::Unknown; ///< The amount of bits sent during each active period.
