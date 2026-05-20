@@ -65,6 +65,7 @@ namespace SpiTypes {
      */
     struct SpiParams final : public IcCommunicationProtocolTypes::ConfigurationParameters {
         IcCommunicationProtocolTypes::IcDevice deviceType() const override { return IcCommunicationProtocolTypes::IcDevice::Spi; }
+        SpiParams() = default;
 
         /**
          * @struct HardwareConfig
@@ -92,6 +93,8 @@ namespace SpiTypes {
             DataSize dataSize = DataSize::Unknown; ///< The amount of bits sent during each active period.
             Channels channels = Channels::Unknown; ///< The width of the SPI bus
         } driverConfig; ///< Driver configuration parameters
+
+        constexpr SpiParams(const HardwareConfig &hardwareConfig, const DriverConfig &driverConfig) : hardwareConfig(hardwareConfig), driverConfig(driverConfig) {}
     };
 }
 
