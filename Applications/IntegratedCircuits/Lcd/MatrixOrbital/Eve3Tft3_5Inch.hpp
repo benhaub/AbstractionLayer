@@ -12,8 +12,7 @@ class MatrixOrbitalEve3Tft35Inch final : public LcdAbstraction {
     public:
     MatrixOrbitalEve3Tft35Inch() : LcdAbstraction() {}
 
-    ErrorType configure() override;
-    ErrorType init() override;
+    ErrorType init(const LcdTypes::Configuration &configuration) override;
     ErrorType reset() override;
     ErrorType startDesign() override;
     ErrorType addDesignElement(const LcdTypes::DesignElement &element) override;

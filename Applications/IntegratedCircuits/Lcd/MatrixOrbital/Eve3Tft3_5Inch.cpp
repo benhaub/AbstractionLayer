@@ -1,10 +1,6 @@
 #include "Eve3Tft3_5Inch.hpp"
 
-ErrorType MatrixOrbitalEve3Tft35Inch::configure() {
-    return ErrorType::NotImplemented;
-}
-
-ErrorType MatrixOrbitalEve3Tft35Inch::init() {
+ErrorType MatrixOrbitalEve3Tft35Inch::init(const LcdTypes::Configuration &configuration) {
     return ErrorType::NotImplemented;
 }
 

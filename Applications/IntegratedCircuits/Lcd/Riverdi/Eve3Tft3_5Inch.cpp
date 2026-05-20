@@ -2,51 +2,34 @@
 #include "Eve3Tft3_5Inch.hpp"
 #include "OperatingSystemModule.hpp"
 
-ErrorType RiverdiEve3Tft35Inch::configure() {
-    _params.powerdown = APP_RIVERDI_LCD_POWERDOWN_PIN_NUMBER;
-    _params.spiParams.hardwareConfig.peripheral = APP_RIVERDI_LCD_SPI_PERIPHERAL_NUMBER;
-    _params.spiParams.hardwareConfig.chipSelect = APP_RIVERDI_LCD_CHIP_SELECT_PIN_NUMBER;
-    _params.spiParams.hardwareConfig.clock = APP_RIVERDI_LCD_CLOCK_PIN_NUMBER;
-    _params.spiParams.hardwareConfig.periperhalOutControllerIn = APP_RIVERDI_LCD_POCI_PIN_NUMBER;
-    _params.spiParams.hardwareConfig.perpheralInControllerOut = APP_RIVERDI_LCD_PICO_PIN_NUMBER;
-    _params.spiParams.driverConfig.clockFrequency = APP_RIVERDI_LCD_SPI_CLOCK_FREQUENCY;
-    _params.spiParams.driverConfig.format = SpiTypes::FrameFormat::Mode0;
-    _params.spiParams.driverConfig.isController = true;
-    _params.spiParams.driverConfig.dataSize = SpiTypes::DataSize::EightBits;
-    _params.spiParams.driverConfig.channels = SpiTypes::Channels::Single;
+ErrorType RiverdiEve3Tft35Inch::init(const LcdTypes::Configuration &configuration) {
+    const RiverdiEve3Tft35InchTypes::Configuration &configConst = reinterpret_cast<const RiverdiEve3Tft35InchTypes::Configuration &>(configuration);
+    RiverdiEve3Tft35InchTypes::Configuration &params = const_cast<RiverdiEve3Tft35InchTypes::Configuration &>(configConst);
 
-    GpioTypes::GpioParams powerdownParams;
-    powerdownParams.hardwareConfig.peripheralNumber = APP_RIVERDI_LCD_POWERDOWN_PERIPHERAL_NUMBER;
-    powerdownParams.hardwareConfig.pinNumber = APP_RIVERDI_LCD_POWERDOWN_PIN_NUMBER;
-    powerdownParams.hardwareConfig.driveType = GpioTypes::DriveType::PushPull;
-    powerdownParams.hardwareConfig.driveStrength = GpioTypes::DriveStrength::EightMilliAmps;
-
-    ErrorType error = _powerdown.configure(powerdownParams);
+    ErrorType error = _powerdown.configure(params.powerdownParams);
 
     if (ErrorType::Success == error) {
         error = _powerdown.init();
-    }
 
-    return error;
-}
+        if (ErrorType::Success == error) {
+            error = reset();
 
-ErrorType RiverdiEve3Tft35Inch::init() {
-    ErrorType error = reset();
+            if (ErrorType::Success == error) {
+                constexpr Bridgetek81xTypes::SystemClockFrequency lcdSystemClock = Bridgetek81xTypes::SystemClockFrequency::Frequency72MHz;
+                constexpr bool hasExternalCrystal = true;
 
-    if (ErrorType::Success == error) {
-        constexpr Bridgetek81xTypes::SystemClockFrequency lcdSystemClock = Bridgetek81xTypes::SystemClockFrequency::Frequency72MHz;
-        constexpr bool hasExternalCrystal = true;
+                if (ErrorType::Success == (error = _bt815.init(params.spiParams, hasExternalCrystal, lcdSystemClock, screenParameters()))) {
 
-        if (ErrorType::Success == (error = _bt815.init(params().spiParams, hasExternalCrystal, lcdSystemClock, screenParameters()))) {
+                    if (ErrorType::Success == (error = _bt815.toggleBacklight(true, Percent(5)))) {
+                        error = _bt815.toggleDisplay(true);
 
-            if (ErrorType::Success == (error = _bt815.toggleBacklight(true, Percent(5)))) {
-                error = _bt815.toggleDisplay(true);
+                        if (ErrorType::Success == error) {
+                            error = _bt815.setTouchThreshold(1200);
 
-                if (ErrorType::Success == error) {
-                    error = _bt815.setTouchThreshold(1200);
-
-                    if (ErrorType::Success == error) {
-                        _bt815.calibrate({screenParameters().activeArea.width/2U, screenParameters().activeArea.height/2U});
+                            if (ErrorType::Success == error) {
+                                _bt815.calibrate({screenParameters().activeArea.width/2U, screenParameters().activeArea.height/2U});
+                            }
+                        }
                     }
                 }
             }

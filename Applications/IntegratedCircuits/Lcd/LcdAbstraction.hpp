@@ -40,6 +40,19 @@ namespace LcdTypes {
     };
 
     /**
+     * @struct Configuration
+     * @brief Configuration for the LCD
+     */
+    struct Configuration {
+        Configuration() = default;
+        virtual ~Configuration() = default;
+        Configuration(Configuration&&) = default;
+        Configuration& operator=(Configuration&&) = default;
+        Configuration(const Configuration&) = default;
+        Configuration& operator=(const Configuration&) = default;
+    };
+
+    /**
      * @enum DesignElementType
      * @brief The type of design element
      */
@@ -160,18 +173,12 @@ class LcdAbstraction {
     static constexpr char TAG[] = "Lcd";
 
     /**
-     * @brief Configure the LCD.
-     * @returns ErrorType::Success if the LCD was configured
-     * @returns ErrorType::Failure if the LCD was not configured
-     */
-    virtual ErrorType configure() = 0;
-    /**
      * @brief Initialize the LCD
      * @pre LcdAbstraction::configure has been called and returned ErrorType::Success
      * @returns ErrorType::Success if the LCD was initialized
      * @returns ErrorType::Failure if the LCD was not initialized
      */
-    virtual ErrorType init() = 0;
+    virtual ErrorType init(const LcdTypes::Configuration &configuration) = 0;
     /**
      * @brief Reset the LCD
      * @returns ErrorType::Success if the LCD was reset

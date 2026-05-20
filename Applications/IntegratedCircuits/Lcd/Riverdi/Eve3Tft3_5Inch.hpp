@@ -14,9 +14,10 @@ namespace RiverdiEve3Tft35InchTypes {
      * @struct Configuration
      * @brief Configuration for the Riverdi display
      */
-    struct Configuration {
+    struct Configuration  : public LcdTypes::Configuration {
+        Configuration(const SpiTypes::SpiParams &spiParams, const GpioTypes::GpioParams &powerdown) : LcdTypes::Configuration(), spiParams(spiParams), powerdownParams(powerdown) {}
         SpiTypes::SpiParams spiParams; ///< SPI parameters
-        PinNumber powerdown = -1; ///< Pin number for powerdown control
+        GpioTypes::GpioParams powerdownParams; ///< GPIO parameters for powerdown control
     };
 }
 
@@ -29,8 +30,7 @@ class RiverdiEve3Tft35Inch final : public LcdAbstraction {
     public:
     RiverdiEve3Tft35Inch() : LcdAbstraction() {}
 
-    ErrorType configure() override;
-    ErrorType init() override;
+    ErrorType init(const LcdTypes::Configuration &configuration) override;
     ErrorType reset() override;
     ErrorType startDesign() override;
     ErrorType addDesignElement(const LcdTypes::DesignElement &element) override;
@@ -61,12 +61,7 @@ class RiverdiEve3Tft35Inch final : public LcdAbstraction {
         };
     }
 
-    /// @brief Get a constant reference to the LCD parameters
-    const RiverdiEve3Tft35InchTypes::Configuration &params() const { return _params; }
-
-
     private:
-    RiverdiEve3Tft35InchTypes::Configuration _params;
     Bridgetek81x _bt815;
     Gpio _powerdown;
     /// @brief Set to true when a sketch, spinner or screensaver is started.
