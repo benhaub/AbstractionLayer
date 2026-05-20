@@ -86,21 +86,14 @@ namespace GpioTypes {
          * @brief Contains the hardware configuration for the GPIO.
          */
         struct HardwareConfig {
-            PeripheralNumber peripheralNumber; ///< The peripheral number to use for the GPIO.
-            PinNumber pinNumber;               ///< The pin number to use for the GPIO.
-            GpioTypes::PinDirection direction; ///< The pin direction to use for the GPIO.
-            InterruptFlags interruptFlags;     ///< The interrupt flags to use for the GPIO.
-            bool pullUpEnable;                 ///< True to enable the pull-up resistor, false otherwise.
-            bool pullDownEnable;               ///< True to enable the pull-down resistor, false otherwise.
-            DriveType driveType;               ///< The drive type of the pin
-            DriveStrength driveStrength;       ///< The drive strength of the pin
-
-            /// @brief Constructor
-            HardwareConfig() :
-              peripheralNumber(PeripheralNumber::Unknown), pinNumber(-1),
-              direction(GpioTypes::PinDirection::DigitalUnknown),
-              interruptFlags(Interrupts::Disabled), pullUpEnable(false),
-              pullDownEnable(false), driveType(DriveType::Unknown), driveStrength(DriveStrength::Unknown) {}
+            PeripheralNumber peripheralNumber = PeripheralNumber::Unknown; ///< The peripheral number to use for the GPIO.
+            PinNumber pinNumber = -1; ///< The pin number to use for the GPIO.
+            GpioTypes::PinDirection direction = GpioTypes::PinDirection::DigitalUnknown; ///< The pin direction to use for the GPIO.
+            InterruptFlags interruptFlags = Interrupts::Disabled; ///< The interrupt flags to use for the GPIO.
+            bool pullUpEnable = false; ///< True to enable the pull-up resistor, false otherwise.
+            bool pullDownEnable = false; ///< True to enable the pull-down resistor, false otherwise.
+            DriveType driveType = DriveType::Unknown; ///< The drive type of the pin
+            DriveStrength driveStrength = DriveStrength::Unknown; ///< The drive strength of the pin
         } hardwareConfig; ///< The hardware configuration for the GPIO.
 
         /**
@@ -108,15 +101,13 @@ namespace GpioTypes {
          * @brief Contains the interrupt configuration for the GPIO.
          */
         struct InterruptConfig {
-            InterruptFlags interruptFlags;       ///< The interrupt flags to use for the uart
-            InterruptCallback interruptCallback; ///< The interrupt callback to use for the uart
-
-            /// @brief Constructor
-            InterruptConfig() : interruptFlags(Interrupts::Disabled), interruptCallback(nullptr) {}
+            InterruptFlags interruptFlags = Interrupts::Disabled; ///< The interrupt flags to use for the uart
+            InterruptCallback interruptCallback = nullptr; ///< The interrupt callback to use for the uart
         } interruptConfig; ///< The interrupt configuration for the GPIO.
 
         /// @brief Constructor
-        GpioParams() : hardwareConfig(), interruptConfig() {}
+        GpioParams() = default;
+        constexpr GpioParams(const HardwareConfig &hardwareConfig, const InterruptConfig &interruptConfig) : hardwareConfig(hardwareConfig), interruptConfig(interruptConfig) {}
     };
 }
 
