@@ -61,7 +61,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 
-    //On Linux, the start function is called before pthread_create returns so we have to add in an init function to make sure
+    //On Linux, the start function may be called before pthread_create returns so we have to add in an init function to make sure
     //that the details of thread are properly saved before the thread code runs. For example, if a thread calls currentThreadId,
     //the posix ID will not be saved yet because pthread_create has not returned and so this function will fail even though the thread
     //exists and has an ID.
@@ -100,6 +100,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     const bool threadWasCreated = (0 == (res = pthread_create(&thread, &attr, initThread, initThreadArgs)));
     if (threadWasCreated) {
         number = newThread.threadId;
+        threads.at(toThreadIndex(nextThreadId)).posixThreadId = thread;
         _status.threadCount++;
         nextThreadId++;
         error = ErrorType::Success;
@@ -144,6 +145,7 @@ ErrorType OperatingSystem::deleteThread(const std::array<char, OperatingSystemTy
 
 ErrorType OperatingSystem::joinThread(const std::array<char, OperatingSystemTypes::MaxThreadNameLength> &name) {
     Id thread;
+
     if (ErrorType::NoData == threadId(name, thread)) {
         return ErrorType::NoData;
     }

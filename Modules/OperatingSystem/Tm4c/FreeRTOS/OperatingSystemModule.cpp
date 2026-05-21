@@ -42,11 +42,13 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     struct InitThreadArgs {
         void *arguments;
         void *(*startFunction)(void *);
+        TaskHandle_t *threadId;
     };
     auto initThread = [](void *arguments) -> void {
         InitThreadArgs *initThreadArgs = static_cast<InitThreadArgs *>(arguments);
         void *threadArguments = initThreadArgs->arguments;
         void *(*startFunction)(void *) = initThreadArgs->startFunction;
+        *(initThreadArgs->threadId) = xTaskGetCurrentTaskHandle();
         delete initThreadArgs;
         initThreadArgs = nullptr;
         (startFunction)(threadArguments);
@@ -56,6 +58,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     InitThreadArgs *initThreadArgs = new InitThreadArgs {
         .arguments = arguments,
         .startFunction = startFunction,
+        .threadId = &threads.at(toThreadIndex(nextThreadId)).tm4c123ThreadId,
     };
 
     TaskHandle_t thread;

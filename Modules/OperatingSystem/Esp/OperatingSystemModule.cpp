@@ -69,7 +69,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
     ErrorType error = ErrorType::LimitReached;
     static Id nextThreadId = _TimerServiceTaskReservedId + 1;
 
-    //On ESP, the start function is called before xTaskCreate returns so we have to make sure
+    //On ESP, the start function may be called before xTaskCreate returns (depending on the priority) so we have to make sure
     //that the details of thread are properly saved before the thread code runs. For example, if a thread calls currentThreadId,
     //the posix ID will not be saved yet because xTaskCreate has not returned and so this function will fail even though the thread
     //exists and has an ID.
@@ -110,6 +110,7 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
         _status.memoryRegion.push_back(stackRegion);
 #endif
         number = threads.at(threadIndex).threadId;
+        threads.at(threadIndex).espThreadId = thread;
         _status.threadCount++;
         nextThreadId++;
         error = ErrorType::Success;
