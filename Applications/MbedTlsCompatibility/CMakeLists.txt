@@ -1,5 +1,11 @@
 #Espressif has an mbedtls component.
 if (NOT ESP_PLATFORM)
+
+  #Set when you give a toolchain file to cmake.
+  if(CMAKE_TOOLCHAIN_FILE)
+    set(TOOLCHAIN_FILE_ARG "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}")
+  endif()
+
   set(MBEDTLS_BUILD_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/mbedtls/build_mbedtls.sh")
   file(WRITE "${MBEDTLS_BUILD_SCRIPT}" "
   #!/bin/bash
@@ -9,7 +15,7 @@ if (NOT ESP_PLATFORM)
   python scripts/config.py unset MBEDTLS_NET_C
   mkdir -p mbedtls_Build
   cd mbedtls_Build
-  cmake -DENABLE_TESTING=OFF -DENABLE_PROGRAMS=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=OFF -DUSE_STATIC_MBEDTLS_LIBRARY=ON -DCMAKE_BUILD_TYPE=Release ..
+  cmake ${TOOLCHAIN_FILE_ARG} -DENABLE_TESTING=OFF -DENABLE_PROGRAMS=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=OFF -DUSE_STATIC_MBEDTLS_LIBRARY=ON -DCMAKE_BUILD_TYPE=Release ..
   cmake --build .
   deactivate
   ")
