@@ -246,8 +246,6 @@ class Bridgetek81x {
         readTransactionAddressBytes->push_back(dummyByteValue);
 
         StaticString::Container byteBuffer = StaticString::Container(std::integral_constant<size_t, sizeof(uint8_t)>());
-        //Dummy byte is an alias to byteBuffer, so they are sharing the same memory but named differently depending on usage
-        StaticString::Container &dummyByte = byteBuffer;
 
         byteBuffer->resize(sizeof(uint8_t));
         buffer = 0;
@@ -264,9 +262,6 @@ class Bridgetek81x {
         if (ErrorType::Success == error) {
 
             for (size_t nextByte = 0; nextByte < sizeof(_ReadType); nextByte++) {
-
-                dummyByte[0] = dummyByteValue;
-                error = _spi.txBlocking(dummyByte, 0, additionalParams);
 
                 if (ErrorType::Success == error) {
                     error = _spi.rxBlocking(byteBuffer, 0, additionalParams);

@@ -115,6 +115,7 @@ ErrorType Spi::rxBlocking(char *buffer, const size_t bufferSize, size_t &bytesRe
     if (ErrorType::Success == error) {
 
         for (size_t i = 0; i < bufferSize; i++) {
+            SSIDataPut(reinterpret_cast<uint32_t>(baseAddress), 0);
             SSIDataGet(reinterpret_cast<uint32_t>(baseAddress), &receivedByte);
             buffer[i] = receivedByte & 0xFF;
             bytesRead++;
