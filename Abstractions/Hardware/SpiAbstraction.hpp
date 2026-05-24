@@ -16,15 +16,37 @@
  */
 namespace SpiTypes {
     /**
+     * @enum ChipSelectMode
+     * @brief Chip select control mode
+     */
+    enum class ChipSelectMode : uint8_t {
+        Unknown = 0,  ///< Unknown mode
+        Hardware = 1, ///< Hardware SPI chip select
+        Gpio = 2      ///< GPIO-based chip select
+    };
+
+    /**
+     * @enum GpioChipSelectControl
+     * @brief GPIO chip select control
+     */
+    enum class GpioChipSelectControl : uint8_t {
+        Unknown = 0,        ///< Unknown mode
+        Assert = 1,         ///< Assert the chip select before the current transfer
+        Deassert = 2,       ///< Deassert the chip select once the current transfer is complete
+        AssertDeassert = 3, ///< Assert and Deassert in one transfer
+        Hold = 4            ///< Hold the chip select at its current state
+    };
+
+    /**
      * @enum FrameFormat
      * @brief The frame format for SPI
      */
     enum class FrameFormat : uint8_t {
         Unknown = 0, ///< Unknown mode
-        Mode0   = 1, ///< Mode 1
-        Mode1   = 2, ///< Mode 2
-        Mode2   = 3, ///< Mode 3
-        Mode3   = 4  ///< Mode 4
+        Mode0   = 1, ///< Mode 0
+        Mode1   = 2, ///< Mode 1
+        Mode2   = 3, ///< Mode 2
+        Mode3   = 4  ///< Mode 3
     };
 
     /**
@@ -79,6 +101,9 @@ namespace SpiTypes {
             PinNumber io4 = -1;                       ///< If using QSPI, set this to the fourth data line.
             PinNumber chipSelect = -1;                ///< CS
             PinNumber clock = -1;                     ///< CLK
+            ChipSelectMode chipSelectMode = ChipSelectMode::Unknown; ///< Chip select control mode (hardware or GPIO)
+            PeripheralNumber chipSelectGpioPeripheral = PeripheralNumber::Unknown; ///< GPIO chip select peripheral
+            PinNumber chipSelectGpioPin = -1; ///< GPIO chip select pin
         } hardwareConfig; ///< Hardware configuration parameters
 
         /**
@@ -96,6 +121,20 @@ namespace SpiTypes {
 
         constexpr SpiParams(const HardwareConfig &hardwareConfig, const DriverConfig &driverConfig) : hardwareConfig(hardwareConfig), driverConfig(driverConfig) {}
     };
+
+    /**
+     * @brief Spi additional communication parameters
+     */
+    struct AdditionalCommunicationParameters final : public IcCommunicationProtocolTypes::AdditionalCommunicationParameters {
+        /// @brief Constructor
+        AdditionalCommunicationParameters() = default;
+        /// @brief Constructor
+        constexpr AdditionalCommunicationParameters(SpiTypes::GpioChipSelectControl chipSelectControl) : chipSelectControl(chipSelectControl) {}
+
+        IcCommunicationProtocolTypes::IcDevice deviceType() const override { return IcCommunicationProtocolTypes::IcDevice::Spi; }
+        /// @brief The chip select control mode ofr the current transfer
+        SpiTypes::GpioChipSelectControl chipSelectControl = SpiTypes::GpioChipSelectControl::Unknown;
+    };
 }
 
 /**
@@ -109,6 +148,9 @@ class SpiAbstraction : public IcCommunicationProtocol {
     SpiAbstraction() : IcCommunicationProtocol() {}
     ///@brief Destructor
     virtual ~SpiAbstraction() = default;
+
+    /// @brief Tag for logging
+    static constexpr char TAG[] = "Spi";
 
     ErrorType configure(const IcCommunicationProtocolTypes::ConfigurationParameters &params) override {
         _spiParams = static_cast<const SpiTypes::SpiParams &>(params);

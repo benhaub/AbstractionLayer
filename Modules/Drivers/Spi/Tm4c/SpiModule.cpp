@@ -46,6 +46,27 @@ ErrorType Spi::init() {
         }
     }
 
+    const bool gpioChipSelectEnabled = (SpiTypes::ChipSelectMode::Gpio == spiParams().hardwareConfig.chipSelectMode &&
+        PeripheralNumber::Unknown != spiParams().hardwareConfig.chipSelectGpioPeripheral &&
+        -1 != spiParams().hardwareConfig.chipSelectGpioPin);
+
+    if (gpioChipSelectEnabled) {
+        GpioTypes::GpioParams chipSelectParams;
+        chipSelectParams.hardwareConfig.peripheralNumber = spiParams().hardwareConfig.chipSelectGpioPeripheral;
+        chipSelectParams.hardwareConfig.pinNumber = spiParams().hardwareConfig.chipSelectGpioPin;
+        chipSelectParams.hardwareConfig.pullUpEnable = true;
+        chipSelectParams.hardwareConfig.driveStrength = GpioTypes::DriveStrength::TwoMilliAmps;
+        chipSelectParams.hardwareConfig.driveType = GpioTypes::DriveType::PushPull;
+
+        _chipSelect.emplace();
+        _chipSelect->configure(chipSelectParams);
+        error = _chipSelect->init();
+
+        if (ErrorType::Success == error) {
+            _chipSelect->pinWrite(spiParams().driverConfig.chipSelectActiveLow ? GpioTypes::LogicLevel::High : GpioTypes::LogicLevel::Low);
+        }
+    }
+
     return error;
 }
 
@@ -61,22 +82,48 @@ ErrorType Spi::deinit() {
 }
 
 ErrorType Spi::txBlocking(const StaticString::Container &data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
-    return txBlocking(data->c_str(), data->size(), timeout);
+    return txBlocking(data->c_str(), data->size(), timeout, params);
 }
 ErrorType Spi::txBlocking(std::string_view data, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
-    return txBlocking(data.data(), data.size(), timeout);
+    return txBlocking(data.data(), data.size(), timeout, params);
 }
-ErrorType Spi::txBlocking(const char *data, const size_t size, const Milliseconds timeout) {
-    ErrorType error;
-    const Register baseAddress = toTm4cPeripheralBaseRegister(spiParams().hardwareConfig.peripheral, error);
+ErrorType Spi::txBlocking(const char *data, const size_t size, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
+    ErrorType error = ErrorType::InvalidParameter;
 
-    if (ErrorType::Success == error) {
-        for (size_t i = 0; i < size; i++) {
-            SSIDataPut(reinterpret_cast<uint32_t>(baseAddress), data[i]);
+    if (IcCommunicationProtocolTypes::IcDevice::Spi == params.deviceType()) {
+        const auto &additionalParams = static_cast<const SpiTypes::AdditionalCommunicationParameters &>(params);
+        const Register baseAddress = toTm4cPeripheralBaseRegister(spiParams().hardwareConfig.peripheral, error);
+
+        if (ErrorType::Success == error) {
+
+            const bool chipSelectShouldBeAsserted = SpiTypes::GpioChipSelectControl::Assert == additionalParams.chipSelectControl ||
+                                            SpiTypes::GpioChipSelectControl::AssertDeassert == additionalParams.chipSelectControl;
+            if (chipSelectShouldBeAsserted) {
+
+                if (_chipSelect) {
+                    error = _chipSelect->pinWrite(spiParams().driverConfig.chipSelectActiveLow ? GpioTypes::LogicLevel::Low : GpioTypes::LogicLevel::High);
+                }
+            }
+
+            if (ErrorType::Success == error) {
+                for (size_t i = 0; i < size; i++) {
+                    SSIDataPut(reinterpret_cast<uint32_t>(baseAddress), data[i]);
+                }
+            }
+
+            while (SSIBusy(reinterpret_cast<uint32_t>(baseAddress)));
+
+            const bool chipSelectShouldBeDeasserted = SpiTypes::GpioChipSelectControl::Deassert == additionalParams.chipSelectControl ||
+                                            SpiTypes::GpioChipSelectControl::AssertDeassert == additionalParams.chipSelectControl;
+
+             if (chipSelectShouldBeDeasserted) {
+
+                if (_chipSelect) {
+                    error = _chipSelect->pinWrite(spiParams().driverConfig.chipSelectActiveLow ? GpioTypes::LogicLevel::High : GpioTypes::LogicLevel::Low);
+                }
+            }
         }
     }
-
-    while (SSIBusy(reinterpret_cast<uint32_t>(baseAddress)));
 
     return error;
 }
@@ -85,7 +132,7 @@ ErrorType Spi::rxBlocking(StaticString::Container &buffer, const Milliseconds ti
     size_t bytesRead = 0;
     ErrorType error;
 
-    error = rxBlocking(buffer->data(), buffer->size(), bytesRead, timeout);
+    error = rxBlocking(buffer->data(), buffer->size(), bytesRead, timeout, params);
 
     if (ErrorType::Success == error) {
         buffer->resize(bytesRead);
@@ -97,7 +144,7 @@ ErrorType Spi::rxBlocking(std::string &buffer, const Milliseconds timeout, const
     size_t bytesRead = 0;
     ErrorType error;
 
-    error = rxBlocking(buffer.data(), buffer.size(), bytesRead, timeout);
+    error = rxBlocking(buffer.data(), buffer.size(), bytesRead, timeout, params);
 
     if (ErrorType::Success == error) {
         buffer.resize(bytesRead);
@@ -105,20 +152,43 @@ ErrorType Spi::rxBlocking(std::string &buffer, const Milliseconds timeout, const
 
     return error;
 }
-ErrorType Spi::rxBlocking(char *buffer, const size_t bufferSize, size_t &bytesRead, const Milliseconds timeout) {
-    ErrorType error;
-    uint32_t receivedByte;
-    const Register baseAddress = toTm4cPeripheralBaseRegister(spiParams().hardwareConfig.peripheral, error);
+ErrorType Spi::rxBlocking(char *buffer, const size_t bufferSize, size_t &bytesRead, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params) {
+    ErrorType error = ErrorType::InvalidParameter;
 
-    bytesRead = 0;
+    if (IcCommunicationProtocolTypes::IcDevice::Spi == params.deviceType()) {
+        const auto &additionalParams = static_cast<const SpiTypes::AdditionalCommunicationParameters &>(params);
+        uint32_t receivedByte;
+        const Register baseAddress = toTm4cPeripheralBaseRegister(spiParams().hardwareConfig.peripheral, error);
+        bytesRead = 0;
 
-    if (ErrorType::Success == error) {
+        const bool chipSelectShouldBeAsserted = SpiTypes::GpioChipSelectControl::Assert == additionalParams.chipSelectControl ||
+                                            SpiTypes::GpioChipSelectControl::AssertDeassert == additionalParams.chipSelectControl;
+        if (chipSelectShouldBeAsserted) {
 
-        for (size_t i = 0; i < bufferSize; i++) {
-            SSIDataPut(reinterpret_cast<uint32_t>(baseAddress), 0);
-            SSIDataGet(reinterpret_cast<uint32_t>(baseAddress), &receivedByte);
-            buffer[i] = receivedByte & 0xFF;
-            bytesRead++;
+            if (_chipSelect) {
+                error = _chipSelect->pinWrite(spiParams().driverConfig.chipSelectActiveLow ? GpioTypes::LogicLevel::Low : GpioTypes::LogicLevel::High);
+            }
+        }
+
+        if (ErrorType::Success == error) {
+
+            for (size_t i = 0; i < bufferSize; i++) {
+                //Drive the clock to receive the data.
+                SSIDataPut(reinterpret_cast<uint32_t>(baseAddress), 0);
+                SSIDataGet(reinterpret_cast<uint32_t>(baseAddress), &receivedByte);
+                buffer[i] = receivedByte & 0xFF;
+                bytesRead++;
+            }
+        }
+
+        const bool chipSelectShouldBeDeasserted = SpiTypes::GpioChipSelectControl::Deassert == additionalParams.chipSelectControl ||
+                                                SpiTypes::GpioChipSelectControl::AssertDeassert == additionalParams.chipSelectControl;
+
+        if (chipSelectShouldBeDeasserted) {
+
+            if (_chipSelect) {
+                error = _chipSelect->pinWrite(spiParams().driverConfig.chipSelectActiveLow ? GpioTypes::LogicLevel::High : GpioTypes::LogicLevel::Low);
+            }
         }
     }
 

@@ -3,33 +3,37 @@
 #include "OperatingSystemModule.hpp"
 
 ErrorType RiverdiEve3Tft35Inch::init(const LcdTypes::Configuration &configuration) {
-    const RiverdiEve3Tft35InchTypes::Configuration &configConst = reinterpret_cast<const RiverdiEve3Tft35InchTypes::Configuration &>(configuration);
+    const auto configConst = static_cast<const RiverdiEve3Tft35InchTypes::Configuration &>(configuration);
     RiverdiEve3Tft35InchTypes::Configuration &params = const_cast<RiverdiEve3Tft35InchTypes::Configuration &>(configConst);
+    ErrorType error = ErrorType::Success;
+    const bool powerdownPinEnabled = (-1 != params.powerdownParams.hardwareConfig.pinNumber || PeripheralNumber::Unknown != params.powerdownParams.hardwareConfig.peripheralNumber);
 
-    ErrorType error = _powerdown.configure(params.powerdownParams);
-
-    if (ErrorType::Success == error) {
-        error = _powerdown.init();
+    if (powerdownPinEnabled) {
+        error = _powerdown.configure(params.powerdownParams);
 
         if (ErrorType::Success == error) {
-            error = reset();
+            error = _powerdown.init();
 
             if (ErrorType::Success == error) {
-                constexpr Bridgetek81xTypes::SystemClockFrequency lcdSystemClock = Bridgetek81xTypes::SystemClockFrequency::Frequency72MHz;
-                constexpr bool hasExternalCrystal = true;
+                error = reset();
+            }
+        }
+    }
 
-                if (ErrorType::Success == (error = _bt815.init(params.spiParams, hasExternalCrystal, lcdSystemClock, screenParameters()))) {
+    if (ErrorType::Success == error) {
+        constexpr Bridgetek81xTypes::SystemClockFrequency lcdSystemClock = Bridgetek81xTypes::SystemClockFrequency::Frequency72MHz;
+        constexpr bool hasExternalCrystal = true;
 
-                    if (ErrorType::Success == (error = _bt815.toggleBacklight(true, Percent(5)))) {
-                        error = _bt815.toggleDisplay(true);
+        if (ErrorType::Success == (error = _bt815.init(params.spiParams, hasExternalCrystal, lcdSystemClock, screenParameters()))) {
 
-                        if (ErrorType::Success == error) {
-                            error = _bt815.setTouchThreshold(1200);
+            if (ErrorType::Success == (error = _bt815.toggleBacklight(true, Percent(5)))) {
+                error = _bt815.toggleDisplay(true);
 
-                            if (ErrorType::Success == error) {
-                                _bt815.calibrate({screenParameters().activeArea.width/2U, screenParameters().activeArea.height/2U});
-                            }
-                        }
+                if (ErrorType::Success == error) {
+                    error = _bt815.setTouchThreshold(1200);
+
+                    if (ErrorType::Success == error) {
+                        _bt815.calibrate({screenParameters().activeArea.width/2U, screenParameters().activeArea.height/2U});
                     }
                 }
             }

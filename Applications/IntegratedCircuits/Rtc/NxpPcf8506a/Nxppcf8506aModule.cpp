@@ -28,10 +28,7 @@ ErrorType Nxppcf8506a::writeDate(const DateTime& dateTime) {
     dateTimeArray->push_back(toBinaryCodedDecimal(dateTime._month));
     dateTimeArray->push_back(toBinaryCodedDecimal(dateTime._year));
 
-    IcCommunicationProtocolTypes::AdditionalCommunicationParameters params = {
-        _I2cAddress,
-        static_cast<uint8_t>(RegisterMap::Seconds)
-    };
+    I2cTypes::AdditionalCommunicationParameters params(_I2cAddress, static_cast<uint8_t>(RegisterMap::Seconds));
 
     ErrorType error = ic().txBlocking(dateTimeArray, Milliseconds(1000), params);
 
@@ -43,10 +40,7 @@ ErrorType Nxppcf8506a::writeDate(const DateTime& dateTime) {
 
 ErrorType Nxppcf8506a::readDate(DateTime& dateTime) {
     StaticString::Container dateTimeArray = StaticString::Container(std::integral_constant<size_t, 7>{});
-    IcCommunicationProtocolTypes::AdditionalCommunicationParameters params = {
-        _I2cAddress,
-        static_cast<uint8_t>(RegisterMap::Seconds)
-    };
+    I2cTypes::AdditionalCommunicationParameters params(_I2cAddress, static_cast<uint8_t>(RegisterMap::Seconds));
 
     //Same as reading. The registers will auto increment with each read. So If we read 7 times starting at the seconds register,
     //we will get all the date data from second to year.
@@ -77,10 +71,7 @@ ErrorType Nxppcf8506a::setHourMode(bool twentyFourHourMode) {
     ErrorType error = ErrorType::Failure;
     constexpr Milliseconds timeout = 1000;
     StaticString::Container controlRegisterData = StaticString::Container(std::integral_constant<size_t, 1>{});
-    IcCommunicationProtocolTypes::AdditionalCommunicationParameters params = {
-        _I2cAddress,
-        static_cast<uint8_t>(RegisterMap::Control1)
-    };
+    I2cTypes::AdditionalCommunicationParameters params(_I2cAddress, static_cast<uint8_t>(RegisterMap::Control1))    ;
 
     //Read the contents of the register so that we don't modify anything we didn't intend to.
     error = ic().rxBlocking(controlRegisterData, timeout, params);
@@ -101,10 +92,7 @@ ErrorType Nxppcf8506a::startClock() {
     constexpr uint8_t stopBitPosition = 5;
     constexpr uint8_t externalTestBitPosition = 7;
     StaticString::Container controlRegisterData = StaticString::Container(std::integral_constant<size_t, 1>{});
-    IcCommunicationProtocolTypes::AdditionalCommunicationParameters params = {
-        _I2cAddress,
-        static_cast<uint8_t>(RegisterMap::Control1)
-    };
+    I2cTypes::AdditionalCommunicationParameters params(_I2cAddress, static_cast<uint8_t>(RegisterMap::Control1))    ;
 
     //Read the contents of the register so that we don't modify anything we didn't intend to.
     error = ic().rxBlocking(controlRegisterData, timeout, params);
@@ -125,10 +113,7 @@ ErrorType Nxppcf8506a::stopClock() {
     constexpr Milliseconds timeout = 1000;
     constexpr uint8_t stopBitPosition = 5;
     StaticString::Container controlRegisterData = StaticString::Container(std::integral_constant<size_t, 1>{});
-    IcCommunicationProtocolTypes::AdditionalCommunicationParameters params = {
-        _I2cAddress,
-        static_cast<uint8_t>(RegisterMap::Control1)
-    };
+    I2cTypes::AdditionalCommunicationParameters params(_I2cAddress, static_cast<uint8_t>(RegisterMap::Control1))    ;
 
     //Read the contents of the register so that we don't modify anything we didn't intend to.
     error = ic().rxBlocking(controlRegisterData, timeout, params);
@@ -148,10 +133,7 @@ ErrorType Nxppcf8506a::softwareReset() {
     constexpr Milliseconds timeout = 1000;
     constexpr uint8_t resetCode = 0x58;
     StaticString::Container controlRegisterData = StaticString::Container(std::integral_constant<size_t, 1>{});
-    IcCommunicationProtocolTypes::AdditionalCommunicationParameters params = {
-        _I2cAddress,
-        static_cast<uint8_t>(RegisterMap::Control1)
-    };
+    I2cTypes::AdditionalCommunicationParameters params(_I2cAddress, static_cast<uint8_t>(RegisterMap::Control1))    ;
 
     //Read the contents of the register so that we don't modify anything we didn't intend to.
     error = ic().rxBlocking(controlRegisterData, timeout, params);

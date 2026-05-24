@@ -2,14 +2,6 @@
 #include "Bridgetek81x.hpp"
 #include "OperatingSystemModule.hpp"
 
-#ifndef BT81X_CHIP_SELECT_PERIPHERAL_NUMBER
-#error "Bridgetek uses a GPIO chip select to communicate with the device. Please define the peripheral number"
-#endif
-
-#ifndef BT81X_CHIP_SELECT_PIN_NUMBER
-#error "Bridgetek uses a GPIO chip select to communicate with the device. Please define the pin number"
-#endif
-
 ErrorType Bridgetek81x::init(const SpiTypes::SpiParams params, bool externalClock, const Bridgetek81xTypes::SystemClockFrequency systemClockFrequency, const LcdTypes::ScreenParameters &screenParams) {
     ErrorType error = ErrorType::InvalidParameter;
 
@@ -21,75 +13,63 @@ ErrorType Bridgetek81x::init(const SpiTypes::SpiParams params, bool externalCloc
         if (ErrorType::Success == (error = _spi.configure(initParams))) {
 
             if (ErrorType::Success == (error = _spi.init())) {
-                GpioTypes::GpioParams chipSelectParams;
-                chipSelectParams.hardwareConfig.peripheralNumber = BT81X_CHIP_SELECT_PERIPHERAL_NUMBER;
-                chipSelectParams.hardwareConfig.pinNumber = BT81X_CHIP_SELECT_PIN_NUMBER;
-                chipSelectParams.hardwareConfig.pullUpEnable = true;
-                chipSelectParams.hardwareConfig.driveStrength = GpioTypes::DriveStrength::TwoMilliAmps;
-                chipSelectParams.hardwareConfig.driveType = GpioTypes::DriveType::PushPull;
 
-                _chipSelect.configure(chipSelectParams);
+                if (externalClock) {
+                    error = sendHostCommand(Bridgetek81xTypes::HostCommands::ClockExternal, 0);
+                    const Hertz lcdSystemClockFrequency = static_cast<Hertz>(systemClockFrequency);
+                    const uint8_t clockSelectParameter = toHostCommandFrequency(lcdSystemClockFrequency, error);
 
-                if (ErrorType::Success == (error = _chipSelect.init())) {
-                    _chipSelect.pinWrite(GpioTypes::LogicLevel::High);
-
-                    if (externalClock) {
-                        error = sendHostCommand(Bridgetek81xTypes::HostCommands::ClockExternal, 0);
-                        const Hertz lcdSystemClockFrequency = static_cast<Hertz>(systemClockFrequency);
-                        const uint8_t clockSelectParameter = toHostCommandFrequency(lcdSystemClockFrequency, error);
-
-                        if (ErrorType::Success == error) {
-                            error = sendHostCommand(Bridgetek81xTypes::HostCommands::ClockSelect, clockSelectParameter);
-                        }
+                    if (ErrorType::Success == error) {
+                        error = sendHostCommand(Bridgetek81xTypes::HostCommands::ClockSelect, clockSelectParameter);
                     }
+                }
 
-                    if (ErrorType::Success == (error = sendHostCommand(Bridgetek81xTypes::HostCommands::ResetPulse, 0))) {
-                        
-                        if (ErrorType::Success == (error = sendHostCommand(Bridgetek81xTypes::HostCommands::Active, 0))) {
-                            //Sect. 4.9.4 BT81x Datasheet, May take up to 300ms before software can access registers or RAM from the
-                            //sleep state.
-                            OperatingSystem::Instance().delay(Milliseconds(300));
+                if (ErrorType::Success == (error = sendHostCommand(Bridgetek81xTypes::HostCommands::ResetPulse, 0))) {
+                    
+                    if (ErrorType::Success == (error = sendHostCommand(Bridgetek81xTypes::HostCommands::Active, 0))) {
+                        //Sect. 4.9.4 BT81x Datasheet, May take up to 300ms before software can access registers or RAM from the
+                        //sleep state.
+                        OperatingSystem::Instance().delay(Milliseconds(300));
 
-                            constexpr Count maxRetries = 50000;
+                        constexpr Count maxRetries = 50000;
 
-                            if (ErrorType::Success == (error = readRegId(maxRetries))) {
-                                //At startup the chip ID is located in RAM and is readable until the application overwrites it.
-                                uint32_t chipId = 0;
-                                if (ErrorType::Success == (error = readChipId(chipId))) {
+                        if (ErrorType::Success == (error = readRegId(maxRetries))) {
+                            //At startup the chip ID is located in RAM and is readable until the application overwrites it.
+                            uint32_t chipId = 0;
+                            if (ErrorType::Success == (error = readChipId(chipId))) {
 
-                                    if (((chipId >> 8) & 0xFF) >= 0x15 && ((chipId >> 8) & 0xFF) <= 0x16) {
+                                if (((chipId >> 8) & 0xFF) >= 0x15 && ((chipId >> 8) & 0xFF) <= 0x16) {
 
-                                        if (ErrorType::Success == (error = readResetStatus())) {
-                                            const Hertz lcdSystemClockFrequency = static_cast<Hertz>(systemClockFrequency);
-                                            constexpr uint32_t address = static_cast<uint32_t>(Bridgetek81xTypes::MiscellaneousRegisters::Frequency);
-                                            StaticString::Container dataBytes = StaticString::Container(std::integral_constant<size_t, sizeof(uint32_t)>());
-                                            dataBytes->assign(reinterpret_cast<const char*>(&lcdSystemClockFrequency), sizeof(lcdSystemClockFrequency));
+                                    if (ErrorType::Success == (error = readResetStatus())) {
+                                        const Hertz lcdSystemClockFrequency = static_cast<Hertz>(systemClockFrequency);
+                                        constexpr uint32_t address = static_cast<uint32_t>(Bridgetek81xTypes::MiscellaneousRegisters::Frequency);
+                                        StaticString::Container dataBytes = StaticString::Container(std::integral_constant<size_t, sizeof(uint32_t)>());
+                                        dataBytes->assign(reinterpret_cast<const char*>(&lcdSystemClockFrequency), sizeof(lcdSystemClockFrequency));
 
-                                            if (ErrorType::Success == (error = hostMemoryWrite(address, dataBytes, Milliseconds(500), 10))) {
-                                                error = setScreenParameters(screenParams);
+                                        if (ErrorType::Success == (error = hostMemoryWrite(address, dataBytes, Milliseconds(500), 10))) {
+                                            error = setScreenParameters(screenParams);
 
-                                                if (ErrorType::Success == error) {
-                                                    _pixelClockDivisor = screenParams.pixelClockDivisor;
+                                            if (ErrorType::Success == error) {
+                                                _pixelClockDivisor = screenParams.pixelClockDivisor;
 
-                                                    if (params.driverConfig.clockFrequency > initParams.driverConfig.clockFrequency) {
-                                                        error = _spi.deinit();
+                                                if (params.driverConfig.clockFrequency > initParams.driverConfig.clockFrequency) {
+                                                    error = _spi.deinit();
+
+                                                    if (ErrorType::Success == error) {
+                                                        error = _spi.configure(params);
 
                                                         if (ErrorType::Success == error) {
-                                                            error = _spi.configure(params);
-
-                                                            if (ErrorType::Success == error) {
-                                                                error = _spi.init();
-                                                            }
+                                                            error = _spi.init();
                                                         }
                                                     }
                                                 }
                                             }
                                         }
                                     }
-                                    else {
-                                        PLT_LOGE(TAG, "Detected incompatible chip <chipId: %u>", chipId);
-                                        error = ErrorType::NotSupported;
-                                    }
+                                }
+                                else {
+                                    PLT_LOGE(TAG, "Detected incompatible chip <chipId: %u>", chipId);
+                                    error = ErrorType::NotSupported;
                                 }
                             }
                         }
@@ -481,18 +461,13 @@ ErrorType Bridgetek81x::sendDisplayListCommand(const Bridgetek81xTypes::DisplayL
 ErrorType Bridgetek81x::sendHostCommand(const Bridgetek81xTypes::HostCommands hostCommand, const uint8_t parameter) {
     constexpr Bytes dummy = 0x00;
     StaticString::Container hostCommandBytes = StaticString::Container(std::integral_constant<size_t, sizeof(hostCommand) + sizeof(parameter) + sizeof(dummy)>());
-    ErrorType error;
 
     hostCommandBytes->push_back(static_cast<uint8_t>(hostCommand));
     hostCommandBytes->push_back(parameter);
     hostCommandBytes->push_back(dummy);
 
-    if (ErrorType::Success == (error = _chipSelect.pinWrite(GpioTypes::LogicLevel::Low))) {
-        IcCommunicationProtocolTypes::AdditionalCommunicationParameters additionalParams;
-        error = _spi.txBlocking(hostCommandBytes, Milliseconds(500), additionalParams);
-    }
-
-    _chipSelect.pinWrite(GpioTypes::LogicLevel::High);
+    SpiTypes::AdditionalCommunicationParameters additionalParams(SpiTypes::GpioChipSelectControl::AssertDeassert);
+    const ErrorType error = _spi.txBlocking(hostCommandBytes, Milliseconds(500), additionalParams);
 
     return error;
 }

@@ -92,6 +92,22 @@ namespace I2cTypes {
             interruptConfig.transmitFifoOverflow = false;
         }
     };
+
+    /**
+     * @brief I2C additional communication parameters
+     */
+    struct AdditionalCommunicationParameters final : public IcCommunicationProtocolTypes::AdditionalCommunicationParameters {
+        /// @brief Constructor
+        AdditionalCommunicationParameters() = default;
+        /// @brief Constructor
+        constexpr AdditionalCommunicationParameters(const uint8_t deviceAddress, const uint8_t registerAddress) : deviceAddress(deviceAddress), registerAddress(registerAddress) {}
+
+        IcCommunicationProtocolTypes::IcDevice deviceType() const override { return IcCommunicationProtocolTypes::IcDevice::I2c; }
+        /// @brief Device address
+        uint8_t deviceAddress = 0;
+        /// @brief Register address
+        uint8_t registerAddress = 0;
+    };
 }
 
 /**

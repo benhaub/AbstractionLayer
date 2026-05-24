@@ -2,5 +2,5 @@ Modules/**/*libsodium*
 .DS_Store
 Doxygen/html/**
 Modules/MachineLearning/Inference/Any/TensorFlowLite/TensorFlowLiteTree/
-Modules/Drivers/Spi/Linux/LibMpsse/libmpsse-x86_64-1.0.8.tgz
-Modules/Drivers/Spi/Linux/LibMpsse/release/*
+Modules/Drivers/Spi/Linux/FT232HL/release/*
+Modules/Drivers/Spi/Linux/FT232HL/linux-x86_64/*

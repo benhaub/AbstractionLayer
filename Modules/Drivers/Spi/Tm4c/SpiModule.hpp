@@ -2,6 +2,7 @@
 #define __SPI_MODULE_HPP__
 
 #include "SpiAbstraction.hpp"
+#include "GpioModule.hpp"
 
 class Spi : public SpiAbstraction {
     public:
@@ -20,8 +21,11 @@ class Spi : public SpiAbstraction {
     ErrorType flushRxBuffer() override;
 
     private:
-    ErrorType txBlocking(const char *data, const size_t size, const Milliseconds timeout);
-    ErrorType rxBlocking(char *buffer, const size_t bufferSize, size_t &bytesRead, const Milliseconds timeout);
+    /// @brief The GPIO for chip select when using GPIO mode
+    std::optional<Gpio> _chipSelect;
+
+    ErrorType txBlocking(const char *data, const size_t size, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params);
+    ErrorType rxBlocking(char *buffer, const size_t bufferSize, size_t &bytesRead, const Milliseconds timeout, const IcCommunicationProtocolTypes::AdditionalCommunicationParameters &params);
 
     uint32_t toTm4cSysCtlPeripheralNumber(const PeripheralNumber peripheralNumber, ErrorType &error);
     Register toTm4cPeripheralBaseRegister(const PeripheralNumber peripheralNumber, ErrorType &error);

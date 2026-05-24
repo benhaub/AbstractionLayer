@@ -46,10 +46,13 @@ namespace IcCommunicationProtocolTypes {
      * @details Fill in if known
      */
     struct AdditionalCommunicationParameters {
-        /// @brief The I2C device address
-        std::optional<uint8_t> i2cDeviceAddress;
-        /// @brief The register address
-        std::optional<uint8_t> i2cRegisterAddress;
+        /// @brief Destructor 
+        virtual ~AdditionalCommunicationParameters() = default;
+        /**
+         * @brief The type of device that these parameters are for
+         * @return The device types
+         */
+        virtual IcDevice deviceType() const = 0;
     };
 }
 

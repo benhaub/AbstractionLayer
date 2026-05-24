@@ -216,8 +216,6 @@ class Bridgetek81x {
     private:
     /// @brief The SPI interface to the BT81x
     Spi _spi;
-    /// @brief The chip select GPIO for the BT81x
-    Gpio _chipSelect;
     /// @brief The pixel clock divsor save from config so that the screen can be enabled/disabled later.
     uint8_t _pixelClockDivisor = 0;
     /// @brief The buffer of commands to write to the LCD display
@@ -236,7 +234,6 @@ class Bridgetek81x {
     template <typename _ReadType>
     requires std::is_same_v<_ReadType, uint8_t> || std::is_same_v<_ReadType, uint16_t> || std::is_same_v<_ReadType, uint32_t>
     ErrorType hostMemoryRead(const uint32_t address, _ReadType &buffer, const Milliseconds timeout) {
-        ErrorType error = ErrorType::Failure;
         constexpr uint8_t dummyByteValue = 0;
         StaticString::Container readTransactionAddressBytes = StaticString::Container(std::integral_constant<size_t, Bridgetek81xTypes::AddressSize + sizeof(dummyByteValue)>());
 
@@ -245,15 +242,12 @@ class Bridgetek81x {
         readTransactionAddressBytes->push_back((address) & 0xFF);
         readTransactionAddressBytes->push_back(dummyByteValue);
 
-        StaticString::Container byteBuffer = StaticString::Container(std::integral_constant<size_t, sizeof(uint8_t)>());
-
-        byteBuffer->resize(sizeof(uint8_t));
+        StaticString::Container byteBuffer = StaticString::Container(std::integral_constant<size_t, sizeof(_ReadType)>());
+        byteBuffer->resize(sizeof(_ReadType));
         buffer = 0;
-        IcCommunicationProtocolTypes::AdditionalCommunicationParameters additionalParams;
 
-        if (ErrorType::Success == (error = _chipSelect.pinWrite(GpioTypes::LogicLevel::Low))) {
-            error = _spi.txBlocking(readTransactionAddressBytes, timeout, additionalParams);
-        }
+        SpiTypes::AdditionalCommunicationParameters additionalParams(SpiTypes::GpioChipSelectControl::Assert);
+        ErrorType error = _spi.txBlocking(readTransactionAddressBytes, timeout, additionalParams);
 
         //BT81x sends data whenever you set CS low and run the clock, so clear the data that was sent while transmitting
         //the address because we aren't interested in it.
@@ -261,22 +255,17 @@ class Bridgetek81x {
 
         if (ErrorType::Success == error) {
 
-            for (size_t nextByte = 0; nextByte < sizeof(_ReadType); nextByte++) {
+            additionalParams.chipSelectControl = SpiTypes::GpioChipSelectControl::Deassert;
+            error = _spi.rxBlocking(byteBuffer, 0, additionalParams);
 
-                if (ErrorType::Success == error) {
-                    error = _spi.rxBlocking(byteBuffer, 0, additionalParams);
+            if (ErrorType::Success == error) {
 
-                    if (ErrorType::Success == error) {
-                        buffer |= byteBuffer[0] << ToBits(nextByte);
-                    }
-                }
-                else {
-                    break;
+                for (size_t nextByte = 0; nextByte < sizeof(_ReadType); nextByte++) {
+                    buffer |= static_cast<uint8_t>(byteBuffer[nextByte]) << ToBits(nextByte);
                 }
             }
         }
 
-        _chipSelect.pinWrite(GpioTypes::LogicLevel::High);
         _spi.flushRxBuffer();
 
         return error;
@@ -306,16 +295,13 @@ class Bridgetek81x {
 
         while (ErrorType::Success != error) {
 
-            if (ErrorType::Success == (error = _chipSelect.pinWrite(GpioTypes::LogicLevel::Low))) {
-                const IcCommunicationProtocolTypes::AdditionalCommunicationParameters additionalParams;
-                error = _spi.txBlocking(writeTransactionBytes, timeout, additionalParams);
+            SpiTypes::AdditionalCommunicationParameters additionalParams(SpiTypes::GpioChipSelectControl::Assert);
+            error = _spi.txBlocking(writeTransactionBytes, timeout, additionalParams);
 
-                if (ErrorType::Success == error) {
-                    error = _spi.txBlocking(data, timeout, additionalParams);
-                }
+            if (ErrorType::Success == error) {
+                additionalParams.chipSelectControl = SpiTypes::GpioChipSelectControl::Deassert;
+                error = _spi.txBlocking(data, timeout, additionalParams);
             }
-
-            _chipSelect.pinWrite(GpioTypes::LogicLevel::High);
 
             constexpr uint32_t registersStart = static_cast<uint32_t>(Bridgetek81xTypes::BaseAddresses::Registers);
             constexpr uint32_t registersEnd = registersStart + static_cast<uint32_t>(Bridgetek81xTypes::AddressSpace::Registers);
