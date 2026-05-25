@@ -57,8 +57,8 @@ ErrorType OperatingSystem::createThread(const OperatingSystemTypes::Priority pri
             .posixThreadId = thread,
             .name = name,
             .threadId = nextThreadId,
-            .blockCount = 0
-            .status = OperatingSystemTypes::ThreadStatus::Active,
+            .blockCount = 0,
+            .status = OperatingSystemTypes::ThreadStatus::Active
         };
         pthread_mutex_init(&(newThread.mutex), nullptr);
         pthread_cond_init(&(newThread.conditionVariable), nullptr);
@@ -254,8 +254,8 @@ ErrorType OperatingSystem::createTimer(Id &timer, const Milliseconds period, con
         .id = nextTimerId++,
         .autoReload = autoReload,
         .isSuspended = false,
-        .isResumed = true //When the timer is activated, it's already resumed.
-        .period = period,
+        .isResumed = true, //When the timer is activated, it's already resumed.
+        .period = period
     };
 
     timers[dispatchTimer] = newTimer;
