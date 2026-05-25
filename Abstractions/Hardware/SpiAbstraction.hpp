@@ -127,7 +127,7 @@ namespace SpiTypes {
      */
     struct AdditionalCommunicationParameters final : public IcCommunicationProtocolTypes::AdditionalCommunicationParameters {
         /// @brief Constructor
-        AdditionalCommunicationParameters() = default;
+        AdditionalCommunicationParameters() : IcCommunicationProtocolTypes::AdditionalCommunicationParameters()
         /// @brief Constructor
         constexpr AdditionalCommunicationParameters(SpiTypes::GpioChipSelectControl chipSelectControl) : chipSelectControl(chipSelectControl) {}
 

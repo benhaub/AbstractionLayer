@@ -121,6 +121,16 @@ namespace UartTypes {
 
         UartParams() : IcCommunicationProtocolTypes::ConfigurationParameters(), hardwareConfig(), driverConfig(), firmwareConfig(), interruptConfig() {}
     };
+
+    /**
+     * @brief Uart additional communication parameters
+     */
+    struct AdditionalCommunicationParameters final : public IcCommunicationProtocolTypes::AdditionalCommunicationParameters {
+        /// @brief Constructor
+        AdditionalCommunicationParameters() : IcCommunicationProtocolTypes::AdditionalCommunicationParameters()
+
+        IcCommunicationProtocolTypes::IcDevice deviceType() const override { return IcCommunicationProtocolTypes::IcDevice::Uart; }
+    };
 }
 
 /**
