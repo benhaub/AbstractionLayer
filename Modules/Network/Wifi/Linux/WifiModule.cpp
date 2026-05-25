@@ -294,7 +294,7 @@ ErrorType Wifi::getMacAddress(std::array<char, NetworkTypes::MacAddressStringSiz
             if (fd >= 0) {
                 struct ifreq ifr;
                 std::memset(&ifr, 0, sizeof(ifr));
-                std::strncpy(ifr.ifr_name, interface.data(), sizeof(ifr.ifr_name) - 1);
+                std::strncpy(ifr.ifr_name, interface.data(), sizeof(ifr.ifr_name));
                 if (0 == ioctl(fd, SIOCGIFHWADDR, &ifr)) {
                     unsigned char* hwaddr = reinterpret_cast<unsigned char*>(ifr.ifr_hwaddr.sa_data);
                     snprintf(macAddress.data(), macAddress.size(),
